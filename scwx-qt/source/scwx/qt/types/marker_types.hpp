@@ -5,6 +5,7 @@
 #include <string>
 #include <cstdint>
 
+#include <boost/gil.hpp>
 #include <QIcon>
 
 namespace scwx
@@ -17,15 +18,25 @@ typedef std::uint64_t MarkerId;
 
 struct MarkerInfo
 {
-   MarkerInfo(const std::string& name, double latitude, double longitude) :
-       name {name}, latitude {latitude}, longitude {longitude}
+   MarkerInfo(const std::string&        name,
+              double                    latitude,
+              double                    longitude,
+              const std::string         iconName,
+              boost::gil::rgba8_pixel_t iconColor) :
+       name {name},
+       latitude {latitude},
+       longitude {longitude},
+       iconName {iconName},
+       iconColor {iconColor}
    {
    }
 
-   MarkerId    id;
-   std::string name;
-   double      latitude;
-   double      longitude;
+   MarkerId                  id;
+   std::string               name;
+   double                    latitude;
+   double                    longitude;
+   std::string               iconName;
+   boost::gil::rgba8_pixel_t iconColor;
 };
 
 struct MarkerIconInfo {

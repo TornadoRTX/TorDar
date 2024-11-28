@@ -1,5 +1,6 @@
 #include <scwx/qt/manager/marker_manager.hpp>
 #include <scwx/qt/types/marker_types.hpp>
+#include <scwx/qt/util/color.hpp>
 #include <scwx/qt/util/json.hpp>
 #include <scwx/qt/main/application.hpp>
 #include <scwx/util/logger.hpp>
@@ -27,6 +28,12 @@ static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 static const std::string kNameName_      = "name";
 static const std::string kLatitudeName_  = "latitude";
 static const std::string kLongitudeName_ = "longitude";
+static const std::string kIconName_      = "icon";
+static const std::string kIconColorName_ = "icon-color";
+
+static const std::string defaultIconName = types::getMarkerIcons()[0].name;
+static const boost::gil::rgba8_pixel_t defaultIconColor =
+   util::color::ToRgba8PixelT("#ffff0000");
 
 class MarkerManager::Impl
 {
@@ -59,10 +66,7 @@ public:
 class MarkerManager::Impl::MarkerRecord
 {
 public:
-   MarkerRecord(const std::string& name, double latitude, double longitude) :
-      markerInfo_ {types::MarkerInfo(name, latitude, longitude)}
-   {
-   }
+
    MarkerRecord(const types::MarkerInfo& info) :
       markerInfo_ {info}
    {
@@ -81,16 +85,47 @@ public:
    {
       jv = {{kNameName_, record->markerInfo_.name},
             {kLatitudeName_, record->markerInfo_.latitude},
-            {kLongitudeName_, record->markerInfo_.longitude}};
+            {kLongitudeName_, record->markerInfo_.longitude},
+            {kIconName_, record->markerInfo_.iconName},
+            {kIconColorName_, util::color::ToArgbString(record->markerInfo_.iconColor)}};
    }
+
 
    friend MarkerRecord tag_invoke(boost::json::value_to_tag<MarkerRecord>,
                                   const boost::json::value& jv)
    {
-      return MarkerRecord(
+
+      const boost::json::object& jo = jv.as_object();
+
+      std::string iconName = defaultIconName;
+      boost::gil::rgba8_pixel_t iconColor = defaultIconColor;
+
+      if (jo.contains(kIconName_) && jo.at(kIconName_).is_string())
+      {
+         iconName = boost::json::value_to<std::string>(jv.at(kIconName_));
+      }
+
+      if (jo.contains(kIconColorName_) && jo.at(kIconName_).is_string())
+      {
+         try {
+            iconColor = util::color::ToRgba8PixelT(
+               boost::json::value_to<std::string>(jv.at(kIconColorName_)));
+         }
+         catch (const std::exception& ex)
+         {
+            logger_->warn(
+               "Could not parse color value in location-markers.json with the "
+               "following exception: {}",
+               ex.what());
+         }
+      }
+
+      return MarkerRecord(types::MarkerInfo(
          boost::json::value_to<std::string>(jv.at(kNameName_)),
          boost::json::value_to<double>(jv.at(kLatitudeName_)),
-         boost::json::value_to<double>(jv.at(kLongitudeName_)));
+         boost::json::value_to<double>(jv.at(kLongitudeName_)),
+         iconName,
+         iconColor));
    }
 };
 

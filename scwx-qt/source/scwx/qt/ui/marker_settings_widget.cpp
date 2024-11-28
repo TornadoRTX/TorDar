@@ -7,6 +7,8 @@
 #include <scwx/qt/ui/open_url_dialog.hpp>
 #include <scwx/util/logger.hpp>
 
+#include <scwx/qt/util/color.hpp>
+
 #include <QSortFilterProxyModel>
 
 namespace scwx
@@ -63,7 +65,12 @@ void MarkerSettingsWidgetImpl::ConnectSignals()
                     self_,
                     [this]()
                     {
-                       markerManager_->add_marker(types::MarkerInfo("", 0, 0));
+                       markerManager_->add_marker(types::MarkerInfo(
+                          "",
+                          0,
+                          0,
+                          types::getMarkerIcons()[0].name,
+                          util::color::ToRgba8PixelT("#ffff0000")));
                     });
    QObject::connect(
       self_->ui->removeButton,
