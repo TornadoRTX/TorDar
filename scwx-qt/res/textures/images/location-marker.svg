@@ -6,6 +6,6 @@
     <path d="M 40,118 L 85,40 L 130,118 L 40,118 L 85,40 Z"
         stroke="black" stroke-width="40" fill="none"/>
     <path d="M 40,118 L 85,40 L 130,118 L 40,118 L 85,40 Z"
-        stroke="red"   stroke-width="20" fill="none"/>
+        stroke="#ffffff" stroke-width="20" fill="none"/>
 
  </svg>
