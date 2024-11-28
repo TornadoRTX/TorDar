@@ -357,6 +357,7 @@ set(HDR_UTIL source/scwx/qt/util/color.hpp
              source/scwx/qt/util/network.hpp
              source/scwx/qt/util/streams.hpp
              source/scwx/qt/util/texture_atlas.hpp
+             source/scwx/qt/util/q_color_modulate.hpp
              source/scwx/qt/util/q_file_buffer.hpp
              source/scwx/qt/util/q_file_input_stream.hpp
              source/scwx/qt/util/time.hpp
@@ -369,6 +370,7 @@ set(SRC_UTIL source/scwx/qt/util/color.cpp
              source/scwx/qt/util/maplibre.cpp
              source/scwx/qt/util/network.cpp
              source/scwx/qt/util/texture_atlas.cpp
+             source/scwx/qt/util/q_color_modulate.cpp
              source/scwx/qt/util/q_file_buffer.cpp
              source/scwx/qt/util/q_file_input_stream.cpp
              source/scwx/qt/util/time.cpp
