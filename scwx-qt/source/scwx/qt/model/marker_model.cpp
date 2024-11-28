@@ -3,6 +3,7 @@
 #include <scwx/qt/manager/marker_manager.hpp>
 #include <scwx/qt/types/marker_types.hpp>
 #include <scwx/qt/types/qt_types.hpp>
+#include <scwx/qt/util/q_color_modulate.hpp>
 #include <scwx/util/logger.hpp>
 
 #include <vector>
@@ -38,7 +39,6 @@ public:
 MarkerModel::MarkerModel(QObject* parent) :
    QAbstractTableModel(parent), p(std::make_unique<Impl>())
 {
-
    connect(p->markerManager_.get(),
          &manager::MarkerManager::MarkersInitialized,
          this,
@@ -127,6 +127,23 @@ QVariant MarkerModel::data(const QModelIndex& index, int role) const
       }
       break;
       break;
+   case static_cast<int>(Column::Icon):
+      if (role == Qt::ItemDataRole::DecorationRole)
+      {
+         for (auto& icon : types::getMarkerIcons())
+         {
+            if (icon.name == markerInfo->iconName)
+            {
+               return util::modulateColors(icon.qIcon,
+                                           QSize(30, 30),
+                                           QColor(markerInfo->iconColor[0],
+                                                  markerInfo->iconColor[1],
+                                                  markerInfo->iconColor[2],
+                                                  markerInfo->iconColor[3]));
+            }
+         }
+      }
+      break;
 
    default:
       break;
@@ -163,6 +180,9 @@ QVariant MarkerModel::headerData(int             section,
 
             case static_cast<int>(Column::Longitude):
                return tr("Longitude");
+
+            case static_cast<int>(Column::Icon):
+               return tr("Icon");
 
             default:
                break;

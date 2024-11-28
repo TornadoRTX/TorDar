@@ -17,7 +17,8 @@ public:
    {
       Latitude  = 0,
       Longitude = 1,
-      Name      = 2,
+      Icon      = 2,
+      Name      = 3,
    };
 
    explicit MarkerModel(QObject* parent = nullptr);
