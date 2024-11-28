@@ -222,8 +222,8 @@ set(HDR_TYPES source/scwx/qt/types/alert_types.hpp
               source/scwx/qt/types/layer_types.hpp
               source/scwx/qt/types/location_types.hpp
               source/scwx/qt/types/map_types.hpp
-              source/scwx/qt/types/media_types.hpp
               source/scwx/qt/types/marker_types.hpp
+              source/scwx/qt/types/media_types.hpp
               source/scwx/qt/types/qt_types.hpp
               source/scwx/qt/types/radar_product_record.hpp
               source/scwx/qt/types/text_event_key.hpp
@@ -239,6 +239,7 @@ set(SRC_TYPES source/scwx/qt/types/alert_types.cpp
               source/scwx/qt/types/layer_types.cpp
               source/scwx/qt/types/location_types.cpp
               source/scwx/qt/types/map_types.cpp
+              source/scwx/qt/types/marker_types.cpp
               source/scwx/qt/types/media_types.cpp
               source/scwx/qt/types/qt_types.cpp
               source/scwx/qt/types/radar_product_record.cpp
