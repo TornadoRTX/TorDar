@@ -291,7 +291,8 @@ std::optional<size_t> MarkerManager::get_index(types::MarkerId id)
    return p->idToIndex_[id];
 }
 
-void MarkerManager::set_marker(types::MarkerId id, const types::MarkerInfo& marker)
+void MarkerManager::set_marker(types::MarkerId          id,
+                               const types::MarkerInfo& marker)
 {
    {
       std::unique_lock lock(p->markerRecordLock_);
@@ -308,6 +309,7 @@ void MarkerManager::set_marker(types::MarkerId id, const types::MarkerInfo& mark
       std::shared_ptr<MarkerManager::Impl::MarkerRecord>& markerRecord =
          p->markerRecords_[index];
       markerRecord->markerInfo_ = marker;
+      markerRecord->markerInfo_.id = id;
    }
    Q_EMIT MarkerChanged(id);
    Q_EMIT MarkersUpdated();
