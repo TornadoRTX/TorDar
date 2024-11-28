@@ -31,9 +31,6 @@ static const std::string kLongitudeName_ = "longitude";
 static const std::string kIconName_      = "icon";
 static const std::string kIconColorName_ = "icon-color";
 
-static const std::string defaultIconName = types::getMarkerIcons()[0].name;
-static const boost::gil::rgba8_pixel_t defaultIconColor =
-   util::color::ToRgba8PixelT("#ffff0000");
 
 class MarkerManager::Impl
 {
@@ -94,6 +91,9 @@ public:
    friend MarkerRecord tag_invoke(boost::json::value_to_tag<MarkerRecord>,
                                   const boost::json::value& jv)
    {
+      static const std::string defaultIconName = types::getMarkerIcons()[0].name;
+      static const boost::gil::rgba8_pixel_t defaultIconColor =
+         util::color::ToRgba8PixelT("#ffff0000");
 
       const boost::json::object& jo = jv.as_object();
 
