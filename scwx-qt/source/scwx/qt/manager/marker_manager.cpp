@@ -313,7 +313,7 @@ void MarkerManager::set_marker(types::MarkerId id, const types::MarkerInfo& mark
    Q_EMIT MarkersUpdated();
 }
 
-void MarkerManager::add_marker(const types::MarkerInfo& marker)
+types::MarkerId MarkerManager::add_marker(const types::MarkerInfo& marker)
 {
    types::MarkerId id;
    {
@@ -326,6 +326,7 @@ void MarkerManager::add_marker(const types::MarkerInfo& marker)
    }
    Q_EMIT MarkerAdded(id);
    Q_EMIT MarkersUpdated();
+   return id;
 }
 
 void MarkerManager::remove_marker(types::MarkerId id)

@@ -25,7 +25,7 @@ public:
    std::optional<types::MarkerInfo> get_marker(types::MarkerId id);
    std::optional<size_t> get_index(types::MarkerId id);
    void set_marker(types::MarkerId id, const types::MarkerInfo& marker);
-   void add_marker(const types::MarkerInfo& marker);
+   types::MarkerId add_marker(const types::MarkerInfo& marker);
    void remove_marker(types::MarkerId id);
    void move_marker(size_t from, size_t to);
 

@@ -78,26 +78,11 @@ Qt::ItemFlags MarkerModel::flags(const QModelIndex& index) const
 {
    Qt::ItemFlags flags = QAbstractTableModel::flags(index);
 
-   switch (index.column())
-   {
-   case static_cast<int>(Column::Name):
-   case static_cast<int>(Column::Latitude):
-   case static_cast<int>(Column::Longitude):
-      flags |= Qt::ItemFlag::ItemIsEditable;
-      break;
-   default:
-      break;
-   }
-
    return flags;
 }
 
 QVariant MarkerModel::data(const QModelIndex& index, int role) const
 {
-
-   static const char COORDINATE_FORMAT    = 'g';
-   static const int  COORDINATE_PRECISION = 10;
-
    if (!index.isValid() || index.row() < 0 ||
        static_cast<size_t>(index.row()) >= p->markerIds_.size())
    {
@@ -118,8 +103,7 @@ QVariant MarkerModel::data(const QModelIndex& index, int role) const
    {
    case static_cast<int>(Column::Name):
       if (role == Qt::ItemDataRole::DisplayRole ||
-          role == Qt::ItemDataRole::ToolTipRole ||
-          role == Qt::ItemDataRole::EditRole)
+          role == Qt::ItemDataRole::ToolTipRole)
       {
          return QString::fromStdString(markerInfo->name);
       }
@@ -132,11 +116,6 @@ QVariant MarkerModel::data(const QModelIndex& index, int role) const
          return QString::fromStdString(
             common::GetLatitudeString(markerInfo->latitude));
       }
-      else if (role == Qt::ItemDataRole::EditRole)
-      {
-         return QString::number(
-            markerInfo->latitude, COORDINATE_FORMAT, COORDINATE_PRECISION);
-      }
       break;
 
    case static_cast<int>(Column::Longitude):
@@ -145,11 +124,6 @@ QVariant MarkerModel::data(const QModelIndex& index, int role) const
       {
          return QString::fromStdString(
             common::GetLongitudeString(markerInfo->longitude));
-      }
-      else if (role == Qt::ItemDataRole::EditRole)
-      {
-         return QString::number(
-            markerInfo->longitude, COORDINATE_FORMAT, COORDINATE_PRECISION);
       }
       break;
       break;
@@ -199,78 +173,9 @@ QVariant MarkerModel::headerData(int             section,
    return QVariant();
 }
 
-bool MarkerModel::setData(const QModelIndex& index,
-                          const QVariant&    value,
-                          int                role)
+bool MarkerModel::setData(const QModelIndex&, const QVariant&, int)
 {
-
-   if (!index.isValid() || index.row() < 0 ||
-       static_cast<size_t>(index.row()) >= p->markerIds_.size())
-   {
-      return false;
-   }
-
-   types::MarkerId id = p->markerIds_[index.row()];
-   std::optional<types::MarkerInfo> markerInfo =
-      p->markerManager_->get_marker(id);
-   if (!markerInfo)
-   {
-      return false;
-   }
-   bool result = false;
-
-   switch(index.column())
-   {
-   case static_cast<int>(Column::Name):
-      if (role == Qt::ItemDataRole::EditRole)
-      {
-         QString str = value.toString();
-         markerInfo->name = str.toStdString();
-         p->markerManager_->set_marker(id, *markerInfo);
-         result = true;
-      }
-      break;
-
-   case static_cast<int>(Column::Latitude):
-      if (role == Qt::ItemDataRole::EditRole)
-      {
-         QString str = value.toString();
-         bool ok;
-         double latitude = str.toDouble(&ok);
-         if (!str.isEmpty() && ok && -90 <= latitude && latitude <= 90)
-         {
-            markerInfo->latitude = latitude;
-            p->markerManager_->set_marker(id, *markerInfo);
-            result = true;
-         }
-      }
-      break;
-
-   case static_cast<int>(Column::Longitude):
-      if (role == Qt::ItemDataRole::EditRole)
-      {
-         QString str = value.toString();
-         bool ok;
-         double longitude = str.toDouble(&ok);
-         if (!str.isEmpty() && ok && -180 <= longitude && longitude <= 180)
-         {
-            markerInfo->longitude = longitude;
-            p->markerManager_->set_marker(id, *markerInfo);
-            result = true;
-         }
-      }
-      break;
-
-   default:
-      break;
-   }
-
-   if (result)
-   {
-      Q_EMIT dataChanged(index, index);
-   }
-
-   return result;
+   return false;
 }
 
 void MarkerModel::HandleMarkersInitialized(size_t count)

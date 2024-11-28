@@ -4,10 +4,8 @@
 #include <scwx/qt/manager/marker_manager.hpp>
 #include <scwx/qt/model/marker_model.hpp>
 #include <scwx/qt/types/qt_types.hpp>
-#include <scwx/qt/ui/open_url_dialog.hpp>
+#include <scwx/qt/ui/edit_marker_dialog.hpp>
 #include <scwx/util/logger.hpp>
-
-#include <scwx/qt/util/color.hpp>
 
 #include <QSortFilterProxyModel>
 
@@ -36,6 +34,7 @@ public:
    model::MarkerModel* markerModel_;
    std::shared_ptr<manager::MarkerManager> markerManager_ {
       manager::MarkerManager::Instance()};
+   std::shared_ptr<ui::EditMarkerDialog> editMarkerDialog_ {nullptr};
 };
 
 
@@ -47,8 +46,9 @@ MarkerSettingsWidget::MarkerSettingsWidget(QWidget* parent) :
    ui->setupUi(this);
 
    ui->removeButton->setEnabled(false);
-
    ui->markerView->setModel(p->markerModel_);
+
+   p->editMarkerDialog_ = std::make_shared<ui::EditMarkerDialog>(this);
 
    p->ConnectSignals();
 }
@@ -65,12 +65,8 @@ void MarkerSettingsWidgetImpl::ConnectSignals()
                     self_,
                     [this]()
                     {
-                       markerManager_->add_marker(types::MarkerInfo(
-                          "",
-                          0,
-                          0,
-                          types::getMarkerIcons()[0].name,
-                          util::color::ToRgba8PixelT("#ffff0000")));
+                       editMarkerDialog_->setup();
+                       editMarkerDialog_->show();
                     });
    QObject::connect(
       self_->ui->removeButton,
@@ -109,6 +105,27 @@ void MarkerSettingsWidgetImpl::ConnectSignals()
          bool itemSelected = selected.size() > 0;
          self_->ui->removeButton->setEnabled(itemSelected);
       });
+   QObject::connect(self_->ui->markerView,
+                    &QAbstractItemView::doubleClicked,
+                    self_,
+                    [this](const QModelIndex& index)
+                    {
+                       int row = index.row();
+                       if (row < 0)
+                       {
+                          return;
+                       }
+
+                       std::optional<types::MarkerId> id =
+                          markerModel_->getId(row);
+                       if (!id)
+                       {
+                          return;
+                       }
+
+                       editMarkerDialog_->setup(*id);
+                       editMarkerDialog_->show();
+                    });
 }
 
 } // namespace ui
