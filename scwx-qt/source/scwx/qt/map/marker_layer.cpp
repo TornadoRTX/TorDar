@@ -1,8 +1,14 @@
 #include <scwx/qt/map/marker_layer.hpp>
 #include <scwx/qt/manager/marker_manager.hpp>
 #include <scwx/util/logger.hpp>
-#include <scwx/qt/types/marker_types.hpp>
 #include <scwx/qt/gl/draw/geo_icons.hpp>
+#include <scwx/qt/types/marker_types.hpp>
+#include <scwx/qt/ui/edit_marker_dialog.hpp>
+
+#include <QGeoPositionInfo>
+#include <QMouseEvent>
+
+#include <string>
 
 namespace scwx
 {
@@ -18,7 +24,9 @@ class MarkerLayer::Impl
 {
 public:
    explicit Impl(MarkerLayer* self, std::shared_ptr<MapContext> context) :
-       self_ {self}, geoIcons_ {std::make_shared<gl::draw::GeoIcons>(context)}
+       self_ {self},
+       geoIcons_ {std::make_shared<gl::draw::GeoIcons>(context)},
+       editMarkerDialog_ {std::make_shared<ui::EditMarkerDialog>()}
    {
       ConnectSignals();
    }
@@ -30,6 +38,7 @@ public:
    MarkerLayer* self_;
 
    std::shared_ptr<gl::draw::GeoIcons> geoIcons_;
+   std::shared_ptr<ui::EditMarkerDialog> editMarkerDialog_;
 };
 
 void MarkerLayer::Impl::ConnectSignals()
@@ -55,11 +64,36 @@ void MarkerLayer::Impl::ReloadMarkers()
    markerManager->for_each(
       [this](const types::MarkerInfo& marker)
       {
+         // must use local ID, instead of reference to marker in event handler
+         // callback.
+         types::MarkerId id = marker.id;
+
          std::shared_ptr<gl::draw::GeoIconDrawItem> icon = geoIcons_->AddIcon();
          geoIcons_->SetIconTexture(icon, marker.iconName, 0);
          geoIcons_->SetIconLocation(icon, marker.latitude, marker.longitude);
          geoIcons_->SetIconHoverText(icon, marker.name);
          geoIcons_->SetIconModulate(icon, marker.iconColor);
+         geoIcons_->RegisterEventHandler(
+            icon,
+            [this, id](QEvent* ev)
+            {
+               switch (ev->type())
+               {
+               case QEvent::Type::MouseButtonPress:
+               {
+                  QMouseEvent* mouseEvent = reinterpret_cast<QMouseEvent*>(ev);
+                  if (mouseEvent->buttons() == Qt::MouseButton::RightButton)
+                  {
+                     editMarkerDialog_->setup(id);
+                     editMarkerDialog_->show();
+                  }
+               }
+               break;
+
+               default:
+                  break;
+               }
+            });
       });
 
    geoIcons_->FinishIcons();

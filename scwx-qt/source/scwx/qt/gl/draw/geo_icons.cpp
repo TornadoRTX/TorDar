@@ -38,7 +38,7 @@ static constexpr std::size_t kIntegersPerVertex_ = 4;
 static constexpr std::size_t kIntegerBufferLength_ =
    kNumTriangles * kVerticesPerTriangle * kIntegersPerVertex_;
 
-struct GeoIconDrawItem
+struct GeoIconDrawItem : types::EventHandler
 {
    units::length::nautical_miles<double>       threshold_ {};
    std::chrono::sys_time<std::chrono::seconds> startTime_ {};
@@ -691,7 +691,7 @@ void GeoIcons::Impl::UpdateSingleBuffer(
                                hoverIcons.end(),
                                [&di](auto& entry) { return entry.di_ == di; });
 
-   if (di->visible_ && !di->hoverText_.empty())
+   if (di->visible_ && (!di->hoverText_.empty() || di->event_ != nullptr))
    {
       const units::angle::radians<double> radians = angle;
 
@@ -903,7 +903,7 @@ bool GeoIcons::RunMousePicking(
    const QPointF&   mouseGlobalPos,
    const glm::vec2& mouseCoords,
    const common::Coordinate& /* mouseGeoCoords */,
-   std::shared_ptr<types::EventHandler>& /* eventHandler */)
+   std::shared_ptr<types::EventHandler>& eventHandler )
 {
    std::unique_lock lock {p->iconMutex_};
 
@@ -993,10 +993,25 @@ bool GeoIcons::RunMousePicking(
    if (it != p->currentHoverIcons_.crend())
    {
       itemPicked = true;
-      util::tooltip::Show(it->di_->hoverText_, mouseGlobalPos);
+      if (!it->di_->hoverText_.empty())
+      {
+         // Show tooltip
+         util::tooltip::Show(it->di_->hoverText_, mouseGlobalPos);
+      }
+      if (it->di_->event_ != nullptr)
+      {
+         eventHandler = it->di_;
+      }
    }
 
    return itemPicked;
+}
+
+void GeoIcons::RegisterEventHandler(
+   const std::shared_ptr<GeoIconDrawItem>& di,
+   const std::function<void(QEvent*)>&     eventHandler)
+{
+   di->event_ = eventHandler;
 }
 
 } // namespace draw
