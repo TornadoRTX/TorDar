@@ -61,6 +61,7 @@ void MarkerLayer::Impl::ReloadMarkers()
          std::shared_ptr<gl::draw::GeoIconDrawItem> icon = geoIcons_->AddIcon();
          geoIcons_->SetIconTexture(icon, markerIconName_, 0);
          geoIcons_->SetIconLocation(icon, marker.latitude, marker.longitude);
+         geoIcons_->SetIconHoverText(icon, marker.name);
       });
 
    geoIcons_->FinishIcons();
