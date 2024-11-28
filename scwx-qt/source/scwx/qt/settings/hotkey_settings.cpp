@@ -12,6 +12,7 @@ namespace settings
 static const std::string logPrefix_ = "scwx::qt::settings::hotkey_settings";
 
 static const std::unordered_map<types::Hotkey, QKeySequence> kDefaultHotkeys_ {
+   {types::Hotkey::AddLocationMarker, QKeySequence {Qt::Key::Key_M}},
    {types::Hotkey::ChangeMapStyle, QKeySequence {Qt::Key::Key_Z}},
    {types::Hotkey::CopyCursorCoordinates,
     QKeySequence {QKeyCombination {Qt::KeyboardModifier::ControlModifier,

@@ -13,6 +13,7 @@ namespace types
 
 enum class Hotkey
 {
+   AddLocationMarker,
    ChangeMapStyle,
    CopyCursorCoordinates,
    CopyMapCoordinates,
@@ -52,7 +53,7 @@ enum class Hotkey
    Unknown
 };
 typedef scwx::util::
-   Iterator<Hotkey, Hotkey::ChangeMapStyle, Hotkey::TimelineStepEnd>
+   Iterator<Hotkey, Hotkey::AddLocationMarker, Hotkey::TimelineStepEnd>
       HotkeyIterator;
 
 Hotkey             GetHotkeyFromShortName(const std::string& name);

@@ -9,10 +9,10 @@
 #include <scwx/qt/map/layer_wrapper.hpp>
 #include <scwx/qt/map/map_provider.hpp>
 #include <scwx/qt/map/map_settings.hpp>
+#include <scwx/qt/map/marker_layer.hpp>
 #include <scwx/qt/map/overlay_layer.hpp>
 #include <scwx/qt/map/overlay_product_layer.hpp>
 #include <scwx/qt/map/placefile_layer.hpp>
-#include <scwx/qt/map/marker_layer.hpp>
 #include <scwx/qt/map/radar_product_layer.hpp>
 #include <scwx/qt/map/radar_range_layer.hpp>
 #include <scwx/qt/map/radar_site_layer.hpp>
@@ -21,6 +21,7 @@
 #include <scwx/qt/settings/general_settings.hpp>
 #include <scwx/qt/settings/map_settings.hpp>
 #include <scwx/qt/settings/palette_settings.hpp>
+#include <scwx/qt/ui/edit_marker_dialog.hpp>
 #include <scwx/qt/util/file.hpp>
 #include <scwx/qt/util/maplibre.hpp>
 #include <scwx/qt/util/tooltip.hpp>
@@ -79,6 +80,7 @@ public:
        map_(),
        layerList_ {},
        imGuiRendererInitialized_ {false},
+       editMarkerDialog_ {nullptr},
        radarProductManager_ {nullptr},
        radarProductLayer_ {nullptr},
        overlayLayer_ {nullptr},
@@ -127,8 +129,6 @@ public:
       ImGui_ImplQt_Init();
 
       InitializeCustomStyles();
-
-      ConnectSignals();
    }
 
    ~MapWidgetImpl()
@@ -219,6 +219,8 @@ public:
    std::shared_ptr<model::LayerModel> layerModel_ {
       model::LayerModel::Instance()};
 
+   std::shared_ptr<ui::EditMarkerDialog> editMarkerDialog_;
+
    std::shared_ptr<manager::HotkeyManager> hotkeyManager_ {
       manager::HotkeyManager::Instance()};
    std::shared_ptr<manager::PlacefileManager> placefileManager_ {
@@ -283,6 +285,9 @@ MapWidget::MapWidget(std::size_t id, const QMapLibre::Settings& settings) :
    setFocusPolicy(Qt::StrongFocus);
 
    ImGui_ImplQt_RegisterWidget(this);
+
+   p->editMarkerDialog_ = std::make_shared<ui::EditMarkerDialog>(this);
+   p->ConnectSignals();
 }
 
 MapWidget::~MapWidget()
@@ -429,6 +434,16 @@ void MapWidgetImpl::HandleHotkeyPressed(types::Hotkey hotkey, bool isAutoRepeat)
 
    switch (hotkey)
    {
+   case types::Hotkey::AddLocationMarker:
+      if (hasMouse_)
+      {
+         auto coordinate = map_->coordinateForPixel(lastPos_);
+
+         editMarkerDialog_->setup(coordinate.first, coordinate.second);
+         editMarkerDialog_->show();
+      }
+      break;
+
    case types::Hotkey::ChangeMapStyle:
       if (context_->settings().isActive_)
       {
