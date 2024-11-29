@@ -182,6 +182,7 @@ void EditMarkerDialog::Impl::show_color_dialog()
                        QString colorName =
                           qColor.name(QColor::NameFormat::HexArgb);
                        self_->ui->iconColorLineEdit->setText(colorName);
+                       set_icon_color(colorName.toStdString());
                     });
    dialog->open();
 }
