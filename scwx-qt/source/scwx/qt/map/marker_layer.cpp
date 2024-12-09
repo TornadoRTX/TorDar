@@ -30,10 +30,15 @@ public:
    {
       ConnectSignals();
    }
-   ~Impl() {}
+   ~Impl() = default;
 
    void ReloadMarkers();
    void ConnectSignals();
+
+   std::shared_ptr<manager::MarkerManager> markerManager_ {
+      manager::MarkerManager::Instance()};
+
+   void set_icon_sheets();
 
    MarkerLayer* self_;
 
@@ -43,25 +48,26 @@ public:
 
 void MarkerLayer::Impl::ConnectSignals()
 {
-   auto markerManager = manager::MarkerManager::Instance();
-
-   QObject::connect(markerManager.get(),
-         &manager::MarkerManager::MarkersUpdated,
-         self_,
-         [this]()
-         {
-            this->ReloadMarkers();
-         });
+   QObject::connect(markerManager_.get(),
+                    &manager::MarkerManager::MarkersUpdated,
+                    self_,
+                    [this]() { ReloadMarkers(); });
+   QObject::connect(markerManager_.get(),
+                    &manager::MarkerManager::IconsReady,
+                    self_,
+                    [this]() { set_icon_sheets(); });
+   QObject::connect(markerManager_.get(),
+                    &manager::MarkerManager::IconAdded,
+                    self_,
+                    [this]() { set_icon_sheets(); });
 }
 
 void MarkerLayer::Impl::ReloadMarkers()
 {
    logger_->debug("ReloadMarkers()");
-   auto markerManager = manager::MarkerManager::Instance();
 
    geoIcons_->StartIcons();
-
-   markerManager->for_each(
+   markerManager_->for_each(
       [this](const types::MarkerInfo& marker)
       {
          // must use local ID, instead of reference to marker in event handler
@@ -69,6 +75,7 @@ void MarkerLayer::Impl::ReloadMarkers()
          types::MarkerId id = marker.id;
 
          std::shared_ptr<gl::draw::GeoIconDrawItem> icon = geoIcons_->AddIcon();
+
          geoIcons_->SetIconTexture(icon, marker.iconName, 0);
          geoIcons_->SetIconLocation(icon, marker.latitude, marker.longitude);
          geoIcons_->SetIconHoverText(icon, marker.name);
@@ -81,7 +88,7 @@ void MarkerLayer::Impl::ReloadMarkers()
                {
                case QEvent::Type::MouseButtonPress:
                {
-                  QMouseEvent* mouseEvent = reinterpret_cast<QMouseEvent*>(ev);
+                  auto* mouseEvent = reinterpret_cast<QMouseEvent*>(ev);
                   if (mouseEvent->buttons() == Qt::MouseButton::RightButton)
                   {
                      editMarkerDialog_->setup(id);
@@ -113,15 +120,22 @@ void MarkerLayer::Initialize()
    logger_->debug("Initialize()");
    DrawLayer::Initialize();
 
-   p->geoIcons_->StartIconSheets();
-   for (auto& markerIcon : types::getMarkerIcons())
-   {
-      p->geoIcons_->AddIconSheet(
-         markerIcon.name, 0, 0, markerIcon.hotX, markerIcon.hotY);
-   }
-   p->geoIcons_->FinishIconSheets();
-
+   p->set_icon_sheets();
    p->ReloadMarkers();
+}
+
+void MarkerLayer::Impl::set_icon_sheets()
+{
+   geoIcons_->StartIconSheets();
+   for (auto& markerIcon : markerManager_->get_icons())
+   {
+      geoIcons_->AddIconSheet(markerIcon.second.name,
+                              0,
+                              0,
+                              markerIcon.second.hotX,
+                              markerIcon.second.hotY);
+   }
+   geoIcons_->FinishIconSheets();
 }
 
 void MarkerLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)

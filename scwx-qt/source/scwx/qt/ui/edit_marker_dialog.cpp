@@ -8,7 +8,6 @@
 #include <scwx/util/logger.hpp>
 
 #include <string>
-#include <vector>
 
 #include <QObject>
 #include <QString>
@@ -16,6 +15,7 @@
 #include <QPixmap>
 #include <QColorDialog>
 #include <QPushButton>
+#include <QFileDialog>
 
 namespace scwx
 {
@@ -36,6 +36,8 @@ public:
    }
 
    void show_color_dialog();
+   void show_icon_file_dialog();
+
    void set_icon_color(const std::string& color);
 
    void connect_signals();
@@ -45,24 +47,20 @@ public:
 
    EditMarkerDialog* self_;
    QPushButton* deleteButton_;
-   QIcon get_colored_icon(size_t index, const std::string& color);
+   QIcon             get_colored_icon(const types::MarkerIconInfo& marker,
+                                      const std::string&           color);
 
    std::shared_ptr<manager::MarkerManager> markerManager_ =
       manager::MarkerManager::Instance();
-   const std::vector<types::MarkerIconInfo>* icons_;
    types::MarkerId editId_;
    bool adding_;
+   std::string setIconOnAdded_{""};
 };
 
-QIcon EditMarkerDialog::Impl::get_colored_icon(size_t             index,
-                                               const std::string& color)
+QIcon EditMarkerDialog::Impl::get_colored_icon(
+   const types::MarkerIconInfo& marker, const std::string& color)
 {
-   if (index >= icons_->size())
-   {
-      return QIcon();
-   }
-
-   return util::modulateColors((*icons_)[index].qIcon,
+   return util::modulateColors(marker.qIcon,
                                self_->ui->iconComboBox->iconSize(),
                                QColor(QString::fromStdString(color)));
 }
@@ -74,12 +72,11 @@ EditMarkerDialog::EditMarkerDialog(QWidget* parent) :
 {
    ui->setupUi(this);
 
-   p->icons_ = &types::getMarkerIcons();
-   for (auto& markerIcon : (*p->icons_))
+   for (auto& markerIcon : p->markerManager_->get_icons())
    {
-      ui->iconComboBox->addItem(markerIcon.qIcon,
+      ui->iconComboBox->addItem(markerIcon.second.qIcon,
                                 QString(""),
-                                QString::fromStdString(markerIcon.name));
+                                QString::fromStdString(markerIcon.second.name));
    }
    p->deleteButton_ =
       ui->buttonBox->addButton("Delete", QDialogButtonBox::DestructiveRole);
@@ -98,7 +95,6 @@ void EditMarkerDialog::setup()
 
 void EditMarkerDialog::setup(double latitude, double longitude)
 {
-   ui->iconComboBox->setCurrentIndex(0);
    // By default use foreground color as marker color, mainly so the icons
    // are vissable in the dropdown menu.
    QColor color = QWidget::palette().color(QWidget::foregroundRole());
@@ -106,7 +102,7 @@ void EditMarkerDialog::setup(double latitude, double longitude)
       "",
       latitude,
       longitude,
-      ui->iconComboBox->currentData().toString().toStdString(),
+      manager::MarkerManager::getDefaultIconName(),
       boost::gil::rgba8_pixel_t {static_cast<uint8_t>(color.red()),
                                  static_cast<uint8_t>(color.green()),
                                  static_cast<uint8_t>(color.blue()),
@@ -128,6 +124,9 @@ void EditMarkerDialog::setup(types::MarkerId id)
    p->editId_ = id;
    p->adding_ = false;
 
+   std::string iconColorStr = util::color::ToArgbString(marker->iconColor);
+   p->set_icon_color(iconColorStr);
+
    int iconIndex =
       ui->iconComboBox->findData(QString::fromStdString(marker->iconName));
    if (iconIndex < 0 || marker->iconName == "")
@@ -135,15 +134,11 @@ void EditMarkerDialog::setup(types::MarkerId id)
       iconIndex = 0;
    }
 
-   std::string iconColorStr = util::color::ToArgbString(marker->iconColor);
-
    ui->nameLineEdit->setText(QString::fromStdString(marker->name));
    ui->iconComboBox->setCurrentIndex(iconIndex);
    ui->latitudeDoubleSpinBox->setValue(marker->latitude);
    ui->longitudeDoubleSpinBox->setValue(marker->longitude);
    ui->iconColorLineEdit->setText(QString::fromStdString(iconColorStr));
-
-   p->set_icon_color(iconColorStr);
 }
 
 types::MarkerInfo EditMarkerDialog::get_marker_info() const
@@ -163,7 +158,7 @@ types::MarkerInfo EditMarkerDialog::get_marker_info() const
 void EditMarkerDialog::Impl::show_color_dialog()
 {
 
-   QColorDialog* dialog = new QColorDialog(self_);
+   auto* dialog = new QColorDialog(self_);
 
    dialog->setAttribute(Qt::WA_DeleteOnClose);
    dialog->setOption(QColorDialog::ColorDialogOption::ShowAlphaChannel);
@@ -183,6 +178,28 @@ void EditMarkerDialog::Impl::show_color_dialog()
                           qColor.name(QColor::NameFormat::HexArgb);
                        self_->ui->iconColorLineEdit->setText(colorName);
                        set_icon_color(colorName.toStdString());
+                    });
+   dialog->open();
+}
+
+void EditMarkerDialog::Impl::show_icon_file_dialog()
+{
+
+   auto* dialog = new QFileDialog(self_);
+
+   dialog->setFileMode(QFileDialog::ExistingFile);
+   dialog->setNameFilters({"Icon (*.png *.svg)", "All (*)"});
+   dialog->setAttribute(Qt::WA_DeleteOnClose);
+
+   QObject::connect(dialog,
+                    &QFileDialog::fileSelected,
+                    self_,
+                    [this](const QString& file)
+                    {
+                       std::string path =
+                          QDir::toNativeSeparators(file).toStdString();
+                       setIconOnAdded_ = path;
+                       markerManager_->add_icon(path);
                     });
    dialog->open();
 }
@@ -217,7 +234,33 @@ void EditMarkerDialog::Impl::connect_signals()
    connect(self_->ui->iconColorButton,
            &QAbstractButton::clicked,
            self_,
-           [=, this]() { self_->p->show_color_dialog(); });
+           [=, this]() { show_color_dialog(); });
+
+   connect(self_->ui->iconFileOpenButton,
+           &QPushButton::clicked,
+           self_,
+           [this]() { show_icon_file_dialog(); });
+
+   connect(markerManager_.get(),
+           &manager::MarkerManager::IconAdded,
+           self_,
+           [this]()
+           {
+              std::string color =
+                 self_->ui->iconColorLineEdit->text().toStdString();
+              set_icon_color(color);
+
+              if (setIconOnAdded_ != "")
+              {
+                 int i = self_->ui->iconComboBox->findData(
+                    QString::fromStdString(setIconOnAdded_));
+                 if (i >= 0)
+                 {
+                    self_->ui->iconComboBox->setCurrentIndex(i);
+                    setIconOnAdded_ = "";
+                 }
+              }
+           });
 }
 
 void EditMarkerDialog::Impl::set_icon_color(const std::string& color)
@@ -225,10 +268,25 @@ void EditMarkerDialog::Impl::set_icon_color(const std::string& color)
    self_->ui->iconColorFrame->setStyleSheet(
       QString::fromStdString(fmt::format("background-color: {}", color)));
 
-   for (size_t i = 0; i < icons_->size(); i++)
+   auto* iconComboBox = self_->ui->iconComboBox;
+
+
+   QVariant data = self_->ui->iconComboBox->currentData();
+   self_->ui->iconComboBox->clear();
+   for (auto& markerIcon : markerManager_->get_icons())
    {
-      self_->ui->iconComboBox->setItemIcon(static_cast<int>(i),
-                                           get_colored_icon(i, color));
+      int i =
+         iconComboBox->findData(QString::fromStdString(markerIcon.second.name));
+      QIcon icon = get_colored_icon(markerIcon.second, color);
+      if (i < 0)
+      {
+         iconComboBox->addItem(
+            icon, QString(""), QString::fromStdString(markerIcon.second.name));
+      }
+      else
+      {
+         self_->ui->iconComboBox->setItemIcon(i, icon);
+      }
    }
 }
 

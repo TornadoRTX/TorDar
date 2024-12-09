@@ -19,6 +19,7 @@ namespace model
 
 static const std::string logPrefix_ = "scwx::qt::model::marker_model";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
+static const int         iconSize_  = 30;
 
 static constexpr int kFirstColumn =
    static_cast<int>(MarkerModel::Column::Latitude);
@@ -130,17 +131,19 @@ QVariant MarkerModel::data(const QModelIndex& index, int role) const
    case static_cast<int>(Column::Icon):
       if (role == Qt::ItemDataRole::DecorationRole)
       {
-         for (auto& icon : types::getMarkerIcons())
+         std::optional<types::MarkerIconInfo> icon =
+            p->markerManager_->get_icon(markerInfo->iconName);
+         if (icon) {
+            return util::modulateColors(icon->qIcon,
+                                        QSize(iconSize_, iconSize_),
+                                        QColor(markerInfo->iconColor[0],
+                                               markerInfo->iconColor[1],
+                                               markerInfo->iconColor[2],
+                                               markerInfo->iconColor[3]));
+         }
+         else
          {
-            if (icon.name == markerInfo->iconName)
-            {
-               return util::modulateColors(icon.qIcon,
-                                           QSize(30, 30),
-                                           QColor(markerInfo->iconColor[0],
-                                                  markerInfo->iconColor[1],
-                                                  markerInfo->iconColor[2],
-                                                  markerInfo->iconColor[3]));
-            }
+            return {};
          }
       }
       break;

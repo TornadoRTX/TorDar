@@ -2,13 +2,16 @@
 #include <scwx/qt/types/marker_types.hpp>
 #include <scwx/qt/util/color.hpp>
 #include <scwx/qt/util/json.hpp>
+#include <scwx/qt/util/texture_atlas.hpp>
 #include <scwx/qt/main/application.hpp>
+#include <scwx/qt/manager/resource_manager.hpp>
 #include <scwx/util/logger.hpp>
 
 #include <filesystem>
 #include <shared_mutex>
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 #include <QStandardPaths>
 #include <boost/json.hpp>
@@ -25,12 +28,13 @@ namespace manager
 static const std::string logPrefix_ = "scwx::qt::manager::marker_manager";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 
-static const std::string kNameName_      = "name";
-static const std::string kLatitudeName_  = "latitude";
-static const std::string kLongitudeName_ = "longitude";
-static const std::string kIconName_      = "icon";
-static const std::string kIconColorName_ = "icon-color";
+static const std::string kNameName_       = "name";
+static const std::string kLatitudeName_   = "latitude";
+static const std::string kLongitudeName_  = "longitude";
+static const std::string kIconName_       = "icon";
+static const std::string kIconColorName_  = "icon-color";
 
+static const std::string defaultIconName = "images/location-marker";
 
 class MarkerManager::Impl
 {
@@ -40,15 +44,16 @@ public:
    explicit Impl(MarkerManager* self) : self_ {self} {}
    ~Impl() { threadPool_.join(); }
 
-   std::string                                markerSettingsPath_ {""};
-   std::vector<std::shared_ptr<MarkerRecord>> markerRecords_ {};
+   std::string                                 markerSettingsPath_ {""};
+   std::vector<std::shared_ptr<MarkerRecord>>  markerRecords_ {};
    std::unordered_map<types::MarkerId, size_t> idToIndex_ {};
-
+   std::unordered_map<std::string, types::MarkerIconInfo> markerIcons_ {};
 
    MarkerManager* self_;
 
    boost::asio::thread_pool threadPool_ {1u};
    std::shared_mutex        markerRecordLock_ {};
+   std::shared_mutex        markerIconsLock_ {};
 
    void                          InitializeMarkerSettings();
    void                          ReadMarkerSettings();
@@ -57,7 +62,7 @@ public:
 
    void InitalizeIds();
    types::MarkerId NewId();
-   types::MarkerId lastId_;
+   types::MarkerId lastId_ {0};
 };
 
 class MarkerManager::Impl::MarkerRecord
@@ -84,14 +89,14 @@ public:
             {kLatitudeName_, record->markerInfo_.latitude},
             {kLongitudeName_, record->markerInfo_.longitude},
             {kIconName_, record->markerInfo_.iconName},
-            {kIconColorName_, util::color::ToArgbString(record->markerInfo_.iconColor)}};
+            {kIconColorName_,
+             util::color::ToArgbString(record->markerInfo_.iconColor)}};
    }
 
 
    friend MarkerRecord tag_invoke(boost::json::value_to_tag<MarkerRecord>,
                                   const boost::json::value& jv)
    {
-      static const std::string defaultIconName = types::getMarkerIcons()[0].name;
       static const boost::gil::rgba8_pixel_t defaultIconColor =
          util::color::ToRgba8PixelT("#ffff0000");
 
@@ -120,12 +125,12 @@ public:
          }
       }
 
-      return MarkerRecord(types::MarkerInfo(
+      return {types::MarkerInfo(
          boost::json::value_to<std::string>(jv.at(kNameName_)),
          boost::json::value_to<double>(jv.at(kLatitudeName_)),
          boost::json::value_to<double>(jv.at(kLongitudeName_)),
          iconName,
-         iconColor));
+         iconColor)};
    }
 };
 
@@ -176,14 +181,14 @@ void MarkerManager::Impl::ReadMarkerSettings()
       {
          // For each marker entry
          auto& markerArray = markerJson.as_array();
+         //std::vector<std::string> fileNames {};
          markerRecords_.reserve(markerArray.size());
          idToIndex_.reserve(markerArray.size());
          for (auto& markerEntry : markerArray)
          {
             try
             {
-               MarkerRecord record =
-                  boost::json::value_to<MarkerRecord>(markerEntry);
+               auto record = boost::json::value_to<MarkerRecord>(markerEntry);
 
                if (!record.markerInfo_.name.empty())
                {
@@ -193,6 +198,8 @@ void MarkerManager::Impl::ReadMarkerSettings()
                   markerRecords_.emplace_back(
                      std::make_shared<MarkerRecord>(record.markerInfo_));
                   idToIndex_.emplace(id, index);
+
+                  self_->add_icon(record.markerInfo_.iconName, true);
                }
             }
             catch (const std::exception& ex)
@@ -201,9 +208,13 @@ void MarkerManager::Impl::ReadMarkerSettings()
             }
          }
 
+         util::TextureAtlas& textureAtlas = util::TextureAtlas::Instance();
+         textureAtlas.BuildAtlas(2048, 2048); // TODO should code be moved to ResourceManager (probrably)
+
          logger_->debug("{} location marker entries", markerRecords_.size());
       }
    }
+
 
    Q_EMIT self_->MarkersUpdated();
 }
@@ -233,17 +244,41 @@ MarkerManager::Impl::GetMarkerByName(const std::string& name)
 
 MarkerManager::MarkerManager() : p(std::make_unique<Impl>(this))
 {
+   const std::vector<types::MarkerIconInfo> defaultMarkerIcons_ {
+      types::MarkerIconInfo(types::ImageTexture::LocationMarker, -1, -1),
+      types::MarkerIconInfo(types::ImageTexture::LocationPin, 6, 16),
+      types::MarkerIconInfo(types::ImageTexture::LocationCrosshair, -1, -1),
+      types::MarkerIconInfo(types::ImageTexture::LocationStar, -1, -1),
+      types::MarkerIconInfo(types::ImageTexture::LocationBriefcase, -1, -1),
+      types::MarkerIconInfo(
+         types::ImageTexture::LocationBuildingColumns, -1, -1),
+      types::MarkerIconInfo(types::ImageTexture::LocationBuilding, -1, -1),
+      types::MarkerIconInfo(types::ImageTexture::LocationCaravan, -1, -1),
+      types::MarkerIconInfo(types::ImageTexture::LocationHouse, -1, -1),
+      types::MarkerIconInfo(types::ImageTexture::LocationTent, -1, -1),
+   };
+
    p->InitializeMarkerSettings();
 
    boost::asio::post(p->threadPool_,
-                     [this]()
+                     [this, defaultMarkerIcons_]()
                      {
                         try
                         {
                            // Read Marker settings on startup
                            main::Application::WaitForInitialization();
+                           {
+                              std::unique_lock lock(p->markerIconsLock_);
+                              p->markerIcons_.reserve(
+                                 defaultMarkerIcons_.size());
+                              for (auto& icon : defaultMarkerIcons_)
+                              {
+                                 p->markerIcons_.emplace(icon.name, icon);
+                              }
+                           }
                            p->ReadMarkerSettings();
 
+                           Q_EMIT IconsReady();
                            Q_EMIT MarkersInitialized(p->markerRecords_.size());
                         }
                         catch (const std::exception& ex)
@@ -310,6 +345,8 @@ void MarkerManager::set_marker(types::MarkerId          id,
          p->markerRecords_[index];
       markerRecord->markerInfo_ = marker;
       markerRecord->markerInfo_.id = id;
+
+      add_icon(marker.iconName);
    }
    Q_EMIT MarkerChanged(id);
    Q_EMIT MarkersUpdated();
@@ -325,6 +362,8 @@ types::MarkerId MarkerManager::add_marker(const types::MarkerInfo& marker)
       p->idToIndex_.emplace(id, index);
       p->markerRecords_.emplace_back(std::make_shared<Impl::MarkerRecord>(marker));
       p->markerRecords_[index]->markerInfo_.id = id;
+
+      add_icon(marker.iconName);
    }
    Q_EMIT MarkerAdded(id);
    Q_EMIT MarkersUpdated();
@@ -403,6 +442,48 @@ void MarkerManager::for_each(std::function<MarkerForEachFunc> func)
    }
 }
 
+void MarkerManager::add_icon(const std::string& name, bool startup)
+{
+   {
+      std::unique_lock lock(p->markerIconsLock_);
+      if (p->markerIcons_.contains(name))
+      {
+         return;
+      }
+      std::shared_ptr<boost::gil::rgba8_image_t> image =
+         ResourceManager::LoadImageResource(name);
+
+      auto icon = types::MarkerIconInfo(name, -1, -1, image);
+      p->markerIcons_.emplace(name, icon);
+   }
+
+   if (!startup)
+   {
+      util::TextureAtlas& textureAtlas = util::TextureAtlas::Instance();
+      textureAtlas.BuildAtlas(2048, 2048); // TODO should code be moved to ResourceManager (probrably)
+      Q_EMIT IconAdded(name);
+   }
+}
+
+std::optional<types::MarkerIconInfo>
+MarkerManager::get_icon(const std::string& name)
+{
+   std::shared_lock lock(p->markerIconsLock_);
+   if (p->markerIcons_.contains(name))
+   {
+      return p->markerIcons_.at(name);
+   }
+
+   return {};
+}
+
+const std::unordered_map<std::string, types::MarkerIconInfo>
+MarkerManager::get_icons()
+{
+   std::shared_lock lock(p->markerIconsLock_);
+   return p->markerIcons_;
+}
+
 // Only use for testing
 void MarkerManager::set_marker_settings_path(const std::string& path)
 {
@@ -427,6 +508,11 @@ std::shared_ptr<MarkerManager> MarkerManager::Instance()
    }
 
    return markerManager;
+}
+
+const std::string& MarkerManager::getDefaultIconName()
+{
+   return defaultIconName;
 }
 
 } // namespace manager

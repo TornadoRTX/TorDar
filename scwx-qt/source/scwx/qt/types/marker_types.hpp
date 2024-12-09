@@ -14,15 +14,15 @@ namespace qt
 {
 namespace types
 {
-typedef std::uint64_t MarkerId;
+using MarkerId = std::uint64_t;
 
 struct MarkerInfo
 {
-   MarkerInfo(const std::string&        name,
-              double                    latitude,
-              double                    longitude,
-              const std::string         iconName,
-              boost::gil::rgba8_pixel_t iconColor) :
+   MarkerInfo(const std::string&               name,
+              double                           latitude,
+              double                           longitude,
+              const std::string&               iconName,
+              const boost::gil::rgba8_pixel_t& iconColor) :
        name {name},
        latitude {latitude},
        longitude {longitude},
@@ -31,7 +31,7 @@ struct MarkerInfo
    {
    }
 
-   MarkerId                  id;
+   MarkerId                  id{0};
    std::string               name;
    double                    latitude;
    double                    longitude;
@@ -47,7 +47,21 @@ struct MarkerIconInfo {
       path{types::GetTexturePath(texture)},
       hotX{hotX},
       hotY{hotY},
-      qIcon{QIcon(QString::fromStdString(path))}
+      qIcon{QIcon(QString::fromStdString(path))},
+      image{}
+   {
+   }
+
+   explicit MarkerIconInfo(const std::string& path,
+                           std::int32_t       hotX,
+                           std::int32_t       hotY,
+                           std::shared_ptr<boost::gil::rgba8_image_t> image) :
+      name{path},
+      path{path},
+      hotX{hotX},
+      hotY{hotY},
+      qIcon{QIcon(QString::fromStdString(path))},
+      image{image}
    {
    }
 
@@ -56,9 +70,8 @@ struct MarkerIconInfo {
    std::int32_t hotX;
    std::int32_t hotY;
    QIcon qIcon;
+   std::optional<std::shared_ptr<boost::gil::rgba8_image_t>> image;
 };
-
-const std::vector<MarkerIconInfo>& getMarkerIcons();
 
 } // namespace types
 } // namespace qt

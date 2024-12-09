@@ -21,7 +21,7 @@ class EditMarkerDialog : public QDialog
 
 public:
    explicit EditMarkerDialog(QWidget* parent = nullptr);
-   ~EditMarkerDialog();
+   ~EditMarkerDialog() override;
 
    void setup();
    void setup(double latitude, double longitude);
