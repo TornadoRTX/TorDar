@@ -190,17 +190,14 @@ void MarkerManager::Impl::ReadMarkerSettings()
             {
                auto record = boost::json::value_to<MarkerRecord>(markerEntry);
 
-               if (!record.markerInfo_.name.empty())
-               {
-                  types::MarkerId id    = NewId();
-                  size_t          index = markerRecords_.size();
-                  record.markerInfo_.id = id;
-                  markerRecords_.emplace_back(
-                     std::make_shared<MarkerRecord>(record.markerInfo_));
-                  idToIndex_.emplace(id, index);
+               types::MarkerId id    = NewId();
+               size_t          index = markerRecords_.size();
+               record.markerInfo_.id = id;
+               markerRecords_.emplace_back(
+                  std::make_shared<MarkerRecord>(record.markerInfo_));
+               idToIndex_.emplace(id, index);
 
-                  self_->add_icon(record.markerInfo_.iconName, true);
-               }
+               self_->add_icon(record.markerInfo_.iconName, true);
             }
             catch (const std::exception& ex)
             {
