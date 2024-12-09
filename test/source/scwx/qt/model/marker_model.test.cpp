@@ -1,6 +1,7 @@
 #include <scwx/qt/model/marker_model.hpp>
 #include <scwx/qt/manager/marker_manager.hpp>
 #include <scwx/qt/main/application.hpp>
+#include <scwx/qt/util/color.hpp>
 
 #include <filesystem>
 #include <fstream>
@@ -30,6 +31,9 @@ static std::mutex              initializedMutex {};
 static std::condition_variable initializedCond {};
 static bool                    initialized;
 
+static const boost::gil::rgba8_pixel_t defaultIconColor =
+   util::color::ToRgba8PixelT("#ffff0000");
+
 void CompareFiles(const std::string& file1, const std::string& file2)
 {
    std::ifstream     ifs1 {file1};
@@ -49,8 +53,7 @@ void CopyFile(const std::string& from, const std::string& to)
    CompareFiles(from, to);
 }
 
-typedef void TestFunction(std::shared_ptr<manager::MarkerManager> manager,
-                          MarkerModel&                            model);
+using TestFunction = void (std::shared_ptr<manager::MarkerManager>, MarkerModel &);
 
 void RunTest(const std::string& filename, TestFunction testFunction)
 {
@@ -65,7 +68,7 @@ void RunTest(const std::string& filename, TestFunction testFunction)
       initialized = false;
       QObject::connect(manager.get(),
                        &manager::MarkerManager::MarkersInitialized,
-                       [](size_t count)
+                       []()
                        {
                           std::unique_lock lock(initializedMutex);
                           initialized = true;
@@ -119,7 +122,7 @@ TEST(MarkerModelTest, AddRemove)
 
    RunTest(ONE_MARKERS_FILE,
            [](std::shared_ptr<manager::MarkerManager> manager, MarkerModel&)
-           { manager->add_marker(types::MarkerInfo("Null", 0, 0)); });
+           { manager->add_marker(types::MarkerInfo("Null", 0, 0, "images/location-marker", defaultIconColor)); });
    RunTest(
       EMPTY_MARKERS_FILE,
       [](std::shared_ptr<manager::MarkerManager> manager, MarkerModel& model)
@@ -143,11 +146,11 @@ TEST(MarkerModelTest, AddFive)
    RunTest(FIVE_MARKERS_FILE,
            [](std::shared_ptr<manager::MarkerManager> manager, MarkerModel&)
            {
-              manager->add_marker(types::MarkerInfo("Null", 0, 0));
-              manager->add_marker(types::MarkerInfo("North", 90, 0));
-              manager->add_marker(types::MarkerInfo("South", -90, 0));
-              manager->add_marker(types::MarkerInfo("East", 0, 90));
-              manager->add_marker(types::MarkerInfo("West", 0, -90));
+              manager->add_marker(types::MarkerInfo("Null", 0, 0, "images/location-marker", defaultIconColor));
+              manager->add_marker(types::MarkerInfo("North", 90, 0, "images/location-marker", defaultIconColor));
+              manager->add_marker(types::MarkerInfo("South", -90, 0, "images/location-marker", defaultIconColor));
+              manager->add_marker(types::MarkerInfo("East", 0, 90, "images/location-marker", defaultIconColor));
+              manager->add_marker(types::MarkerInfo("West", 0, -90, "images/location-marker", defaultIconColor));
            });
 
    std::filesystem::remove(TEMP_MARKERS_FILE);
@@ -161,10 +164,10 @@ TEST(MarkerModelTest, AddFour)
    RunTest(FIVE_MARKERS_FILE,
            [](std::shared_ptr<manager::MarkerManager> manager, MarkerModel&)
            {
-              manager->add_marker(types::MarkerInfo("North", 90, 0));
-              manager->add_marker(types::MarkerInfo("South", -90, 0));
-              manager->add_marker(types::MarkerInfo("East", 0, 90));
-              manager->add_marker(types::MarkerInfo("West", 0, -90));
+              manager->add_marker(types::MarkerInfo("North", 90, 0, "images/location-marker", defaultIconColor));
+              manager->add_marker(types::MarkerInfo("South", -90, 0, "images/location-marker", defaultIconColor));
+              manager->add_marker(types::MarkerInfo("East", 0, 90, "images/location-marker", defaultIconColor));
+              manager->add_marker(types::MarkerInfo("West", 0, -90, "images/location-marker", defaultIconColor));
            });
 
    std::filesystem::remove(TEMP_MARKERS_FILE);
