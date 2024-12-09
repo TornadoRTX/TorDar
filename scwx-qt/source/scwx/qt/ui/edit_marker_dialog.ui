@@ -67,8 +67,11 @@
    </item>
    <item row="0" column="2">
     <widget class="QDoubleSpinBox" name="latitudeDoubleSpinBox">
+     <property name="correctionMode">
+      <enum>QAbstractSpinBox::CorrectionMode::CorrectToNearestValue</enum>
+     </property>
      <property name="decimals">
-      <number>4</number>
+      <number>5</number>
      </property>
      <property name="minimum">
       <double>-90.000000000000000</double>
@@ -135,8 +138,11 @@
    </item>
    <item row="1" column="2">
     <widget class="QDoubleSpinBox" name="longitudeDoubleSpinBox">
+     <property name="correctionMode">
+      <enum>QAbstractSpinBox::CorrectionMode::CorrectToNearestValue</enum>
+     </property>
      <property name="decimals">
-      <number>4</number>
+      <number>5</number>
      </property>
      <property name="minimum">
       <double>-180.000000000000000</double>
