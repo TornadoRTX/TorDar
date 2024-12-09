@@ -271,7 +271,6 @@ void EditMarkerDialog::Impl::set_icon_color(const std::string& color)
    auto* iconComboBox = self_->ui->iconComboBox;
 
 
-   QVariant data = self_->ui->iconComboBox->currentData();
    self_->ui->iconComboBox->clear();
    for (auto& markerIcon : markerManager_->get_icons())
    {
