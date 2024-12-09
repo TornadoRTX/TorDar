@@ -26,6 +26,8 @@ static const std::string ONE_MARKERS_FILE =
    std::string(SCWX_TEST_DATA_DIR) + "/json/markers/markers-one.json";
 static const std::string FIVE_MARKERS_FILE =
    std::string(SCWX_TEST_DATA_DIR) + "/json/markers/markers-five.json";
+static const std::string PART1_MARKER_FILE =
+   std::string(SCWX_TEST_DATA_DIR) + "/json/markers/markers-part1.json";
 
 static std::mutex              initializedMutex {};
 static std::condition_variable initializedCond {};
@@ -33,6 +35,8 @@ static bool                    initialized;
 
 static const boost::gil::rgba8_pixel_t defaultIconColor =
    util::color::ToRgba8PixelT("#ffff0000");
+static const std::string defaultIconName = "images/location-marker";
+
 
 void CompareFiles(const std::string& file1, const std::string& file2)
 {
@@ -122,7 +126,7 @@ TEST(MarkerModelTest, AddRemove)
 
    RunTest(ONE_MARKERS_FILE,
            [](std::shared_ptr<manager::MarkerManager> manager, MarkerModel&)
-           { manager->add_marker(types::MarkerInfo("Null", 0, 0, "images/location-marker", defaultIconColor)); });
+           { manager->add_marker(types::MarkerInfo("Null", 0, 0, defaultIconName, defaultIconColor)); });
    RunTest(
       EMPTY_MARKERS_FILE,
       [](std::shared_ptr<manager::MarkerManager> manager, MarkerModel& model)
@@ -146,11 +150,11 @@ TEST(MarkerModelTest, AddFive)
    RunTest(FIVE_MARKERS_FILE,
            [](std::shared_ptr<manager::MarkerManager> manager, MarkerModel&)
            {
-              manager->add_marker(types::MarkerInfo("Null", 0, 0, "images/location-marker", defaultIconColor));
-              manager->add_marker(types::MarkerInfo("North", 90, 0, "images/location-marker", defaultIconColor));
-              manager->add_marker(types::MarkerInfo("South", -90, 0, "images/location-marker", defaultIconColor));
-              manager->add_marker(types::MarkerInfo("East", 0, 90, "images/location-marker", defaultIconColor));
-              manager->add_marker(types::MarkerInfo("West", 0, -90, "images/location-marker", defaultIconColor));
+              manager->add_marker(types::MarkerInfo("Null", 0, 0, defaultIconName, defaultIconColor));
+              manager->add_marker(types::MarkerInfo("North", 90, 0, defaultIconName, defaultIconColor));
+              manager->add_marker(types::MarkerInfo("South", -90, 0, defaultIconName, defaultIconColor));
+              manager->add_marker(types::MarkerInfo("East", 0, 90, defaultIconName, defaultIconColor));
+              manager->add_marker(types::MarkerInfo("West", 0, -90, defaultIconName, defaultIconColor));
            });
 
    std::filesystem::remove(TEMP_MARKERS_FILE);
@@ -164,10 +168,10 @@ TEST(MarkerModelTest, AddFour)
    RunTest(FIVE_MARKERS_FILE,
            [](std::shared_ptr<manager::MarkerManager> manager, MarkerModel&)
            {
-              manager->add_marker(types::MarkerInfo("North", 90, 0, "images/location-marker", defaultIconColor));
-              manager->add_marker(types::MarkerInfo("South", -90, 0, "images/location-marker", defaultIconColor));
-              manager->add_marker(types::MarkerInfo("East", 0, 90, "images/location-marker", defaultIconColor));
-              manager->add_marker(types::MarkerInfo("West", 0, -90, "images/location-marker", defaultIconColor));
+              manager->add_marker(types::MarkerInfo("North", 90, 0, defaultIconName, defaultIconColor));
+              manager->add_marker(types::MarkerInfo("South", -90, 0, defaultIconName, defaultIconColor));
+              manager->add_marker(types::MarkerInfo("East", 0, 90, defaultIconName, defaultIconColor));
+              manager->add_marker(types::MarkerInfo("West", 0, -90, defaultIconName, defaultIconColor));
            });
 
    std::filesystem::remove(TEMP_MARKERS_FILE);
@@ -233,6 +237,17 @@ TEST(MarkerModelTest, RemoveFour)
          EXPECT_TRUE(id);
          manager->remove_marker(*id);
       });
+
+   std::filesystem::remove(TEMP_MARKERS_FILE);
+   EXPECT_EQ(std::filesystem::exists(TEMP_MARKERS_FILE), false);
+}
+
+TEST(MarkerModelTest, UpdateFromPart1)
+{
+   CopyFile(PART1_MARKER_FILE, TEMP_MARKERS_FILE);
+
+   RunTest(ONE_MARKERS_FILE,
+           [](std::shared_ptr<manager::MarkerManager>, MarkerModel&) {});
 
    std::filesystem::remove(TEMP_MARKERS_FILE);
    EXPECT_EQ(std::filesystem::exists(TEMP_MARKERS_FILE), false);
