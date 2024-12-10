@@ -206,7 +206,7 @@ void MarkerManager::Impl::ReadMarkerSettings()
          }
 
          util::TextureAtlas& textureAtlas = util::TextureAtlas::Instance();
-         textureAtlas.BuildAtlas(2048, 2048); // TODO should code be moved to ResourceManager (probrably)
+         textureAtlas.BuildAtlas(2048, 2048); // Should this code be moved to ResourceManager?
 
          logger_->debug("{} location marker entries", markerRecords_.size());
       }
@@ -457,7 +457,7 @@ void MarkerManager::add_icon(const std::string& name, bool startup)
    if (!startup)
    {
       util::TextureAtlas& textureAtlas = util::TextureAtlas::Instance();
-      textureAtlas.BuildAtlas(2048, 2048); // TODO should code be moved to ResourceManager (probrably)
+      textureAtlas.BuildAtlas(2048, 2048); // Should this code be moved to ResourceManager?
       Q_EMIT IconAdded(name);
    }
 }
