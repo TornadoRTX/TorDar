@@ -284,8 +284,7 @@ void EditMarkerDialog::Impl::set_icon_color(const std::string& color)
       }
    }
 
-   const int i =
-      iconComboBox->findData(currentIcon);
+   const int i = iconComboBox->findData(currentIcon);
    if (i < 0)
    {
       return;
