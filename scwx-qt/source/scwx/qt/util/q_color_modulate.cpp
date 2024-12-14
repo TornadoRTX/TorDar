@@ -20,11 +20,22 @@ void modulateColors_(QImage& image, const QColor& color)
       QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y));
       for (int x = 0; x < image.width(); ++x)
       {
-         QRgb& rgb   = line[x];
-         int   red   = qRed(rgb) * color.redF();
-         int   green = qGreen(rgb) * color.greenF();
-         int   blue  = qBlue(rgb) * color.blueF();
-         int   alpha = qAlpha(rgb) * color.alphaF();
+         QRgb& rgb = line[x];
+         /* clang-format off
+          * NOLINTBEGIN(cppcoreguidelines-narrowing-conversions, bugprone-narrowing-conversions)
+          * qRed/qGreen/qBlue/qAlpha return values 0-255, handlable by float
+          * redF/greenF/blueF/alphaF are all 0-1, so output is 0-255
+          * Rounding is fine for this.
+          * clang-format on
+          */
+         const int red   = qRed(rgb) * color.redF();
+         const int green = qGreen(rgb) * color.greenF();
+         const int blue  = qBlue(rgb) * color.blueF();
+         const int alpha = qAlpha(rgb) * color.alphaF();
+         /* clang-format off
+          * NOLINTEND(cppcoreguidelines-narrowing-conversions, bugprone-narrowing-conversions)
+          * clang-format on
+          */
 
          rgb = qRgba(red, green, blue, alpha);
       }
@@ -47,7 +58,7 @@ QPixmap modulateColors(const QPixmap& pixmap, const QColor& color)
 
 QIcon modulateColors(const QIcon& icon, const QSize& size, const QColor& color)
 {
-   QPixmap pixmap = modulateColors(icon.pixmap(size), color);
+   const QPixmap pixmap = modulateColors(icon.pixmap(size), color);
    return QIcon(pixmap);
 }
 

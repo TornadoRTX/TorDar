@@ -102,7 +102,7 @@ void MarkerSettingsWidgetImpl::ConnectSignals()
             return;
          }
 
-         bool itemSelected = selected.size() > 0;
+         const bool itemSelected = selected.size() > 0;
          self_->ui->removeButton->setEnabled(itemSelected);
       });
    QObject::connect(self_->ui->markerView,
@@ -110,7 +110,7 @@ void MarkerSettingsWidgetImpl::ConnectSignals()
                     self_,
                     [this](const QModelIndex& index)
                     {
-                       int row = index.row();
+                       const int row = index.row();
                        if (row < 0)
                        {
                           return;

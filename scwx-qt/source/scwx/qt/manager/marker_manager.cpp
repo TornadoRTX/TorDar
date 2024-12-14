@@ -168,7 +168,7 @@ void MarkerManager::Impl::ReadMarkerSettings()
 
    boost::json::value markerJson = nullptr;
    {
-      std::unique_lock lock(markerRecordLock_);
+      const std::unique_lock lock(markerRecordLock_);
 
       // Determine if marker settings exists
       if (std::filesystem::exists(markerSettingsPath_))
@@ -188,9 +188,9 @@ void MarkerManager::Impl::ReadMarkerSettings()
             {
                auto record = boost::json::value_to<MarkerRecord>(markerEntry);
 
-               types::MarkerId id    = NewId();
-               size_t          index = markerRecords_.size();
-               record.markerInfo_.id = id;
+               const types::MarkerId id    = NewId();
+               const size_t          index = markerRecords_.size();
+               record.markerInfo_.id       = id;
                markerRecords_.emplace_back(
                   std::make_shared<MarkerRecord>(record.markerInfo_));
                idToIndex_.emplace(id, index);
@@ -218,7 +218,7 @@ void MarkerManager::Impl::WriteMarkerSettings()
 {
    logger_->info("Saving location marker settings");
 
-   std::shared_lock lock(markerRecordLock_);
+   const std::shared_lock lock(markerRecordLock_);
    auto markerJson = boost::json::value_from(markerRecords_);
    util::json::WriteJsonFile(markerSettingsPath_, markerJson);
 }
@@ -263,7 +263,7 @@ MarkerManager::MarkerManager() : p(std::make_unique<Impl>(this))
                            // Read Marker settings on startup
                            main::Application::WaitForInitialization();
                            {
-                              std::unique_lock lock(p->markerIconsLock_);
+                              const std::unique_lock lock(p->markerIconsLock_);
                               p->markerIcons_.reserve(
                                  defaultMarkerIcons_.size());
                               for (auto& icon : defaultMarkerIcons_)
@@ -295,7 +295,7 @@ size_t MarkerManager::marker_count()
 
 std::optional<types::MarkerInfo> MarkerManager::get_marker(types::MarkerId id)
 {
-   std::shared_lock lock(p->markerRecordLock_);
+   const std::shared_lock lock(p->markerRecordLock_);
    if (!p->idToIndex_.contains(id))
    {
       return {};
@@ -313,7 +313,7 @@ std::optional<types::MarkerInfo> MarkerManager::get_marker(types::MarkerId id)
 
 std::optional<size_t> MarkerManager::get_index(types::MarkerId id)
 {
-   std::shared_lock lock(p->markerRecordLock_);
+   const std::shared_lock lock(p->markerRecordLock_);
    if (!p->idToIndex_.contains(id))
    {
       return {};
@@ -325,7 +325,7 @@ void MarkerManager::set_marker(types::MarkerId          id,
                                const types::MarkerInfo& marker)
 {
    {
-      std::unique_lock lock(p->markerRecordLock_);
+      const std::unique_lock lock(p->markerRecordLock_);
       if (!p->idToIndex_.contains(id))
       {
          return;
@@ -336,9 +336,9 @@ void MarkerManager::set_marker(types::MarkerId          id,
          logger_->warn("id in idToIndex_ but out of range!");
          return;
       }
-      std::shared_ptr<MarkerManager::Impl::MarkerRecord>& markerRecord =
+      const std::shared_ptr<MarkerManager::Impl::MarkerRecord>& markerRecord =
          p->markerRecords_[index];
-      markerRecord->markerInfo_ = marker;
+      markerRecord->markerInfo_    = marker;
       markerRecord->markerInfo_.id = id;
 
       add_icon(marker.iconName);
@@ -351,7 +351,7 @@ types::MarkerId MarkerManager::add_marker(const types::MarkerInfo& marker)
 {
    types::MarkerId id;
    {
-      std::unique_lock lock(p->markerRecordLock_);
+      const std::unique_lock lock(p->markerRecordLock_);
       id = p->NewId();
       size_t index = p->markerRecords_.size();
       p->idToIndex_.emplace(id, index);
@@ -368,7 +368,7 @@ types::MarkerId MarkerManager::add_marker(const types::MarkerInfo& marker)
 void MarkerManager::remove_marker(types::MarkerId id)
 {
    {
-      std::unique_lock lock(p->markerRecordLock_);
+      const std::unique_lock lock(p->markerRecordLock_);
       if (!p->idToIndex_.contains(id))
       {
          return;
@@ -399,7 +399,7 @@ void MarkerManager::remove_marker(types::MarkerId id)
 void MarkerManager::move_marker(size_t from, size_t to)
 {
    {
-      std::unique_lock lock(p->markerRecordLock_);
+      const std::unique_lock lock(p->markerRecordLock_);
       if (from >= p->markerRecords_.size() || to >= p->markerRecords_.size())
       {
          return;
@@ -430,7 +430,7 @@ void MarkerManager::move_marker(size_t from, size_t to)
 
 void MarkerManager::for_each(std::function<MarkerForEachFunc> func)
 {
-   std::shared_lock lock(p->markerRecordLock_);
+   const std::shared_lock lock(p->markerRecordLock_);
    for (auto marker : p->markerRecords_)
    {
       func(marker->markerInfo_);
@@ -440,12 +440,12 @@ void MarkerManager::for_each(std::function<MarkerForEachFunc> func)
 void MarkerManager::add_icon(const std::string& name, bool startup)
 {
    {
-      std::unique_lock lock(p->markerIconsLock_);
+      const std::unique_lock lock(p->markerIconsLock_);
       if (p->markerIcons_.contains(name))
       {
          return;
       }
-      std::shared_ptr<boost::gil::rgba8_image_t> image =
+      const std::shared_ptr<boost::gil::rgba8_image_t> image =
          ResourceManager::LoadImageResource(name);
 
       auto icon = types::MarkerIconInfo(name, -1, -1, image);
@@ -464,7 +464,7 @@ void MarkerManager::add_icon(const std::string& name, bool startup)
 std::optional<types::MarkerIconInfo>
 MarkerManager::get_icon(const std::string& name)
 {
-   std::shared_lock lock(p->markerIconsLock_);
+   const std::shared_lock lock(p->markerIconsLock_);
    if (p->markerIcons_.contains(name))
    {
       return p->markerIcons_.at(name);
@@ -476,7 +476,7 @@ MarkerManager::get_icon(const std::string& name)
 const std::unordered_map<std::string, types::MarkerIconInfo>
 MarkerManager::get_icons()
 {
-   std::shared_lock lock(p->markerIconsLock_);
+   const std::shared_lock lock(p->markerIconsLock_);
    return p->markerIcons_;
 }
 
@@ -492,7 +492,7 @@ std::shared_ptr<MarkerManager> MarkerManager::Instance()
    static std::weak_ptr<MarkerManager> markerManagerReference_ {};
    static std::mutex                   instanceMutex_ {};
 
-   std::unique_lock lock(instanceMutex_);
+   const std::unique_lock lock(instanceMutex_);
 
    std::shared_ptr<MarkerManager> markerManager =
       markerManagerReference_.lock();

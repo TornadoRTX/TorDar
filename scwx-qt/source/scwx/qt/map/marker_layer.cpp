@@ -72,9 +72,10 @@ void MarkerLayer::Impl::ReloadMarkers()
       {
          // must use local ID, instead of reference to marker in event handler
          // callback.
-         types::MarkerId id = marker.id;
+         const types::MarkerId id = marker.id;
 
-         std::shared_ptr<gl::draw::GeoIconDrawItem> icon = geoIcons_->AddIcon();
+         const std::shared_ptr<gl::draw::GeoIconDrawItem> icon =
+            geoIcons_->AddIcon();
 
          geoIcons_->SetIconTexture(icon, marker.iconName, 0);
          geoIcons_->SetIconLocation(icon, marker.latitude, marker.longitude);
