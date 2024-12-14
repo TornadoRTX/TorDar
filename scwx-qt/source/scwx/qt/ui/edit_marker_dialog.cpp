@@ -30,12 +30,7 @@ static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 class EditMarkerDialog::Impl
 {
 public:
-   explicit Impl(EditMarkerDialog* self) :
-       self_ {self},
-       deleteButton_ {self_->ui->buttonBox->addButton(
-          "Delete", QDialogButtonBox::DestructiveRole)}
-   {
-   }
+   explicit Impl(EditMarkerDialog* self) : self_ {self} {}
 
    void show_color_dialog();
    void show_icon_file_dialog();
@@ -48,7 +43,7 @@ public:
    void handle_rejected();
 
    EditMarkerDialog* self_;
-   QPushButton*      deleteButton_;
+   QPushButton*      deleteButton_ {nullptr};
    QIcon             get_colored_icon(const types::MarkerIconInfo& marker,
                                       const std::string&           color);
 
@@ -80,6 +75,8 @@ EditMarkerDialog::EditMarkerDialog(QWidget* parent) :
                                 QString(""),
                                 QString::fromStdString(markerIcon.second.name));
    }
+   p->deleteButton_ =
+      ui->buttonBox->addButton("Delete", QDialogButtonBox::DestructiveRole);
    p->connect_signals();
 }
 
