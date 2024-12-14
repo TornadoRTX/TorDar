@@ -31,7 +31,7 @@ struct MarkerInfo
    {
    }
 
-   MarkerId                  id{0};
+   MarkerId                  id {0};
    std::string               name;
    double                    latitude;
    double                    longitude;
@@ -39,37 +39,38 @@ struct MarkerInfo
    boost::gil::rgba8_pixel_t iconColor;
 };
 
-struct MarkerIconInfo {
+struct MarkerIconInfo
+{
    explicit MarkerIconInfo(types::ImageTexture texture,
                            std::int32_t        hotX,
                            std::int32_t        hotY) :
-      name{types::GetTextureName(texture)},
-      path{types::GetTexturePath(texture)},
-      hotX{hotX},
-      hotY{hotY},
-      qIcon{QIcon(QString::fromStdString(path))},
-      image{}
+       name {types::GetTextureName(texture)},
+       path {types::GetTexturePath(texture)},
+       hotX {hotX},
+       hotY {hotY},
+       qIcon {QIcon(QString::fromStdString(path))},
+       image {}
    {
    }
 
-   explicit MarkerIconInfo(const std::string& path,
-                           std::int32_t       hotX,
-                           std::int32_t       hotY,
+   explicit MarkerIconInfo(const std::string&                         path,
+                           std::int32_t                               hotX,
+                           std::int32_t                               hotY,
                            std::shared_ptr<boost::gil::rgba8_image_t> image) :
-      name{path},
-      path{path},
-      hotX{hotX},
-      hotY{hotY},
-      qIcon{QIcon(QString::fromStdString(path))},
-      image{image}
+       name {path},
+       path {path},
+       hotX {hotX},
+       hotY {hotY},
+       qIcon {QIcon(QString::fromStdString(path))},
+       image {image}
    {
    }
 
-   std::string name;
-   std::string path;
-   std::int32_t hotX;
-   std::int32_t hotY;
-   QIcon qIcon;
+   std::string                                               name;
+   std::string                                               path;
+   std::int32_t                                              hotX;
+   std::int32_t                                              hotY;
+   QIcon                                                     qIcon;
    std::optional<std::shared_ptr<boost::gil::rgba8_image_t>> image;
 };
 

@@ -28,11 +28,11 @@ namespace manager
 static const std::string logPrefix_ = "scwx::qt::manager::marker_manager";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 
-static const std::string kNameName_       = "name";
-static const std::string kLatitudeName_   = "latitude";
-static const std::string kLongitudeName_  = "longitude";
-static const std::string kIconName_       = "icon";
-static const std::string kIconColorName_  = "icon-color";
+static const std::string kNameName_      = "name";
+static const std::string kLatitudeName_  = "latitude";
+static const std::string kLongitudeName_ = "longitude";
+static const std::string kIconName_      = "icon";
+static const std::string kIconColorName_ = "icon-color";
 
 static const std::string defaultIconName = "images/location-marker";
 
@@ -68,7 +68,6 @@ public:
 class MarkerManager::Impl::MarkerRecord
 {
 public:
-
    MarkerRecord(const types::MarkerInfo& info) :
       markerInfo_ {info}
    {
@@ -93,7 +92,6 @@ public:
              util::color::ToArgbString(record->markerInfo_.iconColor)}};
    }
 
-
    friend MarkerRecord tag_invoke(boost::json::value_to_tag<MarkerRecord>,
                                   const boost::json::value& jv)
    {
@@ -102,7 +100,7 @@ public:
 
       const boost::json::object& jo = jv.as_object();
 
-      std::string iconName = defaultIconName;
+      std::string               iconName  = defaultIconName;
       boost::gil::rgba8_pixel_t iconColor = defaultIconColor;
 
       if (jo.contains(kIconName_) && jo.at(kIconName_).is_string())
@@ -112,7 +110,8 @@ public:
 
       if (jo.contains(kIconColorName_) && jo.at(kIconName_).is_string())
       {
-         try {
+         try
+         {
             iconColor = util::color::ToRgba8PixelT(
                boost::json::value_to<std::string>(jv.at(kIconColorName_)));
          }
@@ -181,7 +180,6 @@ void MarkerManager::Impl::ReadMarkerSettings()
       {
          // For each marker entry
          auto& markerArray = markerJson.as_array();
-         //std::vector<std::string> fileNames {};
          markerRecords_.reserve(markerArray.size());
          idToIndex_.reserve(markerArray.size());
          for (auto& markerEntry : markerArray)
@@ -206,12 +204,12 @@ void MarkerManager::Impl::ReadMarkerSettings()
          }
 
          util::TextureAtlas& textureAtlas = util::TextureAtlas::Instance();
-         textureAtlas.BuildAtlas(2048, 2048); // Should this code be moved to ResourceManager?
+         textureAtlas.BuildAtlas(
+            2048, 2048); // Should this code be moved to ResourceManager?
 
          logger_->debug("{} location marker entries", markerRecords_.size());
       }
    }
-
 
    Q_EMIT self_->MarkersUpdated();
 }
@@ -457,7 +455,8 @@ void MarkerManager::add_icon(const std::string& name, bool startup)
    if (!startup)
    {
       util::TextureAtlas& textureAtlas = util::TextureAtlas::Instance();
-      textureAtlas.BuildAtlas(2048, 2048); // Should this code be moved to ResourceManager?
+      textureAtlas.BuildAtlas(
+         2048, 2048); // Should this code be moved to ResourceManager?
       Q_EMIT IconAdded(name);
    }
 }

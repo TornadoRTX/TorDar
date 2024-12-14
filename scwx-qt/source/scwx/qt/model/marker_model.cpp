@@ -133,7 +133,8 @@ QVariant MarkerModel::data(const QModelIndex& index, int role) const
       {
          std::optional<types::MarkerIconInfo> icon =
             p->markerManager_->get_icon(markerInfo->iconName);
-         if (icon) {
+         if (icon)
+         {
             return util::modulateColors(icon->qIcon,
                                         QSize(iconSize_, iconSize_),
                                         QColor(markerInfo->iconColor[0],

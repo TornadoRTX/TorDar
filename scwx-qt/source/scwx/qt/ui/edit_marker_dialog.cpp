@@ -30,10 +30,7 @@ static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 class EditMarkerDialog::Impl
 {
 public:
-   explicit Impl(EditMarkerDialog* self) :
-      self_{self}
-   {
-   }
+   explicit Impl(EditMarkerDialog* self) : self_ {self} {}
 
    void show_color_dialog();
    void show_icon_file_dialog();
@@ -46,15 +43,15 @@ public:
    void handle_rejected();
 
    EditMarkerDialog* self_;
-   QPushButton* deleteButton_;
+   QPushButton*      deleteButton_;
    QIcon             get_colored_icon(const types::MarkerIconInfo& marker,
                                       const std::string&           color);
 
    std::shared_ptr<manager::MarkerManager> markerManager_ =
       manager::MarkerManager::Instance();
    types::MarkerId editId_;
-   bool adding_;
-   std::string setIconOnAdded_{""};
+   bool            adding_;
+   std::string     setIconOnAdded_ {""};
 };
 
 QIcon EditMarkerDialog::Impl::get_colored_icon(
@@ -66,9 +63,9 @@ QIcon EditMarkerDialog::Impl::get_colored_icon(
 }
 
 EditMarkerDialog::EditMarkerDialog(QWidget* parent) :
-   QDialog(parent),
-   p {std::make_unique<Impl>(this)},
-   ui(new Ui::EditMarkerDialog)
+    QDialog(parent),
+    p {std::make_unique<Impl>(this)},
+    ui(new Ui::EditMarkerDialog)
 {
    ui->setupUi(this);
 
@@ -98,7 +95,7 @@ void EditMarkerDialog::setup(double latitude, double longitude)
    // By default use foreground color as marker color, mainly so the icons
    // are vissable in the dropdown menu.
    QColor color = QWidget::palette().color(QWidget::foregroundRole());
-   p->editId_ = p->markerManager_->add_marker(types::MarkerInfo(
+   p->editId_   = p->markerManager_->add_marker(types::MarkerInfo(
       "",
       latitude,
       longitude,
@@ -114,8 +111,7 @@ void EditMarkerDialog::setup(double latitude, double longitude)
 
 void EditMarkerDialog::setup(types::MarkerId id)
 {
-   std::optional<types::MarkerInfo> marker =
-      p->markerManager_->get_marker(id);
+   std::optional<types::MarkerInfo> marker = p->markerManager_->get_marker(id);
    if (!marker)
    {
       return;
@@ -143,7 +139,7 @@ void EditMarkerDialog::setup(types::MarkerId id)
 
 types::MarkerInfo EditMarkerDialog::get_marker_info() const
 {
-   QString colorName = ui->iconColorLineEdit->text();
+   QString                   colorName = ui->iconColorLineEdit->text();
    boost::gil::rgba8_pixel_t color =
       util::color::ToRgba8PixelT(colorName.toStdString());
 
@@ -269,7 +265,6 @@ void EditMarkerDialog::Impl::set_icon_color(const std::string& color)
       QString::fromStdString(fmt::format("background-color: {}", color)));
 
    auto* iconComboBox = self_->ui->iconComboBox;
-
 
    self_->ui->iconComboBox->clear();
    for (auto& markerIcon : markerManager_->get_icons())

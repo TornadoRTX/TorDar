@@ -32,9 +32,8 @@ public:
 private:
    class Impl;
    std::unique_ptr<Impl> p;
-   Ui::EditMarkerDialog*   ui;
+   Ui::EditMarkerDialog* ui;
 };
-
 
 } // namespace ui
 } // namespace qt
