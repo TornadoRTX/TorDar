@@ -12,6 +12,7 @@
 #include <scwx/qt/manager/thread_manager.hpp>
 #include <scwx/qt/settings/general_settings.hpp>
 #include <scwx/qt/types/qt_types.hpp>
+#include <scwx/qt/ui/high_privilege_dialog.hpp>
 #include <scwx/qt/ui/setup/setup_wizard.hpp>
 #include <scwx/qt/util/check_privilege.hpp>
 #include <scwx/network/cpr.hpp>
@@ -21,6 +22,7 @@
 
 #include <string>
 #include <vector>
+#include <filesystem>
 
 #include <aws/core/Aws.h>
 #include <boost/asio.hpp>
@@ -31,8 +33,6 @@
 #include <QTranslator>
 #include <QPalette>
 #include <QStyle>
-
-#include <QMessageBox>
 
 #define QT6CT_LIBRARY
 #include <qt6ct-common/qt6ct.h>
@@ -46,6 +46,9 @@ static void OverrideDefaultStyle(const std::vector<std::string>& args);
 
 int main(int argc, char* argv[])
 {
+   bool disableHighPrivilegeWarning = false;
+   bool highPrivilegeChecked        = false;
+
    // Store arguments
    std::vector<std::string> args {};
    for (int i = 0; i < argc; ++i)
@@ -76,23 +79,33 @@ int main(int argc, char* argv[])
       QCoreApplication::installTranslator(&translator);
    }
 
-   // Test to see if scwx was run with high privilege
-   if (scwx::qt::util::is_high_privilege())
-   {
-      QMessageBox::StandardButton pressed = QMessageBox::warning(
-                     nullptr,
-                     "Warning: Running with High Privileges",
-                     "Although Supercell-Wx can be run with high privileges, "
-                     "it is not recommended",
-                     QMessageBox::Ok | QMessageBox::Close);
-      if (pressed & QMessageBox::Ok) {
-         return 0;
-      }
-   }
-
    if (!scwx::util::GetEnvironment("SCWX_TEST").empty())
    {
       QStandardPaths::setTestModeEnabled(true);
+   }
+
+   // Test to see if scwx was run with high privilege
+   std::string appDataPath {
+      QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+         .toStdString()};
+
+   // Check if high privilege before writing settings, assuming no settings
+   // have been written
+   if (!std::filesystem::exists(appDataPath) &&
+       scwx::qt::util::is_high_privilege())
+   {
+      auto dialog =
+         scwx::qt::ui::HighPrivilegeDialog(); // TODO does this need cleaned up?
+      const int result = dialog.exec();
+
+      disableHighPrivilegeWarning = dialog.disable_high_privilege_message();
+      highPrivilegeChecked = true;
+
+      if (result == QDialog::Rejected)
+      {
+         // TODO any other cleanup needed here?
+         return 0;
+      }
    }
 
    // Start the io_context main loop
@@ -133,6 +146,46 @@ int main(int argc, char* argv[])
 
    // Check process modules for compatibility
    scwx::qt::main::CheckProcessModules();
+   auto& generalSettings = scwx::qt::settings::GeneralSettings::Instance();
+
+   if (!highPrivilegeChecked &&
+       generalSettings.high_privilege_warning_enabled().GetValue() &&
+       scwx::qt::util::is_high_privilege())
+   {
+      auto dialog =
+         scwx::qt::ui::HighPrivilegeDialog(); // TODO does this need cleaned up?
+      const int result = dialog.exec();
+
+      disableHighPrivilegeWarning = dialog.disable_high_privilege_message();
+
+      if (result == QDialog::Rejected)
+      {
+         // Deinitialize application
+         scwx::qt::manager::RadarProductManager::Cleanup();
+
+         // Stop Qt Threads
+         scwx::qt::manager::ThreadManager::Instance().StopThreads();
+
+         // Gracefully stop the io_context main loop
+         work.reset();
+         threadPool.join();
+
+         // Shutdown application
+         scwx::qt::manager::ResourceManager::Shutdown();
+         scwx::qt::manager::SettingsManager::Instance().Shutdown();
+
+         // Shutdown AWS SDK
+         Aws::ShutdownAPI(awsSdkOptions);
+         return 0;
+      }
+   }
+
+   // Save high privilege settings
+   if (disableHighPrivilegeWarning)
+   {
+      generalSettings.high_privilege_warning_enabled().SetValue(false);
+      scwx::qt::manager::SettingsManager::Instance().SaveSettings();
+   }
 
    // Run initial setup if required
    if (scwx::qt::ui::setup::SetupWizard::IsSetupRequired())

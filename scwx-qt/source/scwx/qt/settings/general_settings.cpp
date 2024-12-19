@@ -80,6 +80,7 @@ public:
       warningsProvider_.SetDefault(defaultWarningsProviderValue);
       cursorIconAlwaysOn_.SetDefault(false);
       radarSiteThreshold_.SetDefault(0.0);
+      highPrivilegeWarningEnabled_.SetDefault(true);
 
       fontSizes_.SetElementMinimum(1);
       fontSizes_.SetElementMaximum(72);
@@ -175,6 +176,8 @@ public:
    SettingsVariable<std::string> warningsProvider_ {"warnings_provider"};
    SettingsVariable<bool>        cursorIconAlwaysOn_ {"cursor_icon_always_on"};
    SettingsVariable<double>      radarSiteThreshold_ {"radar_site_threshold"};
+   SettingsVariable<bool>        highPrivilegeWarningEnabled_ {
+      "high_privilege_warning_enabled"};
 };
 
 GeneralSettings::GeneralSettings() :
@@ -210,7 +213,8 @@ GeneralSettings::GeneralSettings() :
                       &p->updateNotificationsEnabled_,
                       &p->warningsProvider_,
                       &p->cursorIconAlwaysOn_,
-                      &p->radarSiteThreshold_});
+                      &p->radarSiteThreshold_,
+                      &p->highPrivilegeWarningEnabled_});
    SetDefaults();
 }
 GeneralSettings::~GeneralSettings() = default;
@@ -375,6 +379,11 @@ SettingsVariable<double>& GeneralSettings::radar_site_threshold() const
    return p->radarSiteThreshold_;
 }
 
+SettingsVariable<bool>& GeneralSettings::high_privilege_warning_enabled() const
+{
+   return p->highPrivilegeWarningEnabled_;
+}
+
 bool GeneralSettings::Shutdown()
 {
    bool dataChanged = false;
@@ -429,7 +438,9 @@ bool operator==(const GeneralSettings& lhs, const GeneralSettings& rhs)
               rhs.p->updateNotificationsEnabled_ &&
            lhs.p->warningsProvider_ == rhs.p->warningsProvider_ &&
            lhs.p->cursorIconAlwaysOn_ == rhs.p->cursorIconAlwaysOn_ &&
-           lhs.p->radarSiteThreshold_ == rhs.p->radarSiteThreshold_);
+           lhs.p->radarSiteThreshold_ == rhs.p->radarSiteThreshold_ &&
+           lhs.p->highPrivilegeWarningEnabled_ ==
+              rhs.p->highPrivilegeWarningEnabled_);
 }
 
 } // namespace settings
