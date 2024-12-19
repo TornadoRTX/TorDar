@@ -1,8 +1,11 @@
 #pragma once
 
-namespace scwx {
-namespace qt {
-namespace util {
+namespace scwx
+{
+namespace qt
+{
+namespace util
+{
 
 bool is_high_privilege();
 

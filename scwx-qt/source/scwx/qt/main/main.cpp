@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
    }
 
    // Test to see if scwx was run with high privilege
-   std::string appDataPath {
+   const std::string appDataPath {
       QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
          .toStdString()};
 
@@ -99,7 +99,7 @@ int main(int argc, char* argv[])
       const int result = dialog.exec();
 
       disableHighPrivilegeWarning = dialog.disable_high_privilege_message();
-      highPrivilegeChecked = true;
+      highPrivilegeChecked        = true;
 
       if (result == QDialog::Rejected)
       {

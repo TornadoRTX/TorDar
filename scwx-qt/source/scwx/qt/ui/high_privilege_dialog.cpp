@@ -19,7 +19,7 @@ class HighPrivilegeDialogImpl
 public:
    explicit HighPrivilegeDialogImpl(HighPrivilegeDialog* self) :
        self_ {self} {};
-   ~HighPrivilegeDialogImpl()         = default;
+   ~HighPrivilegeDialogImpl() = default;
 
    HighPrivilegeDialog* self_;
 };
@@ -32,7 +32,8 @@ HighPrivilegeDialog::HighPrivilegeDialog(QWidget* parent) :
    ui->setupUi(this);
 }
 
-bool HighPrivilegeDialog::disable_high_privilege_message() {
+bool HighPrivilegeDialog::disable_high_privilege_message()
+{
    return ui->highPrivilegeCheckBox->isChecked();
 }
 
@@ -44,4 +45,3 @@ HighPrivilegeDialog::~HighPrivilegeDialog()
 } // namespace ui
 } // namespace qt
 } // namespace scwx
-

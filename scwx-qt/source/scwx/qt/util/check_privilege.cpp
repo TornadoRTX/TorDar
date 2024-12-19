@@ -2,20 +2,23 @@
 #include <QtGlobal>
 
 #ifdef _WIN32
-#include <windows.h>
+#   include <windows.h>
 #else
-#include <unistd.h>
+#   include <unistd.h>
 #endif
 
-namespace scwx {
-namespace qt {
-namespace util {
+namespace scwx
+{
+namespace qt
+{
+namespace util
+{
 
 bool is_high_privilege()
 {
 #if defined(_WIN32)
-   bool   isAdmin = false;
-   HANDLE token    = NULL;
+   bool            isAdmin = false;
+   HANDLE          token   = NULL;
    TOKEN_ELEVATION elevation;
    DWORD           elevationSize = sizeof(TOKEN_ELEVATION);
 
@@ -33,7 +36,7 @@ bool is_high_privilege()
    CloseHandle(token);
    return isAdmin;
 #elif defined(Q_OS_UNIX)
-   // On UNIX root is always uid 0. On Linux this is enforced by the kernal.
+   // On UNIX root is always uid 0. On Linux this is enforced by the kernel.
    return geteuid() == 0;
 #endif
 }

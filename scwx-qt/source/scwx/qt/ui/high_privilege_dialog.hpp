@@ -25,7 +25,7 @@ private:
 
 public:
    explicit HighPrivilegeDialog(QWidget* parent = nullptr);
-   ~HighPrivilegeDialog();
+   ~HighPrivilegeDialog() override;
 
    bool disable_high_privilege_message();
 
