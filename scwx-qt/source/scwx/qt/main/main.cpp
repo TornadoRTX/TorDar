@@ -13,6 +13,7 @@
 #include <scwx/qt/settings/general_settings.hpp>
 #include <scwx/qt/types/qt_types.hpp>
 #include <scwx/qt/ui/setup/setup_wizard.hpp>
+#include <scwx/qt/util/check_privilege.hpp>
 #include <scwx/network/cpr.hpp>
 #include <scwx/util/environment.hpp>
 #include <scwx/util/logger.hpp>
@@ -30,6 +31,8 @@
 #include <QTranslator>
 #include <QPalette>
 #include <QStyle>
+
+#include <QMessageBox>
 
 #define QT6CT_LIBRARY
 #include <qt6ct-common/qt6ct.h>
@@ -71,6 +74,20 @@ int main(int argc, char* argv[])
    if (translator.load(QLocale(), "scwx", "_", ":/i18n"))
    {
       QCoreApplication::installTranslator(&translator);
+   }
+
+   // Test to see if scwx was run with high privilege
+   if (scwx::qt::util::is_high_privilege())
+   {
+      QMessageBox::StandardButton pressed = QMessageBox::warning(
+                     nullptr,
+                     "Warning: Running with High Privileges",
+                     "Although Supercell-Wx can be run with high privileges, "
+                     "it is not recommended",
+                     QMessageBox::Ok | QMessageBox::Close);
+      if (pressed & QMessageBox::Ok) {
+         return 0;
+      }
    }
 
    if (!scwx::util::GetEnvironment("SCWX_TEST").empty())
