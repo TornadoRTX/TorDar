@@ -472,6 +472,7 @@ FontManager::Impl::MatchFontFile(const std::string&              family,
    FcPatternAddString(pattern,
                       FC_FONTFORMAT,
                       reinterpret_cast<const FcChar8*>(kFcTrueType_.c_str()));
+   FcPatternAddBool(pattern, FC_SYMBOL, FcFalse);
 
    if (!styles.empty())
    {
@@ -485,29 +486,51 @@ FontManager::Impl::MatchFontFile(const std::string&              family,
    FcDefaultSubstitute(pattern);
 
    // Find matching font
-   FcResult   result;
-   FcPattern* match = FcFontMatch(nullptr, pattern, &result);
+   FcResult   result {};
+   FcFontSet* matches = FcFontSort(nullptr, pattern, FcFalse, nullptr, &result);
    FontRecord record {};
 
-   if (match != nullptr)
+   if (matches != nullptr)
    {
-      FcChar8* fcFamily;
-      FcChar8* fcStyle;
-      FcChar8* fcFile;
-
-      // Match was found, get properties
-      if (FcPatternGetString(match, FC_FAMILY, 0, &fcFamily) == FcResultMatch &&
-          FcPatternGetString(match, FC_STYLE, 0, &fcStyle) == FcResultMatch &&
-          FcPatternGetString(match, FC_FILE, 0, &fcFile) == FcResultMatch)
+      for (int i = 0; i < matches->nfont; i++)
       {
-         record.family_   = reinterpret_cast<char*>(fcFamily);
-         record.style_    = reinterpret_cast<char*>(fcStyle);
-         record.filename_ = reinterpret_cast<char*>(fcFile);
+         FcPattern* match =
+            // Using C code requires pointer arithmetic
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            FcFontRenderPrepare(nullptr, pattern, matches->fonts[i]);
+         if (match == nullptr)
+         {
+            continue;
+         }
+         FcChar8* fcFamily = nullptr;
+         FcChar8* fcStyle  = nullptr;
+         FcChar8* fcFile   = nullptr;
+         FcBool   fcSymbol = FcFalse;
 
-         logger_->debug("Found matching font: {}:{} ({})",
-                        record.family_,
-                        record.style_,
-                        record.filename_);
+         // Match was found, get properties
+         if (FcPatternGetString(match, FC_FAMILY, 0, &fcFamily) ==
+                FcResultMatch &&
+             FcPatternGetString(match, FC_STYLE, 0, &fcStyle) ==
+                FcResultMatch &&
+             FcPatternGetString(match, FC_FILE, 0, &fcFile) == FcResultMatch &&
+             FcPatternGetBool(match, FC_SYMBOL, 0, &fcSymbol) ==
+                FcResultMatch &&
+             fcSymbol == FcFalse /*Must check fcSymbol manually*/)
+         {
+            record.family_   = reinterpret_cast<char*>(fcFamily);
+            record.style_    = reinterpret_cast<char*>(fcStyle);
+            record.filename_ = reinterpret_cast<char*>(fcFile);
+
+            logger_->debug("Found matching font: {}:{} ({}) {}",
+                           record.family_,
+                           record.style_,
+                           record.filename_,
+                           fcSymbol);
+            FcPatternDestroy(match);
+            break;
+         }
+
+         FcPatternDestroy(match);
       }
    }
 
@@ -517,7 +540,7 @@ FontManager::Impl::MatchFontFile(const std::string&              family,
    }
 
    // Cleanup
-   FcPatternDestroy(match);
+   FcFontSetDestroy(matches);
    FcPatternDestroy(pattern);
 
    return record;
