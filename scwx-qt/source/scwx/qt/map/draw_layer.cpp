@@ -1,6 +1,13 @@
+#include <scwx/qt/manager/font_manager.hpp>
 #include <scwx/qt/map/draw_layer.hpp>
+#include <scwx/qt/model/imgui_context_model.hpp>
 #include <scwx/qt/gl/shader_program.hpp>
 #include <scwx/util/logger.hpp>
+
+#include <backends/imgui_impl_opengl3.h>
+#include <backends/imgui_impl_qt.hpp>
+#include <fmt/format.h>
+#include <imgui.h>
 
 namespace scwx
 {
@@ -16,17 +23,64 @@ class DrawLayerImpl
 {
 public:
    explicit DrawLayerImpl(std::shared_ptr<MapContext> context) :
-       context_ {context}, drawList_ {}, textureAtlas_ {GL_INVALID_INDEX}
+       context_ {context},
+       drawList_ {},
+       textureAtlas_ {GL_INVALID_INDEX},
+       imGuiRendererInitialized_ {false}
    {
+      static size_t currentMapId_ {0u};
+      imGuiContextName_ = fmt::format("Layer {}", ++currentMapId_);
+      imGuiContext_ = 
+         model::ImGuiContextModel::Instance().CreateContext(imGuiContextName_);
+
+      // Initialize ImGui Qt backend
+      ImGui_ImplQt_Init();
    }
-   ~DrawLayerImpl() {}
+   ~DrawLayerImpl()
+   {
+      // Set ImGui Context
+      ImGui::SetCurrentContext(imGuiContext_);
+
+      // Shutdown ImGui Context
+      if (imGuiRendererInitialized_)
+      {
+         ImGui_ImplOpenGL3_Shutdown();
+      }
+      ImGui_ImplQt_Shutdown();
+
+      // Destroy ImGui Context
+      model::ImGuiContextModel::Instance().DestroyContext(imGuiContextName_);
+   }
+
+   void ImGuiCheckFonts();
 
    std::shared_ptr<MapContext>                      context_;
    std::vector<std::shared_ptr<gl::draw::DrawItem>> drawList_;
    GLuint                                           textureAtlas_;
 
    std::uint64_t textureAtlasBuildCount_ {};
+
+   std::string imGuiContextName_;
+   ImGuiContext* imGuiContext_;
+   bool          imGuiRendererInitialized_;
+   std::uint64_t imGuiFontsBuildCount_ {};
 };
+
+void DrawLayerImpl::ImGuiCheckFonts()
+{
+   // Update ImGui Fonts if required
+   std::uint64_t currentImGuiFontsBuildCount =
+      manager::FontManager::Instance().imgui_fonts_build_count();
+
+   if (imGuiFontsBuildCount_ != currentImGuiFontsBuildCount ||
+       !model::ImGuiContextModel::Instance().font_atlas()->IsBuilt())
+   {
+      ImGui_ImplOpenGL3_DestroyFontsTexture();
+      ImGui_ImplOpenGL3_CreateFontsTexture();
+   }
+
+   imGuiFontsBuildCount_ = currentImGuiFontsBuildCount;
+}
 
 DrawLayer::DrawLayer(const std::shared_ptr<MapContext>& context) :
     GenericLayer(context), p(std::make_unique<DrawLayerImpl>(context))
@@ -42,9 +96,48 @@ void DrawLayer::Initialize()
    {
       item->Initialize();
    }
+
+   ImGuiInitialize();
 }
 
-void DrawLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
+void DrawLayer::StartImGuiFrame()
+{
+   auto defaultFont = manager::FontManager::Instance().GetImGuiFont(
+      types::FontCategory::Default);
+
+   // Setup ImGui Frame
+   ImGui::SetCurrentContext(p->imGuiContext_);
+
+   // Start ImGui Frame
+   ImGui_ImplQt_NewFrame(p->context_->widget());
+   ImGui_ImplOpenGL3_NewFrame();
+   p->ImGuiCheckFonts();
+   ImGui::NewFrame();
+   ImGui::PushFont(defaultFont->font());
+}
+
+void DrawLayer::EndImGuiFrame()
+{
+   // Pop default font
+   ImGui::PopFont();
+
+   // Render ImGui Frame
+   ImGui::Render();
+   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void DrawLayer::ImGuiInitialize()
+{
+   ImGui::SetCurrentContext(p->imGuiContext_);
+   ImGui_ImplQt_RegisterWidget(p->context_->widget());
+   ImGui_ImplOpenGL3_Init();
+   p->imGuiFontsBuildCount_ =
+      manager::FontManager::Instance().imgui_fonts_build_count();
+   p->imGuiRendererInitialized_ = true;
+}
+
+void DrawLayer::RenderWithoutImGui(
+   const QMapLibre::CustomLayerRenderParameters& params)
 {
    gl::OpenGLFunctions& gl = p->context_->gl();
    p->textureAtlas_        = p->context_->GetTextureAtlas();
@@ -67,6 +160,13 @@ void DrawLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
    }
 
    p->textureAtlasBuildCount_ = newTextureAtlasBuildCount;
+}
+
+   void DrawLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
+{
+   StartImGuiFrame();
+   RenderWithoutImGui(params);
+   EndImGuiFrame();
 }
 
 void DrawLayer::Deinitialize()

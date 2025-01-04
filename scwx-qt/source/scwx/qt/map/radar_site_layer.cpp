@@ -55,6 +55,8 @@ void RadarSiteLayer::Initialize()
    logger_->debug("Initialize()");
 
    p->radarSites_ = config::RadarSite::GetAll();
+
+   ImGuiInitialize();
 }
 
 void RadarSiteLayer::Render(
@@ -84,6 +86,7 @@ void RadarSiteLayer::Render(
    p->halfWidth_     = params.width * 0.5f;
    p->halfHeight_    = params.height * 0.5f;
 
+   StartImGuiFrame();
    // Radar site ImGui windows shouldn't have padding
    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2 {0.0f, 0.0f});
 
@@ -93,6 +96,7 @@ void RadarSiteLayer::Render(
    }
 
    ImGui::PopStyleVar();
+   EndImGuiFrame();
 
    SCWX_GL_CHECK_ERROR();
 }

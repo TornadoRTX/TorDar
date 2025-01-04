@@ -32,6 +32,11 @@ public:
 
 protected:
    void AddDrawItem(const std::shared_ptr<gl::draw::DrawItem>& drawItem);
+   void StartImGuiFrame();
+   void EndImGuiFrame();
+   void ImGuiInitialize();
+   void
+   RenderWithoutImGui(const QMapLibre::CustomLayerRenderParameters& params);
 
 private:
    std::unique_ptr<DrawLayerImpl> p;
