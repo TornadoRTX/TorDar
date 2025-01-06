@@ -6,7 +6,7 @@ import os
 class SupercellWxConan(ConanFile):
     settings   = ("os", "compiler", "build_type", "arch")
     requires   = ("boost/1.86.0",
-                  "cpr/1.11.0",
+                  "cpr/1.11.1",
                   "fontconfig/2.15.0",
                   "freetype/2.13.2",
                   "geographiclib/2.4",
@@ -28,6 +28,10 @@ class SupercellWxConan(ConanFile):
                        "libiconv/*:shared"  : True,
                        "openssl/*:no_module": True,
                        "openssl/*:shared"   : True}
+
+    def configure(self):
+        if self.settings.os == "Windows":
+            self.options["libcurl"].with_ssl = "schannel"
 
     def requirements(self):
         if self.settings.os == "Linux":
