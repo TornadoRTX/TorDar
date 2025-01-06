@@ -93,6 +93,7 @@ public:
    {
       std::unique_lock refreshLock(refreshMutex_);
       std::unique_lock timerLock(timerMutex_);
+      enabled_ = false;
       refreshTimer_.cancel();
       timerLock.unlock();
       refreshLock.unlock();
