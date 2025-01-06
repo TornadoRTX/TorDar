@@ -29,6 +29,10 @@ class SupercellWxConan(ConanFile):
                        "openssl/*:no_module": True,
                        "openssl/*:shared"   : True}
 
+    def configure(self):
+        if self.settings.os == "Windows":
+            self.options["libcurl"].with_ssl = "schannel"
+
     def requirements(self):
         if self.settings.os == "Linux":
             self.requires("onetbb/2021.12.0")
