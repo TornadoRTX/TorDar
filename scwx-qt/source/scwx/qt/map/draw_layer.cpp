@@ -161,8 +161,12 @@ void DrawLayer::RenderWithoutImGui(
 
    p->textureAtlasBuildCount_ = newTextureAtlasBuildCount;
 }
+void DrawLayer::ImGuiSelectContext()
+{
+   ImGui::SetCurrentContext(p->imGuiContext_);
+}
 
-   void DrawLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
+void DrawLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
 {
    StartImGuiFrame();
    RenderWithoutImGui(params);

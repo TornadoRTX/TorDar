@@ -37,6 +37,7 @@ protected:
    void ImGuiInitialize();
    void
    RenderWithoutImGui(const QMapLibre::CustomLayerRenderParameters& params);
+   void ImGuiSelectContext();
 
 private:
    std::unique_ptr<DrawLayerImpl> p;
