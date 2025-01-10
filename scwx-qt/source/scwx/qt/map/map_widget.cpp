@@ -1619,9 +1619,12 @@ void MapWidgetImpl::ImGuiCheckFonts()
       ImGui_ImplOpenGL3_CreateFontsTexture();
    }
 
-   if (!model::ImGuiContextModel::Instance().font_atlas()->IsBuilt())
+   static bool haveLogged = false;
+   if (!model::ImGuiContextModel::Instance().font_atlas()->IsBuilt() &&
+       !haveLogged)
    {
       logger_->error("ImGui font atlas could not be built.");
+      haveLogged = true;
    }
 
    imGuiFontsBuildCount_ = currentImGuiFontsBuildCount;
