@@ -51,9 +51,11 @@ find_package(Qt${QT_VERSION_MAJOR}
 set(SRC_EXE_MAIN source/scwx/qt/main/main.cpp)
 
 set(HDR_MAIN source/scwx/qt/main/application.hpp
-             source/scwx/qt/main/main_window.hpp)
+             source/scwx/qt/main/main_window.hpp
+             source/scwx/qt/main/process_validation.hpp)
 set(SRC_MAIN source/scwx/qt/main/application.cpp
-             source/scwx/qt/main/main_window.cpp)
+             source/scwx/qt/main/main_window.cpp
+             source/scwx/qt/main/process_validation.cpp)
 set(UI_MAIN  source/scwx/qt/main/main_window.ui)
 set(HDR_CONFIG source/scwx/qt/config/county_database.hpp
                source/scwx/qt/config/radar_site.hpp)
