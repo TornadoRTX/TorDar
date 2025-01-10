@@ -25,13 +25,13 @@ class SupercellWxConan(ConanFile):
                   "zlib/1.3.1")
     generators = ("CMakeDeps")
     default_options = {"geos/*:shared"      : True,
-                       "libiconv/*:shared"  : True,
-                       "openssl/*:no_module": True,
-                       "openssl/*:shared"   : True}
+                       "libiconv/*:shared"  : True}
 
     def configure(self):
         if self.settings.os == "Windows":
             self.options["libcurl"].with_ssl = "schannel"
+        elif self.settings.os == "Linux":
+            self.options["openssl"].shared = True
 
     def requirements(self):
         if self.settings.os == "Linux":
