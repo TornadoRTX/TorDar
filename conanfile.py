@@ -26,7 +26,6 @@ class SupercellWxConan(ConanFile):
     generators = ("CMakeDeps")
     default_options = {"geos/*:shared"      : True,
                        "libiconv/*:shared"  : True,
-                       "openssl/*:no_module": True,
                        "openssl/*:shared"   : True}
 
     def configure(self):
