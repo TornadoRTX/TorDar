@@ -80,7 +80,6 @@ public:
        map_(),
        layerList_ {},
        imGuiRendererInitialized_ {false},
-       editMarkerDialog_ {nullptr},
        radarProductManager_ {nullptr},
        radarProductLayer_ {nullptr},
        overlayLayer_ {nullptr},
