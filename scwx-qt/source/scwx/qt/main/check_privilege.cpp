@@ -1,5 +1,5 @@
 #include "scwx/qt/settings/general_settings.hpp"
-#include "scwx/qt/util/check_privilege.hpp"
+#include "scwx/qt/main/check_privilege.hpp"
 #include <QtGlobal>
 #include <QStandardPaths>
 #include <filesystem>
@@ -13,7 +13,7 @@
 #   include <unistd.h>
 #endif
 
-namespace scwx::qt::util
+namespace scwx::qt::main
 {
 
 bool is_high_privilege()
@@ -76,6 +76,7 @@ public:
       hasAppData_ = std::filesystem::exists(appDataPath);
 
       dialog_.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+      dialog_.setDefaultButton(QMessageBox::No);
       dialog_.setCheckBox(checkBox_);
    };
 
@@ -131,4 +132,4 @@ bool PrivilegeChecker::second_check()
    }
 }
 
-} // namespace scwx::qt::util
+} // namespace scwx::qt::main

@@ -14,7 +14,7 @@
 #include <scwx/qt/types/qt_types.hpp>
 #include <scwx/qt/ui/high_privilege_dialog.hpp>
 #include <scwx/qt/ui/setup/setup_wizard.hpp>
-#include <scwx/qt/util/check_privilege.hpp>
+#include <scwx/qt/main/check_privilege.hpp>
 #include <scwx/network/cpr.hpp>
 #include <scwx/util/environment.hpp>
 #include <scwx/util/logger.hpp>
@@ -22,7 +22,6 @@
 
 #include <string>
 #include <vector>
-#include <filesystem>
 
 #include <aws/core/Aws.h>
 #include <boost/asio.hpp>
@@ -82,7 +81,7 @@ int main(int argc, char* argv[])
    }
 
    // Test to see if scwx was run with high privilege
-   scwx::qt::util::PrivilegeChecker privilegeChecker;
+   scwx::qt::main::PrivilegeChecker privilegeChecker;
    if (privilegeChecker.first_check())
    {
       return 0;

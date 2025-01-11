@@ -51,9 +51,11 @@ find_package(Qt${QT_VERSION_MAJOR}
 set(SRC_EXE_MAIN source/scwx/qt/main/main.cpp)
 
 set(HDR_MAIN source/scwx/qt/main/application.hpp
+             source/scwx/qt/main/check_privilege.hpp
              source/scwx/qt/main/main_window.hpp
              source/scwx/qt/main/process_validation.hpp)
 set(SRC_MAIN source/scwx/qt/main/application.cpp
+             source/scwx/qt/main/check_privilege.cpp
              source/scwx/qt/main/main_window.cpp
              source/scwx/qt/main/process_validation.cpp)
 set(UI_MAIN  source/scwx/qt/main/main_window.ui)
@@ -356,8 +358,7 @@ set(SRC_UI_SETUP source/scwx/qt/ui/setup/audio_codec_page.cpp
                  source/scwx/qt/ui/setup/map_provider_page.cpp
                  source/scwx/qt/ui/setup/setup_wizard.cpp
                  source/scwx/qt/ui/setup/welcome_page.cpp)
-set(HDR_UTIL source/scwx/qt/util/check_privilege.hpp
-             source/scwx/qt/util/color.hpp
+set(HDR_UTIL source/scwx/qt/util/color.hpp
              source/scwx/qt/util/file.hpp
              source/scwx/qt/util/geographic_lib.hpp
              source/scwx/qt/util/imgui.hpp
@@ -371,8 +372,7 @@ set(HDR_UTIL source/scwx/qt/util/check_privilege.hpp
              source/scwx/qt/util/q_file_input_stream.hpp
              source/scwx/qt/util/time.hpp
              source/scwx/qt/util/tooltip.hpp)
-set(SRC_UTIL source/scwx/qt/util/check_privilege.cpp
-             source/scwx/qt/util/color.cpp
+set(SRC_UTIL source/scwx/qt/util/color.cpp
              source/scwx/qt/util/file.cpp
              source/scwx/qt/util/geographic_lib.cpp
              source/scwx/qt/util/imgui.cpp

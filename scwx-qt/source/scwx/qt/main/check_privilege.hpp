@@ -2,7 +2,7 @@
 
 #include <memory>
 
-namespace scwx::qt::util
+namespace scwx::qt::main
 {
 
 bool is_high_privilege();
@@ -22,4 +22,4 @@ private:
    std::unique_ptr<Impl> p;
 };
 
-} // namespace scwx::qt::util
+} // namespace scwx::qt::main
