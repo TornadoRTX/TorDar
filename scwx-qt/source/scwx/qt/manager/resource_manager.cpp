@@ -110,8 +110,8 @@ static void LoadTextures()
 
 void BuildAtlas()
 {
-      util::TextureAtlas& textureAtlas = util::TextureAtlas::Instance();
-      textureAtlas.BuildAtlas(atlasWidth, atlasHeight);
+   util::TextureAtlas& textureAtlas = util::TextureAtlas::Instance();
+   textureAtlas.BuildAtlas(atlasWidth, atlasHeight);
 }
 
 } // namespace ResourceManager

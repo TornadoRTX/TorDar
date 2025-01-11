@@ -50,9 +50,9 @@ struct MarkerIconInfo
        qIcon {QIcon(QString::fromStdString(path))},
        image {}
    {
-      auto qName = QString::fromStdString(name);
+      auto        qName = QString::fromStdString(name);
       QStringList parts = qName.split("location-");
-      shortName = parts.last().toStdString();
+      shortName         = parts.last().toStdString();
    }
 
    // Initializer for custom icons (which use a file path)

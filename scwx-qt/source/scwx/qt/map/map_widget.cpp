@@ -219,7 +219,7 @@ public:
    std::shared_ptr<model::LayerModel> layerModel_ {
       model::LayerModel::Instance()};
 
-   ui::EditMarkerDialog* editMarkerDialog_;
+   ui::EditMarkerDialog* editMarkerDialog_ {nullptr};
 
    std::shared_ptr<manager::HotkeyManager> hotkeyManager_ {
       manager::HotkeyManager::Instance()};

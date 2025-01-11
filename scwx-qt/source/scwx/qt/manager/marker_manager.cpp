@@ -470,7 +470,7 @@ std::optional<types::MarkerIconInfo>
 MarkerManager::get_icon(const std::string& name)
 {
    const std::shared_lock lock(p->markerIconsLock_);
-   auto it = p->markerIcons_.find(name);
+   auto                   it = p->markerIcons_.find(name);
    if (it != p->markerIcons_.end())
    {
       return it->second;
