@@ -46,9 +46,6 @@ static void OverrideDefaultStyle(const std::vector<std::string>& args);
 
 int main(int argc, char* argv[])
 {
-   bool disableHighPrivilegeWarning = false;
-   bool highPrivilegeChecked        = false;
-
    // Store arguments
    std::vector<std::string> args {};
    for (int i = 0; i < argc; ++i)
@@ -85,27 +82,10 @@ int main(int argc, char* argv[])
    }
 
    // Test to see if scwx was run with high privilege
-   const std::string appDataPath {
-      QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
-         .toStdString()};
-
-   // Check if high privilege before writing settings, assuming no settings
-   // have been written
-   if (!std::filesystem::exists(appDataPath) &&
-       scwx::qt::util::is_high_privilege())
+   scwx::qt::util::PrivilegeChecker privilegeChecker;
+   if (privilegeChecker.first_check())
    {
-      auto dialog =
-         scwx::qt::ui::HighPrivilegeDialog(); // TODO does this need cleaned up?
-      const int result = dialog.exec();
-
-      disableHighPrivilegeWarning = dialog.disable_high_privilege_message();
-      highPrivilegeChecked        = true;
-
-      if (result == QDialog::Rejected)
-      {
-         // TODO any other cleanup needed here?
-         return 0;
-      }
+      return 0;
    }
 
    // Start the io_context main loop
@@ -146,61 +126,28 @@ int main(int argc, char* argv[])
 
    // Check process modules for compatibility
    scwx::qt::main::CheckProcessModules();
-   auto& generalSettings = scwx::qt::settings::GeneralSettings::Instance();
 
-   if (!highPrivilegeChecked &&
-       generalSettings.high_privilege_warning_enabled().GetValue() &&
-       scwx::qt::util::is_high_privilege())
+   int result = 0;
+   if (privilegeChecker.second_check())
    {
-      auto dialog =
-         scwx::qt::ui::HighPrivilegeDialog(); // TODO does this need cleaned up?
-      const int result = dialog.exec();
-
-      disableHighPrivilegeWarning = dialog.disable_high_privilege_message();
-
-      if (result == QDialog::Rejected)
+      result = 1;
+   }
+   else
+   {
+      // Run initial setup if required
+      if (scwx::qt::ui::setup::SetupWizard::IsSetupRequired())
       {
-         // Deinitialize application
-         scwx::qt::manager::RadarProductManager::Cleanup();
-
-         // Stop Qt Threads
-         scwx::qt::manager::ThreadManager::Instance().StopThreads();
-
-         // Gracefully stop the io_context main loop
-         work.reset();
-         threadPool.join();
-
-         // Shutdown application
-         scwx::qt::manager::ResourceManager::Shutdown();
-         scwx::qt::manager::SettingsManager::Instance().Shutdown();
-
-         // Shutdown AWS SDK
-         Aws::ShutdownAPI(awsSdkOptions);
-         return 0;
+         scwx::qt::ui::setup::SetupWizard w;
+         w.show();
+         a.exec();
       }
-   }
 
-   // Save high privilege settings
-   if (disableHighPrivilegeWarning)
-   {
-      generalSettings.high_privilege_warning_enabled().SetValue(false);
-      scwx::qt::manager::SettingsManager::Instance().SaveSettings();
-   }
-
-   // Run initial setup if required
-   if (scwx::qt::ui::setup::SetupWizard::IsSetupRequired())
-   {
-      scwx::qt::ui::setup::SetupWizard w;
-      w.show();
-      a.exec();
-   }
-
-   // Run Qt main loop
-   int result;
-   {
-      scwx::qt::main::MainWindow w;
-      w.show();
-      result = a.exec();
+      // Run Qt main loop
+      {
+         scwx::qt::main::MainWindow w;
+         w.show();
+         result = a.exec();
+      }
    }
 
    // Deinitialize application

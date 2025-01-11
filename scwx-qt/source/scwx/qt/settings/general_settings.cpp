@@ -394,6 +394,7 @@ bool GeneralSettings::Shutdown()
    dataChanged |= p->loopTime_.Commit();
    dataChanged |= p->processModuleWarningsEnabled_.Commit();
    dataChanged |= p->trackLocation_.Commit();
+   dataChanged |= p->highPrivilegeWarningEnabled_.Commit();
 
    return dataChanged;
 }
