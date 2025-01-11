@@ -12,7 +12,6 @@
 #include <scwx/qt/manager/thread_manager.hpp>
 #include <scwx/qt/settings/general_settings.hpp>
 #include <scwx/qt/types/qt_types.hpp>
-#include <scwx/qt/ui/high_privilege_dialog.hpp>
 #include <scwx/qt/ui/setup/setup_wizard.hpp>
 #include <scwx/qt/main/check_privilege.hpp>
 #include <scwx/network/cpr.hpp>

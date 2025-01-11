@@ -58,7 +58,7 @@ static const QString message = QObject::tr(
 static const QString message = QObject::tr("");
 #endif
 
-static const QString title   = QObject::tr("Supercell Wx");
+static const QString title = QObject::tr("Supercell Wx");
 static const QString checkBoxText =
    QObject::tr("Do not show this warning again.");
 
@@ -88,7 +88,8 @@ public:
    QCheckBox*  checkBox_;
 };
 
-PrivilegeChecker::PrivilegeChecker() : p(std::make_unique<PrivilegeChecker::Impl>())
+PrivilegeChecker::PrivilegeChecker() :
+    p(std::make_unique<PrivilegeChecker::Impl>())
 {
 }
 
@@ -101,7 +102,7 @@ bool PrivilegeChecker::pre_settings_check()
       return false;
    }
 
-   int result = p->dialog_.exec();
+   int result                  = p->dialog_.exec();
    p->firstCheckCheckBoxState_ = p->checkBox_->isChecked();
 
    return result != QMessageBox::Yes;
