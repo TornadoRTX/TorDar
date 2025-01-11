@@ -102,7 +102,7 @@ bool PrivilegeChecker::pre_settings_check()
       return false;
    }
 
-   int result                  = p->dialog_.exec();
+   const int result            = p->dialog_.exec();
    p->firstCheckCheckBoxState_ = p->checkBox_->isChecked();
 
    return result != QMessageBox::Yes;
