@@ -1573,8 +1573,8 @@ void MapWidget::paintGL()
 
    // Render QMapLibre Map
    p->map_->resize(size());
-   p->map_->setFramebufferObject(defaultFramebufferObject(),
-                                 size() * pixelRatio());
+   p->map_->setOpenGLFramebufferObject(defaultFramebufferObject(),
+                                       size() * pixelRatio());
    p->map_->render();
 
    // Perform mouse picking
