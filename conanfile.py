@@ -12,20 +12,20 @@ class SupercellWxConan(ConanFile):
                   "geographiclib/2.4",
                   "geos/3.13.0",
                   "glew/2.2.0",
-                  "glm/cci.20230113",
+                  "glm/1.0.1",
                   "gtest/1.15.0",
                   "libcurl/8.11.1",
                   "libpng/1.6.45",
-                  "libxml2/2.12.7",
+                  "libxml2/2.13.4",
                   "openssl/3.3.2",
                   "re2/20240702",
                   "spdlog/1.15.0",
-                  "sqlite3/3.47.1",
-                  "vulkan-loader/1.3.243.0",
+                  "sqlite3/3.47.2",
+                  "vulkan-loader/1.3.290.0",
                   "zlib/1.3.1")
     generators = ("CMakeDeps")
-    default_options = {"geos/*:shared"      : True,
-                       "libiconv/*:shared"  : True}
+    default_options = {"geos/*:shared"     : True,
+                       "libiconv/*:shared" : True}
 
     def configure(self):
         if self.settings.os == "Windows":
