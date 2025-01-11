@@ -446,8 +446,17 @@ void MarkerManager::add_icon(const std::string& name, bool startup)
       const std::shared_ptr<boost::gil::rgba8_image_t> image =
          ResourceManager::LoadImageResource(name);
 
-      auto icon = types::MarkerIconInfo(name, -1, -1, image);
-      p->markerIcons_.emplace(name, icon);
+      if (image)
+      {
+         auto icon = types::MarkerIconInfo(name, -1, -1, image);
+         p->markerIcons_.emplace(name, icon);
+      }
+      else
+      {
+         // defaultIconName should always be in markerIcons, so at is fine
+         auto icon = p->markerIcons_.at(defaultIconName);
+         p->markerIcons_.emplace(name, icon);
+      }
    }
 
    if (!startup)

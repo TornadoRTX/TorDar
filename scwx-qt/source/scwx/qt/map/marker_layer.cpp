@@ -88,8 +88,16 @@ void MarkerLayer::Impl::ReloadMarkers()
                   "{}\n{}, {}", marker.name, latitudeString, longitudeString) :
                fmt::format("{}, {}", latitudeString, longitudeString);
 
+         auto iconInfo = markerManager_->get_icon(marker.iconName);
+         if (iconInfo)
+         {
+            geoIcons_->SetIconTexture(icon, iconInfo->name, 0);
+         }
+         else
+         {
+            geoIcons_->SetIconTexture(icon, marker.iconName, 0);
+         }
 
-         geoIcons_->SetIconTexture(icon, marker.iconName, 0);
          geoIcons_->SetIconLocation(icon, marker.latitude, marker.longitude);
          geoIcons_->SetIconHoverText(icon, hoverText);
          geoIcons_->SetIconModulate(icon, marker.iconColor);
