@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
 
    // Test to see if scwx was run with high privilege
    scwx::qt::main::PrivilegeChecker privilegeChecker;
-   if (privilegeChecker.first_check())
+   if (privilegeChecker.pre_settings_check())
    {
       return 0;
    }
@@ -127,7 +127,7 @@ int main(int argc, char* argv[])
    scwx::qt::main::CheckProcessModules();
 
    int result = 0;
-   if (privilegeChecker.second_check())
+   if (privilegeChecker.post_settings_check())
    {
       result = 1;
    }

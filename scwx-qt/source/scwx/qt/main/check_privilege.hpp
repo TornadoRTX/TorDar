@@ -14,8 +14,8 @@ public:
    ~PrivilegeChecker();
 
    // returning true means check failed.
-   bool first_check();
-   bool second_check();
+   bool pre_settings_check();
+   bool post_settings_check();
 
 private:
    class Impl;

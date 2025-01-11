@@ -94,7 +94,7 @@ PrivilegeChecker::PrivilegeChecker() : p(std::make_unique<PrivilegeChecker::Impl
 
 PrivilegeChecker::~PrivilegeChecker() = default;
 
-bool PrivilegeChecker::first_check()
+bool PrivilegeChecker::pre_settings_check()
 {
    if (p->hasAppData_ || !p->highPrivilege_)
    {
@@ -107,7 +107,7 @@ bool PrivilegeChecker::first_check()
    return result != QMessageBox::Yes;
 }
 
-bool PrivilegeChecker::second_check()
+bool PrivilegeChecker::post_settings_check()
 {
    auto& highPrivilegeWarningEnabled =
       settings::GeneralSettings::Instance().high_privilege_warning_enabled();
