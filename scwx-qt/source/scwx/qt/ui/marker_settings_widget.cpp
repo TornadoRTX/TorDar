@@ -23,15 +23,21 @@ class MarkerSettingsWidgetImpl
 {
 public:
    explicit MarkerSettingsWidgetImpl(MarkerSettingsWidget* self) :
-      self_ {self},
-      markerModel_ {new model::MarkerModel(self_)}
+       self_ {self},
+       markerModel_ {new model::MarkerModel(self_)},
+       proxyModel_ {new QSortFilterProxyModel(self_)}
    {
+      proxyModel_->setSourceModel(markerModel_);
+      proxyModel_->setSortRole(Qt::DisplayRole); // TODO types::SortRole
+      proxyModel_->setFilterCaseSensitivity(Qt::CaseInsensitive);
+      proxyModel_->setFilterKeyColumn(-1);
    }
 
    void ConnectSignals();
 
-   MarkerSettingsWidget* self_;
-   model::MarkerModel* markerModel_;
+   MarkerSettingsWidget*                   self_;
+   model::MarkerModel*                     markerModel_;
+   QSortFilterProxyModel*                  proxyModel_;
    std::shared_ptr<manager::MarkerManager> markerManager_ {
       manager::MarkerManager::Instance()};
    std::shared_ptr<ui::EditMarkerDialog> editMarkerDialog_ {nullptr};
@@ -46,7 +52,7 @@ MarkerSettingsWidget::MarkerSettingsWidget(QWidget* parent) :
    ui->setupUi(this);
 
    ui->removeButton->setEnabled(false);
-   ui->markerView->setModel(p->markerModel_);
+   ui->markerView->setModel(p->proxyModel_);
 
    p->editMarkerDialog_ = std::make_shared<ui::EditMarkerDialog>(this);
 

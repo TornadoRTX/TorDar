@@ -219,7 +219,7 @@ public:
    std::shared_ptr<model::LayerModel> layerModel_ {
       model::LayerModel::Instance()};
 
-   std::shared_ptr<ui::EditMarkerDialog> editMarkerDialog_;
+   ui::EditMarkerDialog* editMarkerDialog_;
 
    std::shared_ptr<manager::HotkeyManager> hotkeyManager_ {
       manager::HotkeyManager::Instance()};
@@ -286,7 +286,10 @@ MapWidget::MapWidget(std::size_t id, const QMapLibre::Settings& settings) :
 
    ImGui_ImplQt_RegisterWidget(this);
 
-   p->editMarkerDialog_ = std::make_shared<ui::EditMarkerDialog>(this);
+   // Qt parent deals with memory management
+   // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
+   p->editMarkerDialog_ = new ui::EditMarkerDialog(this);
+
    p->ConnectSignals();
 }
 

@@ -129,7 +129,20 @@ QVariant MarkerModel::data(const QModelIndex& index, int role) const
       break;
       break;
    case static_cast<int>(Column::Icon):
-      if (role == Qt::ItemDataRole::DecorationRole)
+      if (role == Qt::ItemDataRole::DisplayRole)
+      {
+         std::optional<types::MarkerIconInfo> icon =
+            p->markerManager_->get_icon(markerInfo->iconName);
+         if (icon)
+         {
+            return QString::fromStdString(icon->shortName);
+         }
+         else
+         {
+            return {};
+         }
+      }
+      else if (role == Qt::ItemDataRole::DecorationRole)
       {
          std::optional<types::MarkerIconInfo> icon =
             p->markerManager_->get_icon(markerInfo->iconName);

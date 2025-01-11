@@ -77,9 +77,21 @@ void MarkerLayer::Impl::ReloadMarkers()
          const std::shared_ptr<gl::draw::GeoIconDrawItem> icon =
             geoIcons_->AddIcon();
 
+         const std::string latitudeString =
+            common::GetLatitudeString(marker.latitude);
+         const std::string longitudeString =
+            common::GetLongitudeString(marker.longitude);
+
+         const std::string hoverText =
+            marker.name != "" ?
+               fmt::format(
+                  "{}\n{}, {}", marker.name, latitudeString, longitudeString) :
+               fmt::format("{}, {}", latitudeString, longitudeString);
+
+
          geoIcons_->SetIconTexture(icon, marker.iconName, 0);
          geoIcons_->SetIconLocation(icon, marker.latitude, marker.longitude);
-         geoIcons_->SetIconHoverText(icon, marker.name);
+         geoIcons_->SetIconHoverText(icon, hoverText);
          geoIcons_->SetIconModulate(icon, marker.iconColor);
          geoIcons_->RegisterEventHandler(
             icon,

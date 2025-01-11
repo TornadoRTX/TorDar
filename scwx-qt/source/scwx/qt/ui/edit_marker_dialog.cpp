@@ -17,11 +17,7 @@
 #include <QPushButton>
 #include <QFileDialog>
 
-namespace scwx
-{
-namespace qt
-{
-namespace ui
+namespace scwx::qt::ui
 {
 
 static const std::string logPrefix_ = "scwx::qt::ui::edit_marker_dialog";
@@ -71,9 +67,10 @@ EditMarkerDialog::EditMarkerDialog(QWidget* parent) :
 
    for (auto& markerIcon : p->markerManager_->get_icons())
    {
-      ui->iconComboBox->addItem(markerIcon.second.qIcon,
-                                QString(""),
-                                QString::fromStdString(markerIcon.second.name));
+      ui->iconComboBox->addItem(
+         markerIcon.second.qIcon,
+         QString::fromStdString(markerIcon.second.shortName),
+         QString::fromStdString(markerIcon.second.name));
    }
    p->deleteButton_ =
       ui->buttonBox->addButton("Delete", QDialogButtonBox::DestructiveRole);
@@ -154,7 +151,8 @@ types::MarkerInfo EditMarkerDialog::get_marker_info() const
 
 void EditMarkerDialog::Impl::show_color_dialog()
 {
-
+   // WA_DeleteOnClose manages memory
+   // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
    auto* dialog = new QColorDialog(self_);
 
    dialog->setAttribute(Qt::WA_DeleteOnClose);
@@ -184,7 +182,7 @@ void EditMarkerDialog::Impl::show_icon_file_dialog()
    auto* dialog = new QFileDialog(self_);
 
    dialog->setFileMode(QFileDialog::ExistingFile);
-   dialog->setNameFilters({"Icon (*.png *.svg)", "All (*)"});
+   dialog->setNameFilters({"Icon (*.png *.svg)", "All Files (*)"});
    dialog->setAttribute(Qt::WA_DeleteOnClose);
 
    QObject::connect(dialog,
@@ -256,6 +254,11 @@ void EditMarkerDialog::Impl::connect_signals()
                  }
               }
            });
+
+   connect(self_->ui->buttonBox->button(QDialogButtonBox::Apply),
+           &QAbstractButton::clicked,
+           self_,
+           [this]() { handle_accepted(); });
 }
 
 void EditMarkerDialog::Impl::set_icon_color(const std::string& color)
@@ -276,7 +279,9 @@ void EditMarkerDialog::Impl::set_icon_color(const std::string& color)
       if (i < 0)
       {
          iconComboBox->addItem(
-            icon, QString(""), QString::fromStdString(markerIcon.second.name));
+            icon,
+            QString::fromStdString(markerIcon.second.shortName),
+            QString::fromStdString(markerIcon.second.name));
       }
       else
       {
@@ -306,6 +311,4 @@ void EditMarkerDialog::Impl::handle_rejected()
    }
 }
 
-} // namespace ui
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::ui

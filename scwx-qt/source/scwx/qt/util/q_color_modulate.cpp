@@ -6,11 +6,7 @@
 #include <QPixmap>
 #include <QSize>
 
-namespace scwx
-{
-namespace qt
-{
-namespace util
+namespace scwx::qt::util
 {
 
 void modulateColors_(QImage& image, const QColor& color)
@@ -20,6 +16,9 @@ void modulateColors_(QImage& image, const QColor& color)
       QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y));
       for (int x = 0; x < image.width(); ++x)
       {
+         // This is pulled from Qt Documentation
+         // https://doc.qt.io/qt-6/qimage.html#scanLine
+         // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
          QRgb& rgb = line[x];
          /* clang-format off
           * NOLINTBEGIN(cppcoreguidelines-narrowing-conversions, bugprone-narrowing-conversions)
@@ -62,6 +61,4 @@ QIcon modulateColors(const QIcon& icon, const QSize& size, const QColor& color)
    return QIcon(pixmap);
 }
 
-} // namespace util
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::util

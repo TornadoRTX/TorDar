@@ -8,11 +8,7 @@ namespace Ui
 class EditMarkerDialog;
 }
 
-namespace scwx
-{
-namespace qt
-{
-namespace ui
+namespace scwx::qt::ui
 {
 class EditMarkerDialog : public QDialog
 {
@@ -35,6 +31,4 @@ private:
    Ui::EditMarkerDialog* ui;
 };
 
-} // namespace ui
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::ui

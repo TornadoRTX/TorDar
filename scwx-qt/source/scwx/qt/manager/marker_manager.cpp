@@ -203,9 +203,7 @@ void MarkerManager::Impl::ReadMarkerSettings()
             }
          }
 
-         util::TextureAtlas& textureAtlas = util::TextureAtlas::Instance();
-         textureAtlas.BuildAtlas(
-            2048, 2048); // Should this code be moved to ResourceManager?
+         ResourceManager::BuildAtlas();
 
          logger_->debug("{} location marker entries", markerRecords_.size());
       }
@@ -239,7 +237,7 @@ MarkerManager::Impl::GetMarkerByName(const std::string& name)
 
 MarkerManager::MarkerManager() : p(std::make_unique<Impl>(this))
 {
-   const std::vector<types::MarkerIconInfo> defaultMarkerIcons_ {
+   static const std::vector<types::MarkerIconInfo> defaultMarkerIcons_ {
       types::MarkerIconInfo(types::ImageTexture::LocationMarker, -1, -1),
       types::MarkerIconInfo(types::ImageTexture::LocationPin, 6, 16),
       types::MarkerIconInfo(types::ImageTexture::LocationCrosshair, -1, -1),
@@ -256,7 +254,7 @@ MarkerManager::MarkerManager() : p(std::make_unique<Impl>(this))
    p->InitializeMarkerSettings();
 
    boost::asio::post(p->threadPool_,
-                     [this, defaultMarkerIcons_]()
+                     [this]()
                      {
                         try
                         {
@@ -454,9 +452,7 @@ void MarkerManager::add_icon(const std::string& name, bool startup)
 
    if (!startup)
    {
-      util::TextureAtlas& textureAtlas = util::TextureAtlas::Instance();
-      textureAtlas.BuildAtlas(
-         2048, 2048); // Should this code be moved to ResourceManager?
+      ResourceManager::BuildAtlas();
       Q_EMIT IconAdded(name);
    }
 }
@@ -465,9 +461,10 @@ std::optional<types::MarkerIconInfo>
 MarkerManager::get_icon(const std::string& name)
 {
    const std::shared_lock lock(p->markerIconsLock_);
-   if (p->markerIcons_.contains(name))
+   auto it = p->markerIcons_.find(name);
+   if (it != p->markerIcons_.end())
    {
-      return p->markerIcons_.at(name);
+      return it->second;
    }
 
    return {};
