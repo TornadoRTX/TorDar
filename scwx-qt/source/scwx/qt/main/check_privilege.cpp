@@ -1,5 +1,5 @@
-#include "scwx/qt/settings/general_settings.hpp"
-#include "scwx/qt/main/check_privilege.hpp"
+#include <scwx/qt/settings/general_settings.hpp>
+#include <scwx/qt/main/check_privilege.hpp>
 #include <QtGlobal>
 #include <QStandardPaths>
 #include <filesystem>
