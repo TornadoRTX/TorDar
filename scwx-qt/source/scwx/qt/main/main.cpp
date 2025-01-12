@@ -3,6 +3,7 @@
 #include <scwx/qt/config/county_database.hpp>
 #include <scwx/qt/config/radar_site.hpp>
 #include <scwx/qt/main/main_window.hpp>
+#include <scwx/qt/main/process_validation.hpp>
 #include <scwx/qt/main/versions.hpp>
 #include <scwx/qt/manager/log_manager.hpp>
 #include <scwx/qt/manager/radar_product_manager.hpp>
@@ -113,6 +114,9 @@ int main(int argc, char* argv[])
    // Theme
    ConfigureTheme(args);
 
+   // Check process modules for compatibility
+   scwx::qt::main::CheckProcessModules();
+
    // Run initial setup if required
    if (scwx::qt::ui::setup::SetupWizard::IsSetupRequired())
    {
@@ -170,7 +174,8 @@ static void ConfigureTheme(const std::vector<std::string>& args)
    QGuiApplication::styleHints()->setColorScheme(qtColorScheme);
 
    std::optional<std::string> paletteFile;
-   if (uiStyle == scwx::qt::types::UiStyle::FusionCustom) {
+   if (uiStyle == scwx::qt::types::UiStyle::FusionCustom)
+   {
       paletteFile = generalSettings.theme_file().GetValue();
    }
    else

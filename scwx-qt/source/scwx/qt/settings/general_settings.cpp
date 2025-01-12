@@ -69,6 +69,7 @@ public:
       nmeaBaudRate_.SetDefault(9600);
       nmeaSource_.SetDefault("");
       positioningPlugin_.SetDefault(defaultPositioningPlugin);
+      processModuleWarningsEnabled_.SetDefault(true);
       showMapAttribution_.SetDefault(true);
       showMapCenter_.SetDefault(false);
       showMapLogo_.SetDefault(true);
@@ -162,12 +163,14 @@ public:
    SettingsVariable<std::int64_t> nmeaBaudRate_ {"nmea_baud_rate"};
    SettingsVariable<std::string>  nmeaSource_ {"nmea_source"};
    SettingsVariable<std::string>  positioningPlugin_ {"positioning_plugin"};
-   SettingsVariable<bool>         showMapAttribution_ {"show_map_attribution"};
-   SettingsVariable<bool>         showMapCenter_ {"show_map_center"};
-   SettingsVariable<bool>         showMapLogo_ {"show_map_logo"};
-   SettingsVariable<std::string>  theme_ {"theme"};
-   SettingsVariable<std::string>  themeFile_ {"theme_file"};
-   SettingsVariable<bool>         trackLocation_ {"track_location"};
+   SettingsVariable<bool>         processModuleWarningsEnabled_ {
+      "process_module_warnings_enabled"};
+   SettingsVariable<bool>        showMapAttribution_ {"show_map_attribution"};
+   SettingsVariable<bool>        showMapCenter_ {"show_map_center"};
+   SettingsVariable<bool>        showMapLogo_ {"show_map_logo"};
+   SettingsVariable<std::string> theme_ {"theme"};
+   SettingsVariable<std::string> themeFile_ {"theme_file"};
+   SettingsVariable<bool>        trackLocation_ {"track_location"};
    SettingsVariable<bool> updateNotificationsEnabled_ {"update_notifications"};
    SettingsVariable<std::string> warningsProvider_ {"warnings_provider"};
    SettingsVariable<bool>        cursorIconAlwaysOn_ {"cursor_icon_always_on"};
@@ -197,6 +200,7 @@ GeneralSettings::GeneralSettings() :
                       &p->nmeaBaudRate_,
                       &p->nmeaSource_,
                       &p->positioningPlugin_,
+                      &p->processModuleWarningsEnabled_,
                       &p->showMapAttribution_,
                       &p->showMapCenter_,
                       &p->showMapLogo_,
@@ -316,6 +320,11 @@ SettingsVariable<std::string>& GeneralSettings::positioning_plugin() const
    return p->positioningPlugin_;
 }
 
+SettingsVariable<bool>& GeneralSettings::process_module_warnings_enabled() const
+{
+   return p->processModuleWarningsEnabled_;
+}
+
 SettingsVariable<bool>& GeneralSettings::show_map_attribution() const
 {
    return p->showMapAttribution_;
@@ -374,6 +383,7 @@ bool GeneralSettings::Shutdown()
    dataChanged |= p->loopDelay_.Commit();
    dataChanged |= p->loopSpeed_.Commit();
    dataChanged |= p->loopTime_.Commit();
+   dataChanged |= p->processModuleWarningsEnabled_.Commit();
    dataChanged |= p->trackLocation_.Commit();
 
    return dataChanged;
@@ -407,6 +417,8 @@ bool operator==(const GeneralSettings& lhs, const GeneralSettings& rhs)
            lhs.p->nmeaBaudRate_ == rhs.p->nmeaBaudRate_ &&
            lhs.p->nmeaSource_ == rhs.p->nmeaSource_ &&
            lhs.p->positioningPlugin_ == rhs.p->positioningPlugin_ &&
+           lhs.p->processModuleWarningsEnabled_ ==
+              rhs.p->processModuleWarningsEnabled_ &&
            lhs.p->showMapAttribution_ == rhs.p->showMapAttribution_ &&
            lhs.p->showMapCenter_ == rhs.p->showMapCenter_ &&
            lhs.p->showMapLogo_ == rhs.p->showMapLogo_ &&
