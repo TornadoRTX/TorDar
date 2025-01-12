@@ -23,11 +23,15 @@ public:
 
    size_t                           marker_count();
    std::optional<types::MarkerInfo> get_marker(types::MarkerId id);
-   std::optional<size_t> get_index(types::MarkerId id);
+   std::optional<size_t>            get_index(types::MarkerId id);
    void set_marker(types::MarkerId id, const types::MarkerInfo& marker);
-   void add_marker(const types::MarkerInfo& marker);
-   void remove_marker(types::MarkerId id);
-   void move_marker(size_t from, size_t to);
+   types::MarkerId add_marker(const types::MarkerInfo& marker);
+   void            remove_marker(types::MarkerId id);
+   void            move_marker(size_t from, size_t to);
+
+   void add_icon(const std::string& name, bool startup = false);
+   std::optional<types::MarkerIconInfo> get_icon(const std::string& name);
+   const std::unordered_map<std::string, types::MarkerIconInfo> get_icons();
 
    void for_each(std::function<MarkerForEachFunc> func);
 
@@ -35,6 +39,7 @@ public:
    void set_marker_settings_path(const std::string& path);
 
    static std::shared_ptr<MarkerManager> Instance();
+   static const std::string&             getDefaultIconName();
 
 signals:
    void MarkersInitialized(size_t count);
@@ -42,6 +47,9 @@ signals:
    void MarkerChanged(types::MarkerId id);
    void MarkerAdded(types::MarkerId id);
    void MarkerRemoved(types::MarkerId id);
+
+   void IconsReady();
+   void IconAdded(std::string name);
 
 private:
    class Impl;

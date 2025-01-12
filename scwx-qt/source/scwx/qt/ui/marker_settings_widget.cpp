@@ -4,7 +4,7 @@
 #include <scwx/qt/manager/marker_manager.hpp>
 #include <scwx/qt/model/marker_model.hpp>
 #include <scwx/qt/types/qt_types.hpp>
-#include <scwx/qt/ui/open_url_dialog.hpp>
+#include <scwx/qt/ui/edit_marker_dialog.hpp>
 #include <scwx/util/logger.hpp>
 
 #include <QSortFilterProxyModel>
@@ -23,17 +23,24 @@ class MarkerSettingsWidgetImpl
 {
 public:
    explicit MarkerSettingsWidgetImpl(MarkerSettingsWidget* self) :
-      self_ {self},
-      markerModel_ {new model::MarkerModel(self_)}
+       self_ {self},
+       markerModel_ {new model::MarkerModel(self_)},
+       proxyModel_ {new QSortFilterProxyModel(self_)}
    {
+      proxyModel_->setSourceModel(markerModel_);
+      proxyModel_->setSortRole(Qt::DisplayRole); // TODO types::SortRole
+      proxyModel_->setFilterCaseSensitivity(Qt::CaseInsensitive);
+      proxyModel_->setFilterKeyColumn(-1);
    }
 
    void ConnectSignals();
 
-   MarkerSettingsWidget* self_;
-   model::MarkerModel* markerModel_;
+   MarkerSettingsWidget*                   self_;
+   model::MarkerModel*                     markerModel_;
+   QSortFilterProxyModel*                  proxyModel_;
    std::shared_ptr<manager::MarkerManager> markerManager_ {
       manager::MarkerManager::Instance()};
+   std::shared_ptr<ui::EditMarkerDialog> editMarkerDialog_ {nullptr};
 };
 
 
@@ -45,8 +52,9 @@ MarkerSettingsWidget::MarkerSettingsWidget(QWidget* parent) :
    ui->setupUi(this);
 
    ui->removeButton->setEnabled(false);
+   ui->markerView->setModel(p->proxyModel_);
 
-   ui->markerView->setModel(p->markerModel_);
+   p->editMarkerDialog_ = std::make_shared<ui::EditMarkerDialog>(this);
 
    p->ConnectSignals();
 }
@@ -63,7 +71,8 @@ void MarkerSettingsWidgetImpl::ConnectSignals()
                     self_,
                     [this]()
                     {
-                       markerManager_->add_marker(types::MarkerInfo("", 0, 0));
+                       editMarkerDialog_->setup();
+                       editMarkerDialog_->show();
                     });
    QObject::connect(
       self_->ui->removeButton,
@@ -99,9 +108,30 @@ void MarkerSettingsWidgetImpl::ConnectSignals()
             return;
          }
 
-         bool itemSelected = selected.size() > 0;
+         const bool itemSelected = selected.size() > 0;
          self_->ui->removeButton->setEnabled(itemSelected);
       });
+   QObject::connect(self_->ui->markerView,
+                    &QAbstractItemView::doubleClicked,
+                    self_,
+                    [this](const QModelIndex& index)
+                    {
+                       const int row = index.row();
+                       if (row < 0)
+                       {
+                          return;
+                       }
+
+                       std::optional<types::MarkerId> id =
+                          markerModel_->getId(row);
+                       if (!id)
+                       {
+                          return;
+                       }
+
+                       editMarkerDialog_->setup(*id);
+                       editMarkerDialog_->show();
+                    });
 }
 
 } // namespace ui

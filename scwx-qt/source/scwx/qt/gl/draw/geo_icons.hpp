@@ -183,6 +183,16 @@ public:
     */
    void FinishIcons();
 
+   /**
+    * Registers an event handler for an icon.
+    *
+    * @param [in] di Icon draw item
+    * @param [in] eventHandler Event handler function
+    */
+   static void
+   RegisterEventHandler(const std::shared_ptr<GeoIconDrawItem>& di,
+                        const std::function<void(QEvent*)>&     eventHandler);
+
 private:
    class Impl;
 

@@ -18,7 +18,16 @@ enum class ImageTexture
    Crosshairs24,
    Cursor17,
    Dot3,
+   LocationBriefcase,
+   LocationBuildingColumns,
+   LocationBuilding,
+   LocationCaravan,
+   LocationCrosshair,
+   LocationHouse,
    LocationMarker,
+   LocationPin,
+   LocationStar,
+   LocationTent,
    MapboxLogo,
    MapTilerLogo
 };

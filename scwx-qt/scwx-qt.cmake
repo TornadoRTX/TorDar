@@ -222,8 +222,8 @@ set(HDR_TYPES source/scwx/qt/types/alert_types.hpp
               source/scwx/qt/types/layer_types.hpp
               source/scwx/qt/types/location_types.hpp
               source/scwx/qt/types/map_types.hpp
-              source/scwx/qt/types/media_types.hpp
               source/scwx/qt/types/marker_types.hpp
+              source/scwx/qt/types/media_types.hpp
               source/scwx/qt/types/qt_types.hpp
               source/scwx/qt/types/radar_product_record.hpp
               source/scwx/qt/types/text_event_key.hpp
@@ -255,6 +255,7 @@ set(HDR_UI source/scwx/qt/ui/about_dialog.hpp
            source/scwx/qt/ui/county_dialog.hpp
            source/scwx/qt/ui/download_dialog.hpp
            source/scwx/qt/ui/edit_line_dialog.hpp
+           source/scwx/qt/ui/edit_marker_dialog.hpp
            source/scwx/qt/ui/flow_layout.hpp
            source/scwx/qt/ui/gps_info_dialog.hpp
            source/scwx/qt/ui/hotkey_edit.hpp
@@ -285,6 +286,7 @@ set(SRC_UI source/scwx/qt/ui/about_dialog.cpp
            source/scwx/qt/ui/county_dialog.cpp
            source/scwx/qt/ui/download_dialog.cpp
            source/scwx/qt/ui/edit_line_dialog.cpp
+           source/scwx/qt/ui/edit_marker_dialog.cpp
            source/scwx/qt/ui/flow_layout.cpp
            source/scwx/qt/ui/gps_info_dialog.cpp
            source/scwx/qt/ui/hotkey_edit.cpp
@@ -314,6 +316,7 @@ set(UI_UI  source/scwx/qt/ui/about_dialog.ui
            source/scwx/qt/ui/collapsible_group.ui
            source/scwx/qt/ui/county_dialog.ui
            source/scwx/qt/ui/edit_line_dialog.ui
+           source/scwx/qt/ui/edit_marker_dialog.ui
            source/scwx/qt/ui/gps_info_dialog.ui
            source/scwx/qt/ui/imgui_debug_dialog.ui
            source/scwx/qt/ui/layer_dialog.ui
@@ -357,6 +360,7 @@ set(HDR_UTIL source/scwx/qt/util/color.hpp
              source/scwx/qt/util/network.hpp
              source/scwx/qt/util/streams.hpp
              source/scwx/qt/util/texture_atlas.hpp
+             source/scwx/qt/util/q_color_modulate.hpp
              source/scwx/qt/util/q_file_buffer.hpp
              source/scwx/qt/util/q_file_input_stream.hpp
              source/scwx/qt/util/time.hpp
@@ -369,6 +373,7 @@ set(SRC_UTIL source/scwx/qt/util/color.cpp
              source/scwx/qt/util/maplibre.cpp
              source/scwx/qt/util/network.cpp
              source/scwx/qt/util/texture_atlas.cpp
+             source/scwx/qt/util/q_color_modulate.cpp
              source/scwx/qt/util/q_file_buffer.cpp
              source/scwx/qt/util/q_file_input_stream.cpp
              source/scwx/qt/util/time.cpp

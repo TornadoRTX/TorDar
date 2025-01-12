@@ -22,6 +22,9 @@ namespace ResourceManager
 static const std::string logPrefix_ = "scwx::qt::manager::resource_manager";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 
+static const size_t atlasWidth  = 2048;
+static const size_t atlasHeight = 2048;
+
 static void LoadFonts();
 static void LoadTextures();
 
@@ -68,8 +71,7 @@ LoadImageResources(const std::vector<std::string>& urlStrings)
 
    if (!images.empty())
    {
-      util::TextureAtlas& textureAtlas = util::TextureAtlas::Instance();
-      textureAtlas.BuildAtlas(2048, 2048);
+      BuildAtlas();
    }
 
    return images;
@@ -103,7 +105,13 @@ static void LoadTextures()
                                    GetTexturePath(lineTexture));
    }
 
-   textureAtlas.BuildAtlas(2048, 2048);
+   BuildAtlas();
+}
+
+void BuildAtlas()
+{
+   util::TextureAtlas& textureAtlas = util::TextureAtlas::Instance();
+   textureAtlas.BuildAtlas(atlasWidth, atlasHeight);
 }
 
 } // namespace ResourceManager

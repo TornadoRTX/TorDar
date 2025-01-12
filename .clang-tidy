@@ -10,4 +10,6 @@ Checks:
   - '-misc-include-cleaner'
   - '-misc-non-private-member-variables-in-classes'
   - '-modernize-use-trailing-return-type'
+  - '-bugprone-easily-swappable-parameters'
+  - '-modernize-return-braced-init-list'
 FormatStyle: 'file'

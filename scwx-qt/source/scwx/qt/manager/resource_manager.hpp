@@ -22,6 +22,7 @@ std::shared_ptr<boost::gil::rgba8_image_t>
 LoadImageResource(const std::string& urlString);
 std::vector<std::shared_ptr<boost::gil::rgba8_image_t>>
 LoadImageResources(const std::vector<std::string>& urlStrings);
+void BuildAtlas();
 
 } // namespace ResourceManager
 } // namespace manager
