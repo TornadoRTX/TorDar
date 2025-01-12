@@ -13,9 +13,9 @@ public:
    explicit PrivilegeChecker();
    ~PrivilegeChecker();
 
-   PrivilegeChecker(const PrivilegeChecker&) = delete;
-   PrivilegeChecker& operator=(const PrivilegeChecker&) = delete;
-   PrivilegeChecker(const PrivilegeChecker&&) = delete;
+   PrivilegeChecker(const PrivilegeChecker&)             = delete;
+   PrivilegeChecker& operator=(const PrivilegeChecker&)  = delete;
+   PrivilegeChecker(const PrivilegeChecker&&)            = delete;
    PrivilegeChecker& operator=(const PrivilegeChecker&&) = delete;
 
    // returning true means check failed.
