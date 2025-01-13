@@ -13,6 +13,7 @@
 #include <scwx/qt/settings/general_settings.hpp>
 #include <scwx/qt/types/qt_types.hpp>
 #include <scwx/qt/ui/setup/setup_wizard.hpp>
+#include <scwx/qt/main/check_privilege.hpp>
 #include <scwx/network/cpr.hpp>
 #include <scwx/util/environment.hpp>
 #include <scwx/util/logger.hpp>
@@ -78,6 +79,13 @@ int main(int argc, char* argv[])
       QStandardPaths::setTestModeEnabled(true);
    }
 
+   // Test to see if scwx was run with high privilege
+   scwx::qt::main::PrivilegeChecker privilegeChecker;
+   if (privilegeChecker.pre_settings_check())
+   {
+      return 0;
+   }
+
    // Start the io_context main loop
    boost::asio::io_context& ioContext = scwx::util::io_context();
    auto                     work      = boost::asio::make_work_guard(ioContext);
@@ -117,20 +125,27 @@ int main(int argc, char* argv[])
    // Check process modules for compatibility
    scwx::qt::main::CheckProcessModules();
 
-   // Run initial setup if required
-   if (scwx::qt::ui::setup::SetupWizard::IsSetupRequired())
+   int result = 0;
+   if (privilegeChecker.post_settings_check())
    {
-      scwx::qt::ui::setup::SetupWizard w;
-      w.show();
-      a.exec();
+      result = 1;
    }
-
-   // Run Qt main loop
-   int result;
+   else
    {
-      scwx::qt::main::MainWindow w;
-      w.show();
-      result = a.exec();
+      // Run initial setup if required
+      if (scwx::qt::ui::setup::SetupWizard::IsSetupRequired())
+      {
+         scwx::qt::ui::setup::SetupWizard w;
+         w.show();
+         a.exec();
+      }
+
+      // Run Qt main loop
+      {
+         scwx::qt::main::MainWindow w;
+         w.show();
+         result = a.exec();
+      }
    }
 
    // Deinitialize application

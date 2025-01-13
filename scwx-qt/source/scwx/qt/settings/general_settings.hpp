@@ -56,6 +56,7 @@ public:
    SettingsVariable<std::string>& warnings_provider() const;
    SettingsVariable<bool>&        cursor_icon_always_on() const;
    SettingsVariable<double>&      radar_site_threshold() const;
+   SettingsVariable<bool>&        high_privilege_warning_enabled() const;
 
    static GeneralSettings& Instance();
 
