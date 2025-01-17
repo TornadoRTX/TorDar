@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Marker Manager</string>
+   <string>Location Marker Manager</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
