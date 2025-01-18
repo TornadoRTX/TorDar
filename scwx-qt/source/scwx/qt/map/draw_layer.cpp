@@ -25,8 +25,7 @@ public:
    explicit DrawLayerImpl(std::shared_ptr<MapContext> context) :
        context_ {context},
        drawList_ {},
-       textureAtlas_ {GL_INVALID_INDEX},
-       imGuiRendererInitialized_ {false}
+       textureAtlas_ {GL_INVALID_INDEX}
    {
       static size_t currentMapId_ {0u};
       imGuiContextName_ = fmt::format("Layer {}", ++currentMapId_);
@@ -52,35 +51,16 @@ public:
       model::ImGuiContextModel::Instance().DestroyContext(imGuiContextName_);
    }
 
-   void ImGuiCheckFonts();
-
    std::shared_ptr<MapContext>                      context_;
    std::vector<std::shared_ptr<gl::draw::DrawItem>> drawList_;
    GLuint                                           textureAtlas_;
 
    std::uint64_t textureAtlasBuildCount_ {};
 
-   std::string imGuiContextName_;
+   std::string   imGuiContextName_;
    ImGuiContext* imGuiContext_;
-   bool          imGuiRendererInitialized_;
-   std::uint64_t imGuiFontsBuildCount_ {};
+   bool          imGuiRendererInitialized_{};
 };
-
-void DrawLayerImpl::ImGuiCheckFonts()
-{
-   // Update ImGui Fonts if required
-   std::uint64_t currentImGuiFontsBuildCount =
-      manager::FontManager::Instance().imgui_fonts_build_count();
-
-   if (imGuiFontsBuildCount_ != currentImGuiFontsBuildCount ||
-       !model::ImGuiContextModel::Instance().font_atlas()->IsBuilt())
-   {
-      ImGui_ImplOpenGL3_DestroyFontsTexture();
-      ImGui_ImplOpenGL3_CreateFontsTexture();
-   }
-
-   imGuiFontsBuildCount_ = currentImGuiFontsBuildCount;
-}
 
 DrawLayer::DrawLayer(const std::shared_ptr<MapContext>& context) :
     GenericLayer(context), p(std::make_unique<DrawLayerImpl>(context))
@@ -111,7 +91,6 @@ void DrawLayer::StartImGuiFrame()
    // Start ImGui Frame
    ImGui_ImplQt_NewFrame(p->context_->widget());
    ImGui_ImplOpenGL3_NewFrame();
-   p->ImGuiCheckFonts();
    ImGui::NewFrame();
    ImGui::PushFont(defaultFont->font());
 }
@@ -131,8 +110,6 @@ void DrawLayer::ImGuiInitialize()
    ImGui::SetCurrentContext(p->imGuiContext_);
    ImGui_ImplQt_RegisterWidget(p->context_->widget());
    ImGui_ImplOpenGL3_Init();
-   p->imGuiFontsBuildCount_ =
-      manager::FontManager::Instance().imgui_fonts_build_count();
    p->imGuiRendererInitialized_ = true;
 }
 

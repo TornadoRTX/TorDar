@@ -1576,6 +1576,9 @@ void MapWidget::paintGL()
    std::shared_lock imguiFontAtlasLock {
       manager::FontManager::Instance().imgui_font_atlas_mutex()};
 
+   // Check ImGui fonts
+   ImGui::SetCurrentContext(p->imGuiContext_);
+   p->ImGuiCheckFonts();
 
    // Update pixel ratio
    p->context_->set_pixel_ratio(pixelRatio());
@@ -1593,7 +1596,6 @@ void MapWidget::paintGL()
    // Start ImGui Frame
    ImGui_ImplQt_NewFrame(this);
    ImGui_ImplOpenGL3_NewFrame();
-   p->ImGuiCheckFonts();
    ImGui::NewFrame();
 
    // Set default font
