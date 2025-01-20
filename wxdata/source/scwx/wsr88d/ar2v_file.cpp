@@ -188,7 +188,7 @@ Ar2vFile::GetElevationScan(rda::DataBlockType                    dataBlockType,
 
       for (auto& scan : elevationScans)
       {
-         auto& scanTime = scan.first;
+         auto scanTime = std::chrono::floor<std::chrono::seconds>(scan.first);
 
          if (elevationScan == nullptr ||
              (scanTime <= time && scanTime > foundTime))
