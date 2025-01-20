@@ -29,6 +29,10 @@ static const auto        logger_    = util::Logger::Create(logPrefix_);
 
 static constexpr uint16_t RANGE_FOLDED = 1u;
 
+static const std::unordered_map<common::Level3ProductCategory, float>
+   categoryScale_ {
+      {common::Level3ProductCategory::CorrelationCoefficient, 100.0f}};
+
 static const std::unordered_map<common::Level3ProductCategory, std::string>
    categoryUnits_ {
       {common::Level3ProductCategory::Reflectivity, "dBZ"},
@@ -215,6 +219,15 @@ float Level3ProductView::unit_scale() const
 
    default:
       break;
+   }
+
+   if (p->otherUnits_ == types::OtherUnits::Default)
+   {
+      auto it = categoryScale_.find(p->category_);
+      if (it != categoryScale_.cend())
+      {
+         return it->second;
+      }
    }
 
    return 1.0f;

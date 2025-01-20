@@ -51,6 +51,9 @@ static const std::unordered_map<common::Level2Product,
       {common::Level2Product::ClutterFilterPowerRemoved,
        wsr88d::rda::DataBlockType::MomentCfp}};
 
+static const std::unordered_map<common::Level2Product, float> productScale_ {
+   {common::Level2Product::CorrelationCoefficient, 100.0f}};
+
 static const std::unordered_map<common::Level2Product, std::string>
    productUnits_ {{common::Level2Product::Reflectivity, "dBZ"},
                   {common::Level2Product::DifferentialReflectivity, "dB"},
@@ -293,6 +296,15 @@ float Level2ProductView::unit_scale() const
 
    default:
       break;
+   }
+
+   if (p->otherUnits_ == types::OtherUnits::Default)
+   {
+      auto it = productScale_.find(p->product_);
+      if (it != productScale_.cend())
+      {
+         return it->second;
+      }
    }
 
    return 1.0f;
