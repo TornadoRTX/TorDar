@@ -23,6 +23,9 @@ namespace scwx::qt::ui
 static const std::string logPrefix_ = "scwx::qt::ui::edit_marker_dialog";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 
+static const QString addingTitle_  = QObject::tr("Add Location Marker");
+static const QString editingTitle_ = QObject::tr("Edit Location Marker");
+
 class EditMarkerDialog::Impl
 {
 public:
@@ -32,6 +35,7 @@ public:
    void show_icon_file_dialog();
 
    void set_icon_color(const std::string& color);
+   void set_adding(bool adding);
 
    void connect_signals();
 
@@ -56,6 +60,24 @@ QIcon EditMarkerDialog::Impl::get_colored_icon(
    return util::modulateColors(marker.qIcon,
                                self_->ui->iconComboBox->iconSize(),
                                QColor(QString::fromStdString(color)));
+}
+
+void EditMarkerDialog::Impl::set_adding(bool adding)
+{
+   if (adding == adding_)
+   {
+      return;
+   }
+
+   if (adding)
+   {
+      self_->setWindowTitle(addingTitle_);
+   }
+   else
+   {
+      self_->setWindowTitle(editingTitle_);
+   }
+   adding_ = adding;
 }
 
 EditMarkerDialog::EditMarkerDialog(QWidget* parent) :
@@ -84,7 +106,7 @@ EditMarkerDialog::~EditMarkerDialog()
 
 void EditMarkerDialog::setup()
 {
-   setup(0, 0);
+   setup(0.0, 0.0);
 }
 
 void EditMarkerDialog::setup(double latitude, double longitude)
@@ -102,11 +124,10 @@ void EditMarkerDialog::setup(double latitude, double longitude)
                                  static_cast<uint8_t>(color.blue()),
                                  static_cast<uint8_t>(color.alpha())}));
 
-   setup(p->editId_);
-   p->adding_ = true;
+   setup(p->editId_, true);
 }
 
-void EditMarkerDialog::setup(types::MarkerId id)
+void EditMarkerDialog::setup(types::MarkerId id, bool adding)
 {
    std::optional<types::MarkerInfo> marker = p->markerManager_->get_marker(id);
    if (!marker)
@@ -115,7 +136,7 @@ void EditMarkerDialog::setup(types::MarkerId id)
    }
 
    p->editId_ = id;
-   p->adding_ = false;
+   p->set_adding(adding);
 
    const std::string iconColorStr =
       util::color::ToArgbString(marker->iconColor);
@@ -300,6 +321,8 @@ void EditMarkerDialog::Impl::set_icon_color(const std::string& color)
 
 void EditMarkerDialog::Impl::handle_accepted()
 {
+   // switch to editing to that canceling after applying does not delete it
+   set_adding(false);
    markerManager_->set_marker(editId_, self_->get_marker_info());
 }
 

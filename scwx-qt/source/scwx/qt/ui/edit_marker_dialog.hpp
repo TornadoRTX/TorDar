@@ -21,7 +21,7 @@ public:
 
    void setup();
    void setup(double latitude, double longitude);
-   void setup(types::MarkerId id);
+   void setup(types::MarkerId id, bool adding = false);
 
    [[nodiscard]] types::MarkerInfo get_marker_info() const;
 
