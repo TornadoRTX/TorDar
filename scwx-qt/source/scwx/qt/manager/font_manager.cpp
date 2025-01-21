@@ -29,6 +29,7 @@ static const std::string logPrefix_ = "scwx::qt::manager::font_manager";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 
 static const std::string kFcTrueType_ {"TrueType"};
+static const std::string kFcOpenType_ {"CFF"};
 
 struct FontRecord
 {
@@ -70,6 +71,7 @@ public:
 
    const std::vector<char>& GetRawFontData(const std::string& filename);
 
+   static bool CheckFontFormat(const FcChar8* format);
    static FontRecord MatchFontFile(const std::string&              family,
                                    const std::vector<std::string>& styles);
 
@@ -457,6 +459,13 @@ void FontManager::Impl::FinalizeFontconfig()
    FcFini();
 }
 
+bool FontManager::Impl::CheckFontFormat(const FcChar8* format)
+{
+   const std::string stdFormat = reinterpret_cast<const char *>(format);
+
+   return stdFormat == kFcTrueType_ || stdFormat == kFcOpenType_;
+}
+
 FontRecord
 FontManager::Impl::MatchFontFile(const std::string&              family,
                                  const std::vector<std::string>& styles)
@@ -469,9 +478,6 @@ FontManager::Impl::MatchFontFile(const std::string&              family,
 
    FcPatternAddString(
       pattern, FC_FAMILY, reinterpret_cast<const FcChar8*>(family.c_str()));
-   FcPatternAddString(pattern,
-                      FC_FONTFORMAT,
-                      reinterpret_cast<const FcChar8*>(kFcTrueType_.c_str()));
    FcPatternAddBool(pattern, FC_SYMBOL, FcFalse);
 
    if (!styles.empty())
@@ -505,6 +511,7 @@ FontManager::Impl::MatchFontFile(const std::string&              family,
          FcChar8* fcFamily = nullptr;
          FcChar8* fcStyle  = nullptr;
          FcChar8* fcFile   = nullptr;
+         FcChar8* fcFormat = nullptr;
          FcBool   fcSymbol = FcFalse;
 
          // Match was found, get properties
@@ -515,7 +522,10 @@ FontManager::Impl::MatchFontFile(const std::string&              family,
              FcPatternGetString(match, FC_FILE, 0, &fcFile) == FcResultMatch &&
              FcPatternGetBool(match, FC_SYMBOL, 0, &fcSymbol) ==
                 FcResultMatch &&
-             fcSymbol == FcFalse /*Must check fcSymbol manually*/)
+             FcPatternGetString(match, FC_FONTFORMAT, 0, &fcFormat) ==
+                FcResultMatch &&
+             fcSymbol == FcFalse /*Must check fcSymbol manually*/ &&
+             CheckFontFormat(fcFormat))
          {
             record.family_   = reinterpret_cast<char*>(fcFamily);
             record.style_    = reinterpret_cast<char*>(fcStyle);
