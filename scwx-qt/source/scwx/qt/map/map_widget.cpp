@@ -1801,7 +1801,16 @@ void MapWidgetImpl::RadarProductManagerConnect()
                             (group == common::RadarProductGroup::Level2 ||
                              context_->radar_product() == product))
                         {
-                           widget_->SelectRadarProduct(record);
+                           if (group == common::RadarProductGroup::Level2)
+                           {
+                              // Level 2 products may have multiple time points,
+                              // ensure the latest is selected
+                              widget_->SelectRadarProduct(group, product);
+                           }
+                           else
+                           {
+                              widget_->SelectRadarProduct(record);
+                           }
                         }
                      });
                }

@@ -23,6 +23,7 @@
 #include <boost/iostreams/copy.hpp>
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/filter/bzip2.hpp>
+#include <fmt/chrono.h>
 
 #if defined(__GNUC__)
 #   pragma GCC diagnostic pop
@@ -187,10 +188,12 @@ Ar2vFile::GetElevationScan(rda::DataBlockType                    dataBlockType,
 
       for (auto& scan : elevationScans)
       {
-         auto& scanTime = scan.first;
+         auto scanTime = std::chrono::floor<std::chrono::seconds>(scan.first);
 
          if (elevationScan == nullptr ||
-             (scanTime <= time && scanTime > foundTime))
+             ((scanTime <= time ||
+               time == std::chrono::system_clock::time_point {}) &&
+              scanTime > foundTime))
          {
             elevationScan = scan.second;
             foundTime     = scanTime;
@@ -253,10 +256,13 @@ bool Ar2vFile::LoadData(std::istream& is)
 
    if (dataValid)
    {
+      auto timePoint = util::TimePoint(p->julianDate_, p->milliseconds_);
+
       logger_->debug("Filename:  {}", p->tapeFilename_);
       logger_->debug("Extension: {}", p->extensionNumber_);
-      logger_->debug("Date:      {}", p->julianDate_);
-      logger_->debug("Time:      {}", p->milliseconds_);
+      logger_->debug("Date:      {} ({:%Y-%m-%d})", p->julianDate_, timePoint);
+      logger_->debug(
+         "Time:      {} ({:%H:%M:%S})", p->milliseconds_, timePoint);
       logger_->debug("ICAO:      {}", p->icao_);
 
       size_t decompressedRecords = p->DecompressLDMRecords(is);

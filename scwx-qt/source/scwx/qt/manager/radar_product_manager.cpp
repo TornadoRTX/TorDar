@@ -1507,10 +1507,10 @@ RadarProductManager::GetLevel2Data(wsr88d::rda::DataBlockType dataBlockType,
 
          if (recordRadarData != nullptr)
          {
-            auto& radarData0 = (*recordRadarData)[0];
-            auto  collectionTime =
+            auto& radarData0     = (*recordRadarData)[0];
+            auto  collectionTime = std::chrono::floor<std::chrono::seconds>(
                scwx::util::TimePoint(radarData0->modified_julian_date(),
-                                     radarData0->collection_time());
+                                     radarData0->collection_time()));
 
             // Find the newest radar data, not newer than the selected time
             if (radarData == nullptr ||
