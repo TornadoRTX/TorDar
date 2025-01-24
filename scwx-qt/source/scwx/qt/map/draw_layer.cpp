@@ -48,6 +48,7 @@ void DrawLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
 {
    gl::OpenGLFunctions& gl = p->context_->gl();
    p->textureAtlas_        = p->context_->GetTextureAtlas();
+   p->context_->set_render_parameters(params);
 
    // Determine if the texture atlas changed since last render
    std::uint64_t newTextureAtlasBuildCount =

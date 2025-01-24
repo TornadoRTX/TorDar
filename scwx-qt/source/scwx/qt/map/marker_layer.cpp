@@ -162,7 +162,6 @@ void MarkerLayer::Impl::set_icon_sheets()
 void MarkerLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
 {
    gl::OpenGLFunctions& gl = context()->gl();
-   context()->set_render_parameters(params);
 
    DrawLayer::Render(params);
 
