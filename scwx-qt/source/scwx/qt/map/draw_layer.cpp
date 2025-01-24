@@ -80,7 +80,7 @@ void DrawLayer::Initialize()
    ImGuiInitialize();
 }
 
-void DrawLayer::StartImGuiFrame()
+void DrawLayer::ImGuiFrameStart()
 {
    auto defaultFont = manager::FontManager::Instance().GetImGuiFont(
       types::FontCategory::Default);
@@ -95,7 +95,7 @@ void DrawLayer::StartImGuiFrame()
    ImGui::PushFont(defaultFont->font());
 }
 
-void DrawLayer::EndImGuiFrame()
+void DrawLayer::ImGuiFrameEnd()
 {
    // Pop default font
    ImGui::PopFont();
@@ -145,9 +145,9 @@ void DrawLayer::ImGuiSelectContext()
 
 void DrawLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
 {
-   StartImGuiFrame();
+   ImGuiFrameStart();
    RenderWithoutImGui(params);
-   EndImGuiFrame();
+   ImGuiFrameEnd();
 }
 
 void DrawLayer::Deinitialize()

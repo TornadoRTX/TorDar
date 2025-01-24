@@ -292,7 +292,7 @@ void OverlayLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
    auto&                settings         = context()->settings();
    const float          pixelRatio       = context()->pixel_ratio();
 
-   StartImGuiFrame();
+   ImGuiFrameStart();
 
    p->sweepTimePicked_ = false;
 
@@ -493,7 +493,7 @@ void OverlayLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
    p->lastFontSize_          = ImGui::GetFontSize();
    p->lastColorTableMargins_ = colorTableMargins;
 
-   EndImGuiFrame();
+   ImGuiFrameEnd();
 
    SCWX_GL_CHECK_ERROR();
 }
