@@ -70,7 +70,7 @@ jobs:
             artifact_suffix: linux-clang-x64
             compiler_packages: clang-17
           - name: linux_gcc_arm64
-            os: ubuntu-22.04-arm
+            os: ubuntu-24.04-arm
             build_type: Release
             env_cc: gcc-11
             env_cxx: g++-11
@@ -84,7 +84,7 @@ jobs:
             conan_profile: scwx-linux_gcc-11_armv8
             appimage_arch: aarch64
             artifact_suffix: linux-arm64
-            compiler_packages: ''
+            compiler_packages: g++-11
     name: ${{ matrix.name }}
     env:
       CC: ${{ matrix.env_cc }}
