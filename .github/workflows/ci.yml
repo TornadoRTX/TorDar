@@ -35,8 +35,9 @@ jobs:
             qt_tools: ''
             conan_package_manager: ''
             conan_profile: scwx-win64_msvc2022
+            appimage_arch: ''
             artifact_suffix: windows-x64
-          - name: linux64_gcc
+          - name: linux_gcc_x64
             os: ubuntu-22.04
             build_type: Release
             env_cc: gcc-11
@@ -49,9 +50,10 @@ jobs:
             qt_tools: ''
             conan_package_manager: --conf tools.system.package_manager:mode=install --conf tools.system.package_manager:sudo=True
             conan_profile: scwx-linux_gcc-11
+            appimage_arch: x86_64
             artifact_suffix: linux-x64
             compiler_packages: ''
-          - name: linux64_clang
+          - name: linux_clang_x64
             os: ubuntu-24.04
             build_type: Release
             env_cc: clang-17
@@ -64,8 +66,25 @@ jobs:
             qt_tools: ''
             conan_package_manager: --conf tools.system.package_manager:mode=install --conf tools.system.package_manager:sudo=True
             conan_profile: scwx-linux_clang-17
+            appimage_arch: x86_64
             artifact_suffix: linux-clang-x64
             compiler_packages: clang-17
+          - name: linux_gcc_arm64
+            os: ubuntu-24.04-arm
+            build_type: Release
+            env_cc: gcc-11
+            env_cxx: g++-11
+            compiler: gcc
+            qt_version: 6.8.1
+            qt_arch_aqt: linux_gcc_arm64
+            qt_arch_dir: gcc_arm64
+            qt_modules: qtimageformats qtmultimedia qtpositioning qtserialport
+            qt_tools: ''
+            conan_package_manager: --conf tools.system.package_manager:mode=install --conf tools.system.package_manager:sudo=True
+            conan_profile: scwx-linux_gcc-11_armv8
+            appimage_arch: aarch64
+            artifact_suffix: linux-arm64
+            compiler_packages: g++-11
     name: ${{ matrix.name }}
     env:
       CC: ${{ matrix.env_cc }}
@@ -84,7 +103,7 @@ jobs:
         submodules: recursive
 
     - name: Install Qt
-      uses: jurplel/install-qt-action@v3
+      uses: dpaulat/install-qt-action@b45c67aaa9e0ea77e59a7031ec14a12d5ddf4b35
       with:
         version: ${{ matrix.qt_version }}
         arch: ${{ matrix.qt_arch_aqt }}
@@ -231,14 +250,14 @@ jobs:
       if: ${{ startsWith(matrix.os, 'ubuntu') }}
       env:
         APPIMAGE_DIR: ${{ github.workspace }}/supercell-wx/
-        LDAI_UPDATE_INFORMATION: gh-releases-zsync|dpaulat|supercell-wx|latest|*x86_64.AppImage.zsync
-        LDAI_OUTPUT: supercell-wx-${{ env.SCWX_VERSION }}-x86_64.AppImage
+        LDAI_UPDATE_INFORMATION: gh-releases-zsync|dpaulat|supercell-wx|latest|*${{ matrix.appimage_arch }}.AppImage.zsync
+        LDAI_OUTPUT: supercell-wx-${{ env.SCWX_VERSION }}-${{ matrix.appimage_arch }}.AppImage
         LINUXDEPLOY_OUTPUT_APP_NAME: supercell-wx
         LINUXDEPLOY_OUTPUT_VERSION: ${{ env.SCWX_VERSION }}
       shell: bash
       run: |
-        wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
-        chmod +x linuxdeploy-x86_64.AppImage
+        wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-${{ matrix.appimage_arch }}.AppImage
+        chmod +x linuxdeploy-${{ matrix.appimage_arch }}.AppImage
         cp "${{ github.workspace }}/source/scwx-qt/res/icons/scwx-256.png" supercell-wx.png
         cp "${{ github.workspace }}/source/scwx-qt/res/linux/supercell-wx.desktop" .
         pushd "${{ env.APPIMAGE_DIR }}"
@@ -247,16 +266,16 @@ jobs:
         mv lib/ usr/
         mv plugins/ usr/
         popd
-        ./linuxdeploy-x86_64.AppImage --appdir ${{ env.APPIMAGE_DIR }} -i supercell-wx.png -d supercell-wx.desktop
-        ./linuxdeploy-x86_64.AppImage --appdir ${{ env.APPIMAGE_DIR }} --output appimage
-        rm -f linuxdeploy-x86_64.AppImage
+        ./linuxdeploy-${{ matrix.appimage_arch }}.AppImage --appdir ${{ env.APPIMAGE_DIR }} -i supercell-wx.png -d supercell-wx.desktop
+        ./linuxdeploy-${{ matrix.appimage_arch }}.AppImage --appdir ${{ env.APPIMAGE_DIR }} --output appimage
+        rm -f linuxdeploy-${{ matrix.appimage_arch }}.AppImage
 
     - name: Upload AppImage (Linux)
       if: ${{ startsWith(matrix.os, 'ubuntu') }}
       uses: actions/upload-artifact@v4
       with:
         name: supercell-wx-appimage-${{ matrix.artifact_suffix }}
-        path: ${{ github.workspace }}/*-x86_64.AppImage*
+        path: ${{ github.workspace }}/*-${{ matrix.appimage_arch }}.AppImage*
 
     - name: Test Supercell Wx
       working-directory: ${{ github.workspace }}/build
