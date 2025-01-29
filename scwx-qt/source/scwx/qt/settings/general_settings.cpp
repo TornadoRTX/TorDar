@@ -8,8 +8,6 @@
 #include <scwx/qt/types/time_types.hpp>
 #include <scwx/util/time.hpp>
 
-#include <array>
-
 #include <boost/algorithm/string.hpp>
 #include <QUrl>
 
