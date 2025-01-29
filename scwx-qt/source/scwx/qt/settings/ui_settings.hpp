@@ -6,11 +6,7 @@
 #include <memory>
 #include <string>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 class UiSettingsImpl;
@@ -45,6 +41,4 @@ private:
    std::unique_ptr<UiSettingsImpl> p;
 };
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

@@ -13,11 +13,7 @@
 #include <QSpinBox>
 #include <QWidget>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::settings_interface";
@@ -633,6 +629,4 @@ template class SettingsInterface<std::string>;
 // Containers are not to be used directly
 template class SettingsInterface<std::vector<std::int64_t>>;
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

@@ -1,10 +1,6 @@
 #include <scwx/qt/settings/settings_variable_base.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ =
@@ -62,6 +58,4 @@ bool operator==(const SettingsVariableBase& lhs,
    return typeid(lhs) == typeid(rhs) && lhs.Equals(rhs);
 }
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

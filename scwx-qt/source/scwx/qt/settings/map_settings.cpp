@@ -9,11 +9,7 @@
 
 #include <boost/json.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::map_settings";
@@ -276,6 +272,4 @@ bool operator==(const MapSettings& lhs, const MapSettings& rhs)
    return (lhs.p->map_ == rhs.p->map_);
 }
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

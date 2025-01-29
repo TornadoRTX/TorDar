@@ -9,11 +9,7 @@
 #include <boost/algorithm/string.hpp>
 #include <fmt/format.h>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::audio_settings";
@@ -210,6 +206,4 @@ bool operator==(const AudioSettings& lhs, const AudioSettings& rhs)
            lhs.p->alertEnabled_ == rhs.p->alertEnabled_);
 }
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

@@ -1,11 +1,7 @@
 #include <scwx/qt/settings/settings_container.hpp>
 #include <scwx/util/logger.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::settings_container";
@@ -172,6 +168,4 @@ bool SettingsContainer<Container>::Equals(const SettingsVariableBase& o) const
 
 template class SettingsContainer<std::vector<std::int64_t>>;
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

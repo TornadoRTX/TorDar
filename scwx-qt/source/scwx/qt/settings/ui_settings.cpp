@@ -1,10 +1,6 @@
 #include <scwx/qt/settings/ui_settings.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::ui_settings";
@@ -122,6 +118,4 @@ bool operator==(const UiSettings& lhs, const UiSettings& rhs)
            lhs.p->mainUIGeometry_ == rhs.p->mainUIGeometry_);
 }
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

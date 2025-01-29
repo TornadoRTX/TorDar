@@ -2,11 +2,7 @@
 
 #include <string>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ =
@@ -29,6 +25,4 @@ SettingsInterfaceBase::SettingsInterfaceBase(SettingsInterfaceBase&&) noexcept =
 SettingsInterfaceBase&
 SettingsInterfaceBase::operator=(SettingsInterfaceBase&&) noexcept = default;
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

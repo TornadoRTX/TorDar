@@ -5,11 +5,7 @@
 class QAbstractButton;
 class QWidget;
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 class SettingsInterfaceBase
@@ -70,6 +66,4 @@ private:
    std::unique_ptr<Impl> p;
 };
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

@@ -3,11 +3,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::text_settings";
@@ -216,6 +212,4 @@ bool operator==(const TextSettings& lhs, const TextSettings& rhs)
            lhs.p->tooltipMethod_ == rhs.p->tooltipMethod_);
 }
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

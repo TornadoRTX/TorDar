@@ -13,11 +13,7 @@
 #include <boost/algorithm/string.hpp>
 #include <QUrl>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::general_settings";
@@ -447,6 +443,4 @@ bool operator==(const GeneralSettings& lhs, const GeneralSettings& rhs)
               rhs.p->highPrivilegeWarningEnabled_);
 }
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

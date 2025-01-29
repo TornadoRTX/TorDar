@@ -4,11 +4,7 @@
 
 #include <algorithm>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::settings_category";
@@ -479,6 +475,4 @@ void SettingsCategory::Impl::ConnectVariable(SettingsVariableBase* variable)
       }));
 }
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

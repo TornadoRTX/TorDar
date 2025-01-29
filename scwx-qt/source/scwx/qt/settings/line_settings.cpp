@@ -1,11 +1,7 @@
 #include <scwx/qt/settings/line_settings.hpp>
 #include <scwx/qt/util/color.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::line_settings";
@@ -153,6 +149,4 @@ bool operator==(const LineSettings& lhs, const LineSettings& rhs)
            lhs.p->lineWidth_ == rhs.p->lineWidth_);
 }
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

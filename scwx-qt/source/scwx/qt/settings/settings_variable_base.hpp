@@ -6,11 +6,7 @@
 #include <boost/json/object.hpp>
 #include <boost/signals2/signal.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 /**
@@ -117,6 +113,4 @@ private:
 bool operator==(const SettingsVariableBase& lhs,
                 const SettingsVariableBase& rhs);
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

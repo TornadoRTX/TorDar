@@ -7,11 +7,7 @@
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::settings_variable";
@@ -439,6 +435,4 @@ template class SettingsVariable<std::string>;
 // Containers are not to be used directly
 template class SettingsVariable<std::vector<std::int64_t>>;
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

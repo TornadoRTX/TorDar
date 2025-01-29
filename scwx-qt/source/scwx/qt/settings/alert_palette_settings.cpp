@@ -7,11 +7,7 @@
 #include <boost/gil.hpp>
 #include <boost/unordered/unordered_flat_map.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ =
@@ -236,6 +232,4 @@ bool operator==(const AlertPaletteSettings& lhs,
            lhs.p->tornadoPossible_ == rhs.p->tornadoPossible_);
 }
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

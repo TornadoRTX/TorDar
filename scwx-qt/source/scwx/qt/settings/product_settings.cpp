@@ -1,11 +1,7 @@
 #include <scwx/qt/settings/product_settings.hpp>
 #include <scwx/qt/settings/settings_container.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::product_settings";
@@ -85,6 +81,4 @@ bool operator==(const ProductSettings& lhs, const ProductSettings& rhs)
            lhs.p->stiPastEnabled_ == rhs.p->stiPastEnabled_);
 }
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

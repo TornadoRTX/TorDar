@@ -2,11 +2,7 @@
 
 #include <QKeySequence>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::hotkey_settings";
@@ -142,6 +138,4 @@ static bool IsHotkeyValid(const std::string& value)
              .toStdString() == value;
 }
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings
