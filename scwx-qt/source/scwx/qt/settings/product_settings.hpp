@@ -4,7 +4,6 @@
 #include <scwx/qt/settings/settings_variable.hpp>
 
 #include <memory>
-#include <string>
 
 namespace scwx::qt::settings
 {

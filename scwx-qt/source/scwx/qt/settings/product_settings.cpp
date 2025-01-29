@@ -1,6 +1,8 @@
 #include <scwx/qt/settings/product_settings.hpp>
 #include <scwx/qt/settings/settings_container.hpp>
 
+#include <string>
+
 namespace scwx::qt::settings
 {
 

@@ -12,6 +12,7 @@
 #include <QLineEdit>
 #include <QSpinBox>
 #include <QWidget>
+#include <vector>
 
 namespace scwx::qt::settings
 {
