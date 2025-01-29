@@ -50,6 +50,8 @@ public:
       boost::to_lower(defaultPositioningPlugin);
       boost::to_lower(defaultThemeValue);
 
+      // SetDefault, SetMinimum, and SetMaximum are descriptive
+      // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
       antiAliasingEnabled_.SetDefault(true);
       clockFormat_.SetDefault(defaultClockFormatValue);
       customStyleDrawLayer_.SetDefault(".*\\.annotations\\.points");
@@ -100,6 +102,7 @@ public:
       nmeaBaudRate_.SetMaximum(999999999);
       radarSiteThreshold_.SetMinimum(-10000);
       radarSiteThreshold_.SetMaximum(10000);
+      // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
       customStyleDrawLayer_.SetTransform([](const std::string& value)
                                          { return boost::trim_copy(value); });

@@ -50,12 +50,15 @@ public:
 
       boost::to_lower(defaultTooltipMethodValue);
 
+      // SetDefault, SetMinimum and SetMaximum are descriptive
+      // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
       hoverTextWrap_.SetDefault(80);
       hoverTextWrap_.SetMinimum(0);
       hoverTextWrap_.SetMaximum(999);
       placefileTextDropShadowEnabled_.SetDefault(true);
       radarSiteHoverTextEnabled_.SetDefault(true);
       tooltipMethod_.SetDefault(defaultTooltipMethodValue);
+      // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
       tooltipMethod_.SetValidator(
          [](const std::string& value)
@@ -141,8 +144,11 @@ void TextSettings::Impl::InitializeFontVariables()
                                    { return !value.empty(); });
 
       // Font point size must be between 6 and 72
+      // SetDefault, SetMinimum and SetMaximum are descriptive
+      // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
       font.fontPointSize_.SetMinimum(6.0);
       font.fontPointSize_.SetMaximum(72.0);
+      // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
       // Variable registration
       auto& settings = fontSettings_.emplace_back(

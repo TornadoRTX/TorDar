@@ -14,6 +14,8 @@ class UiSettingsImpl
 public:
    explicit UiSettingsImpl()
    {
+      // SetDefault, SetMinimum and SetMaximum are descriptive
+      // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
       level2ProductsExpanded_.SetDefault(false);
       level2SettingsExpanded_.SetDefault(true);
       level3ProductsExpanded_.SetDefault(true);
@@ -21,6 +23,7 @@ public:
       timelineExpanded_.SetDefault(true);
       mainUIState_.SetDefault("");
       mainUIGeometry_.SetDefault("");
+      // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
    }
 
    ~UiSettingsImpl() {}

@@ -15,9 +15,12 @@ class ProductSettings::Impl
 public:
    explicit Impl()
    {
+      // SetDefault, SetMinimum and SetMaximum are descriptive
+      // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
       showSmoothedRangeFolding_.SetDefault(false);
       stiForecastEnabled_.SetDefault(true);
       stiPastEnabled_.SetDefault(true);
+      // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
    }
 
    ~Impl() {}

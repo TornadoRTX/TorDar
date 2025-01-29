@@ -27,6 +27,8 @@ class LineSettings::Impl
 public:
    explicit Impl()
    {
+      // SetDefault, SetMinimum, and SetMaximum are descriptive
+      // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
       lineColor_.SetDefault(kWhiteColorString_);
       highlightColor_.SetDefault(kTransparentColorString_);
       borderColor_.SetDefault(kBlackColorString_);
@@ -42,6 +44,7 @@ public:
       lineWidth_.SetMaximum(9);
       highlightWidth_.SetMaximum(9);
       borderWidth_.SetMaximum(9);
+      // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
       lineColor_.SetValidator(&util::color::ValidateArgbString);
       highlightColor_.SetValidator(&util::color::ValidateArgbString);

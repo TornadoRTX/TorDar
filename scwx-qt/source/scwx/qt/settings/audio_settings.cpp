@@ -33,6 +33,8 @@ public:
 
       boost::to_lower(defaultAlertLocationMethodValue);
 
+      // SetDefault, SetMinimum and SetMaximum are descriptive
+      // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
       alertSoundFile_.SetDefault(defaultAlertSoundFileValue);
       alertLocationMethod_.SetDefault(defaultAlertLocationMethodValue);
       alertLatitude_.SetDefault(0.0);
@@ -48,7 +50,7 @@ public:
       alertLongitude_.SetMaximum(180.0);
       alertRadius_.SetMinimum(0.0);
       alertRadius_.SetMaximum(9999999999);
-
+      // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
       alertLocationMethod_.SetValidator(
          SCWX_SETTINGS_ENUM_VALIDATOR(types::LocationMethod,

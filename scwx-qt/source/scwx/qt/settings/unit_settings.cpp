@@ -35,11 +35,14 @@ public:
       boost::to_lower(defaultSpeedUnitsValue);
       boost::to_lower(defaultDistanceUnitsValue);
 
+      // SetDefault, SetMinimum and SetMaximum are descriptive
+      // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
       accumulationUnits_.SetDefault(defaultAccumulationUnitsValue);
       echoTopsUnits_.SetDefault(defaultEchoTopsUnitsValue);
       otherUnits_.SetDefault(defaultOtherUnitsValue);
       speedUnits_.SetDefault(defaultSpeedUnitsValue);
       distanceUnits_.SetDefault(defaultDistanceUnitsValue);
+      // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
       accumulationUnits_.SetValidator(
          SCWX_SETTINGS_ENUM_VALIDATOR(types::AccumulationUnits,
