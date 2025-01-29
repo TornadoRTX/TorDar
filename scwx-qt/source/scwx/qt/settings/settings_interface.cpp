@@ -27,7 +27,11 @@ public:
       context_->moveToThread(QCoreApplication::instance()->thread());
    }
 
-   ~Impl() {}
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    template<class U>
    void SetWidgetText(U* widget, const T& currentValue);

@@ -22,7 +22,11 @@ public:
       // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
    }
 
-   ~UiSettingsImpl() {}
+   ~UiSettingsImpl()                                 = default;
+   UiSettingsImpl(const UiSettingsImpl&)             = delete;
+   UiSettingsImpl& operator=(const UiSettingsImpl&)  = delete;
+   UiSettingsImpl(const UiSettingsImpl&&)            = delete;
+   UiSettingsImpl& operator=(const UiSettingsImpl&&) = delete;
 
    SettingsVariable<bool> level2ProductsExpanded_ {"level2_products_expanded"};
    SettingsVariable<bool> level2SettingsExpanded_ {"level2_settings_expanded"};

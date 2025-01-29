@@ -135,7 +135,12 @@ public:
 
       SetDefaultLineData(inactive_, kInactivePalettes_.at(phenomenon));
    }
-   ~Impl() {}
+
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    static void SetDefaultLineData(LineSettings&   lineSettings,
                                   const LineData& lineData);

@@ -79,7 +79,11 @@ public:
       InitializeAlerts();
    }
 
-   ~Impl() {}
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    void InitializeColorTables();
    void InitializeLegacyAlerts();

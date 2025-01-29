@@ -15,7 +15,11 @@ class SettingsCategory::Impl
 public:
    explicit Impl(const std::string& name) : name_ {name} {}
 
-   ~Impl() {}
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    void ConnectSubcategory(SettingsCategory& category);
    void ConnectVariable(SettingsVariableBase* variable);

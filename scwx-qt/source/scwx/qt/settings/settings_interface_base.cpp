@@ -11,8 +11,12 @@ static const std::string logPrefix_ =
 class SettingsInterfaceBase::Impl
 {
 public:
-   explicit Impl() {}
-   ~Impl() {}
+   explicit Impl()               = default;
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 };
 
 SettingsInterfaceBase::SettingsInterfaceBase() : p(std::make_unique<Impl>()) {}

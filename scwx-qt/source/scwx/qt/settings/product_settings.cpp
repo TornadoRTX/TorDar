@@ -19,7 +19,11 @@ public:
       // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
    }
 
-   ~Impl() {}
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    SettingsVariable<bool> showSmoothedRangeFolding_ {
       "show_smoothed_range_folding"};

@@ -11,7 +11,11 @@ class SettingsVariableBase::Impl
 public:
    explicit Impl(const std::string& name) : name_ {name} {}
 
-   ~Impl() {}
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    const std::string name_;
 

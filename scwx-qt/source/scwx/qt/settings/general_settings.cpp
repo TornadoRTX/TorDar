@@ -140,7 +140,11 @@ public:
          { return QUrl {QString::fromStdString(value)}.isValid(); });
    }
 
-   ~Impl() {}
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    SettingsVariable<bool>        antiAliasingEnabled_ {"anti_aliasing_enabled"};
    SettingsVariable<std::string> clockFormat_ {"clock_format"};

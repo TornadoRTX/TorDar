@@ -46,7 +46,12 @@ public:
       highlightColor_.SetValidator(&util::color::ValidateArgbString);
       borderColor_.SetValidator(&util::color::ValidateArgbString);
    }
-   ~Impl() {}
+
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    SettingsVariable<std::string> lineColor_ {"line_color"};
    SettingsVariable<std::string> highlightColor_ {"highlight_color"};

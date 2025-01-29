@@ -90,7 +90,11 @@ public:
                       SettingsVariable<std::string> {"?"});
    }
 
-   ~Impl() {}
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    std::unordered_map<types::Hotkey, SettingsVariable<std::string>> hotkey_ {};
    std::vector<SettingsVariableBase*> variables_ {};

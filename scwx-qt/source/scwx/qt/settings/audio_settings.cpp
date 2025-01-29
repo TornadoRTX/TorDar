@@ -92,7 +92,11 @@ public:
                             SettingsVariable<bool> {"alert_disabled"});
    }
 
-   ~Impl() {}
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    SettingsVariable<std::string> alertSoundFile_ {"alert_sound_file"};
    SettingsVariable<std::string> alertLocationMethod_ {"alert_location_method"};

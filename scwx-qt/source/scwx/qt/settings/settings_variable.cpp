@@ -17,8 +17,12 @@ template<class T>
 class SettingsVariable<T>::Impl
 {
 public:
-   explicit Impl() {}
-   ~Impl() {}
+   explicit Impl()               = default;
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    T                             value_ {};
    T                             default_ {};

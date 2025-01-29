@@ -11,9 +11,13 @@ template<class Container>
 class SettingsContainer<Container>::Impl
 {
 public:
-   explicit Impl() {}
+   explicit Impl() = default;
 
-   ~Impl() {}
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    T                             elementDefault_ {};
    std::optional<T>              elementMinimum_ {};

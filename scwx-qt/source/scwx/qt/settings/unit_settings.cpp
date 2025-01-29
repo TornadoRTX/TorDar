@@ -62,7 +62,11 @@ public:
                                       types::GetDistanceUnitsName));
    }
 
-   ~Impl() {}
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    SettingsVariable<std::string> accumulationUnits_ {"accumulation_units"};
    SettingsVariable<std::string> echoTopsUnits_ {"echo_tops_units"};
