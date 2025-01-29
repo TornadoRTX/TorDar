@@ -15,7 +15,7 @@ class LineSettings : public SettingsCategory
 {
 public:
    explicit LineSettings(const std::string& name);
-   ~LineSettings();
+   ~LineSettings() override;
 
    LineSettings(const LineSettings&)            = delete;
    LineSettings& operator=(const LineSettings&) = delete;

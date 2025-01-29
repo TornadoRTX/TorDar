@@ -14,7 +14,7 @@ class HotkeySettings : public SettingsCategory
 {
 public:
    explicit HotkeySettings();
-   ~HotkeySettings();
+   ~HotkeySettings() override;
 
    HotkeySettings(const HotkeySettings&)            = delete;
    HotkeySettings& operator=(const HotkeySettings&) = delete;

@@ -15,7 +15,7 @@ class AlertPaletteSettings : public SettingsCategory
 {
 public:
    explicit AlertPaletteSettings(awips::Phenomenon phenomenon);
-   ~AlertPaletteSettings();
+   ~AlertPaletteSettings() override;
 
    AlertPaletteSettings(const AlertPaletteSettings&)            = delete;
    AlertPaletteSettings& operator=(const AlertPaletteSettings&) = delete;

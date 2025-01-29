@@ -13,7 +13,7 @@ class GeneralSettings : public SettingsCategory
 {
 public:
    explicit GeneralSettings();
-   ~GeneralSettings();
+   ~GeneralSettings() override;
 
    GeneralSettings(const GeneralSettings&)            = delete;
    GeneralSettings& operator=(const GeneralSettings&) = delete;

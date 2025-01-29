@@ -13,7 +13,7 @@ class MapSettings : public SettingsCategory
 {
 public:
    explicit MapSettings();
-   ~MapSettings();
+   ~MapSettings() override;
 
    MapSettings(const MapSettings&)            = delete;
    MapSettings& operator=(const MapSettings&) = delete;

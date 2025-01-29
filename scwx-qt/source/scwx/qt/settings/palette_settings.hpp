@@ -16,7 +16,7 @@ class PaletteSettings : public SettingsCategory
 {
 public:
    explicit PaletteSettings();
-   ~PaletteSettings();
+   ~PaletteSettings() override;
 
    PaletteSettings(const PaletteSettings&)            = delete;
    PaletteSettings& operator=(const PaletteSettings&) = delete;

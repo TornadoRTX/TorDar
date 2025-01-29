@@ -13,7 +13,7 @@ class UnitSettings : public SettingsCategory
 {
 public:
    explicit UnitSettings();
-   ~UnitSettings();
+   ~UnitSettings() override;
 
    UnitSettings(const UnitSettings&)            = delete;
    UnitSettings& operator=(const UnitSettings&) = delete;

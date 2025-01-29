@@ -14,7 +14,7 @@ class AudioSettings : public SettingsCategory
 {
 public:
    explicit AudioSettings();
-   ~AudioSettings();
+   ~AudioSettings() override;
 
    AudioSettings(const AudioSettings&)            = delete;
    AudioSettings& operator=(const AudioSettings&) = delete;

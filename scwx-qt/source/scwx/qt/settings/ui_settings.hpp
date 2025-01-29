@@ -15,7 +15,7 @@ class UiSettings : public SettingsCategory
 {
 public:
    explicit UiSettings();
-   ~UiSettings();
+   ~UiSettings() override;
 
    UiSettings(const UiSettings&)            = delete;
    UiSettings& operator=(const UiSettings&) = delete;

@@ -14,7 +14,7 @@ class TextSettings : public SettingsCategory
 {
 public:
    explicit TextSettings();
-   ~TextSettings();
+   ~TextSettings() override;
 
    TextSettings(const TextSettings&)            = delete;
    TextSettings& operator=(const TextSettings&) = delete;

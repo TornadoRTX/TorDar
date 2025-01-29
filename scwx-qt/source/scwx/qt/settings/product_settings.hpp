@@ -13,7 +13,7 @@ class ProductSettings : public SettingsCategory
 {
 public:
    explicit ProductSettings();
-   ~ProductSettings();
+   ~ProductSettings() override;
 
    ProductSettings(const ProductSettings&)            = delete;
    ProductSettings& operator=(const ProductSettings&) = delete;
