@@ -60,6 +60,8 @@ public:
    void                          WriteMarkerSettings();
    std::shared_ptr<MarkerRecord> GetMarkerByName(const std::string& name);
 
+   bool markerFileRead_ {false};
+
    void InitalizeIds();
    types::MarkerId NewId();
    types::MarkerId lastId_ {0};
@@ -209,11 +211,16 @@ void MarkerManager::Impl::ReadMarkerSettings()
       }
    }
 
+   markerFileRead_ = true;
    Q_EMIT self_->MarkersUpdated();
 }
 
 void MarkerManager::Impl::WriteMarkerSettings()
 {
+   if (!markerFileRead_)
+   {
+      return;
+   }
    logger_->info("Saving location marker settings");
 
    const std::shared_lock lock(markerRecordLock_);

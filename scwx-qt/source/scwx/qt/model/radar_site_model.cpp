@@ -68,6 +68,8 @@ public:
    scwx::common::Coordinate                previousPosition_;
 
    QIcon starIcon_ {":/res/icons/font-awesome-6/star-solid.svg"};
+
+   bool presetsRead_ {false};
 };
 
 RadarSiteModel::RadarSiteModel(QObject* parent) :
@@ -146,10 +148,15 @@ void RadarSiteModelImpl::ReadPresets()
          }
       }
    }
+   presetsRead_ = true;
 }
 
 void RadarSiteModelImpl::WritePresets()
 {
+   if (!presetsRead_)
+   {
+      return;
+   }
    logger_->info("Saving presets");
 
    auto presetsJson = boost::json::value_from(presets_);

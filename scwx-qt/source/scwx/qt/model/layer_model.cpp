@@ -96,6 +96,8 @@ public:
       manager::PlacefileManager::Instance()};
 
    types::LayerVector layers_ {};
+
+   bool fileRead_ {false};
 };
 
 LayerModel::LayerModel(QObject* parent) :
@@ -201,6 +203,8 @@ void LayerModel::Impl::ReadLayerSettings()
       // Assign read layers
       layers_.swap(newLayers);
    }
+
+   fileRead_ = true;
 }
 
 void LayerModel::Impl::ValidateLayerSettings(types::LayerVector& layers)
@@ -314,6 +318,10 @@ void LayerModel::Impl::ValidateLayerSettings(types::LayerVector& layers)
 
 void LayerModel::Impl::WriteLayerSettings()
 {
+   if (!fileRead_)
+   {
+      return;
+   }
    logger_->info("Saving layer settings");
 
    auto layerJson = boost::json::value_from(layers_);
