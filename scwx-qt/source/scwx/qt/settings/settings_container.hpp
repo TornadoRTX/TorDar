@@ -88,7 +88,8 @@ public:
    void SetElementValidator(std::function<bool(const T&)> validator);
 
 protected:
-   virtual bool Equals(const SettingsVariableBase& o) const override;
+   [[nodiscard]] virtual bool
+   Equals(const SettingsVariableBase& o) const override;
 
 private:
    class Impl;

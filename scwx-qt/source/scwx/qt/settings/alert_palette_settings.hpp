@@ -23,11 +23,11 @@ public:
    AlertPaletteSettings(AlertPaletteSettings&&) noexcept;
    AlertPaletteSettings& operator=(AlertPaletteSettings&&) noexcept;
 
-   LineSettings&
+   [[nodiscard]] LineSettings&
    threat_category(awips::ibw::ThreatCategory threatCategory) const;
-   LineSettings& inactive() const;
-   LineSettings& observed() const;
-   LineSettings& tornado_possible() const;
+   [[nodiscard]] LineSettings& inactive() const;
+   [[nodiscard]] LineSettings& observed() const;
+   [[nodiscard]] LineSettings& tornado_possible() const;
 
    friend bool operator==(const AlertPaletteSettings& lhs,
                           const AlertPaletteSettings& rhs);

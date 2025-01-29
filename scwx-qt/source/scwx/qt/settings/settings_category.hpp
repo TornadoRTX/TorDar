@@ -23,7 +23,7 @@ public:
    SettingsCategory(SettingsCategory&&) noexcept;
    SettingsCategory& operator=(SettingsCategory&&) noexcept;
 
-   std::string name() const;
+   [[nodiscard]] std::string name() const;
 
    /**
     * Gets the signal invoked when a variable within the category is changed.
@@ -46,7 +46,7 @@ public:
     * @return true if all settings variables are currently set to default
     * values, otherwise false.
     */
-   bool IsDefault() const;
+   [[nodiscard]] bool IsDefault() const;
 
    /**
     * Gets whether or not all settings variables currently have staged values
@@ -55,7 +55,7 @@ public:
     * @return true if all settings variables currently have staged values set
     * to default, otherwise false.
     */
-   bool IsDefaultStaged() const;
+   [[nodiscard]] bool IsDefaultStaged() const;
 
    /**
     * Set all variables to their defaults.

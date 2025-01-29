@@ -246,7 +246,8 @@ public:
    void UnregisterValueStagedCallback(boost::uuids::uuid uuid);
 
 protected:
-   virtual bool Equals(const SettingsVariableBase& o) const override;
+   [[nodiscard]] virtual bool
+   Equals(const SettingsVariableBase& o) const override;
 
 private:
    class Impl;

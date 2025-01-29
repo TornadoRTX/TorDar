@@ -22,17 +22,18 @@ public:
    TextSettings(TextSettings&&) noexcept;
    TextSettings& operator=(TextSettings&&) noexcept;
 
-   SettingsVariable<std::string>&
+   [[nodiscard]] SettingsVariable<std::string>&
    font_family(types::FontCategory fontCategory) const;
-   SettingsVariable<std::string>&
+   [[nodiscard]] SettingsVariable<std::string>&
    font_style(types::FontCategory fontCategory) const;
-   SettingsVariable<double>&
+   [[nodiscard]] SettingsVariable<double>&
    font_point_size(types::FontCategory fontCategory) const;
 
-   SettingsVariable<std::int64_t>& hover_text_wrap() const;
-   SettingsVariable<bool>&         placefile_text_drop_shadow_enabled() const;
-   SettingsVariable<bool>&         radar_site_hover_text_enabled() const;
-   SettingsVariable<std::string>&  tooltip_method() const;
+   [[nodiscard]] SettingsVariable<std::int64_t>& hover_text_wrap() const;
+   [[nodiscard]] SettingsVariable<bool>&
+   placefile_text_drop_shadow_enabled() const;
+   [[nodiscard]] SettingsVariable<bool>& radar_site_hover_text_enabled() const;
+   [[nodiscard]] SettingsVariable<std::string>& tooltip_method() const;
 
    static TextSettings& Instance();
 

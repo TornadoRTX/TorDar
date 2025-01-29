@@ -21,7 +21,7 @@ public:
    MapSettings(MapSettings&&) noexcept;
    MapSettings& operator=(MapSettings&&) noexcept;
 
-   std::size_t                    count() const;
+   [[nodiscard]] std::size_t      count() const;
    SettingsVariable<std::string>& map_style(std::size_t i);
    SettingsVariable<std::string>& radar_site(std::size_t i);
    SettingsVariable<std::string>& radar_product_group(std::size_t i);

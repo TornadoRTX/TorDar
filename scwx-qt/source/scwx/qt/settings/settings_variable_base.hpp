@@ -25,7 +25,7 @@ public:
    SettingsVariableBase(SettingsVariableBase&&) noexcept;
    SettingsVariableBase& operator=(SettingsVariableBase&&) noexcept;
 
-   std::string name() const;
+   [[nodiscard]] std::string name() const;
 
    /**
     * Gets the signal invoked when the settings variable is changed.
@@ -48,7 +48,7 @@ public:
     * @return true if the settings variable is currently set to its default
     * value, otherwise false.
     */
-   virtual bool IsDefault() const = 0;
+   [[nodiscard]] virtual bool IsDefault() const = 0;
 
    /**
     * Gets whether or not the settings variable currently has its staged value
@@ -57,7 +57,7 @@ public:
     * @return true if the settings variable currently has its staged value set
     * to default, otherwise false.
     */
-   virtual bool IsDefaultStaged() const = 0;
+   [[nodiscard]] virtual bool IsDefaultStaged() const = 0;
 
    /**
     * Sets the current value of the settings variable to default.
@@ -103,7 +103,7 @@ public:
 protected:
    friend bool  operator==(const SettingsVariableBase& lhs,
                           const SettingsVariableBase& rhs);
-   virtual bool Equals(const SettingsVariableBase& o) const;
+   [[nodiscard]] virtual bool Equals(const SettingsVariableBase& o) const;
 
 private:
    class Impl;

@@ -21,11 +21,11 @@ public:
    UnitSettings(UnitSettings&&) noexcept;
    UnitSettings& operator=(UnitSettings&&) noexcept;
 
-   SettingsVariable<std::string>& accumulation_units() const;
-   SettingsVariable<std::string>& echo_tops_units() const;
-   SettingsVariable<std::string>& other_units() const;
-   SettingsVariable<std::string>& speed_units() const;
-   SettingsVariable<std::string>& distance_units() const;
+   [[nodiscard]] SettingsVariable<std::string>& accumulation_units() const;
+   [[nodiscard]] SettingsVariable<std::string>& echo_tops_units() const;
+   [[nodiscard]] SettingsVariable<std::string>& other_units() const;
+   [[nodiscard]] SettingsVariable<std::string>& speed_units() const;
+   [[nodiscard]] SettingsVariable<std::string>& distance_units() const;
 
    static UnitSettings& Instance();
 

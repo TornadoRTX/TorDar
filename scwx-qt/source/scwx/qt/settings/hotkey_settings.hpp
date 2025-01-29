@@ -22,7 +22,8 @@ public:
    HotkeySettings(HotkeySettings&&) noexcept;
    HotkeySettings& operator=(HotkeySettings&&) noexcept;
 
-   SettingsVariable<std::string>& hotkey(scwx::qt::types::Hotkey hotkey) const;
+   [[nodiscard]] SettingsVariable<std::string>&
+   hotkey(scwx::qt::types::Hotkey hotkey) const;
 
    static HotkeySettings& Instance();
 
