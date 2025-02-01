@@ -90,9 +90,14 @@ WarningsProvider::LoadUpdatedFiles(
 
 #if (__cpp_lib_chrono >= 201907L)
    namespace df = std;
+
+   static constexpr std::string_view kDateTimeFormat {
+      "warnings_{:%Y%m%d_%H}.txt"};
 #else
    using namespace date;
    namespace df = date;
+
+#   define kDateTimeFormat "warnings_%Y%m%d_%H.txt"
 #endif
 
    std::vector<
@@ -112,9 +117,7 @@ WarningsProvider::LoadUpdatedFiles(
 
    while (currentHour <= now)
    {
-      static constexpr std::string_view dateTimeFormat {
-         "warnings_{:%Y%m%d_%H}.txt"};
-      const std::string filename = df::format(dateTimeFormat, currentHour);
+      const std::string filename = df::format(kDateTimeFormat, currentHour);
       const std::string url      = p->baseUrl_ + "/" + filename;
 
       logger_->trace("HEAD request for file: {}", filename);
