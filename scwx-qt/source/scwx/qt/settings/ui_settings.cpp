@@ -1,10 +1,6 @@
 #include <scwx/qt/settings/ui_settings.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::ui_settings";
@@ -14,6 +10,8 @@ class UiSettingsImpl
 public:
    explicit UiSettingsImpl()
    {
+      // SetDefault, SetMinimum and SetMaximum are descriptive
+      // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
       level2ProductsExpanded_.SetDefault(false);
       level2SettingsExpanded_.SetDefault(true);
       level3ProductsExpanded_.SetDefault(true);
@@ -21,9 +19,14 @@ public:
       timelineExpanded_.SetDefault(true);
       mainUIState_.SetDefault("");
       mainUIGeometry_.SetDefault("");
+      // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
    }
 
-   ~UiSettingsImpl() {}
+   ~UiSettingsImpl()                                 = default;
+   UiSettingsImpl(const UiSettingsImpl&)             = delete;
+   UiSettingsImpl& operator=(const UiSettingsImpl&)  = delete;
+   UiSettingsImpl(const UiSettingsImpl&&)            = delete;
+   UiSettingsImpl& operator=(const UiSettingsImpl&&) = delete;
 
    SettingsVariable<bool> level2ProductsExpanded_ {"level2_products_expanded"};
    SettingsVariable<bool> level2SettingsExpanded_ {"level2_settings_expanded"};
@@ -119,6 +122,4 @@ bool operator==(const UiSettings& lhs, const UiSettings& rhs)
            lhs.p->mainUIGeometry_ == rhs.p->mainUIGeometry_);
 }
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

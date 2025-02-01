@@ -3,11 +3,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::text_settings";
@@ -50,12 +46,15 @@ public:
 
       boost::to_lower(defaultTooltipMethodValue);
 
+      // SetDefault, SetMinimum and SetMaximum are descriptive
+      // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
       hoverTextWrap_.SetDefault(80);
       hoverTextWrap_.SetMinimum(0);
       hoverTextWrap_.SetMaximum(999);
       placefileTextDropShadowEnabled_.SetDefault(true);
       radarSiteHoverTextEnabled_.SetDefault(true);
       tooltipMethod_.SetDefault(defaultTooltipMethodValue);
+      // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
       tooltipMethod_.SetValidator(
          [](const std::string& value)
@@ -81,7 +80,11 @@ public:
       InitializeFontVariables();
    }
 
-   ~Impl() {}
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    void InitializeFontVariables();
 
@@ -141,8 +144,11 @@ void TextSettings::Impl::InitializeFontVariables()
                                    { return !value.empty(); });
 
       // Font point size must be between 6 and 72
+      // SetDefault, SetMinimum and SetMaximum are descriptive
+      // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
       font.fontPointSize_.SetMinimum(6.0);
       font.fontPointSize_.SetMaximum(72.0);
+      // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
       // Variable registration
       auto& settings = fontSettings_.emplace_back(
@@ -210,6 +216,4 @@ bool operator==(const TextSettings& lhs, const TextSettings& rhs)
            lhs.p->tooltipMethod_ == rhs.p->tooltipMethod_);
 }
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

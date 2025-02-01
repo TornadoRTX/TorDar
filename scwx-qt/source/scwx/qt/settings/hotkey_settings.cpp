@@ -2,11 +2,7 @@
 
 #include <QKeySequence>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::hotkey_settings";
@@ -94,7 +90,11 @@ public:
                       SettingsVariable<std::string> {"?"});
    }
 
-   ~Impl() {}
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    std::unordered_map<types::Hotkey, SettingsVariable<std::string>> hotkey_ {};
    std::vector<SettingsVariableBase*> variables_ {};
@@ -142,6 +142,4 @@ static bool IsHotkeyValid(const std::string& value)
              .toStdString() == value;
 }
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

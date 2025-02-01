@@ -2,11 +2,7 @@
 
 #include <string>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ =
@@ -15,8 +11,12 @@ static const std::string logPrefix_ =
 class SettingsInterfaceBase::Impl
 {
 public:
-   explicit Impl() {}
-   ~Impl() {}
+   explicit Impl()               = default;
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 };
 
 SettingsInterfaceBase::SettingsInterfaceBase() : p(std::make_unique<Impl>()) {}
@@ -29,6 +29,4 @@ SettingsInterfaceBase::SettingsInterfaceBase(SettingsInterfaceBase&&) noexcept =
 SettingsInterfaceBase&
 SettingsInterfaceBase::operator=(SettingsInterfaceBase&&) noexcept = default;
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

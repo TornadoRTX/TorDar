@@ -10,11 +10,7 @@
 class QAbstractButton;
 class QWidget;
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 template<class T>
@@ -250,13 +246,12 @@ public:
    void UnregisterValueStagedCallback(boost::uuids::uuid uuid);
 
 protected:
-   virtual bool Equals(const SettingsVariableBase& o) const override;
+   [[nodiscard]] virtual bool
+   Equals(const SettingsVariableBase& o) const override;
 
 private:
    class Impl;
    std::unique_ptr<Impl> p;
 };
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

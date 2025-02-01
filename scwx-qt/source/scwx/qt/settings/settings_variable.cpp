@@ -7,11 +7,7 @@
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::settings_variable";
@@ -21,8 +17,12 @@ template<class T>
 class SettingsVariable<T>::Impl
 {
 public:
-   explicit Impl() {}
-   ~Impl() {}
+   explicit Impl()               = default;
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    T                             value_ {};
    T                             default_ {};
@@ -439,6 +439,4 @@ template class SettingsVariable<std::string>;
 // Containers are not to be used directly
 template class SettingsVariable<std::vector<std::int64_t>>;
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

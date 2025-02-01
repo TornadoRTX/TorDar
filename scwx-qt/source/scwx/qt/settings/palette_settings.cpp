@@ -6,11 +6,7 @@
 #include <boost/gil.hpp>
 #include <fmt/format.h>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::palette_settings";
@@ -83,7 +79,11 @@ public:
       InitializeAlerts();
    }
 
-   ~Impl() {}
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    void InitializeColorTables();
    void InitializeLegacyAlerts();
@@ -252,6 +252,4 @@ bool operator==(const PaletteSettings& lhs, const PaletteSettings& rhs)
            lhs.p->inactiveAlertColor_ == rhs.p->inactiveAlertColor_);
 }
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

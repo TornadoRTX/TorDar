@@ -9,11 +9,7 @@
 #include <boost/algorithm/string.hpp>
 #include <fmt/format.h>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::audio_settings";
@@ -33,6 +29,8 @@ public:
 
       boost::to_lower(defaultAlertLocationMethodValue);
 
+      // SetDefault, SetMinimum and SetMaximum are descriptive
+      // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
       alertSoundFile_.SetDefault(defaultAlertSoundFileValue);
       alertLocationMethod_.SetDefault(defaultAlertLocationMethodValue);
       alertLatitude_.SetDefault(0.0);
@@ -48,7 +46,7 @@ public:
       alertLongitude_.SetMaximum(180.0);
       alertRadius_.SetMinimum(0.0);
       alertRadius_.SetMaximum(9999999999);
-
+      // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
       alertLocationMethod_.SetValidator(
          SCWX_SETTINGS_ENUM_VALIDATOR(types::LocationMethod,
@@ -94,7 +92,11 @@ public:
                             SettingsVariable<bool> {"alert_disabled"});
    }
 
-   ~Impl() {}
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    SettingsVariable<std::string> alertSoundFile_ {"alert_sound_file"};
    SettingsVariable<std::string> alertLocationMethod_ {"alert_location_method"};
@@ -208,6 +210,4 @@ bool operator==(const AudioSettings& lhs, const AudioSettings& rhs)
            lhs.p->alertEnabled_ == rhs.p->alertEnabled_);
 }
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

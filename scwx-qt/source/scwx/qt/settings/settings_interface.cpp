@@ -12,12 +12,9 @@
 #include <QLineEdit>
 #include <QSpinBox>
 #include <QWidget>
+#include <vector>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::settings_interface";
@@ -31,7 +28,11 @@ public:
       context_->moveToThread(QCoreApplication::instance()->thread());
    }
 
-   ~Impl() {}
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    template<class U>
    void SetWidgetText(U* widget, const T& currentValue);
@@ -633,6 +634,4 @@ template class SettingsInterface<std::string>;
 // Containers are not to be used directly
 template class SettingsInterface<std::vector<std::int64_t>>;
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

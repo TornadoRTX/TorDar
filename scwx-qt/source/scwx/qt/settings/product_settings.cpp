@@ -1,11 +1,9 @@
 #include <scwx/qt/settings/product_settings.hpp>
 #include <scwx/qt/settings/settings_container.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+#include <string>
+
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::product_settings";
@@ -15,12 +13,19 @@ class ProductSettings::Impl
 public:
    explicit Impl()
    {
+      // SetDefault, SetMinimum and SetMaximum are descriptive
+      // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
       showSmoothedRangeFolding_.SetDefault(false);
       stiForecastEnabled_.SetDefault(true);
       stiPastEnabled_.SetDefault(true);
+      // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
    }
 
-   ~Impl() {}
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    SettingsVariable<bool> showSmoothedRangeFolding_ {
       "show_smoothed_range_folding"};
@@ -82,6 +87,4 @@ bool operator==(const ProductSettings& lhs, const ProductSettings& rhs)
            lhs.p->stiPastEnabled_ == rhs.p->stiPastEnabled_);
 }
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

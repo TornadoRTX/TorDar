@@ -1,11 +1,7 @@
 #include <scwx/qt/settings/settings_container.hpp>
 #include <scwx/util/logger.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::settings_container";
@@ -15,9 +11,13 @@ template<class Container>
 class SettingsContainer<Container>::Impl
 {
 public:
-   explicit Impl() {}
+   explicit Impl() = default;
 
-   ~Impl() {}
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    T                             elementDefault_ {};
    std::optional<T>              elementMinimum_ {};
@@ -172,6 +172,4 @@ bool SettingsContainer<Container>::Equals(const SettingsVariableBase& o) const
 
 template class SettingsContainer<std::vector<std::int64_t>>;
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

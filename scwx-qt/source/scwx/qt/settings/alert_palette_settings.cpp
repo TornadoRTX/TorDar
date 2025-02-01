@@ -7,11 +7,7 @@
 #include <boost/gil.hpp>
 #include <boost/unordered/unordered_flat_map.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ =
@@ -139,7 +135,12 @@ public:
 
       SetDefaultLineData(inactive_, kInactivePalettes_.at(phenomenon));
    }
-   ~Impl() {}
+
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    static void SetDefaultLineData(LineSettings&   lineSettings,
                                   const LineData& lineData);
@@ -236,6 +237,4 @@ bool operator==(const AlertPaletteSettings& lhs,
            lhs.p->tornadoPossible_ == rhs.p->tornadoPossible_);
 }
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

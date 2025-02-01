@@ -67,9 +67,10 @@ void SettingsManager::Initialize()
    }
 
    p->settingsPath_ = appDataPath + "/settings.json";
-   p->initialized_  = true;
 
    ReadSettings(p->settingsPath_);
+
+   p->initialized_ = true;
    p->ValidateSettings();
 }
 

@@ -8,18 +8,14 @@
 #include <memory>
 #include <string>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 class AlertPaletteSettings : public SettingsCategory
 {
 public:
    explicit AlertPaletteSettings(awips::Phenomenon phenomenon);
-   ~AlertPaletteSettings();
+   ~AlertPaletteSettings() override;
 
    AlertPaletteSettings(const AlertPaletteSettings&)            = delete;
    AlertPaletteSettings& operator=(const AlertPaletteSettings&) = delete;
@@ -27,11 +23,11 @@ public:
    AlertPaletteSettings(AlertPaletteSettings&&) noexcept;
    AlertPaletteSettings& operator=(AlertPaletteSettings&&) noexcept;
 
-   LineSettings&
+   [[nodiscard]] LineSettings&
    threat_category(awips::ibw::ThreatCategory threatCategory) const;
-   LineSettings& inactive() const;
-   LineSettings& observed() const;
-   LineSettings& tornado_possible() const;
+   [[nodiscard]] LineSettings& inactive() const;
+   [[nodiscard]] LineSettings& observed() const;
+   [[nodiscard]] LineSettings& tornado_possible() const;
 
    friend bool operator==(const AlertPaletteSettings& lhs,
                           const AlertPaletteSettings& rhs);
@@ -41,6 +37,4 @@ private:
    std::unique_ptr<Impl> p;
 };
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

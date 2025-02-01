@@ -7,18 +7,14 @@
 #include <memory>
 #include <string>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 class AudioSettings : public SettingsCategory
 {
 public:
    explicit AudioSettings();
-   ~AudioSettings();
+   ~AudioSettings() override;
 
    AudioSettings(const AudioSettings&)            = delete;
    AudioSettings& operator=(const AudioSettings&) = delete;
@@ -26,16 +22,17 @@ public:
    AudioSettings(AudioSettings&&) noexcept;
    AudioSettings& operator=(AudioSettings&&) noexcept;
 
-   SettingsVariable<std::string>& alert_sound_file() const;
-   SettingsVariable<std::string>& alert_location_method() const;
-   SettingsVariable<double>&      alert_latitude() const;
-   SettingsVariable<double>&      alert_longitude() const;
-   SettingsVariable<double>&      alert_radius() const;
-   SettingsVariable<std::string>& alert_radar_site() const;
-   SettingsVariable<std::string>& alert_county() const;
-   SettingsVariable<std::string>& alert_wfo() const;
-   SettingsVariable<bool>& alert_enabled(awips::Phenomenon phenomenon) const;
-   SettingsVariable<bool>& ignore_missing_codecs() const;
+   [[nodiscard]] SettingsVariable<std::string>& alert_sound_file() const;
+   [[nodiscard]] SettingsVariable<std::string>& alert_location_method() const;
+   [[nodiscard]] SettingsVariable<double>&      alert_latitude() const;
+   [[nodiscard]] SettingsVariable<double>&      alert_longitude() const;
+   [[nodiscard]] SettingsVariable<double>&      alert_radius() const;
+   [[nodiscard]] SettingsVariable<std::string>& alert_radar_site() const;
+   [[nodiscard]] SettingsVariable<std::string>& alert_county() const;
+   [[nodiscard]] SettingsVariable<std::string>& alert_wfo() const;
+   [[nodiscard]] SettingsVariable<bool>&
+   alert_enabled(awips::Phenomenon phenomenon) const;
+   [[nodiscard]] SettingsVariable<bool>& ignore_missing_codecs() const;
 
    static AudioSettings& Instance();
 
@@ -46,6 +43,4 @@ private:
    std::unique_ptr<Impl> p;
 };
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

@@ -6,18 +6,14 @@
 #include <memory>
 #include <string>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 class UnitSettings : public SettingsCategory
 {
 public:
    explicit UnitSettings();
-   ~UnitSettings();
+   ~UnitSettings() override;
 
    UnitSettings(const UnitSettings&)            = delete;
    UnitSettings& operator=(const UnitSettings&) = delete;
@@ -25,11 +21,11 @@ public:
    UnitSettings(UnitSettings&&) noexcept;
    UnitSettings& operator=(UnitSettings&&) noexcept;
 
-   SettingsVariable<std::string>& accumulation_units() const;
-   SettingsVariable<std::string>& echo_tops_units() const;
-   SettingsVariable<std::string>& other_units() const;
-   SettingsVariable<std::string>& speed_units() const;
-   SettingsVariable<std::string>& distance_units() const;
+   [[nodiscard]] SettingsVariable<std::string>& accumulation_units() const;
+   [[nodiscard]] SettingsVariable<std::string>& echo_tops_units() const;
+   [[nodiscard]] SettingsVariable<std::string>& other_units() const;
+   [[nodiscard]] SettingsVariable<std::string>& speed_units() const;
+   [[nodiscard]] SettingsVariable<std::string>& distance_units() const;
 
    static UnitSettings& Instance();
 
@@ -40,6 +36,4 @@ private:
    std::unique_ptr<Impl> p;
 };
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

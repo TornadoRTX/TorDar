@@ -4,20 +4,15 @@
 #include <scwx/qt/settings/settings_variable.hpp>
 
 #include <memory>
-#include <string>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 class ProductSettings : public SettingsCategory
 {
 public:
    explicit ProductSettings();
-   ~ProductSettings();
+   ~ProductSettings() override;
 
    ProductSettings(const ProductSettings&)            = delete;
    ProductSettings& operator=(const ProductSettings&) = delete;
@@ -41,6 +36,4 @@ private:
    std::unique_ptr<Impl> p;
 };
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

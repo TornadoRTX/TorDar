@@ -1,11 +1,7 @@
 #include <scwx/qt/settings/line_settings.hpp>
 #include <scwx/qt/util/color.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::line_settings";
@@ -27,6 +23,8 @@ class LineSettings::Impl
 public:
    explicit Impl()
    {
+      // SetDefault, SetMinimum, and SetMaximum are descriptive
+      // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
       lineColor_.SetDefault(kWhiteColorString_);
       highlightColor_.SetDefault(kTransparentColorString_);
       borderColor_.SetDefault(kBlackColorString_);
@@ -42,12 +40,18 @@ public:
       lineWidth_.SetMaximum(9);
       highlightWidth_.SetMaximum(9);
       borderWidth_.SetMaximum(9);
+      // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
       lineColor_.SetValidator(&util::color::ValidateArgbString);
       highlightColor_.SetValidator(&util::color::ValidateArgbString);
       borderColor_.SetValidator(&util::color::ValidateArgbString);
    }
-   ~Impl() {}
+
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    SettingsVariable<std::string> lineColor_ {"line_color"};
    SettingsVariable<std::string> highlightColor_ {"highlight_color"};
@@ -150,6 +154,4 @@ bool operator==(const LineSettings& lhs, const LineSettings& rhs)
            lhs.p->lineWidth_ == rhs.p->lineWidth_);
 }
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

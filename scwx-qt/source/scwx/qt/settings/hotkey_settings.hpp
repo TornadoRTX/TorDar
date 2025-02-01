@@ -7,18 +7,14 @@
 #include <memory>
 #include <string>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 class HotkeySettings : public SettingsCategory
 {
 public:
    explicit HotkeySettings();
-   ~HotkeySettings();
+   ~HotkeySettings() override;
 
    HotkeySettings(const HotkeySettings&)            = delete;
    HotkeySettings& operator=(const HotkeySettings&) = delete;
@@ -26,7 +22,8 @@ public:
    HotkeySettings(HotkeySettings&&) noexcept;
    HotkeySettings& operator=(HotkeySettings&&) noexcept;
 
-   SettingsVariable<std::string>& hotkey(scwx::qt::types::Hotkey hotkey) const;
+   [[nodiscard]] SettingsVariable<std::string>&
+   hotkey(scwx::qt::types::Hotkey hotkey) const;
 
    static HotkeySettings& Instance();
 
@@ -37,6 +34,4 @@ private:
    std::unique_ptr<Impl> p;
 };
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

@@ -4,11 +4,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::unit_settings";
@@ -35,11 +31,14 @@ public:
       boost::to_lower(defaultSpeedUnitsValue);
       boost::to_lower(defaultDistanceUnitsValue);
 
+      // SetDefault, SetMinimum and SetMaximum are descriptive
+      // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
       accumulationUnits_.SetDefault(defaultAccumulationUnitsValue);
       echoTopsUnits_.SetDefault(defaultEchoTopsUnitsValue);
       otherUnits_.SetDefault(defaultOtherUnitsValue);
       speedUnits_.SetDefault(defaultSpeedUnitsValue);
       distanceUnits_.SetDefault(defaultDistanceUnitsValue);
+      // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
       accumulationUnits_.SetValidator(
          SCWX_SETTINGS_ENUM_VALIDATOR(types::AccumulationUnits,
@@ -63,7 +62,11 @@ public:
                                       types::GetDistanceUnitsName));
    }
 
-   ~Impl() {}
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    SettingsVariable<std::string> accumulationUnits_ {"accumulation_units"};
    SettingsVariable<std::string> echoTopsUnits_ {"echo_tops_units"};
@@ -127,6 +130,4 @@ bool operator==(const UnitSettings& lhs, const UnitSettings& rhs)
            lhs.p->distanceUnits_ == rhs.p->distanceUnits_);
 }
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

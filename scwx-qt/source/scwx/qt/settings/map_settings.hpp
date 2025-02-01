@@ -6,18 +6,14 @@
 #include <memory>
 #include <string>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 class MapSettings : public SettingsCategory
 {
 public:
    explicit MapSettings();
-   ~MapSettings();
+   ~MapSettings() override;
 
    MapSettings(const MapSettings&)            = delete;
    MapSettings& operator=(const MapSettings&) = delete;
@@ -25,7 +21,7 @@ public:
    MapSettings(MapSettings&&) noexcept;
    MapSettings& operator=(MapSettings&&) noexcept;
 
-   std::size_t                    count() const;
+   [[nodiscard]] std::size_t      count() const;
    SettingsVariable<std::string>& map_style(std::size_t i);
    SettingsVariable<std::string>& radar_site(std::size_t i);
    SettingsVariable<std::string>& radar_product_group(std::size_t i);
@@ -60,6 +56,4 @@ private:
    std::unique_ptr<Impl> p;
 };
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

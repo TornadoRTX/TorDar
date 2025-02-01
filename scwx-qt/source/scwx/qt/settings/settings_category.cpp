@@ -4,11 +4,7 @@
 
 #include <algorithm>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::settings_category";
@@ -19,7 +15,11 @@ class SettingsCategory::Impl
 public:
    explicit Impl(const std::string& name) : name_ {name} {}
 
-   ~Impl() {}
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    void ConnectSubcategory(SettingsCategory& category);
    void ConnectVariable(SettingsVariableBase* variable);
@@ -479,6 +479,4 @@ void SettingsCategory::Impl::ConnectVariable(SettingsVariableBase* variable)
       }));
 }
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

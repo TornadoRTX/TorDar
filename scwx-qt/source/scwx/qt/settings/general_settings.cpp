@@ -8,16 +8,10 @@
 #include <scwx/qt/types/time_types.hpp>
 #include <scwx/util/time.hpp>
 
-#include <array>
-
 #include <boost/algorithm/string.hpp>
 #include <QUrl>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::general_settings";
@@ -50,6 +44,8 @@ public:
       boost::to_lower(defaultPositioningPlugin);
       boost::to_lower(defaultThemeValue);
 
+      // SetDefault, SetMinimum, and SetMaximum are descriptive
+      // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
       antiAliasingEnabled_.SetDefault(true);
       clockFormat_.SetDefault(defaultClockFormatValue);
       customStyleDrawLayer_.SetDefault(".*\\.annotations\\.points");
@@ -100,6 +96,7 @@ public:
       nmeaBaudRate_.SetMaximum(999999999);
       radarSiteThreshold_.SetMinimum(-10000);
       radarSiteThreshold_.SetMaximum(10000);
+      // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
       customStyleDrawLayer_.SetTransform([](const std::string& value)
                                          { return boost::trim_copy(value); });
@@ -141,7 +138,11 @@ public:
          { return QUrl {QString::fromStdString(value)}.isValid(); });
    }
 
-   ~Impl() {}
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    SettingsVariable<bool>        antiAliasingEnabled_ {"anti_aliasing_enabled"};
    SettingsVariable<std::string> clockFormat_ {"clock_format"};
@@ -444,6 +445,4 @@ bool operator==(const GeneralSettings& lhs, const GeneralSettings& rhs)
               rhs.p->highPrivilegeWarningEnabled_);
 }
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

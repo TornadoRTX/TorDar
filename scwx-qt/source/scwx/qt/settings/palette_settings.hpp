@@ -9,18 +9,14 @@
 #include <memory>
 #include <string>
 
-namespace scwx
-{
-namespace qt
-{
-namespace settings
+namespace scwx::qt::settings
 {
 
 class PaletteSettings : public SettingsCategory
 {
 public:
    explicit PaletteSettings();
-   ~PaletteSettings();
+   ~PaletteSettings() override;
 
    PaletteSettings(const PaletteSettings&)            = delete;
    PaletteSettings& operator=(const PaletteSettings&) = delete;
@@ -28,9 +24,10 @@ public:
    PaletteSettings(PaletteSettings&&) noexcept;
    PaletteSettings& operator=(PaletteSettings&&) noexcept;
 
-   SettingsVariable<std::string>& palette(const std::string& name) const;
-   SettingsVariable<std::string>& alert_color(awips::Phenomenon phenomenon,
-                                              bool              active) const;
+   [[nodiscard]] SettingsVariable<std::string>&
+   palette(const std::string& name) const;
+   [[nodiscard]] SettingsVariable<std::string>&
+   alert_color(awips::Phenomenon phenomenon, bool active) const;
    AlertPaletteSettings&          alert_palette(awips::Phenomenon);
 
    static const std::vector<awips::Phenomenon>& alert_phenomena();
@@ -45,6 +42,4 @@ private:
    std::unique_ptr<Impl> p;
 };
 
-} // namespace settings
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::settings

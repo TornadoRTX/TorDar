@@ -70,6 +70,8 @@ public:
    boost::unordered_flat_map<std::string, std::shared_ptr<PlacefileRecord>>
                      placefileRecordMap_ {};
    std::shared_mutex placefileRecordLock_ {};
+
+   bool placefileSettingsRead_ {false};
 };
 
 class PlacefileManager::Impl::PlacefileRecord
@@ -413,10 +415,15 @@ void PlacefileManager::Impl::ReadPlacefileSettings()
          }
       }
    }
+   placefileSettingsRead_ = true;
 }
 
 void PlacefileManager::Impl::WritePlacefileSettings()
 {
+   if (!placefileSettingsRead_)
+   {
+      return;
+   }
    logger_->info("Saving placefile settings");
 
    std::shared_lock lock {placefileRecordLock_};
