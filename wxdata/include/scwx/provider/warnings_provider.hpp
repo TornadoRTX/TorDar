@@ -22,10 +22,8 @@ public:
    WarningsProvider(WarningsProvider&&) noexcept;
    WarningsProvider& operator=(WarningsProvider&&) noexcept;
 
-   std::pair<size_t, size_t>
-   ListFiles(std::chrono::system_clock::time_point newerThan = {});
    std::vector<std::shared_ptr<awips::TextProductFile>>
-   LoadUpdatedFiles(std::chrono::system_clock::time_point newerThan = {});
+   LoadUpdatedFiles(std::chrono::sys_time<std::chrono::hours> newerThan = {});
 
 private:
    class Impl;

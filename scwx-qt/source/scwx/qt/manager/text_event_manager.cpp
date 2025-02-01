@@ -22,8 +22,10 @@ namespace manager
 static const std::string logPrefix_ = "scwx::qt::manager::text_event_manager";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 
-static const std::string& kDefaultWarningsProviderUrl {
-   "https://warnings.allisonhouse.com"};
+static constexpr std::chrono::hours kInitialLoadHistoryDuration_ =
+   std::chrono::days {3};
+static constexpr std::chrono::hours kDefaultLoadHistoryDuration_ =
+   std::chrono::hours {1};
 
 class TextEventManager::Impl
 {
@@ -42,7 +44,9 @@ public:
 
       warningsProviderChangedCallbackUuid_ =
          generalSettings.warnings_provider().RegisterValueChangedCallback(
-            [this](const std::string& value) {
+            [this](const std::string& value)
+            {
+               loadHistoryDuration_ = kInitialLoadHistoryDuration_;
                warningsProvider_ =
                   std::make_shared<provider::WarningsProvider>(value);
             });
@@ -94,6 +98,8 @@ public:
    std::shared_mutex textEventMutex_;
 
    std::shared_ptr<provider::WarningsProvider> warningsProvider_ {nullptr};
+   std::chrono::hours loadHistoryDuration_ {kInitialLoadHistoryDuration_};
+   std::chrono::sys_time<std::chrono::hours> prevLoadTime_ {};
 
    boost::uuids::uuid warningsProviderChangedCallbackUuid_ {};
 };
@@ -254,21 +260,33 @@ void TextEventManager::Impl::Refresh()
    std::shared_ptr<provider::WarningsProvider> warningsProvider =
       warningsProvider_;
 
-   // Update the file listing from the warnings provider
-   auto [newFiles, totalFiles] = warningsProvider->ListFiles();
+   // Load updated files from the warnings provider
+   // Start time should default to:
+   // - 3 days of history for the first load
+   // - 1 hour of history for subsequent loads
+   // If the time jumps, we should attempt to load from no later than the
+   // previous load time
+   auto loadTime =
+      std::chrono::floor<std::chrono::hours>(std::chrono::system_clock::now());
+   auto startTime = loadTime - loadHistoryDuration_;
 
-   if (newFiles > 0)
+   if (prevLoadTime_ != std::chrono::sys_time<std::chrono::hours> {})
    {
-      // Load new files
-      auto updatedFiles = warningsProvider->LoadUpdatedFiles();
+      startTime = std::min(startTime, prevLoadTime_);
+   }
 
-      // Handle messages
-      for (auto& file : updatedFiles)
+   auto updatedFiles = warningsProvider->LoadUpdatedFiles(startTime);
+
+   // Store the load time and reset the load history duration
+   prevLoadTime_        = loadTime;
+   loadHistoryDuration_ = kDefaultLoadHistoryDuration_;
+
+   // Handle messages
+   for (auto& file : updatedFiles)
+   {
+      for (auto& message : file->messages())
       {
-         for (auto& message : file->messages())
-         {
-            HandleMessage(message);
-         }
+         HandleMessage(message);
       }
    }
 
