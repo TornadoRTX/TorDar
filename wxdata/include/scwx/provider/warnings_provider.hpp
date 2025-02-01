@@ -2,9 +2,7 @@
 
 #include <scwx/awips/text_product_file.hpp>
 
-namespace scwx
-{
-namespace provider
+namespace scwx::provider
 {
 
 /**
@@ -30,5 +28,4 @@ private:
    std::unique_ptr<Impl> p;
 };
 
-} // namespace provider
-} // namespace scwx
+} // namespace scwx::provider

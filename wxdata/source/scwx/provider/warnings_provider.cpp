@@ -29,9 +29,7 @@
 #   pragma warning(pop)
 #endif
 
-namespace scwx
-{
-namespace provider
+namespace scwx::provider
 {
 
 static const std::string logPrefix_ = "scwx::provider::warnings_provider";
@@ -42,9 +40,9 @@ class WarningsProvider::Impl
 public:
    struct FileInfoRecord
    {
-      FileInfoRecord(const std::string& contentLength,
-                     const std::string& lastModified) :
-          contentLengthStr_ {contentLength}, lastModifiedStr_ {lastModified}
+      FileInfoRecord(std::string contentLength, std::string lastModified) :
+          contentLengthStr_ {std::move(contentLength)},
+          lastModifiedStr_ {std::move(lastModified)}
       {
       }
 
@@ -54,12 +52,16 @@ public:
 
    using WarningFileMap = std::map<std::string, FileInfoRecord>;
 
-   explicit Impl(const std::string& baseUrl) :
-       baseUrl_ {baseUrl}, files_ {}, filesMutex_ {}
+   explicit Impl(std::string baseUrl) :
+       baseUrl_ {std::move(baseUrl)}, files_ {}, filesMutex_ {}
    {
    }
 
-   ~Impl() {}
+   ~Impl()                       = default;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    bool UpdateFileRecord(const cpr::Response& response,
                          const std::string&   filename);
@@ -87,8 +89,7 @@ WarningsProvider::LoadUpdatedFiles(
    using namespace std::chrono;
 
 #if (__cpp_lib_chrono >= 201907L)
-   namespace date = std::chrono;
-   namespace df   = std;
+   namespace df = std;
 #else
    using namespace date;
    namespace df = date;
@@ -251,5 +252,4 @@ bool WarningsProvider::Impl::UpdateFileRecord(const cpr::Response& response,
    return updated;
 }
 
-} // namespace provider
-} // namespace scwx
+} // namespace scwx::provider
