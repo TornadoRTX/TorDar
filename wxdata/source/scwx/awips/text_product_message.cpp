@@ -25,8 +25,8 @@ static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 // Look for hhmm (xM|UTC) to key the date/time string
 static constexpr LazyRE2 reDateTimeString = {"^[0-9]{3,4} ([AP]M|UTC)"};
 
-static void ParseCodedInformation(std::shared_ptr<Segment> segment,
-                                  const std::string&       wfo);
+static void ParseCodedInformation(const std::shared_ptr<Segment>& segment,
+                                  const std::string&              wfo);
 static std::vector<std::string>     ParseProductContent(std::istream& is);
 static void                         SkipBlankLines(std::istream& is);
 static bool                         TryParseEndOfProduct(std::istream& is);
@@ -47,7 +47,7 @@ public:
    {
    }
    ~TextProductMessageImpl() = default;
-   
+
    TextProductMessageImpl(const TextProductMessageImpl&)             = delete;
    TextProductMessageImpl& operator=(const TextProductMessageImpl&)  = delete;
    TextProductMessageImpl(const TextProductMessageImpl&&)            = delete;
