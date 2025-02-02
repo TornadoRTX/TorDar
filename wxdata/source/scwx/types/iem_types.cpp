@@ -77,11 +77,19 @@ tag_invoke(boost::json::value_to_tag<ValidationError::Detail>,
    detail.type_ = jo.at("type").as_string();
    detail.loc_  = boost::json::value_to<
        std::vector<std::variant<std::int64_t, std::string>>>(jo.at("loc"));
-   detail.msg_   = jo.at("msg").as_string();
-   detail.input_ = jo.at("input").as_string();
+   detail.msg_ = jo.at("msg").as_string();
 
-   detail.ctx_ =
-      boost::json::value_to<ValidationError::Detail::Context>(jo.at("ctx"));
+   // Optional parameters
+   if (jo.contains("input"))
+   {
+      detail.input_ = jo.at("input").as_string();
+   }
+
+   if (jo.contains("ctx"))
+   {
+      detail.ctx_ =
+         boost::json::value_to<ValidationError::Detail::Context>(jo.at("ctx"));
+   }
 
    return detail;
 }

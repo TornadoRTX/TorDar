@@ -27,11 +27,6 @@ public:
    Impl& operator=(const Impl&)  = delete;
    Impl(const Impl&&)            = delete;
    Impl& operator=(const Impl&&) = delete;
-
-   std::vector<std::string>
-   ListTextProducts(std::chrono::sys_time<std::chrono::days> date,
-                    std::optional<std::string_view>          cccc = {},
-                    std::optional<std::string_view>          pil  = {});
 };
 
 IemWarningsProvider::IemWarningsProvider() : p(std::make_unique<Impl>()) {}
@@ -43,14 +38,6 @@ IemWarningsProvider&
 IemWarningsProvider::operator=(IemWarningsProvider&&) noexcept = default;
 
 std::vector<std::string> IemWarningsProvider::ListTextProducts(
-   std::chrono::sys_time<std::chrono::days> date,
-   std::optional<std::string_view>          cccc,
-   std::optional<std::string_view>          pil)
-{
-   return p->ListTextProducts(date, cccc, pil);
-}
-
-std::vector<std::string> IemWarningsProvider::Impl::ListTextProducts(
    std::chrono::sys_time<std::chrono::days> date,
    std::optional<std::string_view>          cccc,
    std::optional<std::string_view>          pil)
@@ -147,6 +134,53 @@ std::vector<std::string> IemWarningsProvider::Impl::ListTextProducts(
    }
 
    return textProducts;
+}
+
+std::vector<std::shared_ptr<awips::TextProductFile>>
+IemWarningsProvider::LoadTextProducts(
+   const std::vector<std::string>& textProducts)
+{
+   auto parameters = cpr::Parameters {{"nolimit", "true"}};
+
+   std::vector<std::pair<std::string_view, cpr::AsyncResponse>>
+      asyncResponses {};
+
+   for (auto& productId : textProducts)
+   {
+      asyncResponses.emplace_back(
+         productId,
+         cpr::GetAsync(
+            cpr::Url {kBaseUrl_ + kNwsTextProductEndpoint_ + productId},
+            network::cpr::GetHeader(),
+            parameters));
+   }
+
+   std::vector<std::shared_ptr<awips::TextProductFile>> textProductFiles;
+
+   for (auto& asyncResponse : asyncResponses)
+   {
+      auto response = asyncResponse.second.get();
+
+      if (response.status_code == cpr::status::HTTP_OK)
+      {
+         // Load file
+         std::shared_ptr<awips::TextProductFile> textProductFile {
+            std::make_shared<awips::TextProductFile>()};
+         std::istringstream responseBody {response.text};
+         if (textProductFile->LoadData(responseBody))
+         {
+            textProductFiles.push_back(textProductFile);
+         }
+      }
+      else
+      {
+         logger_->warn("Could not load text product: {} ({})",
+                       asyncResponse.first,
+                       response.status_line);
+      }
+   }
+
+   return textProductFiles;
 }
 
 } // namespace scwx::provider

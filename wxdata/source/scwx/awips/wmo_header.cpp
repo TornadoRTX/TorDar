@@ -132,9 +132,19 @@ bool WmoHeader::Parse(std::istream& is)
    {
       util::getline(is, sohLine);
       util::getline(is, sequenceLine);
+      util::getline(is, wmoLine);
+   }
+   else
+   {
+      // The next line could be the WMO line or the sequence line
+      util::getline(is, wmoLine);
+      if (wmoLine.length() < 18)
+      {
+         sequenceLine.swap(wmoLine);
+         util::getline(is, wmoLine);
+      }
    }
 
-   util::getline(is, wmoLine);
    util::getline(is, awipsLine);
 
    if (is.eof())

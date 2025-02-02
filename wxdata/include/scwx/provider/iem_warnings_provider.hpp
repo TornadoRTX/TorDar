@@ -1,5 +1,7 @@
 #pragma once
 
+#include <scwx/awips/text_product_file.hpp>
+
 #include <memory>
 #include <string>
 
@@ -21,10 +23,13 @@ public:
    IemWarningsProvider(IemWarningsProvider&&) noexcept;
    IemWarningsProvider& operator=(IemWarningsProvider&&) noexcept;
 
-   std::vector<std::string>
+   static std::vector<std::string>
    ListTextProducts(std::chrono::sys_time<std::chrono::days> date,
                     std::optional<std::string_view>          cccc = {},
                     std::optional<std::string_view>          pil  = {});
+
+   static std::vector<std::shared_ptr<awips::TextProductFile>>
+   LoadTextProducts(const std::vector<std::string>& textProducts);
 
 private:
    class Impl;
