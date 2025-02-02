@@ -11,17 +11,17 @@ namespace scwx::provider
 /**
  * @brief Warnings Provider
  */
-class IemWarningsProvider
+class IemApiProvider
 {
 public:
-   explicit IemWarningsProvider();
-   ~IemWarningsProvider();
+   explicit IemApiProvider();
+   ~IemApiProvider();
 
-   IemWarningsProvider(const IemWarningsProvider&)            = delete;
-   IemWarningsProvider& operator=(const IemWarningsProvider&) = delete;
+   IemApiProvider(const IemApiProvider&)            = delete;
+   IemApiProvider& operator=(const IemApiProvider&) = delete;
 
-   IemWarningsProvider(IemWarningsProvider&&) noexcept;
-   IemWarningsProvider& operator=(IemWarningsProvider&&) noexcept;
+   IemApiProvider(IemApiProvider&&) noexcept;
+   IemApiProvider& operator=(IemApiProvider&&) noexcept;
 
    static std::vector<std::string>
    ListTextProducts(std::chrono::sys_time<std::chrono::days> date,

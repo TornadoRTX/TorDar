@@ -1,4 +1,4 @@
-#include <scwx/provider/iem_warnings_provider.hpp>
+#include <scwx/provider/iem_api_provider.hpp>
 #include <scwx/network/cpr.hpp>
 #include <scwx/types/iem_types.hpp>
 #include <scwx/util/json.hpp>
@@ -10,7 +10,7 @@
 namespace scwx::provider
 {
 
-static const std::string logPrefix_ = "scwx::provider::iem_warnings_provider";
+static const std::string logPrefix_ = "scwx::provider::iem_api_provider";
 static const auto        logger_    = util::Logger::Create(logPrefix_);
 
 static const std::string kBaseUrl_ = "https://mesonet.agron.iastate.edu/api/1";
@@ -18,7 +18,7 @@ static const std::string kBaseUrl_ = "https://mesonet.agron.iastate.edu/api/1";
 static const std::string kListNwsTextProductsEndpoint_ = "/nws/afos/list.json";
 static const std::string kNwsTextProductEndpoint_      = "/nwstext/";
 
-class IemWarningsProvider::Impl
+class IemApiProvider::Impl
 {
 public:
    explicit Impl()               = default;
@@ -29,15 +29,15 @@ public:
    Impl& operator=(const Impl&&) = delete;
 };
 
-IemWarningsProvider::IemWarningsProvider() : p(std::make_unique<Impl>()) {}
-IemWarningsProvider::~IemWarningsProvider() = default;
+IemApiProvider::IemApiProvider() : p(std::make_unique<Impl>()) {}
+IemApiProvider::~IemApiProvider() = default;
 
-IemWarningsProvider::IemWarningsProvider(IemWarningsProvider&&) noexcept =
+IemApiProvider::IemApiProvider(IemApiProvider&&) noexcept =
    default;
-IemWarningsProvider&
-IemWarningsProvider::operator=(IemWarningsProvider&&) noexcept = default;
+IemApiProvider&
+IemApiProvider::operator=(IemApiProvider&&) noexcept = default;
 
-std::vector<std::string> IemWarningsProvider::ListTextProducts(
+std::vector<std::string> IemApiProvider::ListTextProducts(
    std::chrono::sys_time<std::chrono::days> date,
    std::optional<std::string_view>          cccc,
    std::optional<std::string_view>          pil)
@@ -137,7 +137,7 @@ std::vector<std::string> IemWarningsProvider::ListTextProducts(
 }
 
 std::vector<std::shared_ptr<awips::TextProductFile>>
-IemWarningsProvider::LoadTextProducts(
+IemApiProvider::LoadTextProducts(
    const std::vector<std::string>& textProducts)
 {
    auto parameters = cpr::Parameters {{"nolimit", "true"}};

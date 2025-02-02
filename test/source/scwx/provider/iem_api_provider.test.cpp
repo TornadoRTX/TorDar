@@ -1,4 +1,4 @@
-#include <scwx/provider/iem_warnings_provider.hpp>
+#include <scwx/provider/iem_api_provider.hpp>
 
 #include <gtest/gtest.h>
 
@@ -7,12 +7,12 @@ namespace scwx
 namespace provider
 {
 
-TEST(IemWarningsProviderTest, ListTextProducts)
+TEST(IemApiProviderTest, ListTextProducts)
 {
    using namespace std::chrono;
    using sys_days = time_point<system_clock, days>;
 
-   IemWarningsProvider provider {};
+   IemApiProvider provider {};
 
    auto date = sys_days {2023y / March / 25d};
 
@@ -30,14 +30,14 @@ TEST(IemWarningsProviderTest, ListTextProducts)
    }
 }
 
-TEST(IemWarningsProviderTest, LoadTextProducts)
+TEST(IemApiProviderTest, LoadTextProducts)
 {
    static const std::vector<std::string> productIds {
       "202303250016-KMEG-WFUS54-TORMEG",
       "202303252015-KFFC-WFUS52-TORFFC",
       "202303311942-KLZK-WWUS54-SVSLZK"};
 
-   IemWarningsProvider provider {};
+   IemApiProvider provider {};
 
    auto textProducts = provider.LoadTextProducts(productIds);
 
