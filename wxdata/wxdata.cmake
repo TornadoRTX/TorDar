@@ -72,6 +72,8 @@ set(SRC_PROVIDER source/scwx/provider/aws_level2_data_provider.cpp
                  source/scwx/provider/nexrad_data_provider.cpp
                  source/scwx/provider/nexrad_data_provider_factory.cpp
                  source/scwx/provider/warnings_provider.cpp)
+set(HDR_TYPES include/scwx/types/iem_types.hpp)
+set(SRC_TYPES source/scwx/types/iem_types.cpp)
 set(HDR_UTIL include/scwx/util/digest.hpp
              include/scwx/util/enum.hpp
              include/scwx/util/environment.hpp
@@ -228,6 +230,8 @@ add_library(wxdata OBJECT ${HDR_AWIPS}
                           ${SRC_NETWORK}
                           ${HDR_PROVIDER}
                           ${SRC_PROVIDER}
+                          ${HDR_TYPES}
+                          ${SRC_TYPES}
                           ${HDR_UTIL}
                           ${SRC_UTIL}
                           ${HDR_WSR88D}
@@ -248,6 +252,8 @@ source_group("Header Files\\network"     FILES ${HDR_NETWORK})
 source_group("Source Files\\network"     FILES ${SRC_NETWORK})
 source_group("Header Files\\provider"    FILES ${HDR_PROVIDER})
 source_group("Source Files\\provider"    FILES ${SRC_PROVIDER})
+source_group("Header Files\\types"       FILES ${HDR_TYPES})
+source_group("Source Files\\types"       FILES ${SRC_TYPES})
 source_group("Header Files\\util"        FILES ${HDR_UTIL})
 source_group("Source Files\\util"        FILES ${SRC_UTIL})
 source_group("Header Files\\wsr88d"      FILES ${HDR_WSR88D})
