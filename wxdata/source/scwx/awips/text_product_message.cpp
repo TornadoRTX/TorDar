@@ -11,9 +11,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <re2/re2.h>
 
-namespace scwx
-{
-namespace awips
+namespace scwx::awips
 {
 
 static const std::string logPrefix_ = "scwx::awips::text_product_message";
@@ -49,6 +47,11 @@ public:
    {
    }
    ~TextProductMessageImpl() = default;
+   
+   TextProductMessageImpl(const TextProductMessageImpl&)             = delete;
+   TextProductMessageImpl& operator=(const TextProductMessageImpl&)  = delete;
+   TextProductMessageImpl(const TextProductMessageImpl&&)            = delete;
+   TextProductMessageImpl& operator=(const TextProductMessageImpl&&) = delete;
 
    std::string                           messageContent_;
    std::shared_ptr<WmoHeader>            wmoHeader_;
@@ -232,7 +235,7 @@ bool TextProductMessage::Parse(std::istream& is)
 
       if (i == 0)
       {
-         if (is.peek() != '\r')
+         if (is.peek() != '\r' && is.peek() != '\n')
          {
             segment->header_ = TryParseSegmentHeader(is);
          }
@@ -318,8 +321,8 @@ bool TextProductMessage::Parse(std::istream& is)
    return dataValid;
 }
 
-void ParseCodedInformation(std::shared_ptr<Segment> segment,
-                           const std::string&       wfo)
+void ParseCodedInformation(const std::shared_ptr<Segment>& segment,
+                           const std::string&              wfo)
 {
    typedef std::vector<std::string>::const_iterator StringIterator;
 
@@ -352,8 +355,8 @@ void ParseCodedInformation(std::shared_ptr<Segment> segment,
          codedLocationEnd = it;
       }
 
-      else if (codedMotionBegin == productContent.cend() &&
-               it->starts_with("TIME...MOT...LOC"))
+      if (codedMotionBegin == productContent.cend() &&
+          it->starts_with("TIME...MOT...LOC"))
       {
          codedMotionBegin = it;
       }
@@ -366,8 +369,7 @@ void ParseCodedInformation(std::shared_ptr<Segment> segment,
          codedMotionEnd = it;
       }
 
-      else if (!segment->observed_ &&
-               it->find("...OBSERVED") != std::string::npos)
+      if (!segment->observed_ && it->find("...OBSERVED") != std::string::npos)
       {
          segment->observed_ = true;
       }
@@ -378,6 +380,8 @@ void ParseCodedInformation(std::shared_ptr<Segment> segment,
          segment->tornadoPossible_ = true;
       }
 
+      // Assignment of an iterator permitted
+      // NOLINTBEGIN(bugprone-assignment-in-if-condition)
       else if (segment->threatCategory_ == ibw::ThreatCategory::Base &&
                (threatTagIt = std::find_if(kThreatCategoryTags.cbegin(),
                                            kThreatCategoryTags.cend(),
@@ -385,6 +389,7 @@ void ParseCodedInformation(std::shared_ptr<Segment> segment,
                                               return it->starts_with(tag);
                                            })) != kThreatCategoryTags.cend() &&
                it->length() > threatTagIt->length())
+      // NOLINTEND(bugprone-assignment-in-if-condition)
       {
          const std::string threatCategoryName =
             it->substr(threatTagIt->length());
@@ -458,7 +463,7 @@ void SkipBlankLines(std::istream& is)
 {
    std::string line;
 
-   while (is.peek() == '\r')
+   while (is.peek() == '\r' || is.peek() == '\n')
    {
       util::getline(is, line);
    }
@@ -513,7 +518,7 @@ std::vector<std::string> TryParseMndHeader(std::istream& is)
    std::string              line;
    std::streampos           isBegin = is.tellg();
 
-   while (!is.eof() && is.peek() != '\r')
+   while (!is.eof() && is.peek() != '\r' && is.peek() != '\n')
    {
       util::getline(is, line);
       mndHeader.push_back(line);
@@ -546,7 +551,7 @@ std::vector<std::string> TryParseOverviewBlock(std::istream& is)
 
    if (is.peek() == '.')
    {
-      while (!is.eof() && is.peek() != '\r')
+      while (!is.eof() && is.peek() != '\r' && is.peek() != '\n')
       {
          util::getline(is, line);
          overviewBlock.push_back(line);
@@ -576,7 +581,7 @@ std::optional<SegmentHeader> TryParseSegmentHeader(std::istream& is)
       header->ugcString_.push_back(line);
 
       // If UGC is multi-line, continue parsing
-      while (!is.eof() && is.peek() != '\r' &&
+      while (!is.eof() && is.peek() != '\r' && is.peek() != '\n' &&
              !RE2::PartialMatch(line, *reUgcExpiration))
       {
          util::getline(is, line);
@@ -595,7 +600,7 @@ std::optional<SegmentHeader> TryParseSegmentHeader(std::istream& is)
          header->vtecString_.push_back(std::move(*vtec));
       }
 
-      while (!is.eof() && is.peek() != '\r')
+      while (!is.eof() && is.peek() != '\r' && is.peek() != '\n')
       {
          util::getline(is, line);
          if (!RE2::PartialMatch(line, *reDateTimeString))
@@ -640,10 +645,8 @@ std::optional<Vtec> TryParseVtecString(std::istream& is)
 
    if (RE2::PartialMatch(line, *rePVtecString))
    {
-      bool vtecValid;
-
-      vtec      = Vtec();
-      vtecValid = vtec->pVtec_.Parse(line);
+      vtec           = Vtec();
+      bool vtecValid = vtec->pVtec_.Parse(line);
 
       isBegin = is.tellg();
 
@@ -687,5 +690,4 @@ std::shared_ptr<TextProductMessage> TextProductMessage::Create(std::istream& is)
    return message;
 }
 
-} // namespace awips
-} // namespace scwx
+} // namespace scwx::awips

@@ -1,8 +1,7 @@
 #include <scwx/util/streams.hpp>
+#include <scwx/common/characters.hpp>
 
-namespace scwx
-{
-namespace util
+namespace scwx::util
 {
 
 std::istream& getline(std::istream& is, std::string& t)
@@ -17,7 +16,8 @@ std::istream& getline(std::istream& is, std::string& t)
       int c = sb->sbumpc();
       switch (c)
       {
-      case '\n': return is;
+      case '\n':
+         return is;
 
       case '\r':
          while (sb->sgetc() == '\r')
@@ -30,6 +30,10 @@ std::istream& getline(std::istream& is, std::string& t)
          }
          return is;
 
+      case common::Characters::ETX:
+         sb->sungetc();
+         return is;
+
       case std::streambuf::traits_type::eof():
          if (t.empty())
          {
@@ -37,10 +41,10 @@ std::istream& getline(std::istream& is, std::string& t)
          }
          return is;
 
-      default: t += static_cast<char>(c);
+      default:
+         t += static_cast<char>(c);
       }
    }
 }
 
-} // namespace util
-} // namespace scwx
+} // namespace scwx::util
