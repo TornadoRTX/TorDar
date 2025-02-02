@@ -33,14 +33,28 @@ TEST(IemWarningsProviderTest, ListTextProducts)
 TEST(IemWarningsProviderTest, LoadTextProducts)
 {
    static const std::vector<std::string> productIds {
-      "202303250016-KMEG-WFUS54-TORMEG", //
-      "202303252015-KFFC-WFUS52-TORFFC"};
+      "202303250016-KMEG-WFUS54-TORMEG",
+      "202303252015-KFFC-WFUS52-TORFFC",
+      "202303311942-KLZK-WWUS54-SVSLZK"};
 
    IemWarningsProvider provider {};
 
    auto textProducts = provider.LoadTextProducts(productIds);
 
-   EXPECT_EQ(textProducts.size(), 2);
+   EXPECT_EQ(textProducts.size(), 3);
+
+   if (textProducts.size() >= 1)
+   {
+      EXPECT_EQ(textProducts.at(0)->message_count(), 1);
+   }
+   if (textProducts.size() >= 2)
+   {
+      EXPECT_EQ(textProducts.at(1)->message_count(), 1);
+   }
+   if (textProducts.size() >= 3)
+   {
+      EXPECT_EQ(textProducts.at(2)->message_count(), 2);
+   }
 }
 
 } // namespace provider
