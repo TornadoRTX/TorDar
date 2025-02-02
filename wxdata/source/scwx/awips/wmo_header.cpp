@@ -12,13 +12,13 @@
 #   include <arpa/inet.h>
 #endif
 
-namespace scwx
-{
-namespace awips
+namespace scwx::awips
 {
 
 static const std::string logPrefix_ = "scwx::awips::wmo_header";
 static const auto        logger_    = util::Logger::Create(logPrefix_);
+
+static constexpr std::size_t kWmoHeaderMinLineLength_ = 18;
 
 class WmoHeaderImpl
 {
@@ -36,6 +36,11 @@ public:
    {
    }
    ~WmoHeaderImpl() = default;
+
+   WmoHeaderImpl(const WmoHeaderImpl&)             = delete;
+   WmoHeaderImpl& operator=(const WmoHeaderImpl&)  = delete;
+   WmoHeaderImpl(const WmoHeaderImpl&&)            = delete;
+   WmoHeaderImpl& operator=(const WmoHeaderImpl&&) = delete;
 
    bool operator==(const WmoHeaderImpl& o) const;
 
@@ -138,8 +143,9 @@ bool WmoHeader::Parse(std::istream& is)
    {
       // The next line could be the WMO line or the sequence line
       util::getline(is, wmoLine);
-      if (wmoLine.length() < 18)
+      if (wmoLine.length() < kWmoHeaderMinLineLength_)
       {
+         // This is likely the sequence line instead
          sequenceLine.swap(wmoLine);
          util::getline(is, wmoLine);
       }
@@ -249,5 +255,4 @@ bool WmoHeader::Parse(std::istream& is)
    return headerValid;
 }
 
-} // namespace awips
-} // namespace scwx
+} // namespace scwx::awips

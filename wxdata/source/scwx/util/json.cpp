@@ -107,6 +107,8 @@ void WriteJsonFile(const std::string&        path,
    }
 }
 
+// Allow recursion within the pretty print function
+// NOLINTNEXTLINE(misc-no-recursion)
 static void PrettyPrintJson(std::ostream&             os,
                             boost::json::value const& jv,
                             std::string*              indent)

@@ -144,13 +144,16 @@ IemWarningsProvider::LoadTextProducts(
 
    std::vector<std::pair<std::string_view, cpr::AsyncResponse>>
       asyncResponses {};
+   asyncResponses.reserve(textProducts.size());
+   
+   const std::string endpointUrl = kBaseUrl_ + kNwsTextProductEndpoint_;
 
    for (auto& productId : textProducts)
    {
       asyncResponses.emplace_back(
          productId,
          cpr::GetAsync(
-            cpr::Url {kBaseUrl_ + kNwsTextProductEndpoint_ + productId},
+            cpr::Url {endpointUrl + productId},
             network::cpr::GetHeader(),
             parameters));
    }
