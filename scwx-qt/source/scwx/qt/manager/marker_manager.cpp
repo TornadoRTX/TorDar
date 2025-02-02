@@ -1,10 +1,10 @@
 #include <scwx/qt/manager/marker_manager.hpp>
 #include <scwx/qt/types/marker_types.hpp>
 #include <scwx/qt/util/color.hpp>
-#include <scwx/qt/util/json.hpp>
 #include <scwx/qt/util/texture_atlas.hpp>
 #include <scwx/qt/main/application.hpp>
 #include <scwx/qt/manager/resource_manager.hpp>
+#include <scwx/util/json.hpp>
 #include <scwx/util/logger.hpp>
 
 #include <filesystem>
@@ -62,7 +62,7 @@ public:
 
    bool markerFileRead_ {false};
 
-   void InitalizeIds();
+   void            InitalizeIds();
    types::MarkerId NewId();
    types::MarkerId lastId_ {0};
 };
@@ -70,15 +70,9 @@ public:
 class MarkerManager::Impl::MarkerRecord
 {
 public:
-   MarkerRecord(const types::MarkerInfo& info) :
-      markerInfo_ {info}
-   {
-   }
+   MarkerRecord(const types::MarkerInfo& info) : markerInfo_ {info} {}
 
-   const types::MarkerInfo& toMarkerInfo()
-   {
-      return markerInfo_;
-   }
+   const types::MarkerInfo& toMarkerInfo() { return markerInfo_; }
 
    types::MarkerInfo markerInfo_;
 
@@ -175,7 +169,7 @@ void MarkerManager::Impl::ReadMarkerSettings()
       // Determine if marker settings exists
       if (std::filesystem::exists(markerSettingsPath_))
       {
-         markerJson = util::json::ReadJsonFile(markerSettingsPath_);
+         markerJson = scwx::util::json::ReadJsonFile(markerSettingsPath_);
       }
 
       if (markerJson != nullptr && markerJson.is_array())
@@ -224,8 +218,8 @@ void MarkerManager::Impl::WriteMarkerSettings()
    logger_->info("Saving location marker settings");
 
    const std::shared_lock lock(markerRecordLock_);
-   auto markerJson = boost::json::value_from(markerRecords_);
-   util::json::WriteJsonFile(markerSettingsPath_, markerJson);
+   auto                   markerJson = boost::json::value_from(markerRecords_);
+   scwx::util::json::WriteJsonFile(markerSettingsPath_, markerJson);
 }
 
 std::shared_ptr<MarkerManager::Impl::MarkerRecord>
@@ -357,10 +351,11 @@ types::MarkerId MarkerManager::add_marker(const types::MarkerInfo& marker)
    types::MarkerId id;
    {
       const std::unique_lock lock(p->markerRecordLock_);
-      id = p->NewId();
+      id           = p->NewId();
       size_t index = p->markerRecords_.size();
       p->idToIndex_.emplace(id, index);
-      p->markerRecords_.emplace_back(std::make_shared<Impl::MarkerRecord>(marker));
+      p->markerRecords_.emplace_back(
+         std::make_shared<Impl::MarkerRecord>(marker));
       p->markerRecords_[index]->markerInfo_.id = id;
 
       add_icon(marker.iconName);
@@ -498,7 +493,6 @@ void MarkerManager::set_marker_settings_path(const std::string& path)
 {
    p->markerSettingsPath_ = path;
 }
-
 
 std::shared_ptr<MarkerManager> MarkerManager::Instance()
 {

@@ -4,8 +4,8 @@
 #include <scwx/qt/types/qt_types.hpp>
 #include <scwx/qt/types/unit_types.hpp>
 #include <scwx/qt/util/geographic_lib.hpp>
-#include <scwx/qt/util/json.hpp>
 #include <scwx/common/geographic.hpp>
+#include <scwx/util/json.hpp>
 #include <scwx/util/logger.hpp>
 
 #include <filesystem>
@@ -117,7 +117,7 @@ void RadarSiteModelImpl::ReadPresets()
    // Determine if presets exists
    if (std::filesystem::exists(presetsPath_))
    {
-      presetsJson = util::json::ReadJsonFile(presetsPath_);
+      presetsJson = scwx::util::json::ReadJsonFile(presetsPath_);
    }
 
    // If presets was successfully read
@@ -160,7 +160,7 @@ void RadarSiteModelImpl::WritePresets()
    logger_->info("Saving presets");
 
    auto presetsJson = boost::json::value_from(presets_);
-   util::json::WriteJsonFile(presetsPath_, presetsJson);
+   scwx::util::json::WriteJsonFile(presetsPath_, presetsJson);
 }
 
 int RadarSiteModel::rowCount(const QModelIndex& parent) const

@@ -2,10 +2,10 @@
 #include <scwx/qt/manager/font_manager.hpp>
 #include <scwx/qt/manager/resource_manager.hpp>
 #include <scwx/qt/main/application.hpp>
-#include <scwx/qt/util/json.hpp>
 #include <scwx/qt/util/network.hpp>
 #include <scwx/gr/placefile.hpp>
 #include <scwx/network/cpr.hpp>
+#include <scwx/util/json.hpp>
 #include <scwx/util/logger.hpp>
 
 #include <shared_mutex>
@@ -385,7 +385,7 @@ void PlacefileManager::Impl::ReadPlacefileSettings()
    // Determine if placefile settings exists
    if (std::filesystem::exists(placefileSettingsPath_))
    {
-      placefileJson = util::json::ReadJsonFile(placefileSettingsPath_);
+      placefileJson = scwx::util::json::ReadJsonFile(placefileSettingsPath_);
    }
 
    // If placefile settings was successfully read
@@ -428,7 +428,7 @@ void PlacefileManager::Impl::WritePlacefileSettings()
 
    std::shared_lock lock {placefileRecordLock_};
    auto             placefileJson = boost::json::value_from(placefileRecords_);
-   util::json::WriteJsonFile(placefileSettingsPath_, placefileJson);
+   scwx::util::json::WriteJsonFile(placefileSettingsPath_, placefileJson);
 }
 
 void PlacefileManager::SetRadarSite(

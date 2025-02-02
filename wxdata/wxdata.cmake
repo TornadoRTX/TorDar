@@ -78,6 +78,7 @@ set(HDR_UTIL include/scwx/util/digest.hpp
              include/scwx/util/float.hpp
              include/scwx/util/hash.hpp
              include/scwx/util/iterator.hpp
+             include/scwx/util/json.hpp
              include/scwx/util/logger.hpp
              include/scwx/util/map.hpp
              include/scwx/util/rangebuf.hpp
@@ -90,6 +91,7 @@ set(SRC_UTIL source/scwx/util/digest.cpp
              source/scwx/util/environment.cpp
              source/scwx/util/float.cpp
              source/scwx/util/hash.cpp
+             source/scwx/util/json.cpp
              source/scwx/util/logger.cpp
              source/scwx/util/rangebuf.cpp
              source/scwx/util/streams.cpp

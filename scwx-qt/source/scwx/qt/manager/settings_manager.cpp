@@ -9,7 +9,7 @@
 #include <scwx/qt/settings/text_settings.hpp>
 #include <scwx/qt/settings/ui_settings.hpp>
 #include <scwx/qt/settings/unit_settings.hpp>
-#include <scwx/qt/util/json.hpp>
+#include <scwx/util/json.hpp>
 #include <scwx/util/logger.hpp>
 
 #include <filesystem>
