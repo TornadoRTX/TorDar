@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
 namespace scwx::provider
 {
@@ -19,6 +20,11 @@ public:
 
    IemWarningsProvider(IemWarningsProvider&&) noexcept;
    IemWarningsProvider& operator=(IemWarningsProvider&&) noexcept;
+
+   std::vector<std::string>
+   ListTextProducts(std::chrono::sys_time<std::chrono::days> date,
+                    std::optional<std::string_view>          cccc = {},
+                    std::optional<std::string_view>          pil  = {});
 
 private:
    class Impl;
