@@ -50,7 +50,6 @@ public:
    common::RadarProductGroup                 radar_product_group() const;
    std::string                               radar_product() const;
    int16_t                                   radar_product_code() const;
-   QMapLibre::CustomLayerRenderParameters    render_parameters() const;
 
    void set_map(const std::shared_ptr<QMapLibre::Map>& map);
    void set_map_copyrights(const std::string& copyrights);
@@ -65,8 +64,6 @@ public:
    void set_radar_product_group(common::RadarProductGroup radarProductGroup);
    void set_radar_product(const std::string& radarProduct);
    void set_radar_product_code(int16_t radarProductCode);
-   void
-   set_render_parameters(const QMapLibre::CustomLayerRenderParameters& params);
 
 private:
    class Impl;

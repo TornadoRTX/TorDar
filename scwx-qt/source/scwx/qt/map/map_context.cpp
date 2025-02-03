@@ -27,7 +27,6 @@ public:
       common::RadarProductGroup::Unknown};
    std::string                            radarProduct_ {"???"};
    int16_t                                radarProductCode_ {0};
-   QMapLibre::CustomLayerRenderParameters renderParameters_ {};
 
    MapProvider mapProvider_ {MapProvider::Unknown};
    std::string mapCopyrights_ {};
@@ -110,11 +109,6 @@ int16_t MapContext::radar_product_code() const
    return p->radarProductCode_;
 }
 
-QMapLibre::CustomLayerRenderParameters MapContext::render_parameters() const
-{
-   return p->renderParameters_;
-}
-
 void MapContext::set_map(const std::shared_ptr<QMapLibre::Map>& map)
 {
    p->map_ = map;
@@ -171,12 +165,6 @@ void MapContext::set_radar_product(const std::string& radarProduct)
 void MapContext::set_radar_product_code(int16_t radarProductCode)
 {
    p->radarProductCode_ = radarProductCode;
-}
-
-void MapContext::set_render_parameters(
-   const QMapLibre::CustomLayerRenderParameters& params)
-{
-   p->renderParameters_ = params;
 }
 
 } // namespace map

@@ -74,8 +74,6 @@ void RadarSiteLayer::Render(
 
    gl::OpenGLFunctions& gl = context()->gl();
 
-   context()->set_render_parameters(params);
-
    // Update map screen coordinate and scale information
    p->mapScreenCoordLocation_ = util::maplibre::LatLongToScreenCoordinate(
       {params.latitude, params.longitude});

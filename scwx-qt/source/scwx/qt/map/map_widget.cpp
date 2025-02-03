@@ -1649,8 +1649,15 @@ void MapWidgetImpl::ImGuiCheckFonts()
 
 void MapWidgetImpl::RunMousePicking()
 {
-   const QMapLibre::CustomLayerRenderParameters params =
-      context_->render_parameters();
+   const QMapLibre::CustomLayerRenderParameters params = {
+      .width       = static_cast<double>(widget_->size().width()),
+      .height      = static_cast<double>(widget_->size().height()),
+      .latitude    = map_->coordinate().first,
+      .longitude   = map_->coordinate().second,
+      .zoom        = map_->zoom(),
+      .bearing     = map_->bearing(),
+      .pitch       = map_->pitch(),
+      .fieldOfView = 0};
 
    auto coordinate = map_->coordinateForPixel(lastPos_);
    auto mouseScreenCoordinate =
