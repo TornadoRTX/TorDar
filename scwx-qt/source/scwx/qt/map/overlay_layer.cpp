@@ -292,8 +292,6 @@ void OverlayLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
    auto&                settings         = context()->settings();
    const float          pixelRatio       = context()->pixel_ratio();
 
-   context()->set_render_parameters(params);
-
    p->sweepTimePicked_ = false;
 
    if (radarProductView != nullptr)
