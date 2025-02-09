@@ -47,7 +47,7 @@ bool IsPointInPolygon(const std::vector<glm::vec2>& vertices,
                       const glm::vec2&              point)
 {
    bool inPolygon = true;
-   bool allSame = true;
+   bool allSame   = true;
 
    // For each vertex, assume counterclockwise order
    for (std::size_t i = 0; i < vertices.size(); ++i)
