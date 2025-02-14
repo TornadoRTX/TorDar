@@ -794,10 +794,10 @@ void RadarProductManagerImpl::RefreshDataSync(
       interval = kSlowRetryInterval_;
    }
 
+   std::unique_lock const lock(providerManager->refreshTimerMutex_);
+
    if (providerManager->refreshEnabled_)
    {
-      std::unique_lock lock(providerManager->refreshTimerMutex_);
-
       logger_->debug(
          "[{}] Scheduled refresh in {:%M:%S}",
          providerManager->name(),
