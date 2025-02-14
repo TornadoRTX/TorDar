@@ -46,7 +46,10 @@ glm::vec2 GetMapScale(const QMapLibre::CustomLayerRenderParameters& params)
 bool IsPointInPolygon(const std::vector<glm::vec2>& vertices,
                       const glm::vec2&              point)
 {
+   // All members of these unions are floats, so no type safety violation
+   // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
    bool inPolygon = true;
+   bool allSame   = true;
 
    // For each vertex, assume counterclockwise order
    for (std::size_t i = 0; i < vertices.size(); ++i)
@@ -54,6 +57,8 @@ bool IsPointInPolygon(const std::vector<glm::vec2>& vertices,
       const auto& p1 = vertices[i];
       const auto& p2 =
          (i == vertices.size() - 1) ? vertices[0] : vertices[i + 1];
+
+      allSame = allSame && p1.x == p2.x && p1.y == p2.y;
 
       // Test which side of edge point lies on
       const float a = -(p2.y - p1.y);
@@ -70,7 +75,14 @@ bool IsPointInPolygon(const std::vector<glm::vec2>& vertices,
       }
    }
 
+   if (allSame)
+   {
+      inPolygon = vertices.size() > 0 && vertices[0].x == point.x &&
+                  vertices[0].y == point.y;
+   }
+
    return inPolygon;
+   // NOLINTEND(cppcoreguidelines-pro-type-union-access)
 }
 
 glm::vec2 LatLongToScreenCoordinate(const QMapLibre::Coordinate& coordinate)
