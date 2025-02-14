@@ -46,6 +46,8 @@ glm::vec2 GetMapScale(const QMapLibre::CustomLayerRenderParameters& params)
 bool IsPointInPolygon(const std::vector<glm::vec2>& vertices,
                       const glm::vec2&              point)
 {
+   // All members of these unions are floats, so no type safety violation
+   // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
    bool inPolygon = true;
    bool allSame   = true;
 
@@ -80,6 +82,7 @@ bool IsPointInPolygon(const std::vector<glm::vec2>& vertices,
    }
 
    return inPolygon;
+   // NOLINTEND(cppcoreguidelines-pro-type-union-access)
 }
 
 glm::vec2 LatLongToScreenCoordinate(const QMapLibre::Coordinate& coordinate)
