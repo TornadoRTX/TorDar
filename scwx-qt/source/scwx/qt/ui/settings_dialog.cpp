@@ -639,7 +639,7 @@ void SettingsDialogImpl::SetupGeneralTab()
       [](const std::string& text) -> std::string
       {
          // Find the position of location details
-         size_t pos = text.rfind(" (");
+         size_t pos = text.find(" (");
 
          if (pos == std::string::npos)
          {
@@ -1060,7 +1060,7 @@ void SettingsDialogImpl::SetupAudioTab()
       [](const std::string& text) -> std::string
       {
          // Find the position of location details
-         size_t pos = text.rfind(" (");
+         size_t pos = text.find(" (");
 
          if (pos == std::string::npos)
          {
