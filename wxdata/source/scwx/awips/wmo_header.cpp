@@ -18,7 +18,11 @@ namespace scwx::awips
 static const std::string logPrefix_ = "scwx::awips::wmo_header";
 static const auto        logger_    = util::Logger::Create(logPrefix_);
 
-static constexpr std::size_t kWmoHeaderMinLineLength_ = 18;
+static constexpr std::size_t kWmoHeaderMinLineLength_    = 18;
+static constexpr std::size_t kWmoIdentifierLength_       = 6;
+static constexpr std::size_t kIcaoLength_                = 4;
+static constexpr std::size_t kDateTimeLength_            = 6;
+static constexpr std::size_t kAwipsIdentifierLineLength_ = 6;
 
 class WmoHeaderImpl
 {
@@ -166,14 +170,12 @@ std::chrono::sys_time<std::chrono::minutes> WmoHeader::GetDateTime(
          // If the begin date is after the end date, assume the start time
          // was the previous month (give a 1 day grace period for expiring
          // events in the past)
+         // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
          if (wmoDateTime > endTimeHint.value() + 24h)
          {
             // If the current end month is January
             if (endDate.month() == January)
             {
-               year_month x = year {2024} / December;
-               sys_days   y;
-
                // The begin month must be December of last year
                wmoDateTime =
                   sys_days {
@@ -269,17 +271,17 @@ bool WmoHeader::Parse(std::istream& is)
          logger_->warn("Invalid number of WMO tokens");
          headerValid = false;
       }
-      else if (wmoTokenList[0].size() != 6)
+      else if (wmoTokenList[0].size() != kWmoIdentifierLength_)
       {
          logger_->warn("WMO identifier malformed");
          headerValid = false;
       }
-      else if (wmoTokenList[1].size() != 4)
+      else if (wmoTokenList[1].size() != kIcaoLength_)
       {
          logger_->warn("ICAO malformed");
          headerValid = false;
       }
-      else if (wmoTokenList[2].size() != 6)
+      else if (wmoTokenList[2].size() != kDateTimeLength_)
       {
          logger_->warn("Date/time malformed");
          headerValid = false;
@@ -316,7 +318,7 @@ bool WmoHeader::Parse(std::istream& is)
 
    if (headerValid)
    {
-      if (awipsLine.size() != 6)
+      if (awipsLine.size() != kAwipsIdentifierLineLength_)
       {
          logger_->warn("AWIPS Identifier Line bad size");
          headerValid = false;

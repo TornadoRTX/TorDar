@@ -4,9 +4,7 @@
 #include <memory>
 #include <string>
 
-namespace scwx
-{
-namespace awips
+namespace scwx::awips
 {
 
 class WmoHeaderImpl;
@@ -85,5 +83,4 @@ private:
    std::unique_ptr<WmoHeaderImpl> p;
 };
 
-} // namespace awips
-} // namespace scwx
+} // namespace scwx::awips
