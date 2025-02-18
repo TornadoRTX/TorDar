@@ -104,7 +104,6 @@ jobs:
           -DCMAKE_EXPORT_COMPILE_COMMANDS=on
         ninja scwx-qt_generate_counties_db `
               scwx-qt_generate_versions `
-              scwx-qt_update_radar_sites `
               scwx-qt_autogen
 
     - name: Code Review
