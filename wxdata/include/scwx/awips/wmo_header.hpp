@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <memory>
 #include <string>
 
@@ -27,7 +28,7 @@ public:
    explicit WmoHeader();
    ~WmoHeader();
 
-   WmoHeader(const WmoHeader&) = delete;
+   WmoHeader(const WmoHeader&)            = delete;
    WmoHeader& operator=(const WmoHeader&) = delete;
 
    WmoHeader(WmoHeader&&) noexcept;
@@ -45,7 +46,40 @@ public:
    std::string product_category() const;
    std::string product_designator() const;
 
+   /**
+    * @brief Get the WMO date/time
+    *
+    * Gets the WMO date/time. Uses the optional date hint provided via
+    * SetDateHint(std::chrono::year_month). If the date hint has not been
+    * provided, the endTimeHint parameter is required.
+    *
+    * @param [in] endTimeHint The optional end time bounds to provide. This is
+    * ignored if a date hint has been provided to determine an absolute date.
+    */
+   std::chrono::sys_time<std::chrono::minutes> GetDateTime(
+      std::optional<std::chrono::system_clock::time_point> endTimeHint =
+         std::nullopt);
+
+   /**
+    * @brief Parse a WMO header
+    *
+    * @param [in] is The input stream to parse
+    */
    bool Parse(std::istream& is);
+
+   /**
+    * @brief Provide a date hint for the WMO parser
+    *
+    * The WMO header contains a date/time in the format DDMMSS. The year and
+    * month must be derived using another source. The date hint provides the
+    * additional context required to determine the absolute product time.
+    *
+    * This function will update any absolute date/time already calculated, or
+    * affect the calculation of a subsequent absolute date/time.
+    *
+    * @param [in] dateHint The date hint to provide the WMO header parser
+    */
+   void SetDateHint(std::chrono::year_month dateHint);
 
 private:
    std::unique_ptr<WmoHeaderImpl> p;
