@@ -80,7 +80,8 @@ public:
       threadPool_.join();
    }
 
-   void HandleMessage(std::shared_ptr<awips::TextProductMessage> message);
+   void
+   HandleMessage(const std::shared_ptr<awips::TextProductMessage>& message);
    void RefreshAsync();
    void Refresh();
 
@@ -171,7 +172,7 @@ void TextEventManager::LoadFile(const std::string& filename)
 }
 
 void TextEventManager::Impl::HandleMessage(
-   std::shared_ptr<awips::TextProductMessage> message)
+   const std::shared_ptr<awips::TextProductMessage>& message)
 {
    auto segments = message->segments();
 
@@ -220,8 +221,23 @@ void TextEventManager::Impl::HandleMessage(
       // If there was a matching event, and this message has not been stored
       // (WMO header equivalence check), add the updated message to the existing
       // event
-      messageIndex = it->second.size();
-      it->second.push_back(message);
+
+      // Determine the chronological sequence of the message. Note, if there
+      // were no time hints given to the WMO header, this will place the message
+      // at the end of the vector.
+      auto insertionPoint = std::upper_bound(
+         it->second.begin(),
+         it->second.end(),
+         message,
+         [](const std::shared_ptr<awips::TextProductMessage>& a,
+            const std::shared_ptr<awips::TextProductMessage>& b) {
+            return a->wmo_header()->GetDateTime() <
+                   b->wmo_header()->GetDateTime();
+         });
+
+      // Insert the message in chronological order
+      messageIndex = std::distance(it->second.begin(), insertionPoint);
+      it->second.insert(insertionPoint, message);
       updated = true;
    };
 
