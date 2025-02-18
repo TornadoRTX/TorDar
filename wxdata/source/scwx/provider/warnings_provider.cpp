@@ -130,8 +130,7 @@ WarningsProvider::LoadUpdatedFiles(
             {
                if (headResponse.status_code == cpr::status::HTTP_OK)
                {
-                  bool updated =
-                     p->UpdateFileRecord(headResponse, url); // TODO: filename
+                  bool updated = p->UpdateFileRecord(headResponse, filename);
 
                   if (updated)
                   {
