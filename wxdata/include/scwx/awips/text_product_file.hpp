@@ -28,7 +28,7 @@ public:
    [[nodiscard]] std::shared_ptr<TextProductMessage> message(size_t i) const;
 
    bool LoadFile(const std::string& filename);
-   bool LoadData(std::string_view filename, std::istream& is);
+   bool LoadData(const std::string& filename, std::istream& is);
 
 private:
    class Impl;

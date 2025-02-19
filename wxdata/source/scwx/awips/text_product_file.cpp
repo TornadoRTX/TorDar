@@ -72,7 +72,7 @@ bool TextProductFile::LoadFile(const std::string& filename)
    return fileValid;
 }
 
-bool TextProductFile::LoadData(std::string_view filename, std::istream& is)
+bool TextProductFile::LoadData(const std::string& filename, std::istream& is)
 {
    static constexpr LazyRE2 kDateTimePattern_ = {
       R"(((?:19|20)\d{2}))"      // Year (YYYY)
