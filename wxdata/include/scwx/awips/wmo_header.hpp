@@ -34,15 +34,15 @@ public:
 
    bool operator==(const WmoHeader& o) const;
 
-   std::string sequence_number() const;
-   std::string data_type() const;
-   std::string geographic_designator() const;
-   std::string bulletin_id() const;
-   std::string icao() const;
-   std::string date_time() const;
-   std::string bbb_indicator() const;
-   std::string product_category() const;
-   std::string product_designator() const;
+   [[nodiscard]] std::string sequence_number() const;
+   [[nodiscard]] std::string data_type() const;
+   [[nodiscard]] std::string geographic_designator() const;
+   [[nodiscard]] std::string bulletin_id() const;
+   [[nodiscard]] std::string icao() const;
+   [[nodiscard]] std::string date_time() const;
+   [[nodiscard]] std::string bbb_indicator() const;
+   [[nodiscard]] std::string product_category() const;
+   [[nodiscard]] std::string product_designator() const;
 
    /**
     * @brief Get the WMO date/time
@@ -54,7 +54,7 @@ public:
     * @param [in] endTimeHint The optional end time bounds to provide. This is
     * ignored if a date hint has been provided to determine an absolute date.
     */
-   std::chrono::sys_time<std::chrono::minutes> GetDateTime(
+   [[nodiscard]] std::chrono::sys_time<std::chrono::minutes> GetDateTime(
       std::optional<std::chrono::system_clock::time_point> endTimeHint =
          std::nullopt);
 
@@ -68,7 +68,7 @@ public:
    /**
     * @brief Provide a date hint for the WMO parser
     *
-    * The WMO header contains a date/time in the format DDMMSS. The year and
+    * The WMO header contains a date/time in the format DDHHMM. The year and
     * month must be derived using another source. The date hint provides the
     * additional context required to determine the absolute product time.
     *

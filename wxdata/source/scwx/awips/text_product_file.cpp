@@ -5,24 +5,29 @@
 
 #include <re2/re2.h>
 
-namespace scwx
-{
-namespace awips
+namespace scwx::awips
 {
 
 static const std::string logPrefix_ = "scwx::awips::text_product_file";
 static const auto        logger_    = util::Logger::Create(logPrefix_);
 
-class TextProductFileImpl
+class TextProductFile::Impl
 {
 public:
-   explicit TextProductFileImpl() : messages_ {} {};
-   ~TextProductFileImpl() = default;
+   explicit Impl() : messages_ {} {};
+   ~Impl() = default;
+
+   Impl(const Impl&)            = delete;
+   Impl& operator=(const Impl&) = delete;
+
+   Impl(Impl&&)            = delete;
+   Impl& operator=(Impl&&) = delete;
 
    std::vector<std::shared_ptr<TextProductMessage>> messages_;
 };
 
-TextProductFile::TextProductFile() : p(std::make_unique<TextProductFileImpl>())
+TextProductFile::TextProductFile() :
+    p(std::make_unique<TextProductFile::Impl>())
 {
 }
 TextProductFile::~TextProductFile() = default;
@@ -97,7 +102,7 @@ bool TextProductFile::LoadData(std::string_view filename, std::istream& is)
 
       if (message != nullptr)
       {
-         for (auto m : p->messages_)
+         for (const auto& m : p->messages_)
          {
             if (*m->wmo_header().get() == *message->wmo_header().get())
             {
@@ -125,5 +130,4 @@ bool TextProductFile::LoadData(std::string_view filename, std::istream& is)
    return !p->messages_.empty();
 }
 
-} // namespace awips
-} // namespace scwx
+} // namespace scwx::awips
