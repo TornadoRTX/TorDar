@@ -163,10 +163,11 @@ IemApiProvider::LoadTextProducts(const std::vector<std::string>& textProducts)
       if (response.status_code == cpr::status::HTTP_OK)
       {
          // Load file
+         auto productId = asyncResponse.first;
          std::shared_ptr<awips::TextProductFile> textProductFile {
             std::make_shared<awips::TextProductFile>()};
          std::istringstream responseBody {response.text};
-         if (textProductFile->LoadData(responseBody))
+         if (textProductFile->LoadData(productId, responseBody))
          {
             textProductFiles.push_back(textProductFile);
          }

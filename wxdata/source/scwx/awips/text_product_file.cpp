@@ -3,6 +3,8 @@
 
 #include <fstream>
 
+#include <re2/re2.h>
+
 namespace scwx
 {
 namespace awips
@@ -59,15 +61,33 @@ bool TextProductFile::LoadFile(const std::string& filename)
 
    if (fileValid)
    {
-      fileValid = LoadData(f);
+      fileValid = LoadData(filename, f);
    }
 
    return fileValid;
 }
 
-bool TextProductFile::LoadData(std::istream& is)
+bool TextProductFile::LoadData(std::string_view filename, std::istream& is)
 {
+   static constexpr LazyRE2 kDateTimePattern_ = {
+      R"(((?:19|20)\d{2}))"      // Year (YYYY)
+      R"((0[1-9]|1[0-2]))"       // Month (MM)
+      R"((0[1-9]|[12]\d|3[01]))" // Day (DD)
+      R"(_?)"                    // Optional separator (not captured)
+      R"(([01]\d|2[0-3]))"       // Hour (HH)
+   };
+
    logger_->trace("Loading Data");
+
+   // Attempt to parse the date from the filename
+   std::optional<std::chrono::year_month> yearMonth;
+   int                                    year {};
+   unsigned int                           month {};
+
+   if (RE2::PartialMatch(filename, *kDateTimePattern_, &year, &month))
+   {
+      yearMonth = std::chrono::year {year} / std::chrono::month {month};
+   }
 
    while (!is.eof())
    {
@@ -88,6 +108,11 @@ bool TextProductFile::LoadData(std::istream& is)
 
          if (!duplicate)
          {
+            if (yearMonth.has_value())
+            {
+               message->wmo_header()->SetDateHint(yearMonth.value());
+            }
+
             p->messages_.push_back(message);
          }
       }

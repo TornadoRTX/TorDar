@@ -29,7 +29,7 @@ public:
    std::shared_ptr<TextProductMessage>              message(size_t i) const;
 
    bool LoadFile(const std::string& filename);
-   bool LoadData(std::istream& is);
+   bool LoadData(std::string_view filename, std::istream& is);
 
 private:
    std::unique_ptr<TextProductFileImpl> p;

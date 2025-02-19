@@ -176,7 +176,7 @@ WarningsProvider::LoadUpdatedFiles(
                std::shared_ptr<awips::TextProductFile> textProductFile {
                   std::make_shared<awips::TextProductFile>()};
                std::istringstream responseBody {response.text};
-               if (textProductFile->LoadData(responseBody))
+               if (textProductFile->LoadData(filename, responseBody))
                {
                   updatedFiles.push_back(textProductFile);
                }
