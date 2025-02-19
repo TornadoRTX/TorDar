@@ -32,15 +32,13 @@ public:
 IemApiProvider::IemApiProvider() : p(std::make_unique<Impl>()) {}
 IemApiProvider::~IemApiProvider() = default;
 
-IemApiProvider::IemApiProvider(IemApiProvider&&) noexcept =
-   default;
-IemApiProvider&
-IemApiProvider::operator=(IemApiProvider&&) noexcept = default;
+IemApiProvider::IemApiProvider(IemApiProvider&&) noexcept            = default;
+IemApiProvider& IemApiProvider::operator=(IemApiProvider&&) noexcept = default;
 
-std::vector<std::string> IemApiProvider::ListTextProducts(
-   std::chrono::sys_time<std::chrono::days> date,
-   std::optional<std::string_view>          cccc,
-   std::optional<std::string_view>          pil)
+std::vector<std::string>
+IemApiProvider::ListTextProducts(std::chrono::sys_time<std::chrono::days> date,
+                                 std::optional<std::string_view>          cccc,
+                                 std::optional<std::string_view>          pil)
 {
    using namespace std::chrono;
 
@@ -137,25 +135,23 @@ std::vector<std::string> IemApiProvider::ListTextProducts(
 }
 
 std::vector<std::shared_ptr<awips::TextProductFile>>
-IemApiProvider::LoadTextProducts(
-   const std::vector<std::string>& textProducts)
+IemApiProvider::LoadTextProducts(const std::vector<std::string>& textProducts)
 {
    auto parameters = cpr::Parameters {{"nolimit", "true"}};
 
    std::vector<std::pair<std::string_view, cpr::AsyncResponse>>
       asyncResponses {};
    asyncResponses.reserve(textProducts.size());
-   
+
    const std::string endpointUrl = kBaseUrl_ + kNwsTextProductEndpoint_;
 
    for (auto& productId : textProducts)
    {
       asyncResponses.emplace_back(
          productId,
-         cpr::GetAsync(
-            cpr::Url {endpointUrl + productId},
-            network::cpr::GetHeader(),
-            parameters));
+         cpr::GetAsync(cpr::Url {endpointUrl + productId},
+                       network::cpr::GetHeader(),
+                       parameters));
    }
 
    std::vector<std::shared_ptr<awips::TextProductFile>> textProductFiles;
