@@ -66,7 +66,7 @@ public:
    std::map<std::uint16_t, std::shared_ptr<rda::ElevationScan>> radarData_ {};
 
    std::map<rda::DataBlockType,
-            std::map<std::uint16_t,
+            std::map<float,
                      std::map<std::chrono::system_clock::time_point,
                               std::shared_ptr<rda::ElevationScan>>>>
       index_ {};
@@ -139,52 +139,41 @@ Ar2vFile::GetElevationScan(rda::DataBlockType                    dataBlockType,
 {
    logger_->debug("GetElevationScan: {} degrees", elevation);
 
-   constexpr float scaleFactor = 8.0f / 0.043945f;
-
    std::shared_ptr<rda::ElevationScan> elevationScan = nullptr;
    float                               elevationCut  = 0.0f;
    std::vector<float>                  elevationCuts;
-
-   std::uint16_t codedElevation =
-      static_cast<std::uint16_t>(std::lroundf(elevation * scaleFactor));
 
    if (p->index_.contains(dataBlockType))
    {
       auto& scans = p->index_.at(dataBlockType);
 
-      std::uint16_t lowerBound = scans.cbegin()->first;
-      std::uint16_t upperBound = scans.crbegin()->first;
+      float lowerBound = scans.cbegin()->first;
+      float upperBound = scans.crbegin()->first;
 
       // Find closest elevation match
       for (auto& scan : scans)
       {
-         if (scan.first > lowerBound && scan.first <= codedElevation)
+         if (scan.first > lowerBound && scan.first <= elevation)
          {
             lowerBound = scan.first;
          }
-         if (scan.first < upperBound && scan.first >= codedElevation)
+         if (scan.first < upperBound && scan.first >= elevation)
          {
             upperBound = scan.first;
          }
 
-         elevationCuts.push_back(scan.first / scaleFactor);
+         elevationCuts.push_back(scan.first);
       }
 
-      std::int32_t lowerDelta =
-         std::abs(static_cast<std::int32_t>(codedElevation) -
-                  static_cast<std::int32_t>(lowerBound));
-      std::int32_t upperDelta =
-         std::abs(static_cast<std::int32_t>(codedElevation) -
-                  static_cast<std::int32_t>(upperBound));
+      const float lowerDelta = std::abs(elevation - lowerBound);
+      const float upperDelta = std::abs(elevation - upperBound);
 
       // Select closest elevation match
-      std::uint16_t elevationIndex =
-         (lowerDelta < upperDelta) ? lowerBound : upperBound;
-      elevationCut = elevationIndex / scaleFactor;
+      elevationCut = (lowerDelta < upperDelta) ? lowerBound : upperBound;
 
       // Select closest time match, not newer than the selected time
       std::chrono::system_clock::time_point foundTime {};
-      auto& elevationScans = scans.at(elevationIndex);
+      auto& elevationScans = scans.at(elevationCut);
 
       for (auto& scan : elevationScans)
       {
@@ -457,6 +446,8 @@ void Ar2vFileImpl::IndexFile()
 {
    logger_->debug("Indexing file");
 
+   constexpr float scaleFactor = 8.0f / 0.043945f;
+
    for (auto& elevationCut : radarData_)
    {
       std::uint16_t     elevationAngle {};
@@ -510,7 +501,19 @@ void Ar2vFileImpl::IndexFile()
             auto time = util::TimePoint(radial0->modified_julian_date(),
                                         radial0->collection_time());
 
-            index_[dataBlockType][elevationAngle][time] = elevationCut.second;
+            // NOLINTNEXTLINE This conversion is accurate
+            float elevationAngleConverted = elevationAngle / scaleFactor;
+            // Any elevation above 90 degrees should be interpreted as a
+            // negative angle
+            // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+            if (elevationAngleConverted > 90)
+            {
+               elevationAngleConverted -= 360;
+            }
+            // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+
+            index_[dataBlockType][elevationAngleConverted][time] =
+               elevationCut.second;
          }
       }
    }
