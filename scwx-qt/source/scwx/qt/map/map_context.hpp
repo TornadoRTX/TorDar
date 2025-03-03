@@ -50,7 +50,7 @@ public:
    common::RadarProductGroup                 radar_product_group() const;
    std::string                               radar_product() const;
    int16_t                                   radar_product_code() const;
-   QWidget*                                  widget() const;
+   [[nodiscard]] QWidget*                    widget() const;
 
    void set_map(const std::shared_ptr<QMapLibre::Map>& map);
    void set_map_copyrights(const std::string& copyrights);

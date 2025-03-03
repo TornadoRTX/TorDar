@@ -71,7 +71,7 @@ public:
 
    const std::vector<char>& GetRawFontData(const std::string& filename);
 
-   static bool CheckFontFormat(const FcChar8* format);
+   static bool       CheckFontFormat(const FcChar8* format);
    static FontRecord MatchFontFile(const std::string&              family,
                                    const std::vector<std::string>& styles);
 
@@ -461,7 +461,7 @@ void FontManager::Impl::FinalizeFontconfig()
 
 bool FontManager::Impl::CheckFontFormat(const FcChar8* format)
 {
-   const std::string stdFormat = reinterpret_cast<const char *>(format);
+   const std::string stdFormat = reinterpret_cast<const char*>(format);
 
    return stdFormat == kFcTrueType_ || stdFormat == kFcOpenType_;
 }

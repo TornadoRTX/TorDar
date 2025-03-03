@@ -1,3 +1,4 @@
+#include <ranges>
 #include <scwx/qt/manager/font_manager.hpp>
 #include <scwx/qt/map/draw_layer.hpp>
 #include <scwx/qt/model/imgui_context_model.hpp>
@@ -6,14 +7,11 @@
 
 #include <backends/imgui_impl_opengl3.h>
 #include <backends/imgui_impl_qt.hpp>
+#include <utility>
 #include <fmt/format.h>
 #include <imgui.h>
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 static const std::string logPrefix_ = "scwx::qt::map::draw_layer";
@@ -23,13 +21,13 @@ class DrawLayerImpl
 {
 public:
    explicit DrawLayerImpl(std::shared_ptr<MapContext> context) :
-       context_ {context},
-       drawList_ {},
-       textureAtlas_ {GL_INVALID_INDEX}
+       context_ {std::move(context)}, drawList_ {}
    {
       static size_t currentMapId_ {0u};
       imGuiContextName_ = fmt::format("Layer {}", ++currentMapId_);
-      imGuiContext_ = 
+      // This must be initialized after the last line
+      // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer)
+      imGuiContext_ =
          model::ImGuiContextModel::Instance().CreateContext(imGuiContextName_);
 
       // Initialize ImGui Qt backend
@@ -51,15 +49,20 @@ public:
       model::ImGuiContextModel::Instance().DestroyContext(imGuiContextName_);
    }
 
+   DrawLayerImpl(const DrawLayerImpl&)             = delete;
+   DrawLayerImpl& operator=(const DrawLayerImpl&)  = delete;
+   DrawLayerImpl(const DrawLayerImpl&&)            = delete;
+   DrawLayerImpl& operator=(const DrawLayerImpl&&) = delete;
+
    std::shared_ptr<MapContext>                      context_;
    std::vector<std::shared_ptr<gl::draw::DrawItem>> drawList_;
-   GLuint                                           textureAtlas_;
+   GLuint textureAtlas_ {GL_INVALID_INDEX};
 
    std::uint64_t textureAtlasBuildCount_ {};
 
    std::string   imGuiContextName_;
    ImGuiContext* imGuiContext_;
-   bool          imGuiRendererInitialized_{};
+   bool          imGuiRendererInitialized_ {};
 };
 
 DrawLayer::DrawLayer(const std::shared_ptr<MapContext>& context) :
@@ -171,15 +174,15 @@ bool DrawLayer::RunMousePicking(
    bool itemPicked = false;
 
    // For each draw item in the draw list in reverse
-   for (auto it = p->drawList_.rbegin(); it != p->drawList_.rend(); ++it)
+   for (auto& it : std::ranges::reverse_view(p->drawList_))
    {
       // Run mouse picking on each draw item
-      if ((*it)->RunMousePicking(params,
-                                 mouseLocalPos,
-                                 mouseGlobalPos,
-                                 mouseCoords,
-                                 mouseGeoCoords,
-                                 eventHandler))
+      if (it->RunMousePicking(params,
+                              mouseLocalPos,
+                              mouseGlobalPos,
+                              mouseCoords,
+                              mouseGeoCoords,
+                              eventHandler))
       {
          // If a draw item was picked, don't process additional items
          itemPicked = true;
@@ -195,6 +198,4 @@ void DrawLayer::AddDrawItem(const std::shared_ptr<gl::draw::DrawItem>& drawItem)
    p->drawList_.push_back(drawItem);
 }
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map
