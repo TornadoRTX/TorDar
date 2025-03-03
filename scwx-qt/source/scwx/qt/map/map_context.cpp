@@ -111,19 +111,11 @@ int16_t MapContext::radar_product_code() const
    return p->radarProductCode_;
 }
 
-<<<<<<< HEAD
-=======
-QMapLibre::CustomLayerRenderParameters MapContext::render_parameters() const
-{
-   return p->renderParameters_;
-}
-
 QWidget* MapContext::widget() const
 {
    return p->widget_;
 }
 
->>>>>>> 513a41d3 (Inital code for per map layer ImGui contexts)
 void MapContext::set_map(const std::shared_ptr<QMapLibre::Map>& map)
 {
    p->map_ = map;
