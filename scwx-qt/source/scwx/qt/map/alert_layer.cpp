@@ -157,8 +157,8 @@ public:
       const std::shared_ptr<AlertLayerHandler::SegmentRecord>& segmentRecord);
    void ConnectAlertHandlerSignals();
    void ConnectSignals();
-   void HandleGeoLinesEvent(std::shared_ptr<gl::draw::GeoLineDrawItem>& di,
-                            QEvent*                                     ev);
+   void HandleGeoLinesEvent(std::weak_ptr<gl::draw::GeoLineDrawItem>& di,
+                            QEvent*                                   ev);
    void HandleGeoLinesHover(std::shared_ptr<gl::draw::GeoLineDrawItem>& di,
                             const QPointF& mouseGlobalPos);
    void ScheduleRefresh();
@@ -633,11 +633,12 @@ void AlertLayer::Impl::AddLine(std::shared_ptr<gl::draw::GeoLines>& geoLines,
                    std::placeholders::_1,
                    std::placeholders::_2));
 
+      std::weak_ptr<gl::draw::GeoLineDrawItem> diWeak = di;
       gl::draw::GeoLines::RegisterEventHandler(
          di,
          std::bind(&AlertLayer::Impl::HandleGeoLinesEvent,
                    this,
-                   di,
+                   diWeak,
                    std::placeholders::_1));
    }
 }
@@ -691,8 +692,14 @@ void AlertLayer::Impl::UpdateLines()
 }
 
 void AlertLayer::Impl::HandleGeoLinesEvent(
-   std::shared_ptr<gl::draw::GeoLineDrawItem>& di, QEvent* ev)
+   std::weak_ptr<gl::draw::GeoLineDrawItem>& diWeak, QEvent* ev)
 {
+   std::shared_ptr<gl::draw::GeoLineDrawItem> di = diWeak.lock();
+   if (di == nullptr)
+   {
+      return;
+   }
+
    switch (ev->type())
    {
    case QEvent::Type::MouseButtonPress:
