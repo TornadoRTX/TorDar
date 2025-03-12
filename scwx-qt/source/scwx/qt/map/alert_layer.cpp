@@ -633,7 +633,7 @@ void AlertLayer::Impl::AddLine(std::shared_ptr<gl::draw::GeoLines>& geoLines,
                    std::placeholders::_1,
                    std::placeholders::_2));
 
-      std::weak_ptr<gl::draw::GeoLineDrawItem> diWeak = di;
+      const std::weak_ptr<gl::draw::GeoLineDrawItem> diWeak = di;
       gl::draw::GeoLines::RegisterEventHandler(
          di,
          std::bind(&AlertLayer::Impl::HandleGeoLinesEvent,
@@ -694,7 +694,7 @@ void AlertLayer::Impl::UpdateLines()
 void AlertLayer::Impl::HandleGeoLinesEvent(
    std::weak_ptr<gl::draw::GeoLineDrawItem>& diWeak, QEvent* ev)
 {
-   std::shared_ptr<gl::draw::GeoLineDrawItem> di = diWeak.lock();
+   const std::shared_ptr<gl::draw::GeoLineDrawItem> di = diWeak.lock();
    if (di == nullptr)
    {
       return;
