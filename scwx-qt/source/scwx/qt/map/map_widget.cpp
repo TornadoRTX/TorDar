@@ -1185,6 +1185,8 @@ void MapWidgetImpl::AddLayers()
    layerList_.clear();
    genericLayers_.clear();
    placefileLayers_.clear();
+   customLayers_.clear();
+   customLayers_.shrink_to_fit();
 
    // Update custom layer list from model
    customLayers_ = model::LayerModel::Instance()->GetLayers();
