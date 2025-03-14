@@ -186,7 +186,7 @@ public:
    std::shared_mutex                         awipsProductMutex_;
 
    common::Level3ProductCategoryMap categoryMap_;
-   std::shared_mutex categoryMapMutex_;
+   std::shared_mutex                categoryMapMutex_;
 
    std::string currentAwipsId_ {};
    QAction*    currentProductTiltAction_ {nullptr};
@@ -327,7 +327,7 @@ void Level3ProductsWidgetImpl::SelectProductCategory(
 {
    UpdateCategorySelection(category);
 
-   std::shared_lock lock {categoryMapMutex_};
+   const std::shared_lock lock {categoryMapMutex_};
 
    Q_EMIT self_->RadarProductSelected(
       common::RadarProductGroup::Level3,
@@ -342,7 +342,7 @@ void Level3ProductsWidget::UpdateAvailableProducts(
 
    // Save the category map
    {
-      std::unique_lock lock {p->categoryMapMutex_};
+      const std::unique_lock lock {p->categoryMapMutex_};
       p->categoryMap_ = updatedCategoryMap;
    }
 

@@ -45,7 +45,7 @@ public:
 
    void ComputeCoordinates(
       const std::shared_ptr<wsr88d::rpg::GenericRadialDataPacket>& radialData,
-      bool smoothingEnabled,
+      bool  smoothingEnabled,
       float gateSize);
 
    [[nodiscard]] inline std::uint8_t
@@ -357,9 +357,7 @@ void Level3RadialView::ComputeSweep()
 
    // Compute gate size (number of base gates per bin)
    const std::uint16_t gateSize = std::max<std::uint16_t>(
-      1,
-      dataMomentInterval /
-         static_cast<std::uint16_t>(gateLength));
+      1, dataMomentInterval / static_cast<std::uint16_t>(gateLength));
 
    // Compute gate range [startGate, endGate)
    std::uint16_t       startGate = 0;
@@ -540,7 +538,7 @@ Level3RadialView::Impl::RemapDataMoment(std::uint8_t dataMoment) const
 
 void Level3RadialView::Impl::ComputeCoordinates(
    const std::shared_ptr<wsr88d::rpg::GenericRadialDataPacket>& radialData,
-   bool smoothingEnabled,
+   bool  smoothingEnabled,
    float gateSize)
 {
    logger_->debug("ComputeCoordinates()");

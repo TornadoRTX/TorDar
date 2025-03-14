@@ -309,7 +309,7 @@ GetLevel3CategoryDefaultProduct(Level3ProductCategory           category,
    }
 
    const auto& productsSiteHas = productsIt->second;
-   const auto& productList = level3CategoryProductList_.at(category);
+   const auto& productList     = level3CategoryProductList_.at(category);
    for (auto& product : productList)
    {
       const auto& tiltsIt = productsSiteHas.find(product);
