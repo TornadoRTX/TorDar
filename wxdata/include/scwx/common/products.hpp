@@ -73,8 +73,9 @@ Level2Product      GetLevel2Product(const std::string& name);
 
 const std::string& GetLevel3CategoryName(Level3ProductCategory category);
 const std::string& GetLevel3CategoryDescription(Level3ProductCategory category);
-const std::string&
-GetLevel3CategoryDefaultProduct(Level3ProductCategory category);
+std::string
+GetLevel3CategoryDefaultProduct(Level3ProductCategory    category,
+                                const Level3ProductCategoryMap& categoryMap);
 Level3ProductCategory GetLevel3Category(const std::string& categoryName);
 Level3ProductCategory
 GetLevel3CategoryByProduct(const std::string& productName);

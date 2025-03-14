@@ -60,7 +60,9 @@ public:
        categoryButtons_ {},
        productTiltMap_ {},
        awipsProductMap_ {},
-       awipsProductMutex_ {}
+       awipsProductMutex_ {},
+       categoryMap_ {},
+       categoryMapMutex_ {}
    {
       layout_->setContentsMargins(0, 0, 0, 0);
       layout_->addWidget(productsWidget_);
@@ -182,6 +184,9 @@ public:
 
    std::unordered_map<QAction*, std::string> awipsProductMap_;
    std::shared_mutex                         awipsProductMutex_;
+
+   common::Level3ProductCategoryMap categoryMap_;
+   std::shared_mutex categoryMapMutex_;
 
    std::string currentAwipsId_ {};
    QAction*    currentProductTiltAction_ {nullptr};
@@ -322,9 +327,11 @@ void Level3ProductsWidgetImpl::SelectProductCategory(
 {
    UpdateCategorySelection(category);
 
+   std::shared_lock lock {categoryMapMutex_};
+
    Q_EMIT self_->RadarProductSelected(
       common::RadarProductGroup::Level3,
-      common::GetLevel3CategoryDefaultProduct(category),
+      common::GetLevel3CategoryDefaultProduct(category, categoryMap_),
       0);
 }
 
@@ -332,6 +339,12 @@ void Level3ProductsWidget::UpdateAvailableProducts(
    const common::Level3ProductCategoryMap& updatedCategoryMap)
 {
    logger_->trace("UpdateAvailableProducts()");
+
+   // Save the category map
+   {
+      std::unique_lock lock {p->categoryMapMutex_};
+      p->categoryMap_ = updatedCategoryMap;
+   }
 
    // Iterate through each category tool button
    std::for_each(

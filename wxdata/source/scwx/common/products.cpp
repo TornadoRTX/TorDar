@@ -298,9 +298,27 @@ const std::string& GetLevel3CategoryDescription(Level3ProductCategory category)
    return level3CategoryDescription_.at(category);
 }
 
-const std::string&
-GetLevel3CategoryDefaultProduct(Level3ProductCategory category)
+std::string
+GetLevel3CategoryDefaultProduct(Level3ProductCategory           category,
+                                const Level3ProductCategoryMap& categoryMap)
 {
+   const auto& productsIt = categoryMap.find(category);
+   if (productsIt == categoryMap.cend())
+   {
+      return level3CategoryDefaultAwipsId_.at(category);
+   }
+
+   const auto& productsSiteHas = productsIt->second;
+   const auto& productList = level3CategoryProductList_.at(category);
+   for (auto& product : productList)
+   {
+      const auto& tiltsIt = productsSiteHas.find(product);
+      if (tiltsIt != productsSiteHas.cend() && tiltsIt->second.size() > 0)
+      {
+         return tiltsIt->second[0];
+      }
+   }
+
    return level3CategoryDefaultAwipsId_.at(category);
 }
 
