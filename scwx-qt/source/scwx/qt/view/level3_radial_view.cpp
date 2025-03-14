@@ -39,7 +39,6 @@ public:
        vcp_ {},
        sweepTime_ {}
    {
-      coordinates_.resize(kMaxCoordinates_);
    }
    ~Impl() { threadPool_.join(); };
 
@@ -555,6 +554,8 @@ void Level3RadialView::Impl::ComputeCoordinates(
 
    // Calculate azimuth coordinates
    timer.start();
+
+   coordinates_.resize(kMaxCoordinates_);
 
    const std::uint16_t numRadials   = radialData->number_of_radials();
    const std::uint16_t numRangeBins = radialData->number_of_range_bins();
