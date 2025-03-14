@@ -1193,7 +1193,7 @@ void MapWidgetImpl::AddLayers()
    std::string before = styleLayers_.front().toStdString();
 
    // Loop through each custom layer in reverse order
-   for (const auto & customLayer : std::ranges::reverse_view(customLayers))
+   for (const auto& customLayer : std::ranges::reverse_view(customLayers))
    {
       if (customLayer.type_ == types::LayerType::Map)
       {
@@ -1214,6 +1214,8 @@ void MapWidgetImpl::AddLayers()
             break;
          }
       }
+      // id_ is always < 4, so this is safe
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
       else if (customLayer.displayed_[id_])
       {
          // If the layer is displayed for the current map, add it
