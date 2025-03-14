@@ -45,7 +45,8 @@ public:
 
    void ComputeCoordinates(
       const std::shared_ptr<wsr88d::rpg::GenericRadialDataPacket>& radialData,
-      bool smoothingEnabled);
+      bool smoothingEnabled,
+      float gateSize);
 
    [[nodiscard]] inline std::uint8_t
    RemapDataMoment(std::uint8_t dataMoment) const;
@@ -269,17 +270,24 @@ void Level3RadialView::ComputeSweep()
    }
 
    common::RadialSize radialSize;
-   if (radials == common::MAX_0_5_DEGREE_RADIALS)
+   if (radarProductManager->is_tdwr())
    {
-      radialSize = common::RadialSize::_0_5Degree;
-   }
-   else if (radials == common::MAX_1_DEGREE_RADIALS)
-   {
-      radialSize = common::RadialSize::_1Degree;
+      radialSize = common::RadialSize::NonStandard;
    }
    else
    {
-      radialSize = common::RadialSize::NonStandard;
+      if (radials == common::MAX_0_5_DEGREE_RADIALS)
+      {
+         radialSize = common::RadialSize::_0_5Degree;
+      }
+      else if (radials == common::MAX_1_DEGREE_RADIALS)
+      {
+         radialSize = common::RadialSize::_1Degree;
+      }
+      else
+      {
+         radialSize = common::RadialSize::NonStandard;
+      }
    }
 
    const std::vector<float>& coordinates =
@@ -323,11 +331,21 @@ void Level3RadialView::ComputeSweep()
    // Compute threshold at which to display an individual bin
    const uint16_t snrThreshold = descriptionBlock->threshold();
 
+   // Compute gate interval
+   const std::uint16_t dataMomentInterval =
+      descriptionBlock->x_resolution_raw();
+
+   // Get the gate length in meters. Use dataMomentInterval for NonStandard to
+   // avoid generating >1 base gates per bin.
+   const float gateLength = radialSize == common::RadialSize::NonStandard ?
+                               static_cast<float>(dataMomentInterval) :
+                               radarProductManager->gate_size();
+
    // Determine which radial to start at
    std::uint16_t startRadial;
    if (radialSize == common::RadialSize::NonStandard)
    {
-      p->ComputeCoordinates(radialData, smoothingEnabled);
+      p->ComputeCoordinates(radialData, smoothingEnabled, gateLength);
       startRadial = 0;
    }
    else
@@ -337,15 +355,11 @@ void Level3RadialView::ComputeSweep()
       startRadial = std::lroundf(startAngle * radialMultiplier);
    }
 
-   // Compute gate interval
-   const std::uint16_t dataMomentInterval =
-      descriptionBlock->x_resolution_raw();
-
    // Compute gate size (number of base gates per bin)
    const std::uint16_t gateSize = std::max<std::uint16_t>(
       1,
       dataMomentInterval /
-         static_cast<std::uint16_t>(radarProductManager->gate_size()));
+         static_cast<std::uint16_t>(gateLength));
 
    // Compute gate range [startGate, endGate)
    std::uint16_t       startGate = 0;
@@ -526,7 +540,8 @@ Level3RadialView::Impl::RemapDataMoment(std::uint8_t dataMoment) const
 
 void Level3RadialView::Impl::ComputeCoordinates(
    const std::shared_ptr<wsr88d::rpg::GenericRadialDataPacket>& radialData,
-   bool smoothingEnabled)
+   bool smoothingEnabled,
+   float gateSize)
 {
    logger_->debug("ComputeCoordinates()");
 
@@ -537,7 +552,6 @@ void Level3RadialView::Impl::ComputeCoordinates(
 
    auto         radarProductManager = self_->radar_product_manager();
    auto         radarSite           = radarProductManager->radar_site();
-   const float  gateSize            = radarProductManager->gate_size();
    const double radarLatitude       = radarSite->latitude();
    const double radarLongitude      = radarSite->longitude();
 
@@ -583,6 +597,10 @@ void Level3RadialView::Impl::ComputeCoordinates(
                const float range =
                   (static_cast<float>(gate) + gateRangeOffset) * gateSize;
                const std::size_t offset = static_cast<size_t>(radialGate) * 2;
+               if (offset + 1 >= coordinates_.size())
+               {
+                  return;
+               }
 
                double latitude  = 0.0;
                double longitude = 0.0;
