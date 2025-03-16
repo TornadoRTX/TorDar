@@ -1,3 +1,4 @@
+#include <ranges>
 #include <scwx/qt/map/map_widget.hpp>
 #include <scwx/qt/gl/gl.hpp>
 #include <scwx/qt/manager/font_manager.hpp>
@@ -204,8 +205,7 @@ public:
    const std::vector<MapStyle> emptyStyles_ {};
    std::vector<MapStyle>       customStyles_ {
       MapStyle {.name_ {"Custom"}, .url_ {}, .drawBelow_ {}}};
-   QStringList        styleLayers_;
-   types::LayerVector customLayers_;
+   QStringList styleLayers_;
 
    boost::uuids::uuid customStyleUrlChangedCallbackId_ {};
    boost::uuids::uuid customStyleDrawBelowChangedCallbackId_ {};
@@ -1187,18 +1187,18 @@ void MapWidgetImpl::AddLayers()
    placefileLayers_.clear();
 
    // Update custom layer list from model
-   customLayers_ = model::LayerModel::Instance()->GetLayers();
+   types::LayerVector customLayers = model::LayerModel::Instance()->GetLayers();
 
    // Start by drawing layers before any style-defined layers
    std::string before = styleLayers_.front().toStdString();
 
    // Loop through each custom layer in reverse order
-   for (auto it = customLayers_.crbegin(); it != customLayers_.crend(); ++it)
+   for (const auto& customLayer : std::ranges::reverse_view(customLayers))
    {
-      if (it->type_ == types::LayerType::Map)
+      if (customLayer.type_ == types::LayerType::Map)
       {
          // Style-defined map layers
-         switch (std::get<types::MapLayer>(it->description_))
+         switch (std::get<types::MapLayer>(customLayer.description_))
          {
          // Subsequent layers are drawn underneath the map symbology layer
          case types::MapLayer::MapUnderlay:
@@ -1214,10 +1214,12 @@ void MapWidgetImpl::AddLayers()
             break;
          }
       }
-      else if (it->displayed_[id_])
+      // id_ is always < 4, so this is safe
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+      else if (customLayer.displayed_[id_])
       {
          // If the layer is displayed for the current map, add it
-         AddLayer(it->type_, it->description_, before);
+         AddLayer(customLayer.type_, customLayer.description_, before);
       }
    }
 }
