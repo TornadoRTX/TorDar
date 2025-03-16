@@ -12,12 +12,16 @@
 #include <QLineEdit>
 #include <QSpinBox>
 #include <QWidget>
+#include <utility>
 #include <vector>
 
 namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::settings_interface";
+
+static const QString kValidStyleSheet_   = "";
+static const QString kInvalidStyleSheet_ = "border: 2px solid red;";
 
 template<class T>
 class SettingsInterface<T>::Impl
@@ -59,6 +63,8 @@ public:
    bool                       unitEnabled_ {false};
 
    bool trimmingEnabled_ {false};
+
+   std::optional<std::string> invalidTooltip_;
 };
 
 template<class T>
@@ -167,20 +173,24 @@ void SettingsInterface<T>::SetEditWidget(QWidget* widget)
    {
       if constexpr (std::is_same_v<T, std::string>)
       {
-         QObject::connect(hotkeyEdit,
-                          &ui::HotkeyEdit::KeySequenceChanged,
-                          p->context_.get(),
-                          [this](const QKeySequence& sequence)
-                          {
-                             std::string value {
-                                sequence.toString().toStdString()};
+         QObject::connect(
+            hotkeyEdit,
+            &ui::HotkeyEdit::KeySequenceChanged,
+            p->context_.get(),
+            [this, hotkeyEdit](const QKeySequence& sequence)
+            {
+               const std::string value {sequence.toString().toStdString()};
 
-                             // Attempt to stage the value
-                             p->stagedValid_ = p->variable_->StageValue(value);
-                             p->UpdateResetButton();
+               // Attempt to stage the value
+               p->stagedValid_ = p->variable_->StageValue(value);
+               p->UpdateResetButton();
 
-                             // TODO: Display invalid status
-                          });
+               hotkeyEdit->setStyleSheet(p->stagedValid_ ? kValidStyleSheet_ :
+                                                           kInvalidStyleSheet_);
+               hotkeyEdit->setToolTip(p->invalidTooltip_ && !p->stagedValid_ ?
+                                         p->invalidTooltip_->c_str() :
+                                         "");
+            });
       }
    }
    else if (QLineEdit* lineEdit = dynamic_cast<QLineEdit*>(widget))
@@ -189,53 +199,64 @@ void SettingsInterface<T>::SetEditWidget(QWidget* widget)
       {
          // If the line is edited (not programatically changed), stage the new
          // value
-         QObject::connect(lineEdit,
-                          &QLineEdit::textEdited,
-                          p->context_.get(),
-                          [this](const QString& text)
-                          {
-                             QString trimmedText =
-                                p->trimmingEnabled_ ? text.trimmed() : text;
+         QObject::connect(
+            lineEdit,
+            &QLineEdit::textEdited,
+            p->context_.get(),
+            [this, lineEdit](const QString& text)
+            {
+               const QString trimmedText =
+                  p->trimmingEnabled_ ? text.trimmed() : text;
 
-                             // Map to value if required
-                             std::string value {trimmedText.toStdString()};
-                             if (p->mapToValue_ != nullptr)
-                             {
-                                value = p->mapToValue_(value);
-                             }
+               // Map to value if required
+               std::string value {trimmedText.toStdString()};
+               if (p->mapToValue_ != nullptr)
+               {
+                  value = p->mapToValue_(value);
+               }
 
-                             // Attempt to stage the value
-                             p->stagedValid_ = p->variable_->StageValue(value);
-                             p->UpdateResetButton();
+               // Attempt to stage the value
+               p->stagedValid_ = p->variable_->StageValue(value);
+               p->UpdateResetButton();
 
-                             // TODO: Display invalid status
-                          });
+               lineEdit->setStyleSheet(p->stagedValid_ ? kValidStyleSheet_ :
+                                                         kInvalidStyleSheet_);
+               lineEdit->setToolTip(p->invalidTooltip_ && !p->stagedValid_ ?
+                                       p->invalidTooltip_->c_str() :
+                                       "");
+            });
       }
       else if constexpr (std::is_same_v<T, double>)
       {
          // If the line is edited (not programatically changed), stage the new
          // value
-         QObject::connect(lineEdit,
-                          &QLineEdit::textEdited,
-                          p->context_.get(),
-                          [this](const QString& text)
-                          {
-                             // Convert to a double
-                             bool   ok;
-                             double value = text.toDouble(&ok);
-                             if (ok)
-                             {
-                                // Attempt to stage the value
-                                p->stagedValid_ =
-                                   p->variable_->StageValue(value);
-                                p->UpdateResetButton();
-                             }
-                             else
-                             {
-                                p->stagedValid_ = false;
-                                p->UpdateResetButton();
-                             }
-                          });
+         QObject::connect(
+            lineEdit,
+            &QLineEdit::textEdited,
+            p->context_.get(),
+            [this, lineEdit](const QString& text)
+            {
+               // Convert to a double
+               bool         ok    = false;
+               const double value = text.toDouble(&ok);
+               if (ok)
+               {
+                  // Attempt to stage the value
+                  p->stagedValid_ = p->variable_->StageValue(value);
+                  p->UpdateResetButton();
+               }
+               else
+               {
+                  p->stagedValid_ = false;
+                  p->UpdateResetButton();
+               }
+
+               lineEdit->setStyleSheet(p->stagedValid_ ? kValidStyleSheet_ :
+                                                         kInvalidStyleSheet_);
+               lineEdit->setToolTip(p->invalidTooltip_ && !p->stagedValid_ ?
+                                       p->invalidTooltip_->c_str() :
+                                       "");
+            });
       }
       else if constexpr (std::is_same_v<T, std::vector<std::int64_t>>)
       {
@@ -245,7 +266,7 @@ void SettingsInterface<T>::SetEditWidget(QWidget* widget)
             lineEdit,
             &QLineEdit::textEdited,
             p->context_.get(),
-            [this](const QString& text)
+            [this, lineEdit](const QString& text)
             {
                // Map to value if required
                T value {};
@@ -280,7 +301,11 @@ void SettingsInterface<T>::SetEditWidget(QWidget* widget)
                p->stagedValid_ = p->variable_->StageValue(value);
                p->UpdateResetButton();
 
-               // TODO: Display invalid status
+               lineEdit->setStyleSheet(p->stagedValid_ ? kValidStyleSheet_ :
+                                                         kInvalidStyleSheet_);
+               lineEdit->setToolTip(p->invalidTooltip_ && !p->stagedValid_ ?
+                                       p->invalidTooltip_->c_str() :
+                                       "");
             });
       }
    }
@@ -343,7 +368,7 @@ void SettingsInterface<T>::SetEditWidget(QWidget* widget)
             spinBox,
             &QSpinBox::valueChanged,
             p->context_.get(),
-            [this](int i)
+            [this, spinBox](int i)
             {
                const T                value  = p->variable_->GetValue();
                const std::optional<T> staged = p->variable_->GetStaged();
@@ -364,6 +389,12 @@ void SettingsInterface<T>::SetEditWidget(QWidget* widget)
                   p->UpdateResetButton();
                }
                // Otherwise, don't process an unchanged value
+
+               spinBox->setStyleSheet(p->stagedValid_ ? kValidStyleSheet_ :
+                                                        kInvalidStyleSheet_);
+               spinBox->setToolTip(p->invalidTooltip_ && !p->stagedValid_ ?
+                                      p->invalidTooltip_->c_str() :
+                                      "");
             });
       }
    }
@@ -389,7 +420,7 @@ void SettingsInterface<T>::SetEditWidget(QWidget* widget)
             doubleSpinBox,
             &QDoubleSpinBox::valueChanged,
             p->context_.get(),
-            [this](double d)
+            [this, doubleSpinBox](double d)
             {
                if (p->unitEnabled_)
                {
@@ -415,6 +446,13 @@ void SettingsInterface<T>::SetEditWidget(QWidget* widget)
                   p->UpdateResetButton();
                }
                // Otherwise, don't process an unchanged value
+
+               doubleSpinBox->setStyleSheet(
+                  p->stagedValid_ ? kValidStyleSheet_ : kInvalidStyleSheet_);
+               doubleSpinBox->setToolTip(p->invalidTooltip_ &&
+                                               !p->stagedValid_ ?
+                                            p->invalidTooltip_->c_str() :
+                                            "");
             });
       }
    }
@@ -498,6 +536,12 @@ template<class T>
 void SettingsInterface<T>::EnableTrimming(bool trimmingEnabled)
 {
    p->trimmingEnabled_ = trimmingEnabled;
+}
+
+template<class T>
+void SettingsInterface<T>::SetInvalidTooltip(std::optional<std::string> tooltip)
+{
+   p->invalidTooltip_ = std::move(tooltip);
 }
 
 template<class T>

@@ -24,6 +24,7 @@
 #include <scwx/qt/types/time_types.hpp>
 #include <scwx/qt/types/unit_types.hpp>
 #include <scwx/qt/ui/county_dialog.hpp>
+#include <scwx/qt/ui/custom_layer_dialog.hpp>
 #include <scwx/qt/ui/radar_site_dialog.hpp>
 #include <scwx/qt/ui/serial_port_dialog.hpp>
 #include <scwx/qt/ui/settings/alert_palette_settings_widget.hpp>
@@ -45,6 +46,7 @@
 #include <QPushButton>
 #include <QStandardItemModel>
 #include <QToolButton>
+#include <utility>
 
 namespace scwx
 {
@@ -106,7 +108,8 @@ static const std::unordered_map<std::string, ColorTableConversions>
 class SettingsDialogImpl
 {
 public:
-   explicit SettingsDialogImpl(SettingsDialog* self) :
+   explicit SettingsDialogImpl(SettingsDialog*     self,
+                               QMapLibre::Settings mapSettings) :
        self_ {self},
        radarSiteDialog_ {new RadarSiteDialog(self)},
        alertAudioRadarSiteDialog_ {new RadarSiteDialog(self)},
@@ -114,6 +117,7 @@ public:
        countyDialog_ {new CountyDialog(self)},
        wfoDialog_ {new WFODialog(self)},
        fontDialog_ {new QFontDialog(self)},
+       mapSettings_ {std::move(mapSettings)},
        fontCategoryModel_ {new QStandardItemModel(self)},
        settings_ {std::initializer_list<settings::SettingsInterfaceBase*> {
           &defaultRadarSite_,
@@ -219,6 +223,8 @@ public:
    WFODialog*        wfoDialog_;
    QFontDialog*      fontDialog_;
 
+   QMapLibre::Settings mapSettings_;
+
    QStandardItemModel* fontCategoryModel_;
 
    types::FontCategory selectedFontCategory_ {types::FontCategory::Unknown};
@@ -292,9 +298,10 @@ public:
    std::vector<settings::SettingsInterfaceBase*> settings_;
 };
 
-SettingsDialog::SettingsDialog(QWidget* parent) :
+SettingsDialog::SettingsDialog(const QMapLibre::Settings& mapSettings,
+                               QWidget*                   parent) :
     QDialog(parent),
-    p {std::make_unique<SettingsDialogImpl>(this)},
+    p {std::make_unique<SettingsDialogImpl>(this, mapSettings)},
     ui(new Ui::SettingsDialog)
 {
    ui->setupUi(this);
@@ -685,12 +692,39 @@ void SettingsDialogImpl::SetupGeneralTab()
    customStyleUrl_.SetSettingsVariable(generalSettings.custom_style_url());
    customStyleUrl_.SetEditWidget(self_->ui->customMapUrlLineEdit);
    customStyleUrl_.SetResetButton(self_->ui->resetCustomMapUrlButton);
+   customStyleUrl_.SetInvalidTooltip(
+      "Remove anything following \"?key=\" in the URL");
    customStyleUrl_.EnableTrimming();
 
    customStyleDrawLayer_.SetSettingsVariable(
       generalSettings.custom_style_draw_layer());
    customStyleDrawLayer_.SetEditWidget(self_->ui->customMapLayerLineEdit);
    customStyleDrawLayer_.SetResetButton(self_->ui->resetCustomMapLayerButton);
+   QObject::connect(
+      self_->ui->customMapLayerToolButton,
+      &QAbstractButton::clicked,
+      self_,
+      [this]()
+      {
+         // WA_DeleteOnClose manages memory
+         // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
+         auto* customLayerDialog = new ui::CustomLayerDialog(mapSettings_);
+         customLayerDialog->setAttribute(Qt::WA_DeleteOnClose);
+         QObject::connect(
+            customLayerDialog,
+            &QDialog::accepted,
+            self_,
+            [this, customLayerDialog]()
+            {
+               auto newLayer = customLayerDialog->selected_layer();
+               self_->ui->customMapLayerLineEdit->setText(newLayer.c_str());
+               // setText does not emit the textEdited signal
+               Q_EMIT
+               self_->ui->customMapLayerLineEdit->textEdited(newLayer.c_str());
+            });
+
+         customLayerDialog->open();
+      });
 
    defaultAlertAction_.SetSettingsVariable(
       generalSettings.default_alert_action());

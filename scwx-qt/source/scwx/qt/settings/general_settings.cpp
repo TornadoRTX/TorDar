@@ -107,6 +107,10 @@ public:
          SCWX_SETTINGS_ENUM_VALIDATOR(scwx::util::ClockFormat,
                                       scwx::util::ClockFormatIterator(),
                                       scwx::util::GetClockFormatName));
+
+      customStyleUrl_.SetValidator(
+         [](const std::string& value)
+         { return value.find("key=") == std::string::npos; });
       customStyleDrawLayer_.SetValidator([](const std::string& value)
                                          { return !value.empty(); });
       defaultAlertAction_.SetValidator(
