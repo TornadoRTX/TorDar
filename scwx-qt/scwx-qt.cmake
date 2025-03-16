@@ -281,7 +281,8 @@ set(HDR_UI source/scwx/qt/ui/about_dialog.hpp
            source/scwx/qt/ui/serial_port_dialog.hpp
            source/scwx/qt/ui/settings_dialog.hpp
            source/scwx/qt/ui/update_dialog.hpp
-           source/scwx/qt/ui/wfo_dialog.hpp)
+           source/scwx/qt/ui/wfo_dialog.hpp
+           source/scwx/qt/ui/api_key_edit_widget.hpp)
 set(SRC_UI source/scwx/qt/ui/about_dialog.cpp
            source/scwx/qt/ui/alert_dialog.cpp
            source/scwx/qt/ui/alert_dock_widget.cpp
@@ -312,7 +313,8 @@ set(SRC_UI source/scwx/qt/ui/about_dialog.cpp
            source/scwx/qt/ui/settings_dialog.cpp
            source/scwx/qt/ui/serial_port_dialog.cpp
            source/scwx/qt/ui/update_dialog.cpp
-           source/scwx/qt/ui/wfo_dialog.cpp)
+           source/scwx/qt/ui/wfo_dialog.cpp
+           source/scwx/qt/ui/api_key_edit_widget.cpp)
 set(UI_UI  source/scwx/qt/ui/about_dialog.ui
            source/scwx/qt/ui/alert_dialog.ui
            source/scwx/qt/ui/alert_dock_widget.ui

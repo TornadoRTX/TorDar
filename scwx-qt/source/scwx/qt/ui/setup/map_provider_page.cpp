@@ -1,4 +1,5 @@
 #include <scwx/qt/ui/setup/map_provider_page.hpp>
+#include <scwx/qt/ui/api_key_edit_widget.hpp>
 #include <scwx/qt/manager/settings_manager.hpp>
 #include <scwx/qt/map/map_provider.hpp>
 #include <scwx/qt/settings/general_settings.hpp>
@@ -18,13 +19,7 @@
 #include <QVBoxLayout>
 #include <boost/algorithm/string.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace ui
-{
-namespace setup
+namespace scwx::qt::ui::setup
 {
 
 static const std::unordered_map<map::MapProvider, QUrl> kUrl_ {
@@ -33,8 +28,8 @@ static const std::unordered_map<map::MapProvider, QUrl> kUrl_ {
 
 struct MapProviderGroup
 {
-   QLabel*    apiKeyLabel_ {};
-   QLineEdit* apiKeyEdit_ {};
+   QLabel*      apiKeyLabel_ {};
+   QApiKeyEdit* apiKeyEdit_ {};
 };
 
 class MapProviderPage::Impl
@@ -45,7 +40,9 @@ public:
 
    void        SelectMapProvider(const QString& text);
    void        SelectMapProvider(map::MapProvider mapProvider);
-   void        SetupMapProviderGroup(MapProviderGroup& group, int row);
+   void        SetupMapProviderGroup(const map::MapProvider mapProvider,
+                                     MapProviderGroup&      group,
+                                     int                    row);
    void        SetupSettingsInterface();
    static void SetGroupVisible(MapProviderGroup& group, bool visible);
 
@@ -122,8 +119,8 @@ MapProviderPage::MapProviderPage(QWidget* parent) :
    p->buttonLayout_->addItem(p->buttonSpacer_);
    p->buttonFrame_->setLayout(p->buttonLayout_);
 
-   p->SetupMapProviderGroup(p->mapboxGroup_, 1);
-   p->SetupMapProviderGroup(p->maptilerGroup_, 2);
+   p->SetupMapProviderGroup(map::MapProvider::Mapbox, p->mapboxGroup_, 1);
+   p->SetupMapProviderGroup(map::MapProvider::MapTiler, p->maptilerGroup_, 2);
 
    // Overall layout
    p->layout_ = new QVBoxLayout(this);
@@ -159,11 +156,12 @@ MapProviderPage::MapProviderPage(QWidget* parent) :
 
 MapProviderPage::~MapProviderPage() = default;
 
-void MapProviderPage::Impl::SetupMapProviderGroup(MapProviderGroup& group,
-                                                  int               row)
+void MapProviderPage::Impl::SetupMapProviderGroup(
+   const map::MapProvider provider, MapProviderGroup& group, int row)
 {
    group.apiKeyLabel_ = new QLabel(self_);
-   group.apiKeyEdit_  = new QLineEdit(self_);
+   group.apiKeyEdit_  = new QApiKeyEdit(self_);
+   group.apiKeyEdit_->setMapProvider(provider);
 
    group.apiKeyLabel_->setText(tr("API Key"));
 
@@ -171,7 +169,7 @@ void MapProviderPage::Impl::SetupMapProviderGroup(MapProviderGroup& group,
    mapProviderLayout_->addWidget(group.apiKeyEdit_, row, 1, 1, 1);
 
    QObject::connect(group.apiKeyEdit_,
-                    &QLineEdit::textChanged,
+                    &QApiKeyEdit::textChanged,
                     self_,
                     &QWizardPage::completeChanged);
 }
@@ -292,7 +290,4 @@ bool MapProviderPage::IsRequired()
    return (mapboxApiKey.size() <= 1 && maptilerApiKey.size() <= 1);
 }
 
-} // namespace setup
-} // namespace ui
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::ui::setup
