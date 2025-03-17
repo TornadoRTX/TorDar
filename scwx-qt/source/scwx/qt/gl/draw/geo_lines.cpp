@@ -50,6 +50,7 @@ struct GeoLineDrawItem : types::EventHandler
    units::angle::degrees<float> angle_ {};
    std::string                  hoverText_ {};
    GeoLines::HoverCallback      hoverCallback_ {nullptr};
+   size_t                       lineIndex_ {0};
 };
 
 class GeoLines::Impl
@@ -87,10 +88,10 @@ public:
    void UpdateBuffers();
    void UpdateModifiedLineBuffers();
    void UpdateSingleBuffer(const std::shared_ptr<GeoLineDrawItem>& di,
-                           std::size_t                             lineIndex,
                            std::vector<float>&                     linesBuffer,
-                           std::vector<GLint>&          integerBuffer,
-                           std::vector<LineHoverEntry>& hoverLines);
+                           std::vector<GLint>&                 integerBuffer,
+                           std::unordered_map<std::shared_ptr<GeoLineDrawItem>,
+                                              LineHoverEntry>& hoverLines);
 
    std::shared_ptr<GlContext> context_;
 
@@ -112,8 +113,10 @@ public:
    std::vector<float> newLinesBuffer_ {};
    std::vector<GLint> newIntegerBuffer_ {};
 
-   std::vector<LineHoverEntry> currentHoverLines_ {};
-   std::vector<LineHoverEntry> newHoverLines_ {};
+   std::unordered_map<std::shared_ptr<GeoLineDrawItem>, LineHoverEntry>
+      currentHoverLines_ {};
+   std::unordered_map<std::shared_ptr<GeoLineDrawItem>, LineHoverEntry>
+      newHoverLines_ {};
 
    std::shared_ptr<ShaderProgram> shaderProgram_;
    GLint                          uMVPMatrixLocation_;
@@ -323,7 +326,9 @@ void GeoLines::StartLines()
 
 std::shared_ptr<GeoLineDrawItem> GeoLines::AddLine()
 {
-   return p->newLineList_.emplace_back(std::make_shared<GeoLineDrawItem>());
+   auto& di = p->newLineList_.emplace_back(std::make_shared<GeoLineDrawItem>());
+   di->lineIndex_ = p->newLineList_.size() - 1;
+   return di;
 }
 
 void GeoLines::SetLineLocation(const std::shared_ptr<GeoLineDrawItem>& di,
@@ -470,7 +475,7 @@ void GeoLines::Impl::UpdateBuffers()
 
       // Update line buffer
       UpdateSingleBuffer(
-         di, i, newLinesBuffer_, newIntegerBuffer_, newHoverLines_);
+         di, newLinesBuffer_, newIntegerBuffer_, newHoverLines_);
    }
 
    // All lines have been updated
@@ -488,23 +493,15 @@ void GeoLines::Impl::UpdateModifiedLineBuffers()
    // Update buffers for modified lines
    for (auto& di : dirtyLines_)
    {
-      // Find modified line in the current list
-      auto it =
-         std::find(currentLineList_.cbegin(), currentLineList_.cend(), di);
-
-      // Ignore invalid lines
-      if (it == currentLineList_.cend())
+      // Check if modified line is in the current list
+      if (currentLineList_.size() < di->lineIndex_ ||
+          currentLineList_[di->lineIndex_] != di)
       {
          continue;
       }
 
-      auto lineIndex = std::distance(currentLineList_.cbegin(), it);
-
-      UpdateSingleBuffer(di,
-                         lineIndex,
-                         currentLinesBuffer_,
-                         currentIntegerBuffer_,
-                         currentHoverLines_);
+      UpdateSingleBuffer(
+         di, currentLinesBuffer_, currentIntegerBuffer_, currentHoverLines_);
    }
 
    // Clear list of modified lines
@@ -517,10 +514,10 @@ void GeoLines::Impl::UpdateModifiedLineBuffers()
 
 void GeoLines::Impl::UpdateSingleBuffer(
    const std::shared_ptr<GeoLineDrawItem>& di,
-   std::size_t                             lineIndex,
    std::vector<float>&                     lineBuffer,
    std::vector<GLint>&                     integerBuffer,
-   std::vector<LineHoverEntry>&            hoverLines)
+   std::unordered_map<std::shared_ptr<GeoLineDrawItem>, LineHoverEntry>&
+      hoverLines)
 {
    // Threshold value
    units::length::nautical_miles<double> threshold = di->threshold_;
@@ -588,10 +585,10 @@ void GeoLines::Impl::UpdateSingleBuffer(
 
    // Buffer position data
    auto lineBufferPosition = lineBuffer.end();
-   auto lineBufferOffset   = lineIndex * kLineBufferLength_;
+   auto lineBufferOffset   = di->lineIndex_ * kLineBufferLength_;
 
    auto integerBufferPosition = integerBuffer.end();
-   auto integerBufferOffset   = lineIndex * kIntegerBufferLength_;
+   auto integerBufferOffset   = di->lineIndex_ * kIntegerBufferLength_;
 
    if (lineBufferOffset < lineBuffer.size())
    {
@@ -620,9 +617,7 @@ void GeoLines::Impl::UpdateSingleBuffer(
       std::copy(integerData.begin(), integerData.end(), integerBufferPosition);
    }
 
-   auto hoverIt = std::find_if(hoverLines.begin(),
-                               hoverLines.end(),
-                               [&di](auto& entry) { return entry.di_ == di; });
+   auto hoverIt = hoverLines.find(di);
 
    if (di->visible_ && (!di->hoverText_.empty() ||
                         di->hoverCallback_ != nullptr || di->event_ != nullptr))
@@ -644,17 +639,23 @@ void GeoLines::Impl::UpdateSingleBuffer(
 
       if (hoverIt == hoverLines.end())
       {
-         hoverLines.emplace_back(
-            LineHoverEntry {di, sc1, sc2, otl, otr, obl, obr});
+         hoverLines.emplace(di,
+                            LineHoverEntry {.di_  = di,
+                                            .p1_  = sc1,
+                                            .p2_  = sc2,
+                                            .otl_ = otl,
+                                            .otr_ = otr,
+                                            .obl_ = obl,
+                                            .obr_ = obr});
       }
       else
       {
-         hoverIt->p1_  = sc1;
-         hoverIt->p2_  = sc2;
-         hoverIt->otl_ = otl;
-         hoverIt->otr_ = otr;
-         hoverIt->obl_ = obl;
-         hoverIt->obr_ = obr;
+         hoverIt->second.p1_  = sc1;
+         hoverIt->second.p2_  = sc2;
+         hoverIt->second.otl_ = otl;
+         hoverIt->second.otr_ = otr;
+         hoverIt->second.obl_ = obl;
+         hoverIt->second.obr_ = obr;
       }
    }
    else if (hoverIt != hoverLines.end())
@@ -726,10 +727,12 @@ bool GeoLines::RunMousePicking(
    // For each pickable line
    auto it = std::find_if(
       std::execution::par_unseq,
-      p->currentHoverLines_.rbegin(),
-      p->currentHoverLines_.rend(),
-      [&mapDistance, &selectedTime, &mapMatrix, &mouseCoords](const auto& line)
+      p->currentHoverLines_.cbegin(),
+      p->currentHoverLines_.cend(),
+      [&mapDistance, &selectedTime, &mapMatrix, &mouseCoords](
+         const auto& lineIt)
       {
+         const auto& line = lineIt.second;
          if ((
                 // Placefile is thresholded
                 mapDistance > units::length::meters<double> {0.0} &&
@@ -785,24 +788,25 @@ bool GeoLines::RunMousePicking(
          return util::maplibre::IsPointInPolygon({tl, bl, br, tr}, mouseCoords);
       });
 
-   if (it != p->currentHoverLines_.crend())
+   if (it != p->currentHoverLines_.cend())
    {
       itemPicked = true;
 
-      if (!it->di_->hoverText_.empty())
+      if (!it->second.di_->hoverText_.empty())
       {
          // Show tooltip
-         util::tooltip::Show(it->di_->hoverText_, mouseGlobalPos);
+         util::tooltip::Show(it->second.di_->hoverText_, mouseGlobalPos);
       }
-      else if (it->di_->hoverCallback_ != nullptr)
+      else if (it->second.di_->hoverCallback_ != nullptr)
       {
-         it->di_->hoverCallback_(it->di_, mouseGlobalPos);
+         std::shared_ptr<GeoLineDrawItem> di = it->second.di_;
+         it->second.di_->hoverCallback_(di, mouseGlobalPos);
       }
 
-      if (it->di_->event_ != nullptr)
+      if (it->second.di_->event_ != nullptr)
       {
          // Register event handler
-         eventHandler = it->di_;
+         eventHandler = it->second.di_;
       }
    }
 
