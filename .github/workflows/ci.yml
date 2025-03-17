@@ -33,7 +33,6 @@ jobs:
             qt_arch_dir: msvc2022_64
             qt_modules: qtimageformats qtmultimedia qtpositioning qtserialport
             qt_tools: ''
-            conan_path: '%USERPROFILE%\.conan2'
             conan_package_manager: ''
             conan_profile: scwx-win64_msvc2022
             appimage_arch: ''
@@ -49,7 +48,6 @@ jobs:
             qt_arch_dir: gcc_64
             qt_modules: qtimageformats qtmultimedia qtpositioning qtserialport
             qt_tools: ''
-            conan_path: '~/.conan2'
             conan_package_manager: --conf tools.system.package_manager:mode=install --conf tools.system.package_manager:sudo=True
             conan_profile: scwx-linux_gcc-11
             appimage_arch: x86_64
@@ -66,7 +64,6 @@ jobs:
             qt_arch_dir: gcc_64
             qt_modules: qtimageformats qtmultimedia qtpositioning qtserialport
             qt_tools: ''
-            conan_path: '~/.conan2'
             conan_package_manager: --conf tools.system.package_manager:mode=install --conf tools.system.package_manager:sudo=True
             conan_profile: scwx-linux_clang-17
             appimage_arch: x86_64
@@ -83,7 +80,6 @@ jobs:
             qt_arch_dir: gcc_arm64
             qt_modules: qtimageformats qtmultimedia qtpositioning qtserialport
             qt_tools: ''
-            conan_path: '~/.conan2'
             conan_package_manager: --conf tools.system.package_manager:mode=install --conf tools.system.package_manager:sudo=True
             conan_profile: scwx-linux_gcc-11_armv8
             appimage_arch: aarch64
@@ -140,8 +136,8 @@ jobs:
     - name: Cache Conan Packages
       uses: actions/cache@v4
       with:
-        path: ${{ matrix.conan_path }}
-        key: ${{ matrix.name }}-build-${{ matrix.conan_profile }}-${{ hashFiles('./source/conanfile.py', './source/tools/conan/profiles/*') }}
+        path: ~/.conan2
+        key: build-${{ matrix.conan_profile }}-${{ hashFiles('./source/conanfile.py', './source/tools/conan/profiles/*') }}
 
     - name: Install Conan Packages
       shell: pwsh
