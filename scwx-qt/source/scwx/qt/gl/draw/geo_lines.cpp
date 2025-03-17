@@ -494,7 +494,7 @@ void GeoLines::Impl::UpdateModifiedLineBuffers()
    for (auto& di : dirtyLines_)
    {
       // Check if modified line is in the current list
-      if (currentLineList_.size() < di->lineIndex_ ||
+      if (di->lineIndex_ >= currentLineList_.size() ||
           currentLineList_[di->lineIndex_] != di)
       {
          continue;
@@ -799,8 +799,7 @@ bool GeoLines::RunMousePicking(
       }
       else if (it->second.di_->hoverCallback_ != nullptr)
       {
-         std::shared_ptr<GeoLineDrawItem> di = it->second.di_;
-         it->second.di_->hoverCallback_(di, mouseGlobalPos);
+         it->second.di_->hoverCallback_(it->second.di_, mouseGlobalPos);
       }
 
       if (it->second.di_->event_ != nullptr)
