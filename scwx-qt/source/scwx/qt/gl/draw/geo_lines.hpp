@@ -19,9 +19,8 @@ struct GeoLineDrawItem;
 class GeoLines : public DrawItem
 {
 public:
-   typedef std::function<void(const std::shared_ptr<GeoLineDrawItem>&,
-                              const QPointF&)>
-      HoverCallback;
+   using HoverCallback = std::function<void(
+      const std::shared_ptr<GeoLineDrawItem>&, const QPointF&)>;
 
    explicit GeoLines(std::shared_ptr<GlContext> context);
    ~GeoLines();
