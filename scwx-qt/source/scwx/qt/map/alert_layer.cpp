@@ -159,8 +159,9 @@ public:
    void ConnectSignals();
    void HandleGeoLinesEvent(std::weak_ptr<gl::draw::GeoLineDrawItem>& di,
                             QEvent*                                   ev);
-   void HandleGeoLinesHover(std::shared_ptr<gl::draw::GeoLineDrawItem>& di,
-                            const QPointF& mouseGlobalPos);
+   void
+   HandleGeoLinesHover(const std::shared_ptr<gl::draw::GeoLineDrawItem>& di,
+                       const QPointF& mouseGlobalPos);
    void ScheduleRefresh();
 
    LineData& GetLineData(const std::shared_ptr<const awips::Segment>& segment,
@@ -720,8 +721,8 @@ void AlertLayer::Impl::HandleGeoLinesEvent(
 }
 
 void AlertLayer::Impl::HandleGeoLinesHover(
-   std::shared_ptr<gl::draw::GeoLineDrawItem>& di,
-   const QPointF&                              mouseGlobalPos)
+   const std::shared_ptr<gl::draw::GeoLineDrawItem>& di,
+   const QPointF&                                    mouseGlobalPos)
 {
    if (di != lastHoverDi_)
    {
