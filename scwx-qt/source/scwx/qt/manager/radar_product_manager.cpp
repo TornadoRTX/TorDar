@@ -230,6 +230,7 @@ public:
    const std::string radarId_;
    bool              initialized_;
    bool              level3ProductsInitialized_;
+   bool              level3AvailabilityReady_ {false};
 
    std::shared_ptr<config::RadarSite> radarSite_;
    std::size_t                        cacheLimit_ {6u};
@@ -1585,6 +1586,12 @@ void RadarProductManager::UpdateAvailableProducts()
 
    if (p->level3ProductsInitialized_)
    {
+      if (p->level3AvailabilityReady_)
+      {
+         // Multiple maps may use the same manager, so this ensures that all get
+         // notified of the change
+         Q_EMIT Level3ProductsChanged();
+      }
       return;
    }
 
@@ -1660,6 +1667,7 @@ void RadarProductManagerImpl::UpdateAvailableProductsSync()
       }
    }
 
+   level3AvailabilityReady_ = true;
    Q_EMIT self_->Level3ProductsChanged();
 }
 
