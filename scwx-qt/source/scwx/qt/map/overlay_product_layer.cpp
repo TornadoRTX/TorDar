@@ -109,7 +109,8 @@ public:
 };
 
 OverlayProductLayer::OverlayProductLayer(std::shared_ptr<MapContext> context) :
-    DrawLayer(context), p(std::make_unique<Impl>(this, context))
+    DrawLayer(context, "OverlayProductLayer"),
+    p(std::make_unique<Impl>(this, context))
 {
    auto overlayProductView = context->overlay_product_view();
    connect(overlayProductView.get(),

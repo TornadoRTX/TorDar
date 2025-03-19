@@ -143,7 +143,8 @@ public:
 };
 
 OverlayLayer::OverlayLayer(std::shared_ptr<MapContext> context) :
-    DrawLayer(context), p(std::make_unique<OverlayLayerImpl>(this, context))
+    DrawLayer(context, "OverlayLayer"),
+    p(std::make_unique<OverlayLayerImpl>(this, context))
 {
    AddDrawItem(p->activeBoxOuter_);
    AddDrawItem(p->activeBoxInner_);

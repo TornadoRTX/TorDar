@@ -20,11 +20,13 @@ static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 class DrawLayerImpl
 {
 public:
-   explicit DrawLayerImpl(std::shared_ptr<MapContext> context) :
+   explicit DrawLayerImpl(std::shared_ptr<MapContext> context,
+                          const std::string&          imGuiContextName) :
        context_ {std::move(context)}, drawList_ {}
    {
-      static size_t currentMapId_ {0u};
-      imGuiContextName_ = fmt::format("Layer {}", ++currentMapId_);
+      static size_t currentLayerId_ {0u};
+      imGuiContextName_ =
+         fmt::format("{} {}", imGuiContextName, ++currentLayerId_);
       // This must be initialized after the last line
       // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer)
       imGuiContext_ =
@@ -65,8 +67,10 @@ public:
    bool          imGuiRendererInitialized_ {};
 };
 
-DrawLayer::DrawLayer(const std::shared_ptr<MapContext>& context) :
-    GenericLayer(context), p(std::make_unique<DrawLayerImpl>(context))
+DrawLayer::DrawLayer(const std::shared_ptr<MapContext>& context,
+                     const std::string&                 imGuiContextName) :
+    GenericLayer(context),
+    p(std::make_unique<DrawLayerImpl>(context, imGuiContextName))
 {
 }
 DrawLayer::~DrawLayer() = default;

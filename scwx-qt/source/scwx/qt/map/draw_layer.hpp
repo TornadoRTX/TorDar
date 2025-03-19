@@ -15,7 +15,8 @@ class DrawLayerImpl;
 class DrawLayer : public GenericLayer
 {
 public:
-   explicit DrawLayer(const std::shared_ptr<MapContext>& context);
+   explicit DrawLayer(const std::shared_ptr<MapContext>& context,
+                      const std::string&                 imGuiContextName);
    virtual ~DrawLayer();
 
    virtual void Initialize() override;

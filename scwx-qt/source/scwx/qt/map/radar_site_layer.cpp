@@ -44,7 +44,7 @@ public:
 };
 
 RadarSiteLayer::RadarSiteLayer(std::shared_ptr<MapContext> context) :
-    DrawLayer(context), p(std::make_unique<Impl>(this))
+    DrawLayer(context, "RadarSiteLayer"), p(std::make_unique<Impl>(this))
 {
 }
 
