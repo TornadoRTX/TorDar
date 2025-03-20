@@ -229,7 +229,10 @@ public:
 
 AlertLayer::AlertLayer(std::shared_ptr<MapContext> context,
                        awips::Phenomenon           phenomenon) :
-    DrawLayer(context), p(std::make_unique<Impl>(this, context, phenomenon))
+    DrawLayer(
+       context,
+       fmt::format("AlertLayer {}", awips::GetPhenomenonText(phenomenon))),
+    p(std::make_unique<Impl>(this, context, phenomenon))
 {
    for (auto alertActive : {false, true})
    {

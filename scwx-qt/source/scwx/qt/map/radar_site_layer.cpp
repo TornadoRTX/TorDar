@@ -44,7 +44,7 @@ public:
 };
 
 RadarSiteLayer::RadarSiteLayer(std::shared_ptr<MapContext> context) :
-    DrawLayer(context), p(std::make_unique<Impl>(this))
+    DrawLayer(context, "RadarSiteLayer"), p(std::make_unique<Impl>(this))
 {
 }
 
@@ -55,6 +55,8 @@ void RadarSiteLayer::Initialize()
    logger_->debug("Initialize()");
 
    p->radarSites_ = config::RadarSite::GetAll();
+
+   ImGuiInitialize();
 }
 
 void RadarSiteLayer::Render(
@@ -84,6 +86,7 @@ void RadarSiteLayer::Render(
    p->halfWidth_     = params.width * 0.5f;
    p->halfHeight_    = params.height * 0.5f;
 
+   ImGuiFrameStart();
    // Radar site ImGui windows shouldn't have padding
    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2 {0.0f, 0.0f});
 
@@ -93,6 +96,7 @@ void RadarSiteLayer::Render(
    }
 
    ImGui::PopStyleVar();
+   ImGuiFrameEnd();
 
    SCWX_GL_CHECK_ERROR();
 }
@@ -136,6 +140,7 @@ void RadarSiteLayer::Impl::RenderRadarSite(
       if (ImGui::Button(radarSite->id().c_str()))
       {
          Q_EMIT self_->RadarSiteSelected(radarSite->id());
+         self_->ImGuiSelectContext();
       }
 
       // Store hover text for mouse picking pass

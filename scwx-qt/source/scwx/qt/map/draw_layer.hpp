@@ -15,7 +15,8 @@ class DrawLayerImpl;
 class DrawLayer : public GenericLayer
 {
 public:
-   explicit DrawLayer(const std::shared_ptr<MapContext>& context);
+   explicit DrawLayer(const std::shared_ptr<MapContext>& context,
+                      const std::string&                 imGuiContextName);
    virtual ~DrawLayer();
 
    virtual void Initialize() override;
@@ -32,6 +33,12 @@ public:
 
 protected:
    void AddDrawItem(const std::shared_ptr<gl::draw::DrawItem>& drawItem);
+   void ImGuiFrameStart();
+   void ImGuiFrameEnd();
+   void ImGuiInitialize();
+   void
+   RenderWithoutImGui(const QMapLibre::CustomLayerRenderParameters& params);
+   void ImGuiSelectContext();
 
 private:
    std::unique_ptr<DrawLayerImpl> p;

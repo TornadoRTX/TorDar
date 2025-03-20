@@ -129,7 +129,8 @@ void MarkerLayer::Impl::ReloadMarkers()
 }
 
 MarkerLayer::MarkerLayer(const std::shared_ptr<MapContext>& context) :
-    DrawLayer(context), p(std::make_unique<MarkerLayer::Impl>(this, context))
+    DrawLayer(context, "MarkerLayer"),
+    p(std::make_unique<MarkerLayer::Impl>(this, context))
 {
    AddDrawItem(p->geoIcons_);
 }

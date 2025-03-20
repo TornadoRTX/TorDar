@@ -38,18 +38,21 @@ public:
    MapContext(MapContext&&) noexcept;
    MapContext& operator=(MapContext&&) noexcept;
 
-   std::weak_ptr<QMapLibre::Map>             map() const;
-   std::string                               map_copyrights() const;
-   MapProvider                               map_provider() const;
-   MapSettings&                              settings();
-   QMargins                                  color_table_margins() const;
-   float                                     pixel_ratio() const;
-   common::Coordinate                        mouse_coordinate() const;
-   std::shared_ptr<view::OverlayProductView> overlay_product_view() const;
-   std::shared_ptr<view::RadarProductView>   radar_product_view() const;
-   common::RadarProductGroup                 radar_product_group() const;
-   std::string                               radar_product() const;
-   int16_t                                   radar_product_code() const;
+   [[nodiscard]] std::weak_ptr<QMapLibre::Map> map() const;
+   [[nodiscard]] std::string                   map_copyrights() const;
+   [[nodiscard]] MapProvider                   map_provider() const;
+   [[nodiscard]] MapSettings&                  settings();
+   [[nodiscard]] QMargins                      color_table_margins() const;
+   [[nodiscard]] float                         pixel_ratio() const;
+   [[nodiscard]] common::Coordinate            mouse_coordinate() const;
+   [[nodiscard]] std::shared_ptr<view::OverlayProductView>
+   overlay_product_view() const;
+   [[nodiscard]] std::shared_ptr<view::RadarProductView>
+                                           radar_product_view() const;
+   [[nodiscard]] common::RadarProductGroup radar_product_group() const;
+   [[nodiscard]] std::string               radar_product() const;
+   [[nodiscard]] int16_t                   radar_product_code() const;
+   [[nodiscard]] QWidget*                  widget() const;
 
    void set_map(const std::shared_ptr<QMapLibre::Map>& map);
    void set_map_copyrights(const std::string& copyrights);
@@ -64,6 +67,7 @@ public:
    void set_radar_product_group(common::RadarProductGroup radarProductGroup);
    void set_radar_product(const std::string& radarProduct);
    void set_radar_product_code(int16_t radarProductCode);
+   void set_widget(QWidget* widget);
 
 private:
    class Impl;

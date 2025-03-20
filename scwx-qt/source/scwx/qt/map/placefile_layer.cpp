@@ -66,7 +66,7 @@ public:
 
 PlacefileLayer::PlacefileLayer(const std::shared_ptr<MapContext>& context,
                                const std::string& placefileName) :
-    DrawLayer(context),
+    DrawLayer(context, fmt::format("PlacefileLayer {}", placefileName)),
     p(std::make_unique<PlacefileLayer::Impl>(this, context, placefileName))
 {
    AddDrawItem(p->placefileImages_);

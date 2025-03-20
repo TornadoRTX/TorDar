@@ -114,6 +114,7 @@ public:
       context_->set_map_provider(
          GetMapProvider(generalSettings.map_provider().GetValue()));
       context_->set_overlay_product_view(overlayProductView);
+      context_->set_widget(widget);
 
       // Initialize map data
       SetRadarSite(generalSettings.default_radar_site().GetValue());
@@ -1571,21 +1572,13 @@ void MapWidget::paintGL()
    // Handle hotkey updates
    p->HandleHotkeyUpdates();
 
-   // Setup ImGui Frame
-   ImGui::SetCurrentContext(p->imGuiContext_);
-
    // Lock ImGui font atlas prior to new ImGui frame
    std::shared_lock imguiFontAtlasLock {
       manager::FontManager::Instance().imgui_font_atlas_mutex()};
 
-   // Start ImGui Frame
-   ImGui_ImplQt_NewFrame(this);
-   ImGui_ImplOpenGL3_NewFrame();
+   // Check ImGui fonts
+   ImGui::SetCurrentContext(p->imGuiContext_);
    p->ImGuiCheckFonts();
-   ImGui::NewFrame();
-
-   // Set default font
-   ImGui::PushFont(defaultFont->font());
 
    // Update pixel ratio
    p->context_->set_pixel_ratio(pixelRatio());
@@ -1595,6 +1588,18 @@ void MapWidget::paintGL()
    p->map_->setOpenGLFramebufferObject(defaultFramebufferObject(),
                                        size() * pixelRatio());
    p->map_->render();
+
+   // ImGui tool tip code
+   // Setup ImGui Frame
+   ImGui::SetCurrentContext(p->imGuiContext_);
+
+   // Start ImGui Frame
+   ImGui_ImplQt_NewFrame(this);
+   ImGui_ImplOpenGL3_NewFrame();
+   ImGui::NewFrame();
+
+   // Set default font
+   ImGui::PushFont(defaultFont->font());
 
    // Perform mouse picking
    if (p->hasMouse_)

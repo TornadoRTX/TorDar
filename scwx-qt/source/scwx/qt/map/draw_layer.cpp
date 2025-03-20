@@ -1,12 +1,17 @@
+#include <ranges>
+#include <scwx/qt/manager/font_manager.hpp>
 #include <scwx/qt/map/draw_layer.hpp>
+#include <scwx/qt/model/imgui_context_model.hpp>
 #include <scwx/qt/gl/shader_program.hpp>
 #include <scwx/util/logger.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+#include <backends/imgui_impl_opengl3.h>
+#include <backends/imgui_impl_qt.hpp>
+#include <utility>
+#include <fmt/format.h>
+#include <imgui.h>
+
+namespace scwx::qt::map
 {
 
 static const std::string logPrefix_ = "scwx::qt::map::draw_layer";
@@ -15,21 +20,57 @@ static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 class DrawLayerImpl
 {
 public:
-   explicit DrawLayerImpl(std::shared_ptr<MapContext> context) :
-       context_ {context}, drawList_ {}, textureAtlas_ {GL_INVALID_INDEX}
+   explicit DrawLayerImpl(std::shared_ptr<MapContext> context,
+                          const std::string&          imGuiContextName) :
+       context_ {std::move(context)}, drawList_ {}
    {
+      static size_t currentLayerId_ {0u};
+      imGuiContextName_ =
+         fmt::format("{} {}", imGuiContextName, ++currentLayerId_);
+      // This must be initialized after the last line
+      // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer)
+      imGuiContext_ =
+         model::ImGuiContextModel::Instance().CreateContext(imGuiContextName_);
+
+      // Initialize ImGui Qt backend
+      ImGui_ImplQt_Init();
    }
-   ~DrawLayerImpl() {}
+   ~DrawLayerImpl()
+   {
+      // Set ImGui Context
+      ImGui::SetCurrentContext(imGuiContext_);
+
+      // Shutdown ImGui Context
+      if (imGuiRendererInitialized_)
+      {
+         ImGui_ImplOpenGL3_Shutdown();
+      }
+      ImGui_ImplQt_Shutdown();
+
+      // Destroy ImGui Context
+      model::ImGuiContextModel::Instance().DestroyContext(imGuiContextName_);
+   }
+
+   DrawLayerImpl(const DrawLayerImpl&)             = delete;
+   DrawLayerImpl& operator=(const DrawLayerImpl&)  = delete;
+   DrawLayerImpl(const DrawLayerImpl&&)            = delete;
+   DrawLayerImpl& operator=(const DrawLayerImpl&&) = delete;
 
    std::shared_ptr<MapContext>                      context_;
    std::vector<std::shared_ptr<gl::draw::DrawItem>> drawList_;
-   GLuint                                           textureAtlas_;
+   GLuint textureAtlas_ {GL_INVALID_INDEX};
 
    std::uint64_t textureAtlasBuildCount_ {};
+
+   std::string   imGuiContextName_;
+   ImGuiContext* imGuiContext_;
+   bool          imGuiRendererInitialized_ {};
 };
 
-DrawLayer::DrawLayer(const std::shared_ptr<MapContext>& context) :
-    GenericLayer(context), p(std::make_unique<DrawLayerImpl>(context))
+DrawLayer::DrawLayer(const std::shared_ptr<MapContext>& context,
+                     const std::string&                 imGuiContextName) :
+    GenericLayer(context),
+    p(std::make_unique<DrawLayerImpl>(context, imGuiContextName))
 {
 }
 DrawLayer::~DrawLayer() = default;
@@ -42,9 +83,45 @@ void DrawLayer::Initialize()
    {
       item->Initialize();
    }
+
+   ImGuiInitialize();
 }
 
-void DrawLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
+void DrawLayer::ImGuiFrameStart()
+{
+   auto defaultFont = manager::FontManager::Instance().GetImGuiFont(
+      types::FontCategory::Default);
+
+   // Setup ImGui Frame
+   ImGui::SetCurrentContext(p->imGuiContext_);
+
+   // Start ImGui Frame
+   ImGui_ImplQt_NewFrame(p->context_->widget());
+   ImGui_ImplOpenGL3_NewFrame();
+   ImGui::NewFrame();
+   ImGui::PushFont(defaultFont->font());
+}
+
+void DrawLayer::ImGuiFrameEnd()
+{
+   // Pop default font
+   ImGui::PopFont();
+
+   // Render ImGui Frame
+   ImGui::Render();
+   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void DrawLayer::ImGuiInitialize()
+{
+   ImGui::SetCurrentContext(p->imGuiContext_);
+   ImGui_ImplQt_RegisterWidget(p->context_->widget());
+   ImGui_ImplOpenGL3_Init();
+   p->imGuiRendererInitialized_ = true;
+}
+
+void DrawLayer::RenderWithoutImGui(
+   const QMapLibre::CustomLayerRenderParameters& params)
 {
    gl::OpenGLFunctions& gl = p->context_->gl();
    p->textureAtlas_        = p->context_->GetTextureAtlas();
@@ -68,6 +145,17 @@ void DrawLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
 
    p->textureAtlasBuildCount_ = newTextureAtlasBuildCount;
 }
+void DrawLayer::ImGuiSelectContext()
+{
+   ImGui::SetCurrentContext(p->imGuiContext_);
+}
+
+void DrawLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
+{
+   ImGuiFrameStart();
+   RenderWithoutImGui(params);
+   ImGuiFrameEnd();
+}
 
 void DrawLayer::Deinitialize()
 {
@@ -90,15 +178,15 @@ bool DrawLayer::RunMousePicking(
    bool itemPicked = false;
 
    // For each draw item in the draw list in reverse
-   for (auto it = p->drawList_.rbegin(); it != p->drawList_.rend(); ++it)
+   for (auto& it : std::ranges::reverse_view(p->drawList_))
    {
       // Run mouse picking on each draw item
-      if ((*it)->RunMousePicking(params,
-                                 mouseLocalPos,
-                                 mouseGlobalPos,
-                                 mouseCoords,
-                                 mouseGeoCoords,
-                                 eventHandler))
+      if (it->RunMousePicking(params,
+                              mouseLocalPos,
+                              mouseGlobalPos,
+                              mouseCoords,
+                              mouseGeoCoords,
+                              eventHandler))
       {
          // If a draw item was picked, don't process additional items
          itemPicked = true;
@@ -114,6 +202,4 @@ void DrawLayer::AddDrawItem(const std::shared_ptr<gl::draw::DrawItem>& drawItem)
    p->drawList_.push_back(drawItem);
 }
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

@@ -143,7 +143,8 @@ public:
 };
 
 OverlayLayer::OverlayLayer(std::shared_ptr<MapContext> context) :
-    DrawLayer(context), p(std::make_unique<OverlayLayerImpl>(this, context))
+    DrawLayer(context, "OverlayLayer"),
+    p(std::make_unique<OverlayLayerImpl>(this, context))
 {
    AddDrawItem(p->activeBoxOuter_);
    AddDrawItem(p->activeBoxInner_);
@@ -291,6 +292,8 @@ void OverlayLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
    auto                 radarProductView = context()->radar_product_view();
    auto&                settings         = context()->settings();
    const float          pixelRatio       = context()->pixel_ratio();
+
+   ImGuiFrameStart();
 
    p->sweepTimePicked_ = false;
 
@@ -457,7 +460,7 @@ void OverlayLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
    p->icons_->SetIconVisible(p->mapLogoIcon_,
                              generalSettings.show_map_logo().GetValue());
 
-   DrawLayer::Render(params);
+   DrawLayer::RenderWithoutImGui(params);
 
    auto mapCopyrights = context()->map_copyrights();
    if (mapCopyrights.length() > 0 &&
@@ -490,6 +493,8 @@ void OverlayLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
    p->lastBearing_           = params.bearing;
    p->lastFontSize_          = ImGui::GetFontSize();
    p->lastColorTableMargins_ = colorTableMargins;
+
+   ImGuiFrameEnd();
 
    SCWX_GL_CHECK_ERROR();
 }

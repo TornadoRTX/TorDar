@@ -36,6 +36,8 @@ public:
 
    std::shared_ptr<view::OverlayProductView> overlayProductView_ {nullptr};
    std::shared_ptr<view::RadarProductView>   radarProductView_;
+
+   QWidget* widget_;
 };
 
 MapContext::MapContext(
@@ -109,6 +111,11 @@ int16_t MapContext::radar_product_code() const
    return p->radarProductCode_;
 }
 
+QWidget* MapContext::widget() const
+{
+   return p->widget_;
+}
+
 void MapContext::set_map(const std::shared_ptr<QMapLibre::Map>& map)
 {
    p->map_ = map;
@@ -165,6 +172,11 @@ void MapContext::set_radar_product(const std::string& radarProduct)
 void MapContext::set_radar_product_code(int16_t radarProductCode)
 {
    p->radarProductCode_ = radarProductCode;
+}
+
+void MapContext::set_widget(QWidget* widget)
+{
+   p->widget_ = widget;
 }
 
 } // namespace map
