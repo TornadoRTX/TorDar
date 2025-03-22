@@ -12,7 +12,7 @@
 
 using namespace scwx::qt::ui;
 
-static const std::string logPrefix_ = "scwx::qt::ui::setup::api_key";
+static const std::string logPrefix_ = "scwx::qt::ui::QApiKeyEdit";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 
 QApiKeyEdit::QApiKeyEdit(QWidget* parent) :
