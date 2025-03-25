@@ -44,6 +44,7 @@ public:
    [[nodiscard]] const std::vector<float>&
    coordinates(common::RadialSize radialSize, bool smoothingEnabled) const;
    [[nodiscard]] const scwx::util::time_zone*       default_time_zone() const;
+   [[nodiscard]] bool                               is_tdwr() const;
    [[nodiscard]] float                              gate_size() const;
    [[nodiscard]] std::string                        radar_id() const;
    [[nodiscard]] std::shared_ptr<config::RadarSite> radar_site() const;

@@ -49,7 +49,7 @@ static const std::unordered_map<int, std::string> level3ProductCodeMap_ {
    {153, "SDR"}, {154, "SDV"}, {159, "DZD"}, {161, "DCC"}, {163, "DKD"},
    {165, "DHC"}, {166, "ML"},  {169, "OHA"}, {170, "DAA"}, {172, "DTA"},
    {173, "DUA"}, {174, "DOD"}, {175, "DSD"}, {177, "HHC"}, {180, "TDR"},
-   {182, "TDV"}};
+   {182, "TDV"}, {186, "TZL"}};
 
 static const std::unordered_map<std::string, std::string>
    level3ProductDescription_ {
@@ -84,6 +84,7 @@ static const std::unordered_map<std::string, std::string>
       {"HHC", "Hybrid Hydrometeor Classification"},
       {"TDR", "Digital Reflectivity"},
       {"TDV", "Digital Velocity"},
+      {"TZL", "Long Range Reflectivity"},
       {"?", "Unknown"}};
 
 static const std::unordered_map<std::string, std::vector<std::string>>
@@ -91,6 +92,7 @@ static const std::unordered_map<std::string, std::vector<std::string>>
       // Reflectivity
       {"SDR", {"NXB", "NYB", "NZB", "N0B", "NAB", "N1B", "NBB", "N2B", "N3B"}},
       {"DR", {"NXQ", "NYQ", "NZQ", "N0Q", "NAQ", "N1Q", "NBQ", "N2Q", "N3Q"}},
+      {"TZL", {"TZL"}},
       {"TDR", {"TZ0", "TZ1", "TZ2"}},
       {"NCR", {"NCR"}},
 
@@ -184,7 +186,7 @@ static const std::unordered_map<Level3ProductCategory, std::string>
 
 static const std::unordered_map<Level3ProductCategory, std::vector<std::string>>
    level3CategoryProductList_ {
-      {Level3ProductCategory::Reflectivity, {"SDR", "DR", "TDR", "NCR"}},
+      {Level3ProductCategory::Reflectivity, {"SDR", "DR", "TZL", "TDR", "NCR"}},
       {Level3ProductCategory::Velocity, {"SDV", "DV", "TDV"}},
       {Level3ProductCategory::StormRelativeVelocity, {"SRM"}},
       {Level3ProductCategory::SpectrumWidth, {"SW"}},
@@ -296,9 +298,27 @@ const std::string& GetLevel3CategoryDescription(Level3ProductCategory category)
    return level3CategoryDescription_.at(category);
 }
 
-const std::string&
-GetLevel3CategoryDefaultProduct(Level3ProductCategory category)
+std::string
+GetLevel3CategoryDefaultProduct(Level3ProductCategory           category,
+                                const Level3ProductCategoryMap& categoryMap)
 {
+   const auto& productsIt = categoryMap.find(category);
+   if (productsIt == categoryMap.cend())
+   {
+      return level3CategoryDefaultAwipsId_.at(category);
+   }
+
+   const auto& productsSiteHas = productsIt->second;
+   const auto& productList     = level3CategoryProductList_.at(category);
+   for (auto& product : productList)
+   {
+      const auto& tiltsIt = productsSiteHas.find(product);
+      if (tiltsIt != productsSiteHas.cend() && tiltsIt->second.size() > 0)
+      {
+         return tiltsIt->second[0];
+      }
+   }
+
    return level3CategoryDefaultAwipsId_.at(category);
 }
 

@@ -230,6 +230,7 @@ public:
    const std::string radarId_;
    bool              initialized_;
    bool              level3ProductsInitialized_;
+   bool              level3AvailabilityReady_ {false};
 
    std::shared_ptr<config::RadarSite> radarSite_;
    std::size_t                        cacheLimit_ {6u};
@@ -428,9 +429,16 @@ const scwx::util::time_zone* RadarProductManager::default_time_zone() const
    }
 }
 
+bool RadarProductManager::is_tdwr() const
+{
+   return p->radarSite_->type() == "tdwr";
+}
+
 float RadarProductManager::gate_size() const
 {
-   return (p->radarSite_->type() == "tdwr") ? 150.0f : 250.0f;
+   // tdwr is 150 meter per gate, wsr88d is 250 meter per gate
+   // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
+   return (is_tdwr()) ? 150.0f : 250.0f;
 }
 
 std::string RadarProductManager::radar_id() const
@@ -453,6 +461,12 @@ void RadarProductManager::Initialize()
    }
 
    logger_->debug("Initialize()");
+
+   if (is_tdwr())
+   {
+      p->initialized_ = true;
+      return;
+   }
 
    boost::timer::cpu_timer timer;
 
@@ -1572,6 +1586,12 @@ void RadarProductManager::UpdateAvailableProducts()
 
    if (p->level3ProductsInitialized_)
    {
+      if (p->level3AvailabilityReady_)
+      {
+         // Multiple maps may use the same manager, so this ensures that all get
+         // notified of the change
+         Q_EMIT Level3ProductsChanged();
+      }
       return;
    }
 
@@ -1647,6 +1667,7 @@ void RadarProductManagerImpl::UpdateAvailableProductsSync()
       }
    }
 
+   level3AvailabilityReady_ = true;
    Q_EMIT self_->Level3ProductsChanged();
 }
 

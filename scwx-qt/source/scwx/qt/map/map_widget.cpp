@@ -31,6 +31,7 @@
 #include <scwx/util/logger.hpp>
 #include <scwx/util/time.hpp>
 
+#include <algorithm>
 #include <set>
 
 #include <backends/imgui_impl_opengl3.h>
@@ -178,9 +179,11 @@ public:
    void SelectNearestRadarSite(double                     latitude,
                                double                     longitude,
                                std::optional<std::string> type);
-   void SetRadarSite(const std::string& radarSite);
+   void SetRadarSite(const std::string& radarSite,
+                     bool               checkProductAvailability = false);
    void UpdateLoadedStyle();
    bool UpdateStoredMapParameters();
+   void CheckLevel3Availability();
 
    std::string FindMapSymbologyLayer();
 
@@ -267,6 +270,10 @@ public:
 
    std::set<types::Hotkey>               activeHotkeys_ {};
    std::chrono::system_clock::time_point prevHotkeyTime_ {};
+
+   bool productAvailabilityCheckNeeded_ {false};
+   bool productAvailabilityUpdated_ {false};
+   bool productAvailabilityProductSelected_ {false};
 
 public slots:
    void Update();
@@ -429,6 +436,14 @@ void MapWidgetImpl::ConnectSignals()
            &manager::HotkeyManager::HotkeyReleased,
            this,
            &MapWidgetImpl::HandleHotkeyReleased);
+   connect(widget_,
+           &MapWidget::RadarSiteUpdated,
+           widget_,
+           [this](const std::shared_ptr<config::RadarSite>&)
+           {
+              productAvailabilityProductSelected_ = true;
+              CheckLevel3Availability();
+           });
 }
 
 void MapWidgetImpl::HandleHotkeyPressed(types::Hotkey hotkey, bool isAutoRepeat)
@@ -913,7 +928,7 @@ void MapWidget::SelectRadarSite(std::shared_ptr<config::RadarSite> radarSite,
          p->map_->setCoordinate(
             {radarSite->latitude(), radarSite->longitude()});
       }
-      p->SetRadarSite(radarSite->id());
+      p->SetRadarSite(radarSite->id(), true);
       p->Update();
 
       // Select products from new site
@@ -1772,7 +1787,12 @@ void MapWidgetImpl::RadarProductManagerConnect()
       connect(radarProductManager_.get(),
               &manager::RadarProductManager::Level3ProductsChanged,
               this,
-              [this]() { Q_EMIT widget_->Level3ProductsChanged(); });
+              [this]()
+              {
+                 productAvailabilityUpdated_ = true;
+                 CheckLevel3Availability();
+                 Q_EMIT widget_->Level3ProductsChanged();
+              });
 
       connect(
          radarProductManager_.get(),
@@ -1990,7 +2010,8 @@ void MapWidgetImpl::SelectNearestRadarSite(double                     latitude,
    }
 }
 
-void MapWidgetImpl::SetRadarSite(const std::string& radarSite)
+void MapWidgetImpl::SetRadarSite(const std::string& radarSite,
+                                 bool               checkProductAvailability)
 {
    // Check if radar site has changed
    if (radarProductManager_ == nullptr ||
@@ -2008,6 +2029,12 @@ void MapWidgetImpl::SetRadarSite(const std::string& radarSite)
 
       // Connect signals to new RadarProductManager
       RadarProductManagerConnect();
+
+      // Once the available products are loaded, check to make sure the current
+      // one is available
+      productAvailabilityCheckNeeded_     = checkProductAvailability;
+      productAvailabilityUpdated_         = false;
+      productAvailabilityProductSelected_ = false;
 
       radarProductManager_->UpdateAvailableProducts();
    }
@@ -2051,6 +2078,83 @@ bool MapWidgetImpl::UpdateStoredMapParameters()
    }
 
    return changed;
+}
+
+void MapWidgetImpl::CheckLevel3Availability()
+{
+   /*
+    * productAvailabilityCheckNeeded_ Only do this when it is indicated that it
+    * is needed (mostly on radar site change). This is mainly to avoid potential
+    * recursion with SelectRadarProduct calls.
+    *
+    * productAvailabilityUpdated_ Only update once the product availability
+    * has been updated
+    *
+    * productAvailabilityProductSelected_ Only update once the radar site is
+    * fully selected, including the current product
+    */
+   if (!(productAvailabilityCheckNeeded_ && productAvailabilityUpdated_ &&
+         productAvailabilityProductSelected_))
+   {
+      return;
+   }
+   productAvailabilityCheckNeeded_ = false;
+
+   // Only do this for level3 products
+   if (widget_->GetRadarProductGroup() != common::RadarProductGroup::Level3)
+   {
+      return;
+   }
+
+   const common::Level3ProductCategoryMap& categoryMap =
+      widget_->GetAvailableLevel3Categories();
+
+   const std::string& productTilt = context_->radar_product();
+   const std::string& productName =
+      common::GetLevel3ProductByAwipsId(productTilt);
+   const common::Level3ProductCategory productCategory =
+      common::GetLevel3CategoryByProduct(productName);
+   if (productCategory == common::Level3ProductCategory::Unknown)
+   {
+      return;
+   }
+
+   const auto& availableProductsIt = categoryMap.find(productCategory);
+   // Has no products in this category, do not change categories
+   if (availableProductsIt == categoryMap.cend())
+   {
+      return;
+   }
+
+   const auto& availableProducts = availableProductsIt->second;
+   const auto& availableTiltsIt  = availableProducts.find(productName);
+   // Does not have the same product, but has others in the same category.
+   // Switch to the default product and tilt in this category.
+   if (availableTiltsIt == availableProducts.cend())
+   {
+      widget_->SelectRadarProduct(
+         common::RadarProductGroup::Level3,
+         common::GetLevel3CategoryDefaultProduct(productCategory, categoryMap),
+         0,
+         widget_->GetSelectedTime());
+      return;
+   }
+
+   const auto& availableTilts = availableTiltsIt->second;
+   const auto& tilt           = std::ranges::find_if(
+      availableTilts,
+      [productTilt](const std::string& tilt) { return productTilt == tilt; });
+   // Tilt is not available, set it to first tilt
+   if (tilt == availableTilts.cend() && availableTilts.size() > 0)
+   {
+      widget_->SelectRadarProduct(common::RadarProductGroup::Level3,
+                                  availableTilts[0],
+                                  0,
+                                  widget_->GetSelectedTime());
+      return;
+   }
+
+   // Tilt is available, no change needed
 }
 
 } // namespace map
