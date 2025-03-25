@@ -136,7 +136,7 @@ public:
     *
     * @param tooltip the tooltip to be displayed
     */
-   void SetInvalidTooltip(std::optional<std::string> tooltip);
+   void SetInvalidTooltip(const std::optional<std::string>& tooltip);
 
 private:
    class Impl;

@@ -49,7 +49,7 @@ void CustomLayerDialogImpl::handle_mapChanged(QMapLibre::Map::MapChange change)
       self_->ui->layerListWidget->clear();
       self_->ui->layerListWidget->addItems(layerIds);
 
-      std::string symbologyLayer = util::maplibre::FindMapSymbologyLayer(
+      const std::string symbologyLayer = util::maplibre::FindMapSymbologyLayer(
          layerIds, {customStyleDrawLayer});
 
       const auto& symbologyItems = self_->ui->layerListWidget->findItems(

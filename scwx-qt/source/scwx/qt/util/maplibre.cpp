@@ -137,7 +137,7 @@ std::string FindMapSymbologyLayer(const QStringList&              styleLayers,
                               [&layer](const std::string& styleLayer) -> bool
                               {
                                  // Perform case-insensitive matching
-                                 RE2 re {"(?i)" + styleLayer};
+                                 const RE2 re {"(?i)" + styleLayer};
                                  if (re.ok())
                                  {
                                     return RE2::FullMatch(layer, re);

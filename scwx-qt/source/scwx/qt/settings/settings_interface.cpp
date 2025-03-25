@@ -539,7 +539,8 @@ void SettingsInterface<T>::EnableTrimming(bool trimmingEnabled)
 }
 
 template<class T>
-void SettingsInterface<T>::SetInvalidTooltip(std::optional<std::string> tooltip)
+void SettingsInterface<T>::SetInvalidTooltip(
+   const std::optional<std::string>& tooltip)
 {
    p->invalidTooltip_ = std::move(tooltip);
 }
