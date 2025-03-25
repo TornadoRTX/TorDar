@@ -1,7 +1,9 @@
 #include <scwx/qt/util/maplibre.hpp>
 
 #include <QMapLibre/Utils>
+#include <algorithm>
 #include <mbgl/util/constants.hpp>
+#include <re2/re2.h>
 
 namespace scwx
 {
@@ -118,6 +120,44 @@ void SetMapStyleUrl(const std::shared_ptr<map::MapContext>& mapContext,
    {
       map->setStyleUrl(qUrl);
    }
+}
+
+std::string FindMapSymbologyLayer(const QStringList&              styleLayers,
+                                  const std::vector<std::string>& drawBelow)
+{
+   std::string before = "ferry";
+
+   for (const QString& qlayer : styleLayers)
+   {
+      const std::string layer = qlayer.toStdString();
+
+      // Draw below layers defined in map style
+      auto it =
+         std::ranges::find_if(drawBelow,
+                              [&layer](const std::string& styleLayer) -> bool
+                              {
+                                 // Perform case-insensitive matching
+                                 RE2 re {"(?i)" + styleLayer};
+                                 if (re.ok())
+                                 {
+                                    return RE2::FullMatch(layer, re);
+                                 }
+                                 else
+                                 {
+                                    // Fall back to basic comparison if RE
+                                    // doesn't compile
+                                    return layer == styleLayer;
+                                 }
+                              });
+
+      if (it != drawBelow.cend())
+      {
+         before = layer;
+         break;
+      }
+   }
+
+   return before;
 }
 
 } // namespace maplibre

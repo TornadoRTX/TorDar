@@ -185,8 +185,6 @@ public:
    bool UpdateStoredMapParameters();
    void CheckLevel3Availability();
 
-   std::string FindMapSymbologyLayer();
-
    common::Level2Product
    GetLevel2ProductOrDefault(const std::string& productName) const;
 
@@ -1146,43 +1144,6 @@ void MapWidget::DumpLayerList() const
    logger_->info("Layers: {}", p->map_->layerIds().join(", ").toStdString());
 }
 
-std::string MapWidgetImpl::FindMapSymbologyLayer()
-{
-   std::string before = "ferry";
-
-   for (const QString& qlayer : styleLayers_)
-   {
-      const std::string layer = qlayer.toStdString();
-
-      // Draw below layers defined in map style
-      auto it = std::find_if(currentStyle_->drawBelow_.cbegin(),
-                             currentStyle_->drawBelow_.cend(),
-                             [&layer](const std::string& styleLayer) -> bool
-                             {
-                                // Perform case-insensitive matching
-                                RE2 re {"(?i)" + styleLayer};
-                                if (re.ok())
-                                {
-                                   return RE2::FullMatch(layer, re);
-                                }
-                                else
-                                {
-                                   // Fall back to basic comparison if RE
-                                   // doesn't compile
-                                   return layer == styleLayer;
-                                }
-                             });
-
-      if (it != currentStyle_->drawBelow_.cend())
-      {
-         before = layer;
-         break;
-      }
-   }
-
-   return before;
-}
-
 void MapWidgetImpl::AddLayers()
 {
    if (styleLayers_.isEmpty())
@@ -1218,7 +1179,8 @@ void MapWidgetImpl::AddLayers()
          {
          // Subsequent layers are drawn underneath the map symbology layer
          case types::MapLayer::MapUnderlay:
-            before = FindMapSymbologyLayer();
+            before = util::maplibre::FindMapSymbologyLayer(
+               styleLayers_, currentStyle_->drawBelow_);
             break;
 
          // Subsequent layers are drawn after all style-defined layers

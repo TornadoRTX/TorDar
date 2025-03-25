@@ -1,10 +1,11 @@
 #include "custom_layer_dialog.hpp"
 #include "ui_custom_layer_dialog.h"
 
-#include <re2/re2.h>
 #include <scwx/qt/settings/general_settings.hpp>
+#include <scwx/qt/util/maplibre.hpp>
 #include <scwx/util/logger.hpp>
 #include <scwx/qt/map/map_provider.hpp>
+
 #include <utility>
 
 namespace scwx::qt::ui
@@ -36,43 +37,26 @@ public:
    std::shared_ptr<QMapLibre::Map> map_;
 };
 
-// TODO Duplicated form map_widget, Should probably be moved.
-static bool match_layer(const std::string& pattern, const std::string& layer)
-{
-   // Perform case-insensitive matching
-   const RE2 re {"(?i)" + pattern};
-   if (re.ok())
-   {
-      return RE2::FullMatch(layer, re);
-   }
-   else
-   {
-      // Fall back to basic comparison if RE
-      // doesn't compile
-      return layer == pattern;
-   }
-}
-
 void CustomLayerDialogImpl::handle_mapChanged(QMapLibre::Map::MapChange change)
 {
    if (change == QMapLibre::Map::MapChange::MapChangeDidFinishLoadingStyle)
    {
       auto& generalSettings = settings::GeneralSettings::Instance();
       const std::string& customStyleDrawLayer =
-         generalSettings.custom_style_draw_layer().GetValue();
+         generalSettings.custom_style_draw_layer().GetStagedOrValue();
 
       const QStringList layerIds = map_->layerIds();
       self_->ui->layerListWidget->clear();
       self_->ui->layerListWidget->addItems(layerIds);
 
-      for (int i = 0; i < self_->ui->layerListWidget->count(); i++)
-      {
-         auto* item = self_->ui->layerListWidget->item(i);
+      std::string symbologyLayer = util::maplibre::FindMapSymbologyLayer(
+         layerIds, {customStyleDrawLayer});
 
-         if (match_layer(customStyleDrawLayer, item->text().toStdString()))
-         {
-            self_->ui->layerListWidget->setCurrentItem(item);
-         }
+      const auto& symbologyItems = self_->ui->layerListWidget->findItems(
+         symbologyLayer.c_str(), Qt::MatchExactly);
+      if (!symbologyItems.isEmpty())
+      {
+         self_->ui->layerListWidget->setCurrentItem(symbologyItems.first());
       }
    }
 }
