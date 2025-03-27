@@ -39,12 +39,16 @@ public:
 
    std::string FindKey(std::chrono::system_clock::time_point time) override;
    std::string FindLatestKey() override;
+   std::chrono::system_clock::time_point FindLatestTime() override;
    std::vector<std::chrono::system_clock::time_point>
    GetTimePointsByDate(std::chrono::system_clock::time_point date) override;
    std::tuple<bool, size_t, size_t>
    ListObjects(std::chrono::system_clock::time_point date) override;
    std::shared_ptr<wsr88d::NexradFile>
                              LoadObjectByKey(const std::string& key) override;
+   std::shared_ptr<wsr88d::NexradFile>
+   LoadObjectByTime(std::chrono::system_clock::time_point time) override;
+   std::shared_ptr<wsr88d::NexradFile> LoadLatestObject() override;
    std::pair<size_t, size_t> Refresh() override;
 
 protected:

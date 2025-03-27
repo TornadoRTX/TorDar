@@ -769,9 +769,7 @@ void RadarProductManagerImpl::RefreshDataSync(
 
    if (totalObjects > 0)
    {
-      std::string key = providerManager->provider_->FindLatestKey();
-      auto latestTime = providerManager->provider_->GetTimePointByKey(key);
-
+      auto latestTime        = providerManager->provider_->FindLatestTime();
       auto updatePeriod      = providerManager->provider_->update_period();
       auto lastModified      = providerManager->provider_->last_modified();
       auto sinceLastModified = std::chrono::system_clock::now() - lastModified;
@@ -951,13 +949,8 @@ void RadarProductManagerImpl::LoadProviderData(
 
          if (existingRecord == nullptr)
          {
-            std::string key = providerManager->provider_->FindKey(time);
-
-            if (!key.empty())
-            {
-               nexradFile = providerManager->provider_->LoadObjectByKey(key);
-            }
-            else
+            nexradFile = providerManager->provider_->LoadObjectByTime(time);
+            if (nexradFile == nullptr)
             {
                logger_->warn("Attempting to load object without key: {}",
                              scwx::util::TimeString(time));

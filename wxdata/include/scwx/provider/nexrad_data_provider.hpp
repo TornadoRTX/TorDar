@@ -60,6 +60,13 @@ public:
    virtual std::string FindLatestKey() = 0;
 
    /**
+    * Finds the most recent time in the cache.
+    *
+    * @return NEXRAD data key
+    */
+   virtual std::chrono::system_clock::time_point FindLatestTime() = 0;
+
+   /**
     * Lists NEXRAD objects for the date supplied, and adds them to the cache.
     *
     * @param date Date for which to list objects
@@ -80,6 +87,24 @@ public:
     */
    virtual std::shared_ptr<wsr88d::NexradFile>
    LoadObjectByKey(const std::string& key) = 0;
+
+   /**
+    * Loads a NEXRAD file object at the given time
+    *
+    * @param time NEXRAD time
+    *
+    * @return NEXRAD data
+    */
+   virtual std::shared_ptr<wsr88d::NexradFile>
+   LoadObjectByTime(std::chrono::system_clock::time_point time) = 0;
+
+   /**
+    * Loads the latest NEXRAD file object
+    *
+    * @return NEXRAD data
+    */
+   virtual std::shared_ptr<wsr88d::NexradFile>
+   LoadLatestObject() = 0;
 
    /**
     * Lists NEXRAD objects for the current date, and adds them to the cache. If
