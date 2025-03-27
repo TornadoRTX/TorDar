@@ -21,7 +21,6 @@
 
 namespace scwx::provider
 {
-
 static const std::string logPrefix_ =
    "scwx::provider::aws_level2_chunks_data_provider";
 static const auto logger_ = util::Logger::Create(logPrefix_);
@@ -47,12 +46,12 @@ public:
       ScanRecord& operator=(const ScanRecord&) = default;
       ScanRecord& operator=(ScanRecord&&)      = default;
 
-      std::string prefix_;
-      std::shared_ptr<wsr88d::Ar2vFile> nexradFile_;
+      std::string                           prefix_;
+      std::shared_ptr<wsr88d::Ar2vFile>     nexradFile_;
       std::chrono::system_clock::time_point lastModified_;
       std::chrono::system_clock::time_point secondLastModified_;
-      int nextFile_{1};
-      bool hasAllFiles_{false};
+      int                                   nextFile_ {1};
+      bool                                  hasAllFiles_ {false};
    };
 
    explicit Impl(AwsLevel2ChunksDataProvider* self,
@@ -92,9 +91,9 @@ public:
    Impl& operator=(Impl&&)      = delete;
 
    std::chrono::system_clock::time_point GetScanTime(const std::string& prefix);
-   std::string GetScanKey(const std::string& prefix,
-         const std::chrono::system_clock::time_point& time,
-         int last);
+   std::string                           GetScanKey(const std::string&                           prefix,
+                                                    const std::chrono::system_clock::time_point& time,
+                                                    int                                          last);
    std::shared_ptr<wsr88d::NexradFile>   LoadScan(Impl::ScanRecord& scanRecord);
 
    std::string                        radarSite_;
@@ -111,7 +110,7 @@ public:
    std::chrono::seconds                  updatePeriod_;
 
    AwsLevel2ChunksDataProvider* self_;
-   };
+};
 
 AwsLevel2ChunksDataProvider::AwsLevel2ChunksDataProvider(
    const std::string& radarSite) :
@@ -225,7 +224,7 @@ AwsLevel2ChunksDataProvider::FindLatestTime()
 
 std::vector<std::chrono::system_clock::time_point>
 AwsLevel2ChunksDataProvider::GetTimePointsByDate(
-   std::chrono::system_clock::time_point  /*date*/)
+   std::chrono::system_clock::time_point /*date*/)
 {
    return {};
 }
@@ -254,10 +253,10 @@ std::string AwsLevel2ChunksDataProvider::Impl::GetScanKey(
    const std::chrono::system_clock::time_point& time,
    int                                          last)
 {
-   
+
    static const std::string timeFormat {"%Y%m%d-%H%M%S"};
 
-   //TODO
+   // TODO
    return fmt::format(
       "{0}/{1:%Y%m%d-%H%M%S}-{2}", prefix, fmt::gmtime(time), last - 1);
 }
@@ -288,13 +287,13 @@ AwsLevel2ChunksDataProvider::ListObjects(std::chrono::system_clock::time_point)
 
       for (const auto& scan : scans)
       {
-         const std::string& prefix = scan.GetPrefix();
+         const std::string& prefixScan = scan.GetPrefix();
 
-         auto time = p->GetScanTime(prefix);
+         auto time = p->GetScanTime(prefixScan);
 
          if (!p->scans_.contains(time))
          {
-            p->scans_.insert_or_assign(time, Impl::ScanRecord {prefix});
+            p->scans_.insert_or_assign(time, Impl::ScanRecord {prefixScan});
             newObjects++;
          }
 
@@ -306,7 +305,7 @@ AwsLevel2ChunksDataProvider::ListObjects(std::chrono::system_clock::time_point)
 }
 
 std::shared_ptr<wsr88d::NexradFile>
-AwsLevel2ChunksDataProvider::LoadObjectByKey(const std::string&  /*prefix*/)
+AwsLevel2ChunksDataProvider::LoadObjectByKey(const std::string& /*prefix*/)
 {
    return nullptr;
 }
@@ -339,10 +338,10 @@ AwsLevel2ChunksDataProvider::Impl::LoadScan(Impl::ScanRecord& scanRecord)
 
       // We just want the number of this chunk for now
       // KIND/585/20250324-134727-001-S
-      constexpr size_t startNumberPos =
+      static const size_t startNumberPos =
          std::string("KIND/585/20250324-134727-").size();
       const std::string& keyNumberStr = key.substr(startNumberPos, 3);
-      const int keyNumber = std::stoi(keyNumberStr);
+      const int          keyNumber    = std::stoi(keyNumberStr);
       if (keyNumber != scanRecord.nextFile_)
       {
          continue;
@@ -350,7 +349,7 @@ AwsLevel2ChunksDataProvider::Impl::LoadScan(Impl::ScanRecord& scanRecord)
 
       // Now we want the ending char
       // KIND/585/20250324-134727-001-S
-      constexpr size_t charPos =
+      static const size_t charPos =
          std::string("KIND/585/20250324-134727-001-").size();
       const char keyChar = key[charPos];
 
@@ -369,7 +368,8 @@ AwsLevel2ChunksDataProvider::Impl::LoadScan(Impl::ScanRecord& scanRecord)
 
       auto& body = outcome.GetResultWithOwnership().GetBody();
 
-      switch (keyChar) {
+      switch (keyChar)
+      {
       case 'S':
       { // First chunk
          scanRecord.nexradFile_ = std::make_shared<wsr88d::Ar2vFile>();
@@ -405,8 +405,7 @@ AwsLevel2ChunksDataProvider::Impl::LoadScan(Impl::ScanRecord& scanRecord)
 
       std::chrono::seconds lastModifiedSeconds {
          outcome.GetResult().GetLastModified().Seconds()};
-      std::chrono::system_clock::time_point lastModified {
-         lastModifiedSeconds};
+      std::chrono::system_clock::time_point lastModified {lastModifiedSeconds};
 
       scanRecord.secondLastModified_ = scanRecord.lastModified_;
       scanRecord.lastModified_       = lastModified;

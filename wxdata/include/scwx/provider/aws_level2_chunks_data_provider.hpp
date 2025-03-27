@@ -23,10 +23,12 @@ public:
    ~AwsLevel2ChunksDataProvider() override;
 
    AwsLevel2ChunksDataProvider(const AwsLevel2ChunksDataProvider&) = delete;
-   AwsLevel2ChunksDataProvider& operator=(const AwsLevel2ChunksDataProvider&) = delete;
+   AwsLevel2ChunksDataProvider&
+   operator=(const AwsLevel2ChunksDataProvider&) = delete;
 
    AwsLevel2ChunksDataProvider(AwsLevel2ChunksDataProvider&&) noexcept;
-   AwsLevel2ChunksDataProvider& operator=(AwsLevel2ChunksDataProvider&&) noexcept;
+   AwsLevel2ChunksDataProvider&
+   operator=(AwsLevel2ChunksDataProvider&&) noexcept;
 
    [[nodiscard]] std::chrono::system_clock::time_point
    GetTimePointByKey(const std::string& key) const override;
@@ -45,13 +47,13 @@ public:
    std::tuple<bool, size_t, size_t>
    ListObjects(std::chrono::system_clock::time_point date) override;
    std::shared_ptr<wsr88d::NexradFile>
-                             LoadObjectByKey(const std::string& key) override;
+   LoadObjectByKey(const std::string& key) override;
    std::shared_ptr<wsr88d::NexradFile>
    LoadObjectByTime(std::chrono::system_clock::time_point time) override;
    std::shared_ptr<wsr88d::NexradFile> LoadLatestObject() override;
-   std::pair<size_t, size_t> Refresh() override;
+   std::pair<size_t, size_t>           Refresh() override;
 
-   void RequestAvailableProducts() override;
+   void                     RequestAvailableProducts() override;
    std::vector<std::string> GetAvailableProducts() override;
 
 private:
