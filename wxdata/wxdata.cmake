@@ -60,6 +60,7 @@ set(HDR_NETWORK include/scwx/network/cpr.hpp
 set(SRC_NETWORK source/scwx/network/cpr.cpp
                 source/scwx/network/dir_list.cpp)
 set(HDR_PROVIDER include/scwx/provider/aws_level2_data_provider.hpp
+                 include/scwx/provider/aws_level2_chunks_data_provider.hpp
                  include/scwx/provider/aws_level3_data_provider.hpp
                  include/scwx/provider/aws_nexrad_data_provider.hpp
                  include/scwx/provider/iem_api_provider.hpp
@@ -68,6 +69,7 @@ set(HDR_PROVIDER include/scwx/provider/aws_level2_data_provider.hpp
                  include/scwx/provider/nexrad_data_provider_factory.hpp
                  include/scwx/provider/warnings_provider.hpp)
 set(SRC_PROVIDER source/scwx/provider/aws_level2_data_provider.cpp
+                 source/scwx/provider/aws_level2_chunks_data_provider.cpp
                  source/scwx/provider/aws_level3_data_provider.cpp
                  source/scwx/provider/aws_nexrad_data_provider.cpp
                  source/scwx/provider/iem_api_provider.cpp
