@@ -1,5 +1,6 @@
 #include <scwx/provider/nexrad_data_provider_factory.hpp>
-#include <scwx/provider/aws_level2_data_provider.hpp>
+//#include <scwx/provider/aws_level2_data_provider.hpp>
+#include <scwx/provider/aws_level2_chunks_data_provider.hpp>
 #include <scwx/provider/aws_level3_data_provider.hpp>
 
 namespace scwx
@@ -14,7 +15,7 @@ std::shared_ptr<NexradDataProvider>
 NexradDataProviderFactory::CreateLevel2DataProvider(
    const std::string& radarSite)
 {
-   return std::make_unique<AwsLevel2DataProvider>(radarSite);
+   return std::make_unique<AwsLevel2ChunksDataProvider>(radarSite);
 }
 
 std::shared_ptr<NexradDataProvider>
