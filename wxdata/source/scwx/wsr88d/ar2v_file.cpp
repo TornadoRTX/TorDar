@@ -519,5 +519,25 @@ void Ar2vFileImpl::IndexFile()
    }
 }
 
+bool Ar2vFile::LoadLDMRecords(std::istream& is) {
+   size_t decompressedRecords = p->DecompressLDMRecords(is);
+   if (decompressedRecords == 0)
+   {
+      p->ParseLDMRecord(is);
+   }
+   else
+   {
+      p->ParseLDMRecords();
+   }
+
+   return true;
+}
+
+bool Ar2vFile::IndexFile()
+{
+   p->IndexFile();
+   return true;
+}
+
 } // namespace wsr88d
 } // namespace scwx

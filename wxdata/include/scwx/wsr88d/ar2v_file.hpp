@@ -53,6 +53,9 @@ public:
    bool LoadFile(const std::string& filename);
    bool LoadData(std::istream& is);
 
+   bool LoadLDMRecords(std::istream& is);
+   bool IndexFile();
+
 private:
    std::unique_ptr<Ar2vFileImpl> p;
 };
