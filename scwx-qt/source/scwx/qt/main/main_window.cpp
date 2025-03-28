@@ -316,7 +316,7 @@ MainWindow::MainWindow(QWidget* parent) :
    p->layerDialog_ = new ui::LayerDialog(this);
 
    // Settings Dialog
-   p->settingsDialog_ = new ui::SettingsDialog(this);
+   p->settingsDialog_ = new ui::SettingsDialog(p->settings_, this);
 
    // Map Settings
    p->mapSettingsGroup_ = new ui::CollapsibleGroup(tr("Map Settings"), this);

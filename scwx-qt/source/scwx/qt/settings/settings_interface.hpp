@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <scwx/qt/settings/settings_interface_base.hpp>
 
 #include <functional>
@@ -129,6 +130,13 @@ public:
     * @param trimmingEnabled If trimming should be enabled.
     */
    void EnableTrimming(bool trimmingEnabled = true);
+
+   /**
+    * Set a tooltip to be displayed when an invalid input is given.
+    *
+    * @param tooltip the tooltip to be displayed
+    */
+   void SetInvalidTooltip(const std::optional<std::string>& tooltip);
 
 private:
    class Impl;

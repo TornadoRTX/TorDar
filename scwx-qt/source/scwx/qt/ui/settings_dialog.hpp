@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QDialog>
+#include <qmaplibre.hpp>
 
 namespace Ui
 {
@@ -24,7 +25,8 @@ private:
    Q_DISABLE_COPY(SettingsDialog)
 
 public:
-   explicit SettingsDialog(QWidget* parent = nullptr);
+   explicit SettingsDialog(QMapLibre::Settings& mapSettings,
+                           QWidget*             parent = nullptr);
    ~SettingsDialog();
 
 private:

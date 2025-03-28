@@ -12,12 +12,16 @@
 #include <QLineEdit>
 #include <QSpinBox>
 #include <QWidget>
+#include <utility>
 #include <vector>
 
 namespace scwx::qt::settings
 {
 
 static const std::string logPrefix_ = "scwx::qt::settings::settings_interface";
+
+static const QString kValidStyleSheet_   = "";
+static const QString kInvalidStyleSheet_ = "border: 2px solid red;";
 
 template<class T>
 class SettingsInterface<T>::Impl
@@ -40,6 +44,7 @@ public:
    void UpdateEditWidget();
    void UpdateResetButton();
    void UpdateUnitLabel();
+   void UpdateValidityDisplay();
 
    SettingsInterface<T>* self_;
 
@@ -59,6 +64,8 @@ public:
    bool                       unitEnabled_ {false};
 
    bool trimmingEnabled_ {false};
+
+   std::optional<std::string> invalidTooltip_;
 };
 
 template<class T>
@@ -172,14 +179,13 @@ void SettingsInterface<T>::SetEditWidget(QWidget* widget)
                           p->context_.get(),
                           [this](const QKeySequence& sequence)
                           {
-                             std::string value {
+                             const std::string value {
                                 sequence.toString().toStdString()};
 
                              // Attempt to stage the value
                              p->stagedValid_ = p->variable_->StageValue(value);
                              p->UpdateResetButton();
-
-                             // TODO: Display invalid status
+                             p->UpdateValidityDisplay();
                           });
       }
    }
@@ -194,7 +200,7 @@ void SettingsInterface<T>::SetEditWidget(QWidget* widget)
                           p->context_.get(),
                           [this](const QString& text)
                           {
-                             QString trimmedText =
+                             const QString trimmedText =
                                 p->trimmingEnabled_ ? text.trimmed() : text;
 
                              // Map to value if required
@@ -207,8 +213,7 @@ void SettingsInterface<T>::SetEditWidget(QWidget* widget)
                              // Attempt to stage the value
                              p->stagedValid_ = p->variable_->StageValue(value);
                              p->UpdateResetButton();
-
-                             // TODO: Display invalid status
+                             p->UpdateValidityDisplay();
                           });
       }
       else if constexpr (std::is_same_v<T, double>)
@@ -221,8 +226,8 @@ void SettingsInterface<T>::SetEditWidget(QWidget* widget)
                           [this](const QString& text)
                           {
                              // Convert to a double
-                             bool   ok;
-                             double value = text.toDouble(&ok);
+                             bool         ok    = false;
+                             const double value = text.toDouble(&ok);
                              if (ok)
                              {
                                 // Attempt to stage the value
@@ -235,6 +240,8 @@ void SettingsInterface<T>::SetEditWidget(QWidget* widget)
                                 p->stagedValid_ = false;
                                 p->UpdateResetButton();
                              }
+
+                             p->UpdateValidityDisplay();
                           });
       }
       else if constexpr (std::is_same_v<T, std::vector<std::int64_t>>)
@@ -279,8 +286,7 @@ void SettingsInterface<T>::SetEditWidget(QWidget* widget)
                // Attempt to stage the value
                p->stagedValid_ = p->variable_->StageValue(value);
                p->UpdateResetButton();
-
-               // TODO: Display invalid status
+               p->UpdateValidityDisplay();
             });
       }
    }
@@ -364,6 +370,8 @@ void SettingsInterface<T>::SetEditWidget(QWidget* widget)
                   p->UpdateResetButton();
                }
                // Otherwise, don't process an unchanged value
+
+               p->UpdateValidityDisplay();
             });
       }
    }
@@ -415,6 +423,8 @@ void SettingsInterface<T>::SetEditWidget(QWidget* widget)
                   p->UpdateResetButton();
                }
                // Otherwise, don't process an unchanged value
+
+               p->UpdateValidityDisplay();
             });
       }
    }
@@ -498,6 +508,13 @@ template<class T>
 void SettingsInterface<T>::EnableTrimming(bool trimmingEnabled)
 {
    p->trimmingEnabled_ = trimmingEnabled;
+}
+
+template<class T>
+void SettingsInterface<T>::SetInvalidTooltip(
+   const std::optional<std::string>& tooltip)
+{
+   p->invalidTooltip_ = std::move(tooltip);
 }
 
 template<class T>
@@ -615,6 +632,15 @@ void SettingsInterface<T>::Impl::UpdateUnitLabel()
    }
 
    unitLabel_->setText(QString::fromStdString(unitAbbreviation_.value_or("")));
+}
+
+template<class T>
+void SettingsInterface<T>::Impl::UpdateValidityDisplay()
+{
+   editWidget_->setStyleSheet(stagedValid_ ? kValidStyleSheet_ :
+                                             kInvalidStyleSheet_);
+   editWidget_->setToolTip(
+      invalidTooltip_ && !stagedValid_ ? invalidTooltip_->c_str() : "");
 }
 
 template<class T>
