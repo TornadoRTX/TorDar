@@ -669,11 +669,14 @@ void SettingsDialogImpl::SetupGeneralTab()
                            map::GetMapProviderName);
    mapProvider_.SetResetButton(self_->ui->resetMapProviderButton);
 
+   self_->ui->mapboxApiKeyLineEdit->setMapProvider(map::MapProvider::Mapbox);
    mapboxApiKey_.SetSettingsVariable(generalSettings.mapbox_api_key());
    mapboxApiKey_.SetEditWidget(self_->ui->mapboxApiKeyLineEdit);
    mapboxApiKey_.SetResetButton(self_->ui->resetMapboxApiKeyButton);
    mapboxApiKey_.EnableTrimming();
 
+   self_->ui->mapTilerApiKeyLineEdit->setMapProvider(
+      map::MapProvider::MapTiler);
    mapTilerApiKey_.SetSettingsVariable(generalSettings.maptiler_api_key());
    mapTilerApiKey_.SetEditWidget(self_->ui->mapTilerApiKeyLineEdit);
    mapTilerApiKey_.SetResetButton(self_->ui->resetMapTilerApiKeyButton);

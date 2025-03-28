@@ -255,6 +255,7 @@ set(HDR_UI source/scwx/qt/ui/about_dialog.hpp
            source/scwx/qt/ui/alert_dialog.hpp
            source/scwx/qt/ui/alert_dock_widget.hpp
            source/scwx/qt/ui/animation_dock_widget.hpp
+           source/scwx/qt/ui/api_key_edit_widget.hpp
            source/scwx/qt/ui/collapsible_group.hpp
            source/scwx/qt/ui/county_dialog.hpp
            source/scwx/qt/ui/download_dialog.hpp
@@ -286,6 +287,7 @@ set(SRC_UI source/scwx/qt/ui/about_dialog.cpp
            source/scwx/qt/ui/alert_dialog.cpp
            source/scwx/qt/ui/alert_dock_widget.cpp
            source/scwx/qt/ui/animation_dock_widget.cpp
+           source/scwx/qt/ui/api_key_edit_widget.cpp
            source/scwx/qt/ui/collapsible_group.cpp
            source/scwx/qt/ui/county_dialog.cpp
            source/scwx/qt/ui/download_dialog.cpp

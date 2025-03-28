@@ -256,14 +256,14 @@
                    </widget>
                   </item>
                   <item row="13" column="2">
-                   <widget class="QLineEdit" name="mapTilerApiKeyLineEdit">
+                   <widget class="scwx::qt::ui::QApiKeyEdit" name="mapTilerApiKeyLineEdit">
                     <property name="echoMode">
                      <enum>QLineEdit::EchoMode::Password</enum>
                     </property>
                    </widget>
                   </item>
                   <item row="12" column="2">
-                   <widget class="QLineEdit" name="mapboxApiKeyLineEdit">
+                   <widget class="scwx::qt::ui::QApiKeyEdit" name="mapboxApiKeyLineEdit">
                     <property name="echoMode">
                      <enum>QLineEdit::EchoMode::Password</enum>
                     </property>
@@ -1389,6 +1389,13 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>scwx::qt::ui::QApiKeyEdit</class>
+   <extends>QLineEdit</extends>
+   <header>scwx/qt/ui/api_key_edit_widget.hpp</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../../../../scwx-qt.qrc"/>
  </resources>
