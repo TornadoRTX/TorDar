@@ -108,8 +108,8 @@ static const std::unordered_map<std::string, ColorTableConversions>
 class SettingsDialogImpl
 {
 public:
-   explicit SettingsDialogImpl(SettingsDialog*     self,
-                               QMapLibre::Settings mapSettings) :
+   explicit SettingsDialogImpl(SettingsDialog*      self,
+                               QMapLibre::Settings& mapSettings) :
        self_ {self},
        radarSiteDialog_ {new RadarSiteDialog(self)},
        alertAudioRadarSiteDialog_ {new RadarSiteDialog(self)},
@@ -117,7 +117,7 @@ public:
        countyDialog_ {new CountyDialog(self)},
        wfoDialog_ {new WFODialog(self)},
        fontDialog_ {new QFontDialog(self)},
-       mapSettings_ {std::move(mapSettings)},
+       mapSettings_ {mapSettings},
        fontCategoryModel_ {new QStandardItemModel(self)},
        settings_ {std::initializer_list<settings::SettingsInterfaceBase*> {
           &defaultRadarSite_,
@@ -223,7 +223,7 @@ public:
    WFODialog*        wfoDialog_;
    QFontDialog*      fontDialog_;
 
-   QMapLibre::Settings mapSettings_;
+   QMapLibre::Settings& mapSettings_;
 
    QStandardItemModel* fontCategoryModel_;
 
@@ -298,8 +298,8 @@ public:
    std::vector<settings::SettingsInterfaceBase*> settings_;
 };
 
-SettingsDialog::SettingsDialog(const QMapLibre::Settings& mapSettings,
-                               QWidget*                   parent) :
+SettingsDialog::SettingsDialog(QMapLibre::Settings& mapSettings,
+                               QWidget*             parent) :
     QDialog(parent),
     p {std::make_unique<SettingsDialogImpl>(this, mapSettings)},
     ui(new Ui::SettingsDialog)

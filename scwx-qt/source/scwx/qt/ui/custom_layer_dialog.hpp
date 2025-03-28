@@ -17,15 +17,12 @@ class CustomLayerDialogImpl;
 class CustomLayerDialog : public QDialog
 {
    Q_OBJECT
+   Q_DISABLE_COPY_MOVE(CustomLayerDialog)
 
 public:
    explicit CustomLayerDialog(const QMapLibre::Settings& settings,
                               QWidget*                   parent = nullptr);
    ~CustomLayerDialog() override;
-   CustomLayerDialog(const CustomLayerDialog&)            = delete;
-   CustomLayerDialog(CustomLayerDialog&&)                 = delete;
-   CustomLayerDialog& operator=(const CustomLayerDialog&) = delete;
-   CustomLayerDialog& operator=(CustomLayerDialog&&)      = delete;
 
    std::string selected_layer();
 

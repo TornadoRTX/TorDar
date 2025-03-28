@@ -25,8 +25,8 @@ private:
    Q_DISABLE_COPY(SettingsDialog)
 
 public:
-   explicit SettingsDialog(const QMapLibre::Settings& mapSettings,
-                           QWidget*                   parent = nullptr);
+   explicit SettingsDialog(QMapLibre::Settings& mapSettings,
+                           QWidget*             parent = nullptr);
    ~SettingsDialog();
 
 private:
