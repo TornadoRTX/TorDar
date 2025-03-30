@@ -603,7 +603,13 @@ AwsLevel2ChunksDataProvider::LoadObjectByTime(
 std::shared_ptr<wsr88d::NexradFile>
 AwsLevel2ChunksDataProvider::LoadLatestObject()
 {
-   return LoadObjectByTime(FindLatestTime());
+   return p->currentScan_.nexradFile_;
+}
+
+std::shared_ptr<wsr88d::NexradFile>
+AwsLevel2ChunksDataProvider::LoadSecondLatestObject()
+{
+   return p->lastScan_.nexradFile_;
 }
 
 int AwsLevel2ChunksDataProvider::Impl::GetScanNumber(const std::string& prefix)

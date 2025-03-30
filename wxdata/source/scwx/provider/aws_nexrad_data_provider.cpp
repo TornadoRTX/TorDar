@@ -351,6 +351,12 @@ std::shared_ptr<wsr88d::NexradFile> AwsNexradDataProvider::LoadLatestObject()
    return LoadObjectByKey(FindLatestKey());
 }
 
+std::shared_ptr<wsr88d::NexradFile>
+AwsNexradDataProvider::LoadSecondLatestObject()
+{
+   return nullptr;
+}
+
 std::pair<size_t, size_t> AwsNexradDataProvider::Refresh()
 {
    using namespace std::chrono;

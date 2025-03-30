@@ -49,6 +49,7 @@ public:
    std::shared_ptr<wsr88d::NexradFile>
    LoadObjectByTime(std::chrono::system_clock::time_point time) override;
    std::shared_ptr<wsr88d::NexradFile> LoadLatestObject() override;
+   std::shared_ptr<wsr88d::NexradFile> LoadSecondLatestObject() override;
    std::pair<size_t, size_t> Refresh() override;
 
 protected:
