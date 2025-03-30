@@ -66,6 +66,7 @@ static const std::string kDefaultLevel3Product_ {"N0B"};
 static constexpr std::size_t kTimerPlaces_ {6u};
 
 static constexpr std::chrono::seconds kFastRetryInterval_ {15};
+static constexpr std::chrono::seconds kFastRetryIntervalChunks_ {3};
 static constexpr std::chrono::seconds kSlowRetryInterval_ {120};
 
 static std::unordered_map<std::string, std::weak_ptr<RadarProductManager>>
@@ -765,7 +766,12 @@ void RadarProductManagerImpl::RefreshDataSync(
 
    auto [newObjects, totalObjects] = providerManager->provider_->Refresh();
 
-   std::chrono::milliseconds interval = kFastRetryInterval_;
+   // Level2 chunked data is updated quickly and uses a fater interval
+   const std::chrono::milliseconds fastRetryInterval =
+      providerManager->group_ == common::RadarProductGroup::Level2 ?
+         kFastRetryIntervalChunks_ :
+         kFastRetryInterval_;
+   std::chrono::milliseconds interval = fastRetryInterval;
 
    if (totalObjects > 0)
    {
@@ -786,10 +792,10 @@ void RadarProductManagerImpl::RefreshDataSync(
          // been last modified, slow the retry period
          interval = kSlowRetryInterval_;
       }
-      else if (interval < std::chrono::milliseconds {kFastRetryInterval_})
+      else if (interval < std::chrono::milliseconds {fastRetryInterval})
       {
          // The interval should be no quicker than the fast retry interval
-         interval = kFastRetryInterval_;
+         interval = fastRetryInterval;
       }
 
       if (newObjects > 0)
