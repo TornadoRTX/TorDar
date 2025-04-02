@@ -21,7 +21,8 @@ public:
    GeneralSettings(GeneralSettings&&) noexcept;
    GeneralSettings& operator=(GeneralSettings&&) noexcept;
 
-   [[nodiscard]] SettingsVariable<bool>&        anti_aliasing_enabled() const;
+   [[nodiscard]] SettingsVariable<bool>& anti_aliasing_enabled() const;
+   [[nodiscard]] SettingsVariable<bool>& center_on_radar_selection() const;
    [[nodiscard]] SettingsVariable<std::string>& clock_format() const;
    [[nodiscard]] SettingsVariable<std::string>& custom_style_draw_layer() const;
    [[nodiscard]] SettingsVariable<std::string>& custom_style_url() const;
