@@ -1269,7 +1269,7 @@ void MapWidgetImpl::AddLayer(types::LayerType        type,
                  &RadarSiteLayer::RadarSiteSelected,
                  this,
                  [this](const std::string& id)
-                 { widget_->RadarSiteRequested(id); });
+                 { widget_->RadarSiteRequested(id, false); });
          break;
 
       // Create the location marker layer
