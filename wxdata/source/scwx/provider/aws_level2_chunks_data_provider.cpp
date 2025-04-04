@@ -368,16 +368,19 @@ AwsLevel2ChunksDataProvider::Impl::ListObjects()
          int previousScanNumber = scanNumberMap.crbegin()->first;
          const int firstScanNumber = scanNumberMap.cbegin()->first;
 
+         // Look for a gap in scan numbers. This indicates that is the latest
+         // scan.
+
          // This indicates that highest number scan is the last scan
          // (including if there is only 1 scan)
          // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
-         if (previousScanNumber != 999 || firstScanNumber != 1)
+         if (previousScanNumber != 999 || scans.size() == 1)
          {
             lastScanNumber = previousScanNumber;
          }
          else
          {
-            // have already checked scan with highest number, so skip first
+            // Have already checked scan with highest number, so skip first
             previousScanNumber = firstScanNumber;
             bool first = true;
             for (const auto& scan : scanNumberMap)
@@ -398,9 +401,17 @@ AwsLevel2ChunksDataProvider::Impl::ListObjects()
 
          if (lastScanNumber == -1)
          {
-            logger_->warn("Could not find last scan");
-            // TODO make sure this makes sence
-            return {false, 0, 0};
+            // 999 is the last scan
+            if (firstScanNumber != 1)
+            {
+               lastScanNumber = previousScanNumber;
+            }
+            else
+            {
+               logger_->warn("Could not find last scan");
+               // TODO make sure this makes sence
+               return {false, 0, 0};
+            }
          }
 
          std::string& lastScanPrefix = scanNumberMap.at(lastScanNumber);
@@ -444,7 +455,6 @@ AwsLevel2ChunksDataProvider::Impl::ListObjects()
             currentScan_.hasAllFiles_        = false;
             newObjects += 1;
          }
-         logger_->error("{}", currentScan_.prefix_);
       }
    }
 
@@ -510,6 +520,10 @@ bool AwsLevel2ChunksDataProvider::Impl::LoadScan(Impl::ScanRecord& scanRecord)
       const int          keyNumber    = std::stoi(keyNumberStr);
       if (keyNumber != scanRecord.nextFile_)
       {
+         logger_->warn("Chunk found that was not in order {} {} {}",
+                       key,
+                       scanRecord.nextFile_,
+                       keyNumber);
          continue;
       }
 
