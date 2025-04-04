@@ -85,13 +85,14 @@ void MarkerSettingsWidgetImpl::ConnectSignals()
                                    ->selectedRows(static_cast<int>(
                                       model::MarkerModel::Column::Name))
                                    .first();
-         std::optional<types::MarkerId> id = markerModel_->getId(selected.row());
-         if (!id)
+
+         QVariant id = proxyModel_->data(selected, Qt::ItemDataRole::UserRole);
+         if (!id.isValid())
          {
             return;
          }
 
-         markerManager_->remove_marker(*id);
+         markerManager_->remove_marker(id.toULongLong());
       });
    QObject::connect(
       self_->ui->markerView->selectionModel(),
@@ -116,20 +117,14 @@ void MarkerSettingsWidgetImpl::ConnectSignals()
                     self_,
                     [this](const QModelIndex& index)
                     {
-                       const int row = index.row();
-                       if (row < 0)
+                       QVariant id =
+                          proxyModel_->data(index, Qt::ItemDataRole::UserRole);
+                       if (!id.isValid())
                        {
                           return;
                        }
 
-                       std::optional<types::MarkerId> id =
-                          markerModel_->getId(row);
-                       if (!id)
-                       {
-                          return;
-                       }
-
-                       editMarkerDialog_->setup(*id);
+                       editMarkerDialog_->setup(id.toULongLong());
                        editMarkerDialog_->show();
                     });
 }
