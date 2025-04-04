@@ -117,7 +117,7 @@ void MarkerSettingsWidgetImpl::ConnectSignals()
                     self_,
                     [this](const QModelIndex& index)
                     {
-                       QVariant id =
+                       QVariant const id =
                           proxyModel_->data(index, Qt::ItemDataRole::UserRole);
                        if (!id.isValid())
                        {
