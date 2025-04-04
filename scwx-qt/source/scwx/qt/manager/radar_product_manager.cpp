@@ -645,7 +645,7 @@ void RadarProductManager::EnableRefresh(common::RadarProductGroup group,
 {
    if (group == common::RadarProductGroup::Level2)
    {
-      p->EnableRefresh(uuid, p->level2ProviderManager_, enabled);
+      //p->EnableRefresh(uuid, p->level2ProviderManager_, enabled);
       p->EnableRefresh(uuid, p->level2ChunksProviderManager_, enabled);
    }
    else

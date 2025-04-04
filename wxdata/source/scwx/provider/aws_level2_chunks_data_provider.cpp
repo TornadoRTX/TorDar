@@ -189,13 +189,26 @@ size_t AwsLevel2ChunksDataProvider::cache_size() const
 std::chrono::system_clock::time_point
 AwsLevel2ChunksDataProvider::last_modified() const
 {
-   return p->currentScan_.lastModified_;
+   if (p->currentScan_.valid_ && p->currentScan_.lastModified_ !=
+                                    std::chrono::system_clock::time_point {})
+   {
+      return p->currentScan_.lastModified_;
+   }
+   else if (p->lastScan_.valid_ && p->lastScan_.lastModified_ !=
+                                      std::chrono::system_clock::time_point {})
+   {
+      return p->lastScan_.lastModified_;
+   }
+   else
+   {
+      return {};
+   }
 }
 std::chrono::seconds AwsLevel2ChunksDataProvider::update_period() const
 {
    std::shared_lock lock(p->scansMutex_);
    // Add an extra second of delay
-   static const auto extra = std::chrono::seconds(1);
+   static const auto extra = std::chrono::seconds(2);
    // get update period from time between chunks
    if (p->currentScan_.valid_ && p->currentScan_.nextFile_ > 2)
    {
@@ -317,7 +330,7 @@ AwsLevel2ChunksDataProvider::Impl::ListObjects()
    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
 
    if (currentScan_.valid_ && !currentScan_.hasAllFiles_ &&
-       lastTimeListed_ + std::chrono::minutes(7) > now)
+       lastTimeListed_ + std::chrono::minutes(2) > now)
    {
       return {true, newObjects, totalObjects};
    }
@@ -350,13 +363,13 @@ AwsLevel2ChunksDataProvider::Impl::ListObjects()
                                            scanPrefix);
          }
 
-         // TODO ensure not out of range
          int lastScanNumber = -1;
          // Start with last scan
          int previousScanNumber = scanNumberMap.crbegin()->first;
          const int firstScanNumber = scanNumberMap.cbegin()->first;
 
          // This indicates that highest number scan is the last scan
+         // (including if there is only 1 scan)
          // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
          if (previousScanNumber != 999 || firstScanNumber != 1)
          {
@@ -431,6 +444,7 @@ AwsLevel2ChunksDataProvider::Impl::ListObjects()
             currentScan_.hasAllFiles_        = false;
             newObjects += 1;
          }
+         logger_->error("{}", currentScan_.prefix_);
       }
    }
 
@@ -479,6 +493,7 @@ bool AwsLevel2ChunksDataProvider::Impl::LoadScan(Impl::ScanRecord& scanRecord)
 
    bool hasNew = false;
    auto& chunks = listOutcome.GetResult().GetContents();
+   logger_->debug("Found {} new chunks.", chunks.size());
    for (const auto& chunk : chunks)
    {
       const std::string& key = chunk.GetKey();
@@ -502,6 +517,11 @@ bool AwsLevel2ChunksDataProvider::Impl::LoadScan(Impl::ScanRecord& scanRecord)
       // KIND/585/20250324-134727-001-S
       static const size_t charPos =
          std::string("/20250324-134727-001-").size();
+      if (secondSlash + charPos >= key.size())
+      {
+         logger_->warn("Chunk key was not long enough");
+         continue;
+      }
       const char keyChar = key[secondSlash + charPos];
 
       Aws::S3::Model::GetObjectRequest objectRequest;
@@ -571,7 +591,7 @@ bool AwsLevel2ChunksDataProvider::Impl::LoadScan(Impl::ScanRecord& scanRecord)
    {
       logger_->warn("Could not load file");
    }
-   else
+   else if (hasNew)
    {
       scanRecord.nexradFile_->IndexFile();
    }
@@ -614,8 +634,6 @@ AwsLevel2ChunksDataProvider::LoadSecondLatestObject()
 
 int AwsLevel2ChunksDataProvider::Impl::GetScanNumber(const std::string& prefix)
 {
-
-   // We just want the number of this chunk for now
    // KIND/585/20250324-134727-001-S
    static const size_t firstSlash      = std::string("KIND/").size();
    const std::string&  prefixNumberStr = prefix.substr(firstSlash, 3);
