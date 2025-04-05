@@ -47,6 +47,7 @@ public:
       // SetDefault, SetMinimum, and SetMaximum are descriptive
       // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
       antiAliasingEnabled_.SetDefault(true);
+      centerOnRadarSelection_.SetDefault(false);
       clockFormat_.SetDefault(defaultClockFormatValue);
       customStyleDrawLayer_.SetDefault(".*\\.annotations\\.points");
       debugEnabled_.SetDefault(false);
@@ -148,7 +149,8 @@ public:
    Impl(const Impl&&)            = delete;
    Impl& operator=(const Impl&&) = delete;
 
-   SettingsVariable<bool>        antiAliasingEnabled_ {"anti_aliasing_enabled"};
+   SettingsVariable<bool> antiAliasingEnabled_ {"anti_aliasing_enabled"};
+   SettingsVariable<bool> centerOnRadarSelection_ {"center_on_radar_selection"};
    SettingsVariable<std::string> clockFormat_ {"clock_format"};
    SettingsVariable<std::string> customStyleDrawLayer_ {
       "custom_style_draw_layer"};
@@ -189,6 +191,7 @@ GeneralSettings::GeneralSettings() :
     SettingsCategory("general"), p(std::make_unique<Impl>())
 {
    RegisterVariables({&p->antiAliasingEnabled_,
+                      &p->centerOnRadarSelection_,
                       &p->clockFormat_,
                       &p->customStyleDrawLayer_,
                       &p->customStyleUrl_,
@@ -231,6 +234,11 @@ GeneralSettings::operator=(GeneralSettings&&) noexcept = default;
 SettingsVariable<bool>& GeneralSettings::anti_aliasing_enabled() const
 {
    return p->antiAliasingEnabled_;
+}
+
+SettingsVariable<bool>& GeneralSettings::center_on_radar_selection() const
+{
+   return p->centerOnRadarSelection_;
 }
 
 SettingsVariable<std::string>& GeneralSettings::clock_format() const
@@ -413,6 +421,7 @@ GeneralSettings& GeneralSettings::Instance()
 bool operator==(const GeneralSettings& lhs, const GeneralSettings& rhs)
 {
    return (lhs.p->antiAliasingEnabled_ == rhs.p->antiAliasingEnabled_ &&
+           lhs.p->centerOnRadarSelection_ == rhs.p->centerOnRadarSelection_ &&
            lhs.p->clockFormat_ == rhs.p->clockFormat_ &&
            lhs.p->customStyleDrawLayer_ == rhs.p->customStyleDrawLayer_ &&
            lhs.p->customStyleUrl_ == rhs.p->customStyleUrl_ &&

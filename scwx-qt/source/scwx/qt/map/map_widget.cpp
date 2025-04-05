@@ -1265,11 +1265,16 @@ void MapWidgetImpl::AddLayer(types::LayerType        type,
       case types::InformationLayer::RadarSite:
          radarSiteLayer_ = std::make_shared<RadarSiteLayer>(context_);
          AddLayer(layerName, radarSiteLayer_, before);
-         connect(radarSiteLayer_.get(),
-                 &RadarSiteLayer::RadarSiteSelected,
-                 this,
-                 [this](const std::string& id)
-                 { widget_->RadarSiteRequested(id); });
+         connect(
+            radarSiteLayer_.get(),
+            &RadarSiteLayer::RadarSiteSelected,
+            this,
+            [this](const std::string& id)
+            {
+               auto& generalSettings = settings::GeneralSettings::Instance();
+               widget_->RadarSiteRequested(
+                  id, generalSettings.center_on_radar_selection().GetValue());
+            });
          break;
 
       // Create the location marker layer

@@ -135,9 +135,9 @@
               <property name="geometry">
                <rect>
                 <x>0</x>
-                <y>-260</y>
+                <y>-412</y>
                 <width>511</width>
-                <height>812</height>
+                <height>841</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout">
@@ -622,6 +622,13 @@
                 <widget class="QCheckBox" name="antiAliasingEnabledCheckBox">
                  <property name="text">
                   <string>Anti-Aliasing Enabled</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="centerOnRadarSelectionCheckBox">
+                 <property name="text">
+                  <string>Center Map on Radar Selection</string>
                  </property>
                 </widget>
                </item>

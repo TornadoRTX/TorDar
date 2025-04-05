@@ -139,6 +139,7 @@ public:
           &warningsProvider_,
           &radarSiteThreshold_,
           &antiAliasingEnabled_,
+          &centerOnRadarSelection_,
           &showMapAttribution_,
           &showMapCenter_,
           &showMapLogo_,
@@ -258,6 +259,7 @@ public:
    settings::SettingsInterface<std::string>  warningsProvider_ {};
    settings::SettingsInterface<double>       radarSiteThreshold_ {};
    settings::SettingsInterface<bool>         antiAliasingEnabled_ {};
+   settings::SettingsInterface<bool>         centerOnRadarSelection_ {};
    settings::SettingsInterface<bool>         showMapAttribution_ {};
    settings::SettingsInterface<bool>         showMapCenter_ {};
    settings::SettingsInterface<bool>         showMapLogo_ {};
@@ -812,6 +814,11 @@ void SettingsDialogImpl::SetupGeneralTab()
    antiAliasingEnabled_.SetSettingsVariable(
       generalSettings.anti_aliasing_enabled());
    antiAliasingEnabled_.SetEditWidget(self_->ui->antiAliasingEnabledCheckBox);
+
+   centerOnRadarSelection_.SetSettingsVariable(
+      generalSettings.center_on_radar_selection());
+   centerOnRadarSelection_.SetEditWidget(
+      self_->ui->centerOnRadarSelectionCheckBox);
 
    showMapAttribution_.SetSettingsVariable(
       generalSettings.show_map_attribution());
