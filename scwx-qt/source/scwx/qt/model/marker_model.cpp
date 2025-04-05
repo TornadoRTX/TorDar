@@ -100,6 +100,11 @@ QVariant MarkerModel::data(const QModelIndex& index, int role) const
       return QVariant();
    }
 
+   if (role == Qt::ItemDataRole::UserRole)
+   {
+      return qulonglong(id);
+   }
+
    switch(index.column())
    {
    case static_cast<int>(Column::Name):
