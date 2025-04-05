@@ -139,7 +139,7 @@ IemApiProvider::LoadTextProducts(const std::vector<std::string>& textProducts)
 {
    auto parameters = cpr::Parameters {{"nolimit", "true"}};
 
-   std::vector<std::pair<std::string_view, cpr::AsyncResponse>>
+   std::vector<std::pair<const std::string&, cpr::AsyncResponse>>
       asyncResponses {};
    asyncResponses.reserve(textProducts.size());
 
@@ -163,7 +163,7 @@ IemApiProvider::LoadTextProducts(const std::vector<std::string>& textProducts)
       if (response.status_code == cpr::status::HTTP_OK)
       {
          // Load file
-         auto productId = asyncResponse.first;
+         auto& productId = asyncResponse.first;
          std::shared_ptr<awips::TextProductFile> textProductFile {
             std::make_shared<awips::TextProductFile>()};
          std::istringstream responseBody {response.text};
