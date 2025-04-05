@@ -335,8 +335,15 @@ void AlertModel::HandleAlert(const types::TextEventKey& alertKey,
 
    double distanceInMeters;
 
-   // Get the most recent segment for the event
    auto alertMessages = p->textEventManager_->message_list(alertKey);
+
+   // Skip alert if this is not the most recent message
+   if (messageIndex + 1 < alertMessages.size())
+   {
+      return;
+   }
+
+   // Get the most recent segment for the event
    std::shared_ptr<const awips::Segment> alertSegment =
       alertMessages[messageIndex]->segments().back();
 
