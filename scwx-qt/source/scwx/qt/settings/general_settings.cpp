@@ -92,7 +92,7 @@ public:
       loopSpeed_.SetMinimum(1.0);
       loopSpeed_.SetMaximum(99.99);
       loopTime_.SetMinimum(1);
-      loopTime_.SetMaximum(1440);
+      loopTime_.SetMaximum(2880);
       nmeaBaudRate_.SetMinimum(1);
       nmeaBaudRate_.SetMaximum(999999999);
       radarSiteThreshold_.SetMinimum(-10000);
