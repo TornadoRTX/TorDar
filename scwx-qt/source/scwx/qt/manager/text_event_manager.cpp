@@ -245,7 +245,7 @@ void TextEventManager::Impl::HandleMessage(
 
    if (updated)
    {
-      Q_EMIT self_->AlertUpdated(key, messageIndex);
+      Q_EMIT self_->AlertUpdated(key, messageIndex, message->uuid());
    }
 }
 

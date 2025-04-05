@@ -9,6 +9,7 @@
 
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/uuid/random_generator.hpp>
 #include <re2/re2.h>
 
 namespace scwx::awips
@@ -53,6 +54,8 @@ public:
    TextProductMessageImpl(const TextProductMessageImpl&&)            = delete;
    TextProductMessageImpl& operator=(const TextProductMessageImpl&&) = delete;
 
+   boost::uuids::uuid uuid_ {boost::uuids::random_generator()()};
+
    std::string                           messageContent_;
    std::shared_ptr<WmoHeader>            wmoHeader_;
    std::vector<std::string>              mndHeader_;
@@ -69,6 +72,11 @@ TextProductMessage::~TextProductMessage() = default;
 TextProductMessage::TextProductMessage(TextProductMessage&&) noexcept = default;
 TextProductMessage&
 TextProductMessage::operator=(TextProductMessage&&) noexcept = default;
+
+boost::uuids::uuid TextProductMessage::uuid() const
+{
+   return p->uuid_;
+}
 
 std::string TextProductMessage::message_content() const
 {

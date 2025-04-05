@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 
+#include <boost/uuid/uuid.hpp>
 #include <QObject>
 
 namespace scwx
@@ -32,7 +33,9 @@ public:
    static std::shared_ptr<TextEventManager> Instance();
 
 signals:
-   void AlertUpdated(const types::TextEventKey& key, size_t messageIndex);
+   void AlertUpdated(const types::TextEventKey& key,
+                     std::size_t                messageIndex,
+                     boost::uuids::uuid         uuid);
 
 private:
    class Impl;

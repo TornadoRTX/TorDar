@@ -73,8 +73,10 @@ public:
       connect(textEventManager_.get(),
               &manager::TextEventManager::AlertUpdated,
               this,
-              [this](const types::TextEventKey& key, std::size_t messageIndex)
-              { HandleAlert(key, messageIndex); });
+              [this](const types::TextEventKey& key,
+                     std::size_t                messageIndex,
+                     boost::uuids::uuid         uuid)
+              { HandleAlert(key, messageIndex, uuid); });
    }
    ~AlertLayerHandler()
    {
@@ -95,7 +97,9 @@ public:
       types::TextEventHash<types::TextEventKey>>
       segmentsByKey_ {};
 
-   void HandleAlert(const types::TextEventKey& key, size_t messageIndex);
+   void HandleAlert(const types::TextEventKey& key,
+                    size_t                     messageIndex,
+                    boost::uuids::uuid         uuid);
 
    static AlertLayerHandler& Instance();
 
@@ -322,7 +326,8 @@ bool IsAlertActive(const std::shared_ptr<const awips::Segment>& segment)
 }
 
 void AlertLayerHandler::HandleAlert(const types::TextEventKey& key,
-                                    size_t                     messageIndex)
+                                    size_t                     messageIndex,
+                                    boost::uuids::uuid         uuid)
 {
    logger_->trace("HandleAlert: {}", key.ToString());
 
@@ -330,7 +335,27 @@ void AlertLayerHandler::HandleAlert(const types::TextEventKey& key,
                       AlertTypeHash<std::pair<awips::Phenomenon, bool>>>
       alertsUpdated {};
 
-   auto message = textEventManager_->message_list(key).at(messageIndex);
+   const auto& messageList = textEventManager_->message_list(key);
+   auto        message     = messageList.at(messageIndex);
+
+   if (message->uuid() != uuid)
+   {
+      // Find message by UUID instead of index, as the message index could have
+      // changed between the signal being emitted and the handler being called
+      auto it = std::find_if(messageList.cbegin(),
+                             messageList.cend(),
+                             [&uuid](const auto& message)
+                             { return uuid == message->uuid(); });
+
+      if (it == messageList.cend())
+      {
+         logger_->warn(
+            "Could not find alert uuid: {} ({})", key.ToString(), messageIndex);
+         return;
+      }
+
+      message = *it;
+   }
 
    // Determine start time for first segment
    std::chrono::system_clock::time_point segmentBegin {};
