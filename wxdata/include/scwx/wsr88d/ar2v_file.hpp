@@ -32,6 +32,8 @@ public:
    Ar2vFile(Ar2vFile&&) noexcept;
    Ar2vFile& operator=(Ar2vFile&&) noexcept;
 
+   Ar2vFile(std::shared_ptr<Ar2vFile> current, std::shared_ptr<Ar2vFile> last);
+
    std::uint32_t julian_date() const;
    std::uint32_t milliseconds() const;
    std::string   icao() const;

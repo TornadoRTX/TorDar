@@ -1527,6 +1527,16 @@ RadarProductManager::GetLevel2Data(wsr88d::rda::DataBlockType dataBlockType,
    {
       auto currentFile = std::dynamic_pointer_cast<wsr88d::Ar2vFile>(
          p->level2ChunksProviderManager_->provider_->LoadLatestObject());
+      auto lastFile = std::dynamic_pointer_cast<wsr88d::Ar2vFile>(
+         p->level2ChunksProviderManager_->provider_->LoadSecondLatestObject());
+      auto radarFile =
+         std::make_shared<wsr88d::Ar2vFile>(currentFile, lastFile);
+      std::tie(radarData, elevationCut, elevationCuts) =
+         radarFile->GetElevationScan(dataBlockType, elevation, time);
+
+      /*
+      auto currentFile = std::dynamic_pointer_cast<wsr88d::Ar2vFile>(
+         p->level2ChunksProviderManager_->provider_->LoadLatestObject());
       std::shared_ptr<wsr88d::rda::ElevationScan> currentRadarData = nullptr;
       float                                       currentElevationCut = 0.0f;
       std::vector<float>                          currentElevationCuts;
@@ -1587,6 +1597,7 @@ RadarProductManager::GetLevel2Data(wsr88d::rda::DataBlockType dataBlockType,
          elevationCuts = std::move(lastElevationCuts);
          foundTime     = collectionTime;
       }
+      */
    }
    else
    {

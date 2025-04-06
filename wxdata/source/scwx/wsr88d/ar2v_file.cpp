@@ -5,9 +5,11 @@
 #include <scwx/util/logger.hpp>
 #include <scwx/util/rangebuf.hpp>
 #include <scwx/util/time.hpp>
+#include <scwx/common/geographic.hpp>
 
 #include <fstream>
 #include <sstream>
+#include <set>
 
 #if defined(_MSC_VER)
 #   pragma warning(push)
@@ -537,6 +539,148 @@ bool Ar2vFile::IndexFile()
 {
    p->IndexFile();
    return true;
+}
+
+// TODO not good
+bool IsRadarDataIncomplete(
+   const std::shared_ptr<const rda::ElevationScan>& radarData)
+{
+   // Assume the data is incomplete when the delta between the first and last
+   // angles is greater than 2.5 degrees.
+   constexpr units::degrees<float> kIncompleteDataAngleThreshold_ {2.5};
+
+   const units::degrees<float> firstAngle =
+      radarData->cbegin()->second->azimuth_angle();
+   const units::degrees<float> lastAngle =
+      radarData->crbegin()->second->azimuth_angle();
+   const units::degrees<float> angleDelta =
+      common::GetAngleDelta(firstAngle, lastAngle);
+
+   return angleDelta > kIncompleteDataAngleThreshold_;
+}
+
+Ar2vFile::Ar2vFile(std::shared_ptr<Ar2vFile> current,
+                   std::shared_ptr<Ar2vFile> last) :
+   Ar2vFile()
+{
+   /*p->vcpData_ = std::make_shared<rda::VolumeCoveragePatternData>(
+      *current->vcp_data());*/
+   p->vcpData_ = nullptr; // TODO
+   /*
+      use index_ to go through each block type, and elevation.
+      get the latest time.
+      if the latest time is not complete, get the previous time (possibly in
+      last), and merge
+   */
+
+   if (current == nullptr)
+   {
+      return;
+   }
+
+   for (const auto& type : current->p->index_)
+   {
+      for (const auto& elevation : type.second)
+      {
+         const auto& mostRecent = elevation.second.crbegin();
+         if (mostRecent == elevation.second.crend())
+         {
+            continue;
+         }
+
+         if (IsRadarDataIncomplete(mostRecent->second))
+         {
+            std::shared_ptr<rda::ElevationScan> secondMostRecent =
+               nullptr;
+            auto maybe = elevation.second.rbegin();
+            ++maybe;
+
+            if (maybe == elevation.second.rend())
+            {
+               if (last == nullptr)
+               {
+                  // Nothing to merge with
+                  p->index_[type.first][elevation.first][mostRecent->first] =
+                     mostRecent->second;
+                  continue;
+               }
+
+               auto elevationScan =
+                  std::get<std::shared_ptr<rda::ElevationScan>>(
+                     last->GetElevationScan(type.first, elevation.first, {}));
+               if (elevationScan == nullptr)
+               {
+                  // Nothing to merge with
+                  p->index_[type.first][elevation.first][mostRecent->first] =
+                     mostRecent->second;
+                  continue;
+               }
+
+               secondMostRecent = elevationScan;
+            }
+            else
+            {
+               secondMostRecent = maybe->second;
+            }
+
+            auto newScan = std::make_shared<rda::ElevationScan>();
+
+            // Convert old into new coords
+            logger_->error(
+               "old {}, new {}",
+               secondMostRecent->cbegin()->second->azimuth_angle().value(),
+               mostRecent->second->cbegin()->second->azimuth_angle().value());
+            // TODO Ordering these correctly
+            for (const auto& radial : *secondMostRecent)
+            {
+               (*newScan)[radial.first] = radial.second;
+            }
+            for (const auto& radial : *(mostRecent->second))
+            {
+               (*newScan)[radial.first] = radial.second;
+            }
+
+            p->index_[type.first][elevation.first][mostRecent->first] =
+               newScan;
+         }
+         else
+         {
+            p->index_[type.first][elevation.first][mostRecent->first] =
+               mostRecent->second;
+         }
+      }
+   }
+
+   // Go though last, adding other elevations TODO
+   if (last != nullptr)
+   {
+      for (const auto& type : last->p->index_)
+      {
+         float highestCurrentElevation = -90;
+         const auto& maybe1 = p->index_.find(type.first);
+         if (maybe1 != p->index_.cend())
+         {
+            const auto& maybe2 = maybe1->second.crbegin();
+            if (maybe2 != maybe1->second.crend()) {
+               highestCurrentElevation = maybe2->first + 0.01;
+            }
+         }
+         for (const auto& elevation : type.second)
+         {
+            if (elevation.first > highestCurrentElevation)
+            {
+               const auto& mostRecent = elevation.second.crbegin();
+               if (mostRecent == elevation.second.crend())
+               {
+                  continue;
+               }
+               p->index_[type.first][elevation.first][mostRecent->first] =
+                  mostRecent->second;
+            }
+         }
+      }
+   }
+
 }
 
 } // namespace wsr88d

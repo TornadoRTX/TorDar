@@ -676,12 +676,10 @@ std::pair<size_t, size_t> AwsLevel2ChunksDataProvider::Refresh()
    }
    if (p->lastScan_.valid_)
    {
-      /*
       if (p->LoadScan(p->lastScan_))
       {
          newObjects += 1;
       }
-      */
       totalObjects += 1;
    }
 
