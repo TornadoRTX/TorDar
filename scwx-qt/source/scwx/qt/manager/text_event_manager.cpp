@@ -200,6 +200,12 @@ void TextEventManager::LoadFile(const std::string& filename)
 void TextEventManager::SelectTime(
    std::chrono::system_clock::time_point dateTime)
 {
+   if (dateTime == std::chrono::system_clock::time_point {})
+   {
+      // Ignore a default date/time selection
+      return;
+   }
+
    logger_->trace("Select Time: {}", util::TimeString(dateTime));
 
    const auto today     = std::chrono::floor<std::chrono::days>(dateTime);
