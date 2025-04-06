@@ -24,7 +24,7 @@ static const std::unordered_map<ImageTexture, TextureInfo> imageTextureInfo_ {
     {"images/crosshairs-24", ":/res/textures/images/crosshairs-24.png"}},
    {ImageTexture::Cursor17,
     {"images/cursor-17", ":/res/textures/images/cursor-17.png"}},
-   {ImageTexture::Dot3, {"images/dot-3", ":/res/textures/images/dot-3.png"}},
+   {ImageTexture::Dot3, {"images/dot-3", ":/res/textures/images/dot.svg"}},
    {ImageTexture::LocationBriefcase,
     {"images/location-briefcase",
      ":/res/icons/font-awesome-6/briefcase-solid.svg"}},

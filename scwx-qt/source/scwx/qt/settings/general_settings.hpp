@@ -56,6 +56,7 @@ public:
    [[nodiscard]] SettingsVariable<bool>&        cursor_icon_always_on() const;
    [[nodiscard]] SettingsVariable<double>&      radar_site_threshold() const;
    [[nodiscard]] SettingsVariable<bool>& high_privilege_warning_enabled() const;
+   [[nodiscard]] SettingsVariable<double>& cursor_icon_scale() const;
 
    static GeneralSettings& Instance();
 

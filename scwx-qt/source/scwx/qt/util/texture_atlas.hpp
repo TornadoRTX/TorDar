@@ -74,8 +74,8 @@ public:
    std::uint64_t BuildCount() const;
 
    void RegisterTexture(const std::string& name, const std::string& path);
-   std::shared_ptr<boost::gil::rgba8_image_t>
-        CacheTexture(const std::string& name, const std::string& path);
+   std::shared_ptr<boost::gil::rgba8_image_t> CacheTexture(
+      const std::string& name, const std::string& path, double scale = 1);
    void BuildAtlas(std::size_t width, std::size_t height);
    void BufferAtlas(gl::OpenGLFunctions& gl, GLuint texture);
 
