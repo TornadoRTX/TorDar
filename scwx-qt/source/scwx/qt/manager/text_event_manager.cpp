@@ -2,6 +2,7 @@
 #include <scwx/qt/main/application.hpp>
 #include <scwx/qt/settings/general_settings.hpp>
 #include <scwx/awips/text_product_file.hpp>
+#include <scwx/provider/iem_api_provider.hpp>
 #include <scwx/provider/warnings_provider.hpp>
 #include <scwx/util/logger.hpp>
 
@@ -26,6 +27,9 @@ static constexpr std::chrono::hours kInitialLoadHistoryDuration_ =
    std::chrono::days {3};
 static constexpr std::chrono::hours kDefaultLoadHistoryDuration_ =
    std::chrono::hours {1};
+
+static const std::array<std::string, 5> kPils_ = {
+   "TOR", "SVR", "SVS", "FFW", "FFS"};
 
 class TextEventManager::Impl
 {
@@ -82,10 +86,17 @@ public:
 
    void
    HandleMessage(const std::shared_ptr<awips::TextProductMessage>& message);
+   void LoadArchive(std::chrono::sys_days date, const std::string& pil);
+   void LoadArchives(std::chrono::sys_days date);
    void RefreshAsync();
    void Refresh();
 
-   boost::asio::thread_pool threadPool_ {1u};
+   // Thread pool sized for:
+   // - Live Refresh (1x)
+   // - Archive Loading (15x)
+   //   - 3 day window (3x)
+   //   - TOR, SVR, SVS, FFW, FFS (5x)
+   boost::asio::thread_pool threadPool_ {16u};
 
    TextEventManager* self_;
 
@@ -98,6 +109,8 @@ public:
                      textEventMap_;
    std::shared_mutex textEventMutex_;
 
+   std::unique_ptr<provider::IemApiProvider> iemApiProvider_ {
+      std::make_unique<provider::IemApiProvider>()};
    std::shared_ptr<provider::WarningsProvider> warningsProvider_ {nullptr};
    std::chrono::hours loadHistoryDuration_ {kInitialLoadHistoryDuration_};
    std::chrono::sys_time<std::chrono::hours> prevLoadTime_ {};
@@ -169,6 +182,20 @@ void TextEventManager::LoadFile(const std::string& filename)
                            logger_->error(ex.what());
                         }
                      });
+}
+
+void TextEventManager::SelectTime(
+   std::chrono::system_clock::time_point dateTime)
+{
+   const auto today     = std::chrono::floor<std::chrono::days>(dateTime);
+   const auto yesterday = today - std::chrono::days {1};
+   const auto tomorrow  = today + std::chrono::days {1};
+   const auto dates     = {yesterday, today, tomorrow};
+
+   for (auto& date : dates)
+   {
+      p->LoadArchives(date);
+   }
 }
 
 void TextEventManager::Impl::HandleMessage(
@@ -246,6 +273,32 @@ void TextEventManager::Impl::HandleMessage(
    if (updated)
    {
       Q_EMIT self_->AlertUpdated(key, messageIndex, message->uuid());
+   }
+}
+
+void TextEventManager::Impl::LoadArchive(std::chrono::sys_days date,
+                                         const std::string&    pil)
+{
+   const auto& productIds = iemApiProvider_->ListTextProducts(date, {}, pil);
+   const auto& products   = iemApiProvider_->LoadTextProducts(productIds);
+
+   for (auto& product : products)
+   {
+      const auto& messages = product->messages();
+
+      for (auto& message : messages)
+      {
+         HandleMessage(message);
+      }
+   }
+}
+
+void TextEventManager::Impl::LoadArchives(std::chrono::sys_days date)
+{
+   for (auto& pil : kPils_)
+   {
+      boost::asio::post(threadPool_,
+                        [this, date, &pil]() { LoadArchive(date, pil); });
    }
 }
 

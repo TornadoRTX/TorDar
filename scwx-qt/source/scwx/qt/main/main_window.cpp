@@ -1018,6 +1018,7 @@ void MainWindowImpl::ConnectAnimationSignals()
               for (auto map : maps_)
               {
                  map->SelectTime(dateTime);
+                 textEventManager_->SelectTime(dateTime);
                  QMetaObject::invokeMethod(
                     map, static_cast<void (QWidget::*)()>(&QWidget::update));
               }

@@ -3,6 +3,7 @@
 #include <scwx/awips/text_product_message.hpp>
 #include <scwx/qt/types/text_event_key.hpp>
 
+#include <chrono>
 #include <memory>
 #include <string>
 
@@ -29,6 +30,7 @@ public:
    message_list(const types::TextEventKey& key) const;
 
    void LoadFile(const std::string& filename);
+   void SelectTime(std::chrono::system_clock::time_point dateTime);
 
    static std::shared_ptr<TextEventManager> Instance();
 
