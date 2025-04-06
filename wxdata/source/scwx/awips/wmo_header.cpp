@@ -19,7 +19,8 @@ static const std::string logPrefix_ = "scwx::awips::wmo_header";
 static const auto        logger_    = util::Logger::Create(logPrefix_);
 
 static constexpr std::size_t kWmoHeaderMinLineLength_    = 18;
-static constexpr std::size_t kWmoIdentifierLength_       = 6;
+static constexpr std::size_t kWmoIdentifierLengthMin_    = 5;
+static constexpr std::size_t kWmoIdentifierLengthMax_    = 6;
 static constexpr std::size_t kIcaoLength_                = 4;
 static constexpr std::size_t kDateTimeLength_            = 6;
 static constexpr std::size_t kAwipsIdentifierLineLength_ = 6;
@@ -271,7 +272,8 @@ bool WmoHeader::Parse(std::istream& is)
          logger_->warn("Invalid number of WMO tokens");
          headerValid = false;
       }
-      else if (wmoTokenList[0].size() != kWmoIdentifierLength_)
+      else if (wmoTokenList[0].size() < kWmoIdentifierLengthMin_ ||
+               wmoTokenList[0].size() > kWmoIdentifierLengthMax_)
       {
          logger_->warn("WMO identifier malformed");
          headerValid = false;
@@ -296,9 +298,9 @@ bool WmoHeader::Parse(std::istream& is)
       {
          p->dataType_             = wmoTokenList[0].substr(0, 2);
          p->geographicDesignator_ = wmoTokenList[0].substr(2, 2);
-         p->bulletinId_           = wmoTokenList[0].substr(4, 2);
-         p->icao_                 = wmoTokenList[1];
-         p->dateTime_             = wmoTokenList[2];
+         p->bulletinId_ = wmoTokenList[0].substr(4, wmoTokenList[0].size() - 4);
+         p->icao_       = wmoTokenList[1];
+         p->dateTime_   = wmoTokenList[2];
 
          p->CalculateAbsoluteDateTime();
 
