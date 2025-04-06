@@ -166,12 +166,8 @@ OverlayLayer::~OverlayLayer() = default;
 
 void OverlayLayerImpl::SetCusorLocation(common::Coordinate coordinate)
 {
-   const double offset = 3 * cursorScale_ / 2;
-   geoIcons_->SetIconLocation(cursorIcon_,
-                              coordinate.latitude_,
-                              coordinate.longitude_,
-                              -offset,
-                              offset);
+   geoIcons_->SetIconLocation(
+      cursorIcon_, coordinate.latitude_, coordinate.longitude_);
 }
 
 void OverlayLayerImpl::SetupGeoIcons()
@@ -182,6 +178,7 @@ void OverlayLayerImpl::SetupGeoIcons()
       "{}x{}", types::GetTextureName(types::ImageTexture::Dot3), cursorScale_);
    cursorIconImage_ = manager::ResourceManager::LoadImageResource(
       texturePath, cursorIconName_, cursorScale_);
+   manager::ResourceManager::BuildAtlas();
 
    auto coordinate = currentPosition_.coordinate();
    geoIcons_->StartIconSheets();
