@@ -119,6 +119,7 @@ public:
 
    std::chrono::hours loadHistoryDuration_ {kInitialLoadHistoryDuration_};
    std::chrono::sys_time<std::chrono::hours> prevLoadTime_ {};
+   std::chrono::sys_days                     archiveLimit_ {};
 
    std::mutex                       archiveMutex_ {};
    std::list<std::chrono::sys_days> archiveDates_ {};
@@ -215,7 +216,11 @@ void TextEventManager::SelectTime(
 
    for (auto& date : dates)
    {
-      p->LoadArchives(date);
+      if (p->archiveLimit_ == std::chrono::sys_days {} ||
+          date < p->archiveLimit_)
+      {
+         p->LoadArchives(date);
+      }
    }
 }
 
@@ -397,6 +402,11 @@ void TextEventManager::Impl::Refresh()
    if (prevLoadTime_ != std::chrono::sys_time<std::chrono::hours> {})
    {
       startTime = std::min(startTime, prevLoadTime_);
+   }
+
+   if (archiveLimit_ == std::chrono::sys_days {})
+   {
+      archiveLimit_ = std::chrono::ceil<std::chrono::days>(startTime);
    }
 
    auto updatedFiles = warningsProvider->LoadUpdatedFiles(startTime);
