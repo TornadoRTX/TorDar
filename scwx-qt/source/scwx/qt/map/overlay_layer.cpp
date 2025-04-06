@@ -193,7 +193,6 @@ void OverlayLayerImpl::SetupGeoIcons()
 
    locationIcon_ = geoIcons_->AddIcon();
    geoIcons_->SetIconTexture(locationIcon_, locationIconName_, 0);
-   geoIcons_->SetIconAngle(locationIcon_, units::angle::degrees<double> {45.0});
    geoIcons_->SetIconLocation(
       locationIcon_, coordinate.latitude(), coordinate.longitude());
 
