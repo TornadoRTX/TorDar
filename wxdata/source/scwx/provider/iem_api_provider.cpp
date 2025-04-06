@@ -35,7 +35,7 @@ IemApiProvider::~IemApiProvider() = default;
 IemApiProvider::IemApiProvider(IemApiProvider&&) noexcept            = default;
 IemApiProvider& IemApiProvider::operator=(IemApiProvider&&) noexcept = default;
 
-std::vector<std::string>
+boost::outcome_v2::result<std::vector<std::string>>
 IemApiProvider::ListTextProducts(std::chrono::sys_time<std::chrono::days> date,
                                  std::optional<std::string_view>          cccc,
                                  std::optional<std::string_view>          pil)
@@ -93,6 +93,8 @@ IemApiProvider::ListTextProducts(std::chrono::sys_time<std::chrono::days> date,
       {
          // Unexpected bad response
          logger_->warn("Error parsing JSON: {}", ex.what());
+         return boost::system::errc::make_error_code(
+            boost::system::errc::bad_message);
       }
    }
    else if (response.status_code == cpr::status::HTTP_BAD_REQUEST &&
@@ -109,6 +111,9 @@ IemApiProvider::ListTextProducts(std::chrono::sys_time<std::chrono::days> date,
          // Unexpected bad response
          logger_->warn("Error parsing bad response: {}", ex.what());
       }
+
+      return boost::system::errc::make_error_code(
+         boost::system::errc::invalid_argument);
    }
    else if (response.status_code == cpr::status::HTTP_UNPROCESSABLE_ENTITY &&
             json != nullptr)
@@ -125,10 +130,16 @@ IemApiProvider::ListTextProducts(std::chrono::sys_time<std::chrono::days> date,
          // Unexpected bad response
          logger_->warn("Error parsing validation error: {}", ex.what());
       }
+
+      return boost::system::errc::make_error_code(
+         boost::system::errc::no_message_available);
    }
    else
    {
       logger_->warn("Could not list text products: {}", response.status_line);
+
+      return boost::system::errc::make_error_code(
+         boost::system::errc::no_message);
    }
 
    return textProducts;

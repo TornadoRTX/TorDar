@@ -18,15 +18,16 @@ TEST(IemApiProviderTest, ListTextProducts)
 
    auto torProducts = provider.ListTextProducts(date, {}, "TOR");
 
-   EXPECT_EQ(torProducts.size(), 35);
+   ASSERT_EQ(torProducts.has_value(), true);
+   EXPECT_EQ(torProducts.value().size(), 35);
 
-   if (torProducts.size() >= 1)
+   if (torProducts.value().size() >= 1)
    {
-      EXPECT_EQ(torProducts.at(0), "202303250016-KMEG-WFUS54-TORMEG");
+      EXPECT_EQ(torProducts.value().at(0), "202303250016-KMEG-WFUS54-TORMEG");
    }
-   if (torProducts.size() >= 35)
+   if (torProducts.value().size() >= 35)
    {
-      EXPECT_EQ(torProducts.at(34), "202303252015-KFFC-WFUS52-TORFFC");
+      EXPECT_EQ(torProducts.value().at(34), "202303252015-KFFC-WFUS52-TORFFC");
    }
 }
 

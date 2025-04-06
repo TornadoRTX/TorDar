@@ -5,7 +5,10 @@
 #include <scwx/provider/iem_api_provider.hpp>
 #include <scwx/provider/warnings_provider.hpp>
 #include <scwx/util/logger.hpp>
+#include <scwx/util/time.hpp>
 
+#include <list>
+#include <map>
 #include <shared_mutex>
 #include <unordered_map>
 
@@ -90,6 +93,7 @@ public:
    void LoadArchives(std::chrono::sys_days date);
    void RefreshAsync();
    void Refresh();
+   void UpdateArchiveDates(std::chrono::sys_days date);
 
    // Thread pool sized for:
    // - Live Refresh (1x)
@@ -112,8 +116,17 @@ public:
    std::unique_ptr<provider::IemApiProvider> iemApiProvider_ {
       std::make_unique<provider::IemApiProvider>()};
    std::shared_ptr<provider::WarningsProvider> warningsProvider_ {nullptr};
+
    std::chrono::hours loadHistoryDuration_ {kInitialLoadHistoryDuration_};
    std::chrono::sys_time<std::chrono::hours> prevLoadTime_ {};
+
+   std::mutex                       archiveMutex_ {};
+   std::list<std::chrono::sys_days> archiveDates_ {};
+   std::map<
+      std::chrono::sys_days,
+      std::unordered_map<std::string,
+                         std::vector<std::shared_ptr<awips::TextProductFile>>>>
+      archiveMap_;
 
    boost::uuids::uuid warningsProviderChangedCallbackUuid_ {};
 };
@@ -187,10 +200,12 @@ void TextEventManager::LoadFile(const std::string& filename)
 void TextEventManager::SelectTime(
    std::chrono::system_clock::time_point dateTime)
 {
+   logger_->trace("Select Time: {}", util::TimeString(dateTime));
+
    const auto today     = std::chrono::floor<std::chrono::days>(dateTime);
    const auto yesterday = today - std::chrono::days {1};
    const auto tomorrow  = today + std::chrono::days {1};
-   const auto dates     = {yesterday, today, tomorrow};
+   const auto dates     = {today, yesterday, tomorrow};
 
    for (auto& date : dates)
    {
@@ -279,22 +294,56 @@ void TextEventManager::Impl::HandleMessage(
 void TextEventManager::Impl::LoadArchive(std::chrono::sys_days date,
                                          const std::string&    pil)
 {
-   const auto& productIds = iemApiProvider_->ListTextProducts(date, {}, pil);
-   const auto& products   = iemApiProvider_->LoadTextProducts(productIds);
-
-   for (auto& product : products)
+   std::unique_lock lock {archiveMutex_};
+   auto&            dateArchive = archiveMap_[date];
+   if (dateArchive.contains(pil))
    {
-      const auto& messages = product->messages();
+      // Don't reload data that has already been loaded
+      return;
+   }
+   lock.unlock();
 
-      for (auto& message : messages)
+   logger_->debug("Load Archive: {}, {}", util::TimeString(date), pil);
+
+   // Query for products
+   const auto& productIds = iemApiProvider_->ListTextProducts(date, {}, pil);
+
+   if (productIds.has_value())
+   {
+      logger_->debug("Loading {} {} products", productIds.value().size(), pil);
+
+      // Load listed products
+      auto products = iemApiProvider_->LoadTextProducts(productIds.value());
+
+      for (auto& product : products)
       {
-         HandleMessage(message);
+         const auto& messages = product->messages();
+
+         for (auto& message : messages)
+         {
+            HandleMessage(message);
+         }
       }
+
+      lock.lock();
+
+      // Ensure the archive map still contains the date, and has not been pruned
+      if (archiveMap_.contains(date))
+      {
+         // Store the products associated with the PIL in the archive
+         dateArchive.try_emplace(pil, std::move(products));
+      }
+
+      lock.unlock();
    }
 }
 
 void TextEventManager::Impl::LoadArchives(std::chrono::sys_days date)
 {
+   logger_->trace("Load Archives: {}", util::TimeString(date));
+
+   UpdateArchiveDates(date);
+
    for (auto& pil : kPils_)
    {
       boost::asio::post(threadPool_,
@@ -378,6 +427,15 @@ void TextEventManager::Impl::Refresh()
             RefreshAsync();
          }
       });
+}
+
+void TextEventManager::Impl::UpdateArchiveDates(std::chrono::sys_days date)
+{
+   std::unique_lock lock {archiveMutex_};
+
+   // Remove any existing occurrences of day, and add to the back of the list
+   archiveDates_.remove(date);
+   archiveDates_.push_back(date);
 }
 
 std::shared_ptr<TextEventManager> TextEventManager::Instance()

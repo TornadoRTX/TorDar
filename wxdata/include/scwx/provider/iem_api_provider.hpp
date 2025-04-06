@@ -5,6 +5,8 @@
 #include <memory>
 #include <string>
 
+#include <boost/outcome/result.hpp>
+
 namespace scwx::provider
 {
 
@@ -23,7 +25,7 @@ public:
    IemApiProvider(IemApiProvider&&) noexcept;
    IemApiProvider& operator=(IemApiProvider&&) noexcept;
 
-   static std::vector<std::string>
+   static boost::outcome_v2::result<std::vector<std::string>>
    ListTextProducts(std::chrono::sys_time<std::chrono::days> date,
                     std::optional<std::string_view>          cccc = {},
                     std::optional<std::string_view>          pil  = {});
