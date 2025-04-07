@@ -228,6 +228,7 @@ bool WmoHeader::Parse(std::istream& is)
       }
    }
 
+   auto awipsLinePos = is.tellg();
    util::getline(is, awipsLine);
 
    if (is.eof())
@@ -322,8 +323,12 @@ bool WmoHeader::Parse(std::istream& is)
    {
       if (awipsLine.size() != kAwipsIdentifierLineLength_)
       {
-         logger_->warn("AWIPS Identifier Line bad size");
-         headerValid = false;
+         // Older products may be missing an AWIPS Identifier Line
+         logger_->trace("AWIPS Identifier Line bad size");
+
+         is.seekg(awipsLinePos);
+         p->productCategory_   = "";
+         p->productDesignator_ = "";
       }
       else
       {
