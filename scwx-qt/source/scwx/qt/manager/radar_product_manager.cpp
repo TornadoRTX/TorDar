@@ -68,6 +68,7 @@ static constexpr std::size_t kTimerPlaces_ {6u};
 static constexpr std::chrono::seconds kFastRetryInterval_ {15};
 static constexpr std::chrono::seconds kFastRetryIntervalChunks_ {3};
 static constexpr std::chrono::seconds kSlowRetryInterval_ {120};
+static constexpr std::chrono::seconds kSlowRetryIntervalChunks_ {20};
 
 static std::unordered_map<std::string, std::weak_ptr<RadarProductManager>>
                          instanceMap_;
@@ -774,11 +775,15 @@ void RadarProductManagerImpl::RefreshDataSync(
 
    auto [newObjects, totalObjects] = providerManager->provider_->Refresh();
 
-   // Level2 chunked data is updated quickly and uses a fater interval
+   // Level2 chunked data is updated quickly and uses a faster interval
    const std::chrono::milliseconds fastRetryInterval =
-      providerManager->group_ == common::RadarProductGroup::Level2 ?
+      providerManager == level2ChunksProviderManager_ ?
          kFastRetryIntervalChunks_ :
          kFastRetryInterval_;
+   const std::chrono::milliseconds slowRetryInterval =
+      providerManager == level2ChunksProviderManager_ ?
+         kSlowRetryIntervalChunks_ :
+         kSlowRetryInterval_;
    std::chrono::milliseconds interval = fastRetryInterval;
 
    if (totalObjects > 0)
@@ -798,7 +803,7 @@ void RadarProductManagerImpl::RefreshDataSync(
       {
          // If it has been at least 5 update periods since the file has
          // been last modified, slow the retry period
-         interval = kSlowRetryInterval_;
+         interval = slowRetryInterval;
       }
       else if (interval < std::chrono::milliseconds {fastRetryInterval})
       {
@@ -817,7 +822,7 @@ void RadarProductManagerImpl::RefreshDataSync(
       logger_->info("[{}] No data found", providerManager->name());
 
       // If no data is found, retry at the slow retry interval
-      interval = kSlowRetryInterval_;
+      interval = slowRetryInterval;
    }
 
    std::unique_lock const lock(providerManager->refreshTimerMutex_);
@@ -953,11 +958,13 @@ void RadarProductManagerImpl::LoadProviderData(
             {
                existingRecord = it->second.lock();
 
+               /*
                if (existingRecord != nullptr)
                {
                   logger_->debug(
                      "Data previously loaded, loading from data cache");
                }
+               */
             }
          }
 
@@ -1416,7 +1423,7 @@ std::shared_ptr<types::RadarProductRecord>
 RadarProductManagerImpl::StoreRadarProductRecord(
    std::shared_ptr<types::RadarProductRecord> record)
 {
-   logger_->debug("StoreRadarProductRecord()");
+   //logger_->debug("StoreRadarProductRecord()");
 
    std::shared_ptr<types::RadarProductRecord> storedRecord = nullptr;
 
@@ -1433,11 +1440,12 @@ RadarProductManagerImpl::StoreRadarProductRecord(
       {
          storedRecord = it->second.lock();
 
+         /*
          if (storedRecord != nullptr)
          {
             logger_->debug(
                "Level 2 product previously loaded, loading from cache");
-         }
+         }*/
       }
 
       if (storedRecord == nullptr)
@@ -1520,15 +1528,23 @@ RadarProductManager::GetLevel2Data(wsr88d::rda::DataBlockType dataBlockType,
    std::vector<float>                          elevationCuts {};
    std::chrono::system_clock::time_point       foundTime {};
 
-   //TODO decide when to use chunked vs archived data.
-   if constexpr (true)
+   // See if we have this one in the chunk provider.
+   auto chunkFile = std::dynamic_pointer_cast<wsr88d::Ar2vFile>(
+      p->level2ChunksProviderManager_->provider_->LoadObjectByTime(time));
+   if (chunkFile != nullptr)
    {
-      auto currentFile = std::dynamic_pointer_cast<wsr88d::Ar2vFile>(
-         p->level2ChunksProviderManager_->provider_->LoadLatestObject());
       std::tie(radarData, elevationCut, elevationCuts) =
-         currentFile->GetElevationScan(dataBlockType, elevation, time);
+         chunkFile->GetElevationScan(dataBlockType, elevation, time);
+
+      if (radarData != nullptr)
+      {
+         auto& radarData0 = (*radarData)[0];
+         foundTime        = std::chrono::floor<std::chrono::seconds>(
+            scwx::util::TimePoint(radarData0->modified_julian_date(),
+                                  radarData0->collection_time()));
+      }
    }
-   else
+   else // It is not in the chunk provider, so get it from the archive
    {
       auto records = p->GetLevel2ProductRecords(time);
       for (auto& recordPair : records)

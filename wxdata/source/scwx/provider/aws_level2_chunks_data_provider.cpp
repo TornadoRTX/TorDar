@@ -618,10 +618,13 @@ AwsLevel2ChunksDataProvider::LoadObjectByTime(
    std::chrono::system_clock::time_point time)
 {
    std::unique_lock lock(p->scansMutex_);
+   static const std::chrono::system_clock::time_point epoch {};
 
-   if (p->currentScan_.valid_ && time >= p->currentScan_.time_)
+   if (p->currentScan_.valid_ &&
+       (time == epoch || time >= p->currentScan_.time_))
    {
-      return p->currentScan_.nexradFile_;
+      return std::make_shared<wsr88d::Ar2vFile>(p->currentScan_.nexradFile_,
+                                                p->lastScan_.nexradFile_);
    }
    else if (p->lastScan_.valid_ && time >= p->lastScan_.time_)
    {
@@ -629,7 +632,6 @@ AwsLevel2ChunksDataProvider::LoadObjectByTime(
    }
    else
    {
-      logger_->warn("Could not find scan with time");
       return nullptr;
    }
 }
@@ -637,6 +639,7 @@ AwsLevel2ChunksDataProvider::LoadObjectByTime(
 std::shared_ptr<wsr88d::NexradFile>
 AwsLevel2ChunksDataProvider::LoadLatestObject()
 {
+   std::unique_lock lock(p->scansMutex_);
    return std::make_shared<wsr88d::Ar2vFile>(p->currentScan_.nexradFile_,
                                              p->lastScan_.nexradFile_);
    //return p->currentScan_.nexradFile_;

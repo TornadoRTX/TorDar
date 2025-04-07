@@ -138,7 +138,7 @@ Ar2vFile::GetElevationScan(rda::DataBlockType                    dataBlockType,
                            float                                 elevation,
                            std::chrono::system_clock::time_point time) const
 {
-   logger_->debug("GetElevationScan: {} degrees", elevation);
+   //logger_->debug("GetElevationScan: {} degrees", elevation);
 
    std::shared_ptr<rda::ElevationScan> elevationScan = nullptr;
    float                               elevationCut  = 0.0f;
@@ -273,7 +273,7 @@ bool Ar2vFile::LoadData(std::istream& is)
 
 std::size_t Ar2vFileImpl::DecompressLDMRecords(std::istream& is)
 {
-   logger_->debug("Decompressing LDM Records");
+   //logger_->debug("Decompressing LDM Records");
 
    std::size_t numRecords = 0;
 
@@ -321,22 +321,22 @@ std::size_t Ar2vFileImpl::DecompressLDMRecords(std::istream& is)
       ++numRecords;
    }
 
-   logger_->debug("Decompressed {} LDM Records", numRecords);
+   //logger_->debug("Decompressed {} LDM Records", numRecords);
 
    return numRecords;
 }
 
 void Ar2vFileImpl::ParseLDMRecords()
 {
-   logger_->debug("Parsing LDM Records");
+   //logger_->debug("Parsing LDM Records");
 
-   std::size_t count = 0;
+   //std::size_t count = 0;
 
    for (auto it = rawRecords_.begin(); it != rawRecords_.end(); it++)
    {
       std::stringstream& ss = *it;
 
-      logger_->trace("Record {}", count++);
+      //logger_->trace("Record {}", count++);
 
       ParseLDMRecord(ss);
    }
@@ -445,7 +445,7 @@ void Ar2vFileImpl::ProcessRadarData(
 
 void Ar2vFileImpl::IndexFile()
 {
-   logger_->debug("Indexing file");
+   //logger_->debug("Indexing file");
 
    constexpr float scaleFactor = 8.0f / 0.043945f;
 
