@@ -44,7 +44,8 @@ public:
        activeBoxOuter_ {std::make_shared<gl::draw::Rectangle>(context)},
        activeBoxInner_ {std::make_shared<gl::draw::Rectangle>(context)},
        geoIcons_ {std::make_shared<gl::draw::GeoIcons>(context)},
-       icons_ {std::make_shared<gl::draw::Icons>(context)}
+       icons_ {std::make_shared<gl::draw::Icons>(context)},
+       renderMutex_ {}
    {
       auto& generalSettings = settings::GeneralSettings::Instance();
 
@@ -143,7 +144,10 @@ public:
    float    lastFontSize_ {0.0f};
    QMargins lastColorTableMargins_ {};
 
-   double cursorScale_ {1};
+   double                             cursorScale_ {1};
+   boost::signals2::scoped_connection cursorScaleConnection_;
+
+   std::mutex renderMutex_;
 
    std::string sweepTimeString_ {};
    bool        sweepTimeNeedsUpdate_ {true};
@@ -172,6 +176,11 @@ void OverlayLayerImpl::SetCusorLocation(common::Coordinate coordinate)
 
 void OverlayLayerImpl::SetupGeoIcons()
 {
+   const std::unique_lock lock {renderMutex_};
+
+   auto& generalSettings = settings::GeneralSettings::Instance();
+   cursorScale_          = generalSettings.cursor_icon_scale().GetValue();
+
    const std::string& texturePath =
       types::GetTexturePath(types::ImageTexture::Dot3);
    cursorIconName_ = fmt::format(
@@ -219,15 +228,14 @@ void OverlayLayer::Initialize()
 
    // Geo Icons
    auto& generalSettings = settings::GeneralSettings::Instance();
-   p->cursorScale_       = generalSettings.cursor_icon_scale().GetValue();
    p->SetupGeoIcons();
-   generalSettings.cursor_icon_scale().RegisterValueChangedCallback(
-      [this](double value)
-      {
-         p->cursorScale_ = value;
-         p->SetupGeoIcons();
-         Q_EMIT NeedsRendering();
-      });
+   p->cursorScaleConnection_ =
+      generalSettings.cursor_icon_scale().changed_signal().connect(
+         [this]()
+         {
+            p->SetupGeoIcons();
+            Q_EMIT NeedsRendering();
+         });
 
    // Icons
    p->icons_->StartIconSheets();
@@ -322,6 +330,8 @@ void OverlayLayer::Initialize()
 
 void OverlayLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
 {
+   const std::unique_lock lock {p->renderMutex_};
+
    gl::OpenGLFunctions& gl               = context()->gl();
    auto                 radarProductView = context()->radar_product_view();
    auto&                settings         = context()->settings();
