@@ -637,7 +637,9 @@ AwsLevel2ChunksDataProvider::LoadObjectByTime(
 std::shared_ptr<wsr88d::NexradFile>
 AwsLevel2ChunksDataProvider::LoadLatestObject()
 {
-   return p->currentScan_.nexradFile_;
+   return std::make_shared<wsr88d::Ar2vFile>(p->currentScan_.nexradFile_,
+                                             p->lastScan_.nexradFile_);
+   //return p->currentScan_.nexradFile_;
 }
 
 std::shared_ptr<wsr88d::NexradFile>

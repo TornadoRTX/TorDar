@@ -9,7 +9,6 @@
 
 #include <fstream>
 #include <sstream>
-#include <set>
 
 #if defined(_MSC_VER)
 #   pragma warning(push)
@@ -559,114 +558,171 @@ bool IsRadarDataIncomplete(
    return angleDelta > kIncompleteDataAngleThreshold_;
 }
 
-Ar2vFile::Ar2vFile(std::shared_ptr<Ar2vFile> current,
-                   std::shared_ptr<Ar2vFile> last) :
-   Ar2vFile()
+Ar2vFile::Ar2vFile(const std::shared_ptr<Ar2vFile>& current,
+                   const std::shared_ptr<Ar2vFile>& last) :
+    Ar2vFile()
 {
-   /*p->vcpData_ = std::make_shared<rda::VolumeCoveragePatternData>(
-      *current->vcp_data());*/
-   p->vcpData_ = nullptr; // TODO
-   /*
-      use index_ to go through each block type, and elevation.
-      get the latest time.
-      if the latest time is not complete, get the previous time (possibly in
-      last), and merge
-   */
+   // This is only used to index right now, so not a huge deal
+   p->vcpData_ = nullptr;
 
-   if (current == nullptr)
+   // Reconstruct index from the other's indexes
+   if (current != nullptr)
    {
-      return;
-   }
-
-   for (const auto& type : current->p->index_)
-   {
-      for (const auto& elevation : type.second)
+      for (const auto& type : current->p->index_)
       {
-         const auto& mostRecent = elevation.second.crbegin();
-         if (mostRecent == elevation.second.crend())
+         for (const auto& elevation : type.second)
          {
-            continue;
-         }
-
-         if (IsRadarDataIncomplete(mostRecent->second))
-         {
-            std::shared_ptr<rda::ElevationScan> secondMostRecent =
-               nullptr;
-            auto maybe = elevation.second.rbegin();
-            ++maybe;
-
-            if (maybe == elevation.second.rend())
+            // Get the most recent scan
+            const auto& mostRecent = elevation.second.crbegin();
+            if (mostRecent == elevation.second.crend())
             {
-               if (last == nullptr)
+               continue;
+            }
+
+            // Merge this scan with the last one if it is incomplete
+            if (IsRadarDataIncomplete(mostRecent->second))
+            {
+               std::shared_ptr<rda::ElevationScan> secondMostRecent = nullptr;
+
+               // check if this volume scan has an earlier elevation scan
+               auto maybe = elevation.second.rbegin(); // TODO name
+               ++maybe;
+
+               if (maybe == elevation.second.rend())
                {
-                  // Nothing to merge with
-                  p->index_[type.first][elevation.first][mostRecent->first] =
-                     mostRecent->second;
-                  continue;
+                  if (last == nullptr)
+                  {
+                     // Nothing to merge with
+                     p->index_[type.first][elevation.first][mostRecent->first] =
+                        mostRecent->second;
+                     continue;
+                  }
+
+                  // get the scan from the last scan
+                  auto elevationScan =
+                     std::get<std::shared_ptr<rda::ElevationScan>>(
+                        last->GetElevationScan(
+                           type.first, elevation.first, {}));
+                  if (elevationScan == nullptr)
+                  {
+                     // Nothing to merge with
+                     p->index_[type.first][elevation.first][mostRecent->first] =
+                        mostRecent->second;
+                     continue;
+                  }
+
+                  secondMostRecent = elevationScan;
+               }
+               else
+               {
+                  secondMostRecent = maybe->second;
                }
 
-               auto elevationScan =
-                  std::get<std::shared_ptr<rda::ElevationScan>>(
-                     last->GetElevationScan(type.first, elevation.first, {}));
-               if (elevationScan == nullptr)
+               // Make the new scan
+               auto newScan = std::make_shared<rda::ElevationScan>();
+
+               // Copy over the new radials
+               for (const auto& radial : *(mostRecent->second))
                {
-                  // Nothing to merge with
-                  p->index_[type.first][elevation.first][mostRecent->first] =
-                     mostRecent->second;
-                  continue;
+                  (*newScan)[radial.first] = radial.second;
                }
 
-               secondMostRecent = elevationScan;
+               /* Correctly order the old radials. The radials need to be in
+                * order for the rendering to work, and the index needs to start
+                * at 0 and increase by one from there. Since the new radial
+                * should have index 0, the old radial needs to be reshaped to
+                * match the new radials indexing.
+                */
+
+               const double lowestAzm =
+                  mostRecent->second->cbegin()->second->azimuth_angle().value();
+               const double heighestAzm = mostRecent->second->crbegin()
+                                             ->second->azimuth_angle()
+                                             .value();
+               std::uint16_t index = mostRecent->second->crbegin()->first + 1;
+
+               // Sort by the azimuth. Makes the rest of this way easier
+               auto secondMostRecentAzmMap =
+                  std::map<float, std::shared_ptr<rda::GenericRadarData>>();
+               for (const auto& radial : *secondMostRecent)
+               {
+                  secondMostRecentAzmMap[radial.second->azimuth_angle()
+                                            .value()] = radial.second;
+               }
+
+               if (lowestAzm <= heighestAzm) // New scan does not contain 0/360
+               {
+                  // Get the radials following the new radials
+                  for (const auto& radial : secondMostRecentAzmMap)
+                  {
+                     if (radial.first > heighestAzm)
+                     {
+                        (*newScan)[index] = radial.second;
+                        ++index;
+                     }
+                  }
+                  // Get the radials before the new radials
+                  for (const auto& radial : secondMostRecentAzmMap)
+                  {
+                     if (radial.first < lowestAzm)
+                     {
+                        (*newScan)[index] = radial.second;
+                        ++index;
+                     }
+                     else
+                     {
+                        break;
+                     }
+                  }
+               }
+               else // New scan includes 0/360
+               {
+                  // The radials will already be in the right order
+                  for (const auto& radial : secondMostRecentAzmMap)
+                  {
+                     if (radial.first > heighestAzm && radial.first < lowestAzm)
+                     {
+                        (*newScan)[index] = radial.second;
+                        ++index;
+                     }
+                  }
+               }
+
+               p->index_[type.first][elevation.first][mostRecent->first] =
+                  newScan;
             }
             else
             {
-               secondMostRecent = maybe->second;
+               p->index_[type.first][elevation.first][mostRecent->first] =
+                  mostRecent->second;
             }
-
-            auto newScan = std::make_shared<rda::ElevationScan>();
-
-            // Convert old into new coords
-            logger_->error(
-               "old {}, new {}",
-               secondMostRecent->cbegin()->second->azimuth_angle().value(),
-               mostRecent->second->cbegin()->second->azimuth_angle().value());
-            // TODO Ordering these correctly
-            for (const auto& radial : *secondMostRecent)
-            {
-               (*newScan)[radial.first] = radial.second;
-            }
-            for (const auto& radial : *(mostRecent->second))
-            {
-               (*newScan)[radial.first] = radial.second;
-            }
-
-            p->index_[type.first][elevation.first][mostRecent->first] =
-               newScan;
-         }
-         else
-         {
-            p->index_[type.first][elevation.first][mostRecent->first] =
-               mostRecent->second;
          }
       }
    }
 
-   // Go though last, adding other elevations TODO
+   // Go though last, adding other elevations
    if (last != nullptr)
    {
       for (const auto& type : last->p->index_)
       {
+         // Find the highest elevation this type has for the current scan
+         // Start below any reasonable elevation
+         // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
          float highestCurrentElevation = -90;
          const auto& maybe1 = p->index_.find(type.first);
          if (maybe1 != p->index_.cend())
          {
             const auto& maybe2 = maybe1->second.crbegin();
             if (maybe2 != maybe1->second.crend()) {
-               highestCurrentElevation = maybe2->first + 0.01;
+               // Add a slight offset to ensure good floating point compare.
+               // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
+               highestCurrentElevation = maybe2->first + 0.01f;
             }
          }
+
          for (const auto& elevation : type.second)
          {
+            // Only add elevations above the current scan's elevation
             if (elevation.first > highestCurrentElevation)
             {
                const auto& mostRecent = elevation.second.crbegin();
@@ -680,7 +736,6 @@ Ar2vFile::Ar2vFile(std::shared_ptr<Ar2vFile> current,
          }
       }
    }
-
 }
 
 } // namespace wsr88d

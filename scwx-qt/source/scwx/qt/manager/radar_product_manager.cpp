@@ -1520,87 +1520,17 @@ RadarProductManager::GetLevel2Data(wsr88d::rda::DataBlockType dataBlockType,
    std::vector<float>                          elevationCuts {};
    std::chrono::system_clock::time_point       foundTime {};
 
-   auto records = p->GetLevel2ProductRecords(time);
-
    //TODO decide when to use chunked vs archived data.
-   if (true)
+   if constexpr (true)
    {
       auto currentFile = std::dynamic_pointer_cast<wsr88d::Ar2vFile>(
          p->level2ChunksProviderManager_->provider_->LoadLatestObject());
-      auto lastFile = std::dynamic_pointer_cast<wsr88d::Ar2vFile>(
-         p->level2ChunksProviderManager_->provider_->LoadSecondLatestObject());
-      auto radarFile =
-         std::make_shared<wsr88d::Ar2vFile>(currentFile, lastFile);
       std::tie(radarData, elevationCut, elevationCuts) =
-         radarFile->GetElevationScan(dataBlockType, elevation, time);
-
-      /*
-      auto currentFile = std::dynamic_pointer_cast<wsr88d::Ar2vFile>(
-         p->level2ChunksProviderManager_->provider_->LoadLatestObject());
-      std::shared_ptr<wsr88d::rda::ElevationScan> currentRadarData = nullptr;
-      float                                       currentElevationCut = 0.0f;
-      std::vector<float>                          currentElevationCuts;
-      if (currentFile != nullptr)
-      {
-         std::tie(currentRadarData, currentElevationCut, currentElevationCuts) =
-            currentFile->GetElevationScan(dataBlockType, elevation, time);
-      }
-
-      std::shared_ptr<wsr88d::rda::ElevationScan> lastRadarData = nullptr;
-      float                                       lastElevationCut = 0.0f;
-      std::vector<float>                          lastElevationCuts;
-      auto lastFile = std::dynamic_pointer_cast<wsr88d::Ar2vFile>(
-         p->level2ChunksProviderManager_->provider_->LoadSecondLatestObject());
-      if (lastFile != nullptr)
-      {
-         std::tie(lastRadarData, lastElevationCut, lastElevationCuts) =
-               lastFile->GetElevationScan(dataBlockType, elevation, time);
-      }
-
-      if (currentRadarData != nullptr)
-      {
-         if (lastRadarData != nullptr)
-         {
-            auto& radarData0     = (*currentRadarData)[0];
-            auto  collectionTime = std::chrono::floor<std::chrono::seconds>(
-                  scwx::util::TimePoint(radarData0->modified_julian_date(),
-                     radarData0->collection_time()));
-
-            // TODO merge data
-            radarData     = currentRadarData;
-            elevationCut  = currentElevationCut;
-            elevationCuts = std::move(currentElevationCuts);
-            foundTime     = collectionTime;
-         }
-         else
-         {
-            auto& radarData0     = (*currentRadarData)[0];
-            auto  collectionTime = std::chrono::floor<std::chrono::seconds>(
-                  scwx::util::TimePoint(radarData0->modified_julian_date(),
-                     radarData0->collection_time()));
-
-            radarData     = currentRadarData;
-            elevationCut  = currentElevationCut;
-            elevationCuts = std::move(currentElevationCuts);
-            foundTime     = collectionTime;
-         }
-      }
-      else if (lastRadarData != nullptr)
-      {
-         auto& radarData0     = (*lastRadarData)[0];
-         auto  collectionTime = std::chrono::floor<std::chrono::seconds>(
-               scwx::util::TimePoint(radarData0->modified_julian_date(),
-                  radarData0->collection_time()));
-
-         radarData     = lastRadarData;
-         elevationCut  = lastElevationCut;
-         elevationCuts = std::move(lastElevationCuts);
-         foundTime     = collectionTime;
-      }
-      */
+         currentFile->GetElevationScan(dataBlockType, elevation, time);
    }
    else
    {
+      auto records = p->GetLevel2ProductRecords(time);
       for (auto& recordPair : records)
       {
          auto& record = recordPair.second;

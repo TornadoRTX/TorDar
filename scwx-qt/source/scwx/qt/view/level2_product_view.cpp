@@ -561,8 +561,7 @@ void Level2ProductView::ComputeSweep()
       Q_EMIT SweepNotComputed(types::NoUpdateReason::NotLoaded);
       return;
    }
-   // TODO do not do this when updating from live data
-   if (false && (radarData == p->elevationScan_) &&
+   if ((radarData == p->elevationScan_) &&
        smoothingEnabled == p->lastSmoothingEnabled_ &&
        (showSmoothedRangeFolding == p->lastShowSmoothedRangeFolding_ ||
         !smoothingEnabled))
