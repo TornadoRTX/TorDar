@@ -138,7 +138,7 @@ Ar2vFile::GetElevationScan(rda::DataBlockType                    dataBlockType,
                            float                                 elevation,
                            std::chrono::system_clock::time_point time) const
 {
-   //logger_->debug("GetElevationScan: {} degrees", elevation);
+   // logger_->debug("GetElevationScan: {} degrees", elevation);
 
    std::shared_ptr<rda::ElevationScan> elevationScan = nullptr;
    float                               elevationCut  = 0.0f;
@@ -273,7 +273,7 @@ bool Ar2vFile::LoadData(std::istream& is)
 
 std::size_t Ar2vFileImpl::DecompressLDMRecords(std::istream& is)
 {
-   //logger_->debug("Decompressing LDM Records");
+   // logger_->debug("Decompressing LDM Records");
 
    std::size_t numRecords = 0;
 
@@ -321,22 +321,22 @@ std::size_t Ar2vFileImpl::DecompressLDMRecords(std::istream& is)
       ++numRecords;
    }
 
-   //logger_->debug("Decompressed {} LDM Records", numRecords);
+   // logger_->debug("Decompressed {} LDM Records", numRecords);
 
    return numRecords;
 }
 
 void Ar2vFileImpl::ParseLDMRecords()
 {
-   //logger_->debug("Parsing LDM Records");
+   // logger_->debug("Parsing LDM Records");
 
-   //std::size_t count = 0;
+   // std::size_t count = 0;
 
    for (auto it = rawRecords_.begin(); it != rawRecords_.end(); it++)
    {
       std::stringstream& ss = *it;
 
-      //logger_->trace("Record {}", count++);
+      // logger_->trace("Record {}", count++);
 
       ParseLDMRecord(ss);
    }
@@ -445,7 +445,7 @@ void Ar2vFileImpl::ProcessRadarData(
 
 void Ar2vFileImpl::IndexFile()
 {
-   //logger_->debug("Indexing file");
+   // logger_->debug("Indexing file");
 
    for (auto& elevationCut : radarData_)
    {
@@ -465,6 +465,7 @@ void Ar2vFileImpl::IndexFile()
 
       if (vcpData_ != nullptr)
       {
+         // NOLINTNEXTLINE(*-narrowing-conversions) Float is plenty
          elevationAngle = vcpData_->elevation_angle(elevationCut.first);
          waveformType   = vcpData_->waveform_type(elevationCut.first);
       }
@@ -500,15 +501,15 @@ void Ar2vFileImpl::IndexFile()
             auto time = util::TimePoint(radial0->modified_julian_date(),
                                         radial0->collection_time());
 
-            index_[dataBlockType][elevationAngle][time] =
-               elevationCut.second;
+            index_[dataBlockType][elevationAngle][time] = elevationCut.second;
          }
       }
    }
 }
 
-bool Ar2vFile::LoadLDMRecords(std::istream& is) {
-   size_t decompressedRecords = p->DecompressLDMRecords(is);
+bool Ar2vFile::LoadLDMRecords(std::istream& is)
+{
+   const size_t decompressedRecords = p->DecompressLDMRecords(is);
    if (decompressedRecords == 0)
    {
       p->ParseLDMRecord(is);
@@ -528,6 +529,7 @@ bool Ar2vFile::IndexFile()
 }
 
 // TODO not good
+// NOLINTNEXTLINE
 bool IsRadarDataIncomplete(
    const std::shared_ptr<const rda::ElevationScan>& radarData)
 {
@@ -695,12 +697,13 @@ Ar2vFile::Ar2vFile(const std::shared_ptr<Ar2vFile>& current,
          // Find the highest elevation this type has for the current scan
          // Start below any reasonable elevation
          // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
-         float highestCurrentElevation = -90;
-         const auto& maybe1 = p->index_.find(type.first);
+         float       highestCurrentElevation = -90;
+         const auto& maybe1                  = p->index_.find(type.first);
          if (maybe1 != p->index_.cend())
          {
             const auto& maybe2 = maybe1->second.crbegin();
-            if (maybe2 != maybe1->second.crend()) {
+            if (maybe2 != maybe1->second.crend())
+            {
                // Add a slight offset to ensure good floating point compare.
                // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
                highestCurrentElevation = maybe2->first + 0.01f;

@@ -103,17 +103,14 @@ public:
     *
     * @return NEXRAD data
     */
-   virtual std::shared_ptr<wsr88d::NexradFile>
-   LoadLatestObject() = 0;
+   virtual std::shared_ptr<wsr88d::NexradFile> LoadLatestObject() = 0;
 
    /**
     * Loads the second NEXRAD file object
     *
     * @return NEXRAD data
     */
-   virtual std::shared_ptr<wsr88d::NexradFile>
-   LoadSecondLatestObject() = 0;
-
+   virtual std::shared_ptr<wsr88d::NexradFile> LoadSecondLatestObject() = 0;
 
    /**
     * Lists NEXRAD objects for the current date, and adds them to the cache. If

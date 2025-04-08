@@ -16,6 +16,7 @@ namespace scwx::provider
 class AwsLevel2ChunksDataProvider : public NexradDataProvider
 {
 public:
+   constexpr static const float INVALID_ELEVATION = -90.0;
    explicit AwsLevel2ChunksDataProvider(const std::string& radarSite);
    explicit AwsLevel2ChunksDataProvider(const std::string& radarSite,
                                         const std::string& bucketName,

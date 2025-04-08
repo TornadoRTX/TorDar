@@ -73,6 +73,7 @@ public:
        currentScan_ {"", false},
        scansMutex_ {},
        lastTimeListed_ {},
+       // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers) about average
        updatePeriod_ {7},
        self_ {self}
    {
@@ -80,10 +81,11 @@ public:
       util::SetEnvironment("AWS_EC2_METADATA_DISABLED", "true");
 
       // Use anonymous credentials
-      Aws::Auth::AWSCredentials credentials {};
+      const Aws::Auth::AWSCredentials credentials {};
 
       Aws::Client::ClientConfiguration config;
-      config.region           = region_;
+      config.region = region_;
+      // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers) arbitrary
       config.connectTimeoutMs = 10000;
 
       client_ = std::make_shared<Aws::S3::S3Client>(
@@ -104,9 +106,8 @@ public:
                           const std::chrono::system_clock::time_point& time,
                           int                                          last);
 
-   bool LoadScan(Impl::ScanRecord& scanRecord);
+   bool                             LoadScan(Impl::ScanRecord& scanRecord);
    std::tuple<bool, size_t, size_t> ListObjects();
-
 
    std::string                        radarSite_;
    std::string                        bucketName_;
@@ -190,6 +191,7 @@ size_t AwsLevel2ChunksDataProvider::cache_size() const
 std::chrono::system_clock::time_point
 AwsLevel2ChunksDataProvider::last_modified() const
 {
+   const std::shared_lock lock(p->scansMutex_);
    if (p->currentScan_.valid_ && p->currentScan_.lastModified_ !=
                                     std::chrono::system_clock::time_point {})
    {
@@ -207,7 +209,7 @@ AwsLevel2ChunksDataProvider::last_modified() const
 }
 std::chrono::seconds AwsLevel2ChunksDataProvider::update_period() const
 {
-   std::shared_lock lock(p->scansMutex_);
+   const std::shared_lock lock(p->scansMutex_);
    // Add an extra second of delay
    static const auto extra = std::chrono::seconds(2);
    // get update period from time between chunks
@@ -233,7 +235,7 @@ AwsLevel2ChunksDataProvider::FindKey(std::chrono::system_clock::time_point time)
 {
    logger_->debug("FindKey: {}", util::TimeString(time));
 
-   std::shared_lock lock(p->scansMutex_);
+   const std::shared_lock lock(p->scansMutex_);
    if (p->currentScan_.valid_ && time >= p->currentScan_.time_)
    {
       return p->currentScan_.prefix_;
@@ -248,7 +250,7 @@ AwsLevel2ChunksDataProvider::FindKey(std::chrono::system_clock::time_point time)
 
 std::string AwsLevel2ChunksDataProvider::FindLatestKey()
 {
-   std::shared_lock lock(p->scansMutex_);
+   const std::shared_lock lock(p->scansMutex_);
    if (!p->currentScan_.valid_)
    {
       return "";
@@ -260,7 +262,7 @@ std::string AwsLevel2ChunksDataProvider::FindLatestKey()
 std::chrono::system_clock::time_point
 AwsLevel2ChunksDataProvider::FindLatestTime()
 {
-   std::shared_lock lock(p->scansMutex_);
+   const std::shared_lock lock(p->scansMutex_);
    if (!p->currentScan_.valid_)
    {
       return {};
@@ -325,10 +327,11 @@ std::string AwsLevel2ChunksDataProvider::Impl::GetScanKey(
 std::tuple<bool, size_t, size_t>
 AwsLevel2ChunksDataProvider::Impl::ListObjects()
 {
-   size_t newObjects   = 0;
-   size_t totalObjects = 0;
+   size_t       newObjects   = 0;
+   const size_t totalObjects = 0;
 
-   std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+   const std::chrono::system_clock::time_point now =
+      std::chrono::system_clock::now();
 
    if (currentScan_.valid_ && !currentScan_.hasAllFiles_ &&
        lastTimeListed_ + std::chrono::minutes(2) > now)
@@ -366,8 +369,8 @@ AwsLevel2ChunksDataProvider::Impl::ListObjects()
 
          int lastScanNumber = -1;
          // Start with last scan
-         int previousScanNumber = scanNumberMap.crbegin()->first;
-         const int firstScanNumber = scanNumberMap.cbegin()->first;
+         int       previousScanNumber = scanNumberMap.crbegin()->first;
+         const int firstScanNumber    = scanNumberMap.cbegin()->first;
 
          // Look for a gap in scan numbers. This indicates that is the latest
          // scan.
@@ -383,7 +386,7 @@ AwsLevel2ChunksDataProvider::Impl::ListObjects()
          {
             // Have already checked scan with highest number, so skip first
             previousScanNumber = firstScanNumber;
-            bool first = true;
+            bool first         = true;
             for (const auto& scan : scanNumberMap)
             {
                if (first)
@@ -415,15 +418,16 @@ AwsLevel2ChunksDataProvider::Impl::ListObjects()
             }
          }
 
-         std::string& lastScanPrefix = scanNumberMap.at(lastScanNumber);
-         int          secondLastScanNumber =
+         const std::string& lastScanPrefix = scanNumberMap.at(lastScanNumber);
+         const int          secondLastScanNumber =
+            // 999 is the last file possible
+            // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
             lastScanNumber == 1 ? 999 : lastScanNumber - 1;
 
          const auto& secondLastScanPrefix =
             scanNumberMap.find(secondLastScanNumber);
 
-         if (!currentScan_.valid_ ||
-             currentScan_.prefix_ != lastScanPrefix)
+         if (!currentScan_.valid_ || currentScan_.prefix_ != lastScanPrefix)
          {
             if (currentScan_.valid_ &&
                 (secondLastScanPrefix == scanNumberMap.cend() ||
@@ -445,9 +449,9 @@ AwsLevel2ChunksDataProvider::Impl::ListObjects()
                newObjects += 1;
             }
 
-            currentScan_.valid_        = true;
-            currentScan_.prefix_       = lastScanPrefix;
-            currentScan_.nexradFile_   = nullptr;
+            currentScan_.valid_              = true;
+            currentScan_.prefix_             = lastScanPrefix;
+            currentScan_.nexradFile_         = nullptr;
             currentScan_.time_               = GetScanTime(lastScanPrefix);
             currentScan_.lastModified_       = {};
             currentScan_.secondLastModified_ = {};
@@ -502,7 +506,7 @@ bool AwsLevel2ChunksDataProvider::Impl::LoadScan(Impl::ScanRecord& scanRecord)
       return false;
    }
 
-   bool hasNew = false;
+   bool  hasNew = false;
    auto& chunks = listOutcome.GetResult().GetContents();
    logger_->debug("Found {} new chunks.", chunks.size());
    for (const auto& chunk : chunks)
@@ -511,27 +515,26 @@ bool AwsLevel2ChunksDataProvider::Impl::LoadScan(Impl::ScanRecord& scanRecord)
 
       // KIND/585/20250324-134727-001-S
       // KIND/5/20250324-134727-001-S
-      static const size_t firstSlash = std::string("KIND/").size();
-      const size_t secondSlash = key.find('/', firstSlash);
+      static const size_t firstSlash  = std::string("KIND/").size();
+      const size_t        secondSlash = key.find('/', firstSlash);
       static const size_t startNumberPosOffset =
          std::string("/20250324-134727-").size();
-      const size_t startNumberPos =
-          secondSlash + startNumberPosOffset;
-      const std::string& keyNumberStr = key.substr(startNumberPos, 3);
-      const int          keyNumber    = std::stoi(keyNumberStr);
-      if (keyNumber != scanRecord.nextFile_)
+      const size_t       startNumberPos = secondSlash + startNumberPosOffset;
+      const std::string& keyNumberStr   = key.substr(startNumberPos, 3);
+      const int          keyNumber      = std::stoi(keyNumberStr);
+      // As far as order goes, only the first one matters. This may cause some
+      // issues if keys come in out of order, but usually they just skip chunks
+      if (scanRecord.nextFile_ == 1 && keyNumber != scanRecord.nextFile_)
       {
-         logger_->warn("Chunk found that was not in order {} {} {}",
-                       key,
-                       scanRecord.nextFile_,
-                       keyNumber);
+         logger_->warn("Chunk found that was not in order {} {}",
+                       scanRecord.lastKey_,
+                       key);
          continue;
       }
 
       // Now we want the ending char
       // KIND/585/20250324-134727-001-S
-      static const size_t charPos =
-         std::string("/20250324-134727-001-").size();
+      static const size_t charPos = std::string("/20250324-134727-001-").size();
       if (secondSlash + charPos >= key.size())
       {
          logger_->warn("Chunk key was not long enough");
@@ -591,15 +594,16 @@ bool AwsLevel2ChunksDataProvider::Impl::LoadScan(Impl::ScanRecord& scanRecord)
       }
       hasNew = true;
 
-      std::chrono::seconds lastModifiedSeconds {
+      const std::chrono::seconds lastModifiedSeconds {
          outcome.GetResult().GetLastModified().Seconds()};
-      std::chrono::system_clock::time_point lastModified {lastModifiedSeconds};
+      const std::chrono::system_clock::time_point lastModified {
+         lastModifiedSeconds};
 
       scanRecord.secondLastModified_ = scanRecord.lastModified_;
-      scanRecord.lastModified_ = lastModified;
+      scanRecord.lastModified_       = lastModified;
 
-      scanRecord.nextFile_ += 1;
-      scanRecord.lastKey_ = key;
+      scanRecord.nextFile_ = keyNumber + 1;
+      scanRecord.lastKey_  = key;
    }
 
    if (scanRecord.nexradFile_ == nullptr)
@@ -618,7 +622,7 @@ std::shared_ptr<wsr88d::NexradFile>
 AwsLevel2ChunksDataProvider::LoadObjectByTime(
    std::chrono::system_clock::time_point time)
 {
-   std::unique_lock lock(p->scansMutex_);
+   const std::unique_lock                             lock(p->scansMutex_);
    static const std::chrono::system_clock::time_point epoch {};
 
    if (p->currentScan_.valid_ &&
@@ -640,10 +644,10 @@ AwsLevel2ChunksDataProvider::LoadObjectByTime(
 std::shared_ptr<wsr88d::NexradFile>
 AwsLevel2ChunksDataProvider::LoadLatestObject()
 {
-   std::unique_lock lock(p->scansMutex_);
+   const std::unique_lock lock(p->scansMutex_);
    return std::make_shared<wsr88d::Ar2vFile>(p->currentScan_.nexradFile_,
                                              p->lastScan_.nexradFile_);
-   //return p->currentScan_.nexradFile_;
+   // return p->currentScan_.nexradFile_;
 }
 
 std::shared_ptr<wsr88d::NexradFile>
@@ -667,8 +671,8 @@ std::pair<size_t, size_t> AwsLevel2ChunksDataProvider::Refresh()
    boost::timer::cpu_timer timer {};
    timer.start();
 
-   std::unique_lock lock(p->refreshMutex_);
-   std::unique_lock scanLock(p->scansMutex_);
+   const std::unique_lock lock(p->refreshMutex_);
+   const std::unique_lock scanLock(p->scansMutex_);
 
    auto [success, newObjects, totalObjects] = p->ListObjects();
 
@@ -682,6 +686,8 @@ std::pair<size_t, size_t> AwsLevel2ChunksDataProvider::Refresh()
    }
    if (p->lastScan_.valid_)
    {
+      // TODO this is slow when initially loading data. If possible, loading
+      // this from the archive may speed it up a lot.
       if (p->LoadScan(p->lastScan_))
       {
          newObjects += 1;
@@ -690,6 +696,7 @@ std::pair<size_t, size_t> AwsLevel2ChunksDataProvider::Refresh()
    }
 
    timer.stop();
+   // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers) format to 6 digits
    logger_->debug("Refresh() in {}", timer.format(6, "%ws"));
    return std::make_pair(newObjects, totalObjects);
 }
@@ -710,8 +717,7 @@ float AwsLevel2ChunksDataProvider::GetCurrentElevation()
    if (!p->currentScan_.valid_ || p->currentScan_.nexradFile_ == nullptr)
    {
       // Does not have any scan elevation. -90 is beyond what is possible
-      // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
-      return -90;
+      return INVALID_ELEVATION;
    }
 
    auto vcpData   = p->currentScan_.nexradFile_->vcp_data();
@@ -719,18 +725,17 @@ float AwsLevel2ChunksDataProvider::GetCurrentElevation()
    if (radarData.size() == 0)
    {
       // Does not have any scan elevation. -90 is beyond what is possible
-      // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
-      return -90;
+      return INVALID_ELEVATION;
    }
 
    const auto& lastElevation = radarData.crbegin();
-   std::shared_ptr<wsr88d::rda::DigitalRadarData> digitalRadarData0 =
+   const std::shared_ptr<wsr88d::rda::DigitalRadarData> digitalRadarData0 =
       std::dynamic_pointer_cast<wsr88d::rda::DigitalRadarData>(
          lastElevation->second->cbegin()->second);
 
    if (vcpData != nullptr)
    {
-      // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions) Float is plenty
+      // NOLINTNEXTLINE(*-narrowing-conversions) Float is plenty
       return vcpData->elevation_angle(lastElevation->first);
    }
    else if (digitalRadarData0 != nullptr)
@@ -738,9 +743,7 @@ float AwsLevel2ChunksDataProvider::GetCurrentElevation()
       return digitalRadarData0->elevation_angle().value();
    }
 
-   // Does not have any scan elevation. -90 is beyond what is possible
-   // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
-   return -90;
+   return INVALID_ELEVATION;
 }
 
 } // namespace scwx::provider

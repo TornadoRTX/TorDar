@@ -272,7 +272,8 @@ public:
    common::Level3ProductCategoryMap availableCategoryMap_ {};
    std::shared_mutex                availableCategoryMutex_ {};
 
-   float incomingLevel2Elevation_ {-90};
+   float incomingLevel2Elevation_ {
+      provider::AwsLevel2ChunksDataProvider::INVALID_ELEVATION};
 
    std::unordered_map<boost::uuids::uuid,
                       std::shared_ptr<ProviderManager>,
@@ -654,7 +655,7 @@ void RadarProductManager::EnableRefresh(common::RadarProductGroup group,
 {
    if (group == common::RadarProductGroup::Level2)
    {
-      //p->EnableRefresh(uuid, p->level2ProviderManager_, enabled);
+      // p->EnableRefresh(uuid, p->level2ProviderManager_, enabled);
       p->EnableRefresh(uuid, p->level2ChunksProviderManager_, enabled);
    }
    else
@@ -1431,7 +1432,7 @@ std::shared_ptr<types::RadarProductRecord>
 RadarProductManagerImpl::StoreRadarProductRecord(
    std::shared_ptr<types::RadarProductRecord> record)
 {
-   //logger_->debug("StoreRadarProductRecord()");
+   // logger_->debug("StoreRadarProductRecord()");
 
    std::shared_ptr<types::RadarProductRecord> storedRecord = nullptr;
 
@@ -1571,9 +1572,10 @@ RadarProductManager::GetLevel2Data(wsr88d::rda::DataBlockType dataBlockType,
 
          if (record != nullptr)
          {
-            std::shared_ptr<wsr88d::rda::ElevationScan> recordRadarData = nullptr;
-            float                                       recordElevationCut = 0.0f;
-            std::vector<float>                          recordElevationCuts;
+            std::shared_ptr<wsr88d::rda::ElevationScan> recordRadarData =
+               nullptr;
+            float              recordElevationCut = 0.0f;
+            std::vector<float> recordElevationCuts;
 
             std::tie(recordRadarData, recordElevationCut, recordElevationCuts) =
                record->level2_file()->GetElevationScan(
@@ -1595,10 +1597,14 @@ RadarProductManager::GetLevel2Data(wsr88d::rda::DataBlockType dataBlockType,
                   elevationCuts = std::move(recordElevationCuts);
                   foundTime     = collectionTime;
 
-                  if (p->incomingLevel2Elevation_ != -90)
+                  if (p->incomingLevel2Elevation_ !=
+                      provider::AwsLevel2ChunksDataProvider::INVALID_ELEVATION)
                   {
-                     p->incomingLevel2Elevation_ = -90;
-                     Q_EMIT IncomingLevel2ElevationChanged(-90);
+                     p->incomingLevel2Elevation_ = provider::
+                        AwsLevel2ChunksDataProvider::INVALID_ELEVATION;
+                     Q_EMIT IncomingLevel2ElevationChanged(
+                        provider::AwsLevel2ChunksDataProvider::
+                           INVALID_ELEVATION);
                   }
                }
             }

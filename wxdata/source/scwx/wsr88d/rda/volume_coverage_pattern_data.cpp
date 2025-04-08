@@ -221,8 +221,8 @@ uint16_t VolumeCoveragePatternData::number_of_base_tilts() const
 double VolumeCoveragePatternData::elevation_angle(uint16_t e) const
 {
 
-   // NOLINTNEXTLINE This conversion is accurate
    float elevationAngleConverted =
+      // NOLINTNEXTLINE This conversion is accurate
       p->elevationCuts_[e].elevationAngle_ * ANGLE_DATA_SCALE;
    // Any elevation above 90 degrees should be interpreted as a
    // negative angle

@@ -170,7 +170,7 @@ void RadarProductLayer::UpdateSweep()
                               std::try_to_lock);
    if (!sweepLock.owns_lock())
    {
-      //logger_->debug("Sweep locked, deferring update");
+      // logger_->debug("Sweep locked, deferring update");
       return;
    }
    logger_->debug("UpdateSweep()");

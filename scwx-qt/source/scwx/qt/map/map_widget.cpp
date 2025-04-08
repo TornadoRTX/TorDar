@@ -661,7 +661,6 @@ float MapWidget::GetIncomingLevel2Elevation() const
    return p->radarProductManager_->incoming_level_2_elevation();
 }
 
-
 common::Level2Product
 MapWidgetImpl::GetLevel2ProductOrDefault(const std::string& productName) const
 {
