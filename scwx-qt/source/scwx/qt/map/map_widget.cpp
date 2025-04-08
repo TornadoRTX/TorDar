@@ -656,6 +656,12 @@ std::vector<float> MapWidget::GetElevationCuts() const
    }
 }
 
+float MapWidget::GetIncomingLevel2Elevation() const
+{
+   return p->radarProductManager_->incoming_level_2_elevation();
+}
+
+
 common::Level2Product
 MapWidgetImpl::GetLevel2ProductOrDefault(const std::string& productName) const
 {
@@ -1797,6 +1803,14 @@ void MapWidgetImpl::RadarProductManagerConnect()
    if (radarProductManager_ != nullptr)
    {
       connect(radarProductManager_.get(),
+              &manager::RadarProductManager::IncomingLevel2ElevationChanged,
+              this,
+              [this](float incomingElevation)
+              {
+                 Q_EMIT widget_->IncomingLevel2ElevationChanged(
+                    incomingElevation);
+              });
+      connect(radarProductManager_.get(),
               &manager::RadarProductManager::Level3ProductsChanged,
               this,
               [this]()
@@ -1914,6 +1928,10 @@ void MapWidgetImpl::RadarProductManagerDisconnect()
    {
       disconnect(radarProductManager_.get(),
                  &manager::RadarProductManager::NewDataAvailable,
+                 this,
+                 nullptr);
+      disconnect(radarProductManager_.get(),
+                 &manager::RadarProductManager::IncomingLevel2ElevationChanged,
                  this,
                  nullptr);
    }

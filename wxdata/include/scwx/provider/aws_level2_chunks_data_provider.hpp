@@ -57,6 +57,8 @@ public:
    void                     RequestAvailableProducts() override;
    std::vector<std::string> GetAvailableProducts() override;
 
+   float GetCurrentElevation();
+
 private:
    class Impl;
    std::unique_ptr<Impl> p;

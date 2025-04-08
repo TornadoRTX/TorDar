@@ -23,6 +23,7 @@ public:
    void showEvent(QShowEvent* event) override;
 
    void UpdateElevationSelection(float elevation);
+   void UpdateIncomingElevation(float incomingElevation);
    void UpdateSettings(map::MapWidget* activeMap);
 
 signals:

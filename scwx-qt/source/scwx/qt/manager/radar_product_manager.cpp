@@ -4,6 +4,7 @@
 #include <scwx/qt/types/time_types.hpp>
 #include <scwx/qt/util/geographic_lib.hpp>
 #include <scwx/common/constants.hpp>
+#include <scwx/provider/aws_level2_chunks_data_provider.hpp>
 #include <scwx/provider/nexrad_data_provider_factory.hpp>
 #include <scwx/util/logger.hpp>
 #include <scwx/util/map.hpp>
@@ -271,6 +272,8 @@ public:
    common::Level3ProductCategoryMap availableCategoryMap_ {};
    std::shared_mutex                availableCategoryMutex_ {};
 
+   float incomingLevel2Elevation_ {-90};
+
    std::unordered_map<boost::uuids::uuid,
                       std::shared_ptr<ProviderManager>,
                       boost::hash<boost::uuids::uuid>>
@@ -448,6 +451,11 @@ float RadarProductManager::gate_size() const
    // tdwr is 150 meter per gate, wsr88d is 250 meter per gate
    // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
    return (is_tdwr()) ? 150.0f : 250.0f;
+}
+
+float RadarProductManager::incoming_level_2_elevation() const
+{
+   return p->incomingLevel2Elevation_;
 }
 
 std::string RadarProductManager::radar_id() const
@@ -1542,6 +1550,16 @@ RadarProductManager::GetLevel2Data(wsr88d::rda::DataBlockType dataBlockType,
          foundTime        = std::chrono::floor<std::chrono::seconds>(
             scwx::util::TimePoint(radarData0->modified_julian_date(),
                                   radarData0->collection_time()));
+
+         const float incomingElevation =
+            std::dynamic_pointer_cast<provider::AwsLevel2ChunksDataProvider>(
+               p->level2ChunksProviderManager_->provider_)
+               ->GetCurrentElevation();
+         if (incomingElevation != p->incomingLevel2Elevation_)
+         {
+            p->incomingLevel2Elevation_ = incomingElevation;
+            Q_EMIT IncomingLevel2ElevationChanged(incomingElevation);
+         }
       }
    }
    else // It is not in the chunk provider, so get it from the archive
@@ -1576,6 +1594,12 @@ RadarProductManager::GetLevel2Data(wsr88d::rda::DataBlockType dataBlockType,
                   elevationCut  = recordElevationCut;
                   elevationCuts = std::move(recordElevationCuts);
                   foundTime     = collectionTime;
+
+                  if (p->incomingLevel2Elevation_ != -90)
+                  {
+                     p->incomingLevel2Elevation_ = -90;
+                     Q_EMIT IncomingLevel2ElevationChanged(-90);
+                  }
                }
             }
          }

@@ -1,3 +1,4 @@
+#include "scwx/wsr88d/rda/digital_radar_data.hpp"
 #include <scwx/provider/aws_level2_chunks_data_provider.hpp>
 #include <scwx/util/environment.hpp>
 #include <scwx/util/map.hpp>
@@ -703,5 +704,43 @@ AwsLevel2ChunksDataProvider::AwsLevel2ChunksDataProvider(
    AwsLevel2ChunksDataProvider&&) noexcept = default;
 AwsLevel2ChunksDataProvider& AwsLevel2ChunksDataProvider::operator=(
    AwsLevel2ChunksDataProvider&&) noexcept = default;
+
+float AwsLevel2ChunksDataProvider::GetCurrentElevation()
+{
+   if (!p->currentScan_.valid_ || p->currentScan_.nexradFile_ == nullptr)
+   {
+      // Does not have any scan elevation. -90 is beyond what is possible
+      // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
+      return -90;
+   }
+
+   auto vcpData   = p->currentScan_.nexradFile_->vcp_data();
+   auto radarData = p->currentScan_.nexradFile_->radar_data();
+   if (radarData.size() == 0)
+   {
+      // Does not have any scan elevation. -90 is beyond what is possible
+      // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
+      return -90;
+   }
+
+   const auto& lastElevation = radarData.crbegin();
+   std::shared_ptr<wsr88d::rda::DigitalRadarData> digitalRadarData0 =
+      std::dynamic_pointer_cast<wsr88d::rda::DigitalRadarData>(
+         lastElevation->second->cbegin()->second);
+
+   if (vcpData != nullptr)
+   {
+      // NOLINTNEXTLINE(cppcoreguidelines-narrowing-conversions) Float is plenty
+      return vcpData->elevation_angle(lastElevation->first);
+   }
+   else if (digitalRadarData0 != nullptr)
+   {
+      return digitalRadarData0->elevation_angle().value();
+   }
+
+   // Does not have any scan elevation. -90 is beyond what is possible
+   // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
+   return -90;
+}
 
 } // namespace scwx::provider

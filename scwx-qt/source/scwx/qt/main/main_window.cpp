@@ -963,6 +963,13 @@ void MainWindowImpl::ConnectMapSignals()
             }
          },
          Qt::QueuedConnection);
+      connect(
+         mapWidget,
+         &map::MapWidget::IncomingLevel2ElevationChanged,
+         this,
+         [this](float incomingElevation)
+         { level2SettingsWidget_->UpdateIncomingElevation(incomingElevation); },
+         Qt::QueuedConnection);
    }
 }
 

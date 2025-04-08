@@ -1,3 +1,4 @@
+#include <qlabel.h>
 #include <scwx/qt/ui/level2_settings_widget.hpp>
 #include <scwx/qt/ui/flow_layout.hpp>
 #include <scwx/qt/manager/hotkey_manager.hpp>
@@ -30,6 +31,7 @@ public:
        self_ {self},
        layout_ {new QVBoxLayout(self)},
        elevationGroupBox_ {},
+       incomingElevationLabel_ {},
        elevationButtons_ {},
        elevationCuts_ {},
        elevationButtonsChanged_ {false},
@@ -39,9 +41,13 @@ public:
    {
       layout_->setContentsMargins(0, 0, 0, 0);
 
+      incomingElevationLabel_ = new QLabel("", self);
+      layout_->addWidget(incomingElevationLabel_);
+
       elevationGroupBox_ = new QGroupBox(tr("Elevation"), self);
       new ui::FlowLayout(elevationGroupBox_);
       layout_->addWidget(elevationGroupBox_);
+
 
       settingsGroupBox_       = new QGroupBox(tr("Settings"), self);
       QLayout* settingsLayout = new QVBoxLayout(settingsGroupBox_);
@@ -67,6 +73,7 @@ public:
    QLayout*              layout_;
 
    QGroupBox*              elevationGroupBox_;
+   QLabel*                 incomingElevationLabel_;
    std::list<QToolButton*> elevationButtons_;
    std::vector<float>      elevationCuts_;
    bool                    elevationButtonsChanged_;
@@ -240,12 +247,19 @@ void Level2SettingsWidget::UpdateElevationSelection(float elevation)
    p->currentElevationButton_ = newElevationButton;
 }
 
+void Level2SettingsWidget::UpdateIncomingElevation(float incomingElevation)
+{
+   p->incomingElevationLabel_->setText("Incoming Elevation: " +
+      QString::number(incomingElevation, 'f', 1) + common::Characters::DEGREE);
+}
+
 void Level2SettingsWidget::UpdateSettings(map::MapWidget* activeMap)
 {
    std::optional<float> currentElevationOption = activeMap->GetElevation();
    const float          currentElevation =
       currentElevationOption.has_value() ? *currentElevationOption : 0.0f;
    std::vector<float> elevationCuts    = activeMap->GetElevationCuts();
+   float incomingElevation = activeMap->GetIncomingLevel2Elevation();
 
    if (p->elevationCuts_ != elevationCuts)
    {
@@ -279,6 +293,7 @@ void Level2SettingsWidget::UpdateSettings(map::MapWidget* activeMap)
    }
 
    UpdateElevationSelection(currentElevation);
+   UpdateIncomingElevation(incomingElevation);
 }
 
 } // namespace ui

@@ -45,6 +45,7 @@ public:
                                            GetAvailableLevel3Categories();
    [[nodiscard]] std::optional<float>      GetElevation() const;
    [[nodiscard]] std::vector<float>        GetElevationCuts() const;
+   [[nodiscard]] float                     GetIncomingLevel2Elevation() const;
    [[nodiscard]] std::vector<std::string>  GetLevel3Products();
    [[nodiscard]] std::string               GetMapStyle() const;
    [[nodiscard]] common::RadarProductGroup GetRadarProductGroup() const;
@@ -184,6 +185,7 @@ signals:
    void RadarSweepUpdated();
    void RadarSweepNotUpdated(types::NoUpdateReason reason);
    void WidgetPainted();
+   void IncomingLevel2ElevationChanged(float incomingElevation);
 };
 
 } // namespace map
