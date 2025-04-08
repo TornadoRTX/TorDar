@@ -447,11 +447,9 @@ void Ar2vFileImpl::IndexFile()
 {
    //logger_->debug("Indexing file");
 
-   constexpr float scaleFactor = 8.0f / 0.043945f;
-
    for (auto& elevationCut : radarData_)
    {
-      std::uint16_t     elevationAngle {};
+      float             elevationAngle {};
       rda::WaveformType waveformType = rda::WaveformType::Unknown;
 
       std::shared_ptr<rda::GenericRadarData>& radial0 =
@@ -467,14 +465,14 @@ void Ar2vFileImpl::IndexFile()
 
       if (vcpData_ != nullptr)
       {
-         elevationAngle = vcpData_->elevation_angle_raw(elevationCut.first);
+         elevationAngle = vcpData_->elevation_angle(elevationCut.first);
          waveformType   = vcpData_->waveform_type(elevationCut.first);
       }
       else if ((digitalRadarData0 =
                    std::dynamic_pointer_cast<rda::DigitalRadarData>(radial0)) !=
                nullptr)
       {
-         elevationAngle = digitalRadarData0->elevation_angle_raw();
+         elevationAngle = digitalRadarData0->elevation_angle().value();
       }
       else
       {
@@ -502,18 +500,7 @@ void Ar2vFileImpl::IndexFile()
             auto time = util::TimePoint(radial0->modified_julian_date(),
                                         radial0->collection_time());
 
-            // NOLINTNEXTLINE This conversion is accurate
-            float elevationAngleConverted = elevationAngle / scaleFactor;
-            // Any elevation above 90 degrees should be interpreted as a
-            // negative angle
-            // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
-            if (elevationAngleConverted > 90)
-            {
-               elevationAngleConverted -= 360;
-            }
-            // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
-
-            index_[dataBlockType][elevationAngleConverted][time] =
+            index_[dataBlockType][elevationAngle][time] =
                elevationCut.second;
          }
       }
