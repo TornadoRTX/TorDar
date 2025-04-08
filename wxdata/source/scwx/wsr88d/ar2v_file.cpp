@@ -465,8 +465,8 @@ void Ar2vFileImpl::IndexFile()
 
       if (vcpData_ != nullptr)
       {
-         // NOLINTNEXTLINE(*-narrowing-conversions) Float is plenty
-         elevationAngle = vcpData_->elevation_angle(elevationCut.first);
+         elevationAngle =
+            static_cast<float>(vcpData_->elevation_angle(elevationCut.first));
          waveformType   = vcpData_->waveform_type(elevationCut.first);
       }
       else if ((digitalRadarData0 =
