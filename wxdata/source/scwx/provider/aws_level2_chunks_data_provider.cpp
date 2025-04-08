@@ -735,8 +735,7 @@ float AwsLevel2ChunksDataProvider::GetCurrentElevation()
 
    if (vcpData != nullptr)
    {
-      // NOLINTNEXTLINE(*-narrowing-conversions) Float is plenty
-      return vcpData->elevation_angle(lastElevation->first);
+      return static_cast<float>(vcpData->elevation_angle(lastElevation->first));
    }
    else if (digitalRadarData0 != nullptr)
    {
