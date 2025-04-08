@@ -166,7 +166,10 @@ OverlayLayer::OverlayLayer(std::shared_ptr<MapContext> context) :
    p->activeBoxOuter_->SetPosition(0.0f, 0.0f);
 }
 
-OverlayLayer::~OverlayLayer() = default;
+OverlayLayer::~OverlayLayer()
+{
+   p->cursorScaleConnection_.disconnect();
+}
 
 void OverlayLayerImpl::SetCusorLocation(common::Coordinate coordinate)
 {
