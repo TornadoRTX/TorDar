@@ -367,7 +367,6 @@ AwsLevel2ChunksDataProvider::Impl::ListObjects()
                                            scanPrefix);
          }
 
-         int lastScanNumber = -1;
          // Start with last scan
          int       previousScanNumber = scanNumberMap.crbegin()->first;
          const int firstScanNumber    = scanNumberMap.cbegin()->first;
@@ -375,50 +374,54 @@ AwsLevel2ChunksDataProvider::Impl::ListObjects()
          // Look for a gap in scan numbers. This indicates that is the latest
          // scan.
 
-         // This indicates that highest number scan is the last scan
+         auto possibleLastNumbers = std::unordered_set<int>();
+         // This indicates that highest number scan may be the last scan
          // (including if there is only 1 scan)
          // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
-         if (previousScanNumber != 999 || scans.size() == 1)
+         if (previousScanNumber != 999 || firstScanNumber != 1)
          {
-            lastScanNumber = previousScanNumber;
+            possibleLastNumbers.emplace(previousScanNumber);
          }
-         else
+         // Have already checked scan with highest number, so skip first
+         previousScanNumber = firstScanNumber;
+         bool first         = true;
+         for (const auto& scan : scanNumberMap)
          {
-            // Have already checked scan with highest number, so skip first
-            previousScanNumber = firstScanNumber;
-            bool first         = true;
-            for (const auto& scan : scanNumberMap)
+            if (first)
             {
-               if (first)
-               {
-                  first = false;
-                  continue;
-               }
-               if (scan.first != previousScanNumber + 1)
-               {
-                  lastScanNumber = previousScanNumber;
-                  break;
-               }
-               previousScanNumber = scan.first;
+               first = false;
+               continue;
+            }
+            if (scan.first != previousScanNumber + 1)
+            {
+               possibleLastNumbers.emplace(previousScanNumber);
+            }
+            previousScanNumber = scan.first;
+         }
+
+         if (possibleLastNumbers.empty())
+         {
+            logger_->warn("Could not find last scan");
+            // TODO make sure this makes sence
+            return {false, 0, 0};
+         }
+
+         int lastScanNumber = -1;
+         std::chrono::system_clock::time_point lastScanTime = {};
+         std::string lastScanPrefix;
+
+         for (const int scanNumber : possibleLastNumbers)
+         {
+            const std::string& scanPrefix = scanNumberMap.at(scanNumber);
+            auto scanTime = GetScanTime(scanPrefix);
+            if (scanTime > lastScanTime)
+            {
+               lastScanTime = scanTime;
+               lastScanPrefix = scanPrefix;
+               lastScanNumber = scanNumber;
             }
          }
 
-         if (lastScanNumber == -1)
-         {
-            // 999 is the last scan
-            if (firstScanNumber != 1)
-            {
-               lastScanNumber = previousScanNumber;
-            }
-            else
-            {
-               logger_->warn("Could not find last scan");
-               // TODO make sure this makes sence
-               return {false, 0, 0};
-            }
-         }
-
-         const std::string& lastScanPrefix = scanNumberMap.at(lastScanNumber);
          const int          secondLastScanNumber =
             // 999 is the last file possible
             // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
@@ -452,7 +455,7 @@ AwsLevel2ChunksDataProvider::Impl::ListObjects()
             currentScan_.valid_              = true;
             currentScan_.prefix_             = lastScanPrefix;
             currentScan_.nexradFile_         = nullptr;
-            currentScan_.time_               = GetScanTime(lastScanPrefix);
+            currentScan_.time_               = lastScanTime;
             currentScan_.lastModified_       = {};
             currentScan_.secondLastModified_ = {};
             currentScan_.lastKey_            = "";
