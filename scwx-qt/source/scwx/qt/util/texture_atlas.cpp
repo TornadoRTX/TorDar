@@ -50,12 +50,12 @@ public:
    ~Impl() {}
 
    static std::shared_ptr<boost::gil::rgba8_image_t>
-   LoadImage(const std::string& imagePath);
+   LoadImage(const std::string& imagePath, double scale = 1);
 
    static std::shared_ptr<boost::gil::rgba8_image_t>
    ReadPngFile(const QString& imagePath);
    static std::shared_ptr<boost::gil::rgba8_image_t>
-   ReadSvgFile(const QString& imagePath);
+   ReadSvgFile(const QString& imagePath, double scale = 1);
 
    std::vector<std::shared_ptr<boost::gil::rgba8_image_t>>
                      registeredTextures_ {};
@@ -92,12 +92,12 @@ void TextureAtlas::RegisterTexture(const std::string& name,
    p->registeredTextures_.emplace_back(std::move(image));
 }
 
-std::shared_ptr<boost::gil::rgba8_image_t>
-TextureAtlas::CacheTexture(const std::string& name, const std::string& path)
+std::shared_ptr<boost::gil::rgba8_image_t> TextureAtlas::CacheTexture(
+   const std::string& name, const std::string& path, double scale)
 {
    // Attempt to load the image
    std::shared_ptr<boost::gil::rgba8_image_t> image =
-      TextureAtlas::Impl::LoadImage(path);
+      TextureAtlas::Impl::LoadImage(path, scale);
 
    // If the image is valid
    if (image != nullptr && image->width() > 0 && image->height() > 0)
@@ -380,7 +380,7 @@ TextureAttributes TextureAtlas::GetTextureAttributes(const std::string& name)
 }
 
 std::shared_ptr<boost::gil::rgba8_image_t>
-TextureAtlas::Impl::LoadImage(const std::string& imagePath)
+TextureAtlas::Impl::LoadImage(const std::string& imagePath, double scale)
 {
    logger_->debug("Loading image: {}", imagePath);
 
@@ -398,7 +398,7 @@ TextureAtlas::Impl::LoadImage(const std::string& imagePath)
 
       if (suffix == "svg")
       {
-         image = ReadSvgFile(qLocalImagePath);
+         image = ReadSvgFile(qLocalImagePath, scale);
       }
       else
       {
@@ -509,10 +509,10 @@ TextureAtlas::Impl::ReadPngFile(const QString& imagePath)
 }
 
 std::shared_ptr<boost::gil::rgba8_image_t>
-TextureAtlas::Impl::ReadSvgFile(const QString& imagePath)
+TextureAtlas::Impl::ReadSvgFile(const QString& imagePath, double scale)
 {
    QSvgRenderer renderer {imagePath};
-   QPixmap      pixmap {renderer.defaultSize()};
+   QPixmap      pixmap {renderer.defaultSize() * scale};
    pixmap.fill(Qt::GlobalColor::transparent);
 
    QPainter painter {&pixmap};

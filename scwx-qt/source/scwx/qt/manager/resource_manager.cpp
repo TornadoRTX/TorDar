@@ -43,10 +43,17 @@ void Initialize()
 void Shutdown() {}
 
 std::shared_ptr<boost::gil::rgba8_image_t>
-LoadImageResource(const std::string& urlString)
+LoadImageResource(const std::string& urlString, double scale)
 {
    util::TextureAtlas& textureAtlas = util::TextureAtlas::Instance();
-   return textureAtlas.CacheTexture(urlString, urlString);
+   return textureAtlas.CacheTexture(urlString, urlString, scale);
+}
+
+std::shared_ptr<boost::gil::rgba8_image_t> LoadImageResource(
+   const std::string& urlString, const std::string& textureName, double scale)
+{
+   util::TextureAtlas& textureAtlas = util::TextureAtlas::Instance();
+   return textureAtlas.CacheTexture(textureName, urlString, scale);
 }
 
 std::vector<std::shared_ptr<boost::gil::rgba8_image_t>>

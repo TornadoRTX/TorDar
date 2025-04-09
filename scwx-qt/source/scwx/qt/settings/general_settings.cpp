@@ -78,7 +78,10 @@ public:
       cursorIconAlwaysOn_.SetDefault(false);
       radarSiteThreshold_.SetDefault(0.0);
       highPrivilegeWarningEnabled_.SetDefault(true);
+      cursorIconScale_.SetDefault(1.0);
 
+      cursorIconScale_.SetMinimum(1.0);
+      cursorIconScale_.SetMaximum(5.0);
       fontSizes_.SetElementMinimum(1);
       fontSizes_.SetElementMaximum(72);
       fontSizes_.SetValidator([](const std::vector<std::int64_t>& value)
@@ -185,6 +188,7 @@ public:
    SettingsVariable<double>      radarSiteThreshold_ {"radar_site_threshold"};
    SettingsVariable<bool>        highPrivilegeWarningEnabled_ {
       "high_privilege_warning_enabled"};
+   SettingsVariable<double> cursorIconScale_ {"cursor_icon_scale"};
 };
 
 GeneralSettings::GeneralSettings() :
@@ -222,7 +226,8 @@ GeneralSettings::GeneralSettings() :
                       &p->warningsProvider_,
                       &p->cursorIconAlwaysOn_,
                       &p->radarSiteThreshold_,
-                      &p->highPrivilegeWarningEnabled_});
+                      &p->highPrivilegeWarningEnabled_,
+                      &p->cursorIconScale_});
    SetDefaults();
 }
 GeneralSettings::~GeneralSettings() = default;
@@ -397,6 +402,11 @@ SettingsVariable<bool>& GeneralSettings::high_privilege_warning_enabled() const
    return p->highPrivilegeWarningEnabled_;
 }
 
+SettingsVariable<double>& GeneralSettings::cursor_icon_scale() const
+{
+   return p->cursorIconScale_;
+}
+
 bool GeneralSettings::Shutdown()
 {
    bool dataChanged = false;
@@ -455,7 +465,8 @@ bool operator==(const GeneralSettings& lhs, const GeneralSettings& rhs)
            lhs.p->cursorIconAlwaysOn_ == rhs.p->cursorIconAlwaysOn_ &&
            lhs.p->radarSiteThreshold_ == rhs.p->radarSiteThreshold_ &&
            lhs.p->highPrivilegeWarningEnabled_ ==
-              rhs.p->highPrivilegeWarningEnabled_);
+              rhs.p->highPrivilegeWarningEnabled_ &&
+           lhs.p->cursorIconScale_ == rhs.p->cursorIconScale_);
 }
 
 } // namespace scwx::qt::settings

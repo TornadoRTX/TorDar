@@ -146,6 +146,7 @@ public:
           &showSmoothedRangeFolding_,
           &updateNotificationsEnabled_,
           &cursorIconAlwaysOn_,
+          &cursorIconScale_,
           &debugEnabled_,
           &alertAudioSoundFile_,
           &alertAudioLocationMethod_,
@@ -266,6 +267,7 @@ public:
    settings::SettingsInterface<bool>         showSmoothedRangeFolding_ {};
    settings::SettingsInterface<bool>         updateNotificationsEnabled_ {};
    settings::SettingsInterface<bool>         cursorIconAlwaysOn_ {};
+   settings::SettingsInterface<double>       cursorIconScale_ {};
    settings::SettingsInterface<bool>         debugEnabled_ {};
 
    std::unordered_map<std::string, settings::SettingsInterface<std::string>>
@@ -810,6 +812,10 @@ void SettingsDialogImpl::SetupGeneralTab()
       .RegisterValueStagedCallback(radarSiteThresholdUpdateUnits);
    radarSiteThresholdUpdateUnits(
       settings::UnitSettings::Instance().distance_units().GetValue());
+
+   cursorIconScale_.SetSettingsVariable(generalSettings.cursor_icon_scale());
+   cursorIconScale_.SetEditWidget(self_->ui->cursorIconScaleSpinBox);
+   cursorIconScale_.SetResetButton(self_->ui->resetCursorIconScaleButton);
 
    antiAliasingEnabled_.SetSettingsVariable(
       generalSettings.anti_aliasing_enabled());

@@ -19,9 +19,13 @@ void Initialize();
 void Shutdown();
 
 std::shared_ptr<boost::gil::rgba8_image_t>
-LoadImageResource(const std::string& urlString);
+LoadImageResource(const std::string& urlString, double scale = 1);
+std::shared_ptr<boost::gil::rgba8_image_t>
+LoadImageResource(const std::string& urlString,
+                  const std::string& textureName,
+                  double             scale = 1);
 std::vector<std::shared_ptr<boost::gil::rgba8_image_t>>
-LoadImageResources(const std::vector<std::string>& urlStrings);
+     LoadImageResources(const std::vector<std::string>& urlStrings);
 void BuildAtlas();
 
 } // namespace ResourceManager
