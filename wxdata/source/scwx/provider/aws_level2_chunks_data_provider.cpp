@@ -101,10 +101,7 @@ public:
    Impl& operator=(Impl&&)      = delete;
 
    std::chrono::system_clock::time_point GetScanTime(const std::string& prefix);
-   int         GetScanNumber(const std::string& prefix);
-   std::string GetScanKey(const std::string&                           prefix,
-                          const std::chrono::system_clock::time_point& time,
-                          int                                          last);
+   int GetScanNumber(const std::string& prefix);
 
    bool                             LoadScan(Impl::ScanRecord& scanRecord);
    std::tuple<bool, size_t, size_t> ListObjects();
@@ -311,19 +308,6 @@ AwsLevel2ChunksDataProvider::Impl::GetScanTime(const std::string& prefix)
    return {};
 }
 
-std::string AwsLevel2ChunksDataProvider::Impl::GetScanKey(
-   const std::string&                           prefix,
-   const std::chrono::system_clock::time_point& time,
-   int                                          last)
-{
-
-   static const std::string timeFormat {"%Y%m%d-%H%M%S"};
-
-   // TODO
-   return fmt::format(
-      "{0}/{1:%Y%m%d-%H%M%S}-{2}", prefix, fmt::gmtime(time), last - 1);
-}
-
 std::tuple<bool, size_t, size_t>
 AwsLevel2ChunksDataProvider::Impl::ListObjects()
 {
@@ -406,23 +390,23 @@ AwsLevel2ChunksDataProvider::Impl::ListObjects()
             return {false, 0, 0};
          }
 
-         int lastScanNumber = -1;
-         std::chrono::system_clock::time_point lastScanTime = {};
-         std::string lastScanPrefix;
+         int                                   lastScanNumber = -1;
+         std::chrono::system_clock::time_point lastScanTime   = {};
+         std::string                           lastScanPrefix;
 
          for (const int scanNumber : possibleLastNumbers)
          {
             const std::string& scanPrefix = scanNumberMap.at(scanNumber);
-            auto scanTime = GetScanTime(scanPrefix);
+            auto               scanTime   = GetScanTime(scanPrefix);
             if (scanTime > lastScanTime)
             {
-               lastScanTime = scanTime;
+               lastScanTime   = scanTime;
                lastScanPrefix = scanPrefix;
                lastScanNumber = scanNumber;
             }
          }
 
-         const int          secondLastScanNumber =
+         const int secondLastScanNumber =
             // 999 is the last file possible
             // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
             lastScanNumber == 1 ? 999 : lastScanNumber - 1;
