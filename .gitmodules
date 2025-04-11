@@ -39,4 +39,4 @@
 	url = https://github.com/dpaulat/maplibre-gl-native.git
 [submodule "external/qt6ct"]
 	path = external/qt6ct
-	url = https://github.com/trialuser02/qt6ct.git
+	url = https://github.com/AdenKoperczak/qt6ct.git
