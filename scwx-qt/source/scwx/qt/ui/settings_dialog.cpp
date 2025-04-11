@@ -45,6 +45,7 @@
 #include <QGeoPositionInfo>
 #include <QPushButton>
 #include <QStandardItemModel>
+#include <QStandardPaths>
 #include <QToolButton>
 #include <utility>
 
@@ -585,8 +586,18 @@ void SettingsDialogImpl::SetupGeneralTab()
       {
          const settings::GeneralSettings& generalSettings =
             settings::GeneralSettings::Instance();
-         const QString file =
-            generalSettings.theme_file().GetStagedOrValue().c_str();
+         QString file = generalSettings.theme_file().GetStagedOrValue().c_str();
+
+         if (file.isEmpty())
+         {
+            const QString appDataPath {QStandardPaths::writableLocation(
+               QStandardPaths::AppLocalDataLocation)};
+            file = appDataPath + "/theme.conf";
+            self_->ui->themeFileLineEdit->setText(file);
+            // setText does not emit the textEdited signal
+            Q_EMIT self_->ui->themeFileLineEdit->textEdited(file);
+         }
+
          const QPalette palette =
             Qt6CT::loadColorScheme(file, QApplication::palette());
          QStyle* style = QApplication::style();
