@@ -267,6 +267,7 @@ MainWindow::MainWindow(QWidget* parent) :
    ui->vcpLabel->setVisible(false);
    ui->vcpValueLabel->setVisible(false);
    ui->vcpDescriptionLabel->setVisible(false);
+   ui->saveRadarProductsButton->setVisible(true);
 
    p->radarSitePresetsMenu_ = new QMenu(this);
    ui->radarSitePresetsButton->setMenu(p->radarSitePresetsMenu_);
@@ -326,6 +327,8 @@ MainWindow::MainWindow(QWidget* parent) :
       ui->smoothRadarDataCheckBox);
    p->mapSettingsGroup_->GetContentsLayout()->addWidget(
       ui->trackLocationCheckBox);
+   p->mapSettingsGroup_->GetContentsLayout()->addWidget(
+      ui->saveRadarProductsButton);
    ui->radarToolboxScrollAreaContents->layout()->replaceWidget(
       ui->mapSettingsGroupBox, p->mapSettingsGroup_);
    ui->mapSettingsGroupBox->setVisible(false);
@@ -1124,6 +1127,22 @@ void MainWindowImpl::ConnectOtherSignals()
               // Turn on location tracking
               positionManager_->TrackLocation(trackingEnabled);
            });
+   connect(mainWindow_->ui->saveRadarProductsButton,
+           &QAbstractButton::clicked,
+           mainWindow_,
+           [this]()
+           {
+              auto& mapSettings = settings::MapSettings::Instance();
+              for (std::size_t i = 0; i < maps_.size(); i++)
+              {
+                 const auto& map = maps_.at(i);
+                 mapSettings.radar_product_group(i).StageValue(
+                    common::GetRadarProductGroupName(
+                       map->GetRadarProductGroup()));
+                 mapSettings.radar_product(i).StageValue(
+                    map->GetRadarProductName());
+              }
+           });
    connect(level2ProductsWidget_,
            &ui::Level2ProductsWidget::RadarProductSelected,
            mainWindow_,
@@ -1509,6 +1528,8 @@ void MainWindowImpl::UpdateRadarProductSettings()
 void MainWindowImpl::UpdateRadarSite()
 {
    std::shared_ptr<config::RadarSite> radarSite = activeMap_->GetRadarSite();
+   const std::string                  homeRadarSite =
+      settings::GeneralSettings::Instance().default_radar_site().GetValue();
 
    if (radarSite != nullptr)
    {
@@ -1523,6 +1544,9 @@ void MainWindowImpl::UpdateRadarSite()
          radarSite->location_name().c_str());
 
       timelineManager_->SetRadarSite(radarSite->id());
+
+      mainWindow_->ui->saveRadarProductsButton->setVisible(
+            radarSite->id() == homeRadarSite);
    }
    else
    {
@@ -1530,6 +1554,7 @@ void MainWindowImpl::UpdateRadarSite()
 
       mainWindow_->ui->radarSiteValueLabel->setVisible(false);
       mainWindow_->ui->radarLocationLabel->setVisible(false);
+      mainWindow_->ui->saveRadarProductsButton->setVisible(false);
 
       timelineManager_->SetRadarSite("?");
    }
