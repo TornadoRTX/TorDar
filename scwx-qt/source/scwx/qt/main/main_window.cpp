@@ -1127,22 +1127,21 @@ void MainWindowImpl::ConnectOtherSignals()
               // Turn on location tracking
               positionManager_->TrackLocation(trackingEnabled);
            });
-   connect(mainWindow_->ui->saveRadarProductsButton,
-           &QAbstractButton::clicked,
-           mainWindow_,
-           [this]()
-           {
-              auto& mapSettings = settings::MapSettings::Instance();
-              for (std::size_t i = 0; i < maps_.size(); i++)
-              {
-                 const auto& map = maps_.at(i);
-                 mapSettings.radar_product_group(i).StageValue(
-                    common::GetRadarProductGroupName(
-                       map->GetRadarProductGroup()));
-                 mapSettings.radar_product(i).StageValue(
-                    map->GetRadarProductName());
-              }
-           });
+   connect(
+      mainWindow_->ui->saveRadarProductsButton,
+      &QAbstractButton::clicked,
+      mainWindow_,
+      [this]()
+      {
+         auto& mapSettings = settings::MapSettings::Instance();
+         for (std::size_t i = 0; i < maps_.size(); i++)
+         {
+            const auto& map = maps_.at(i);
+            mapSettings.radar_product_group(i).StageValue(
+               common::GetRadarProductGroupName(map->GetRadarProductGroup()));
+            mapSettings.radar_product(i).StageValue(map->GetRadarProductName());
+         }
+      });
    connect(level2ProductsWidget_,
            &ui::Level2ProductsWidget::RadarProductSelected,
            mainWindow_,
@@ -1545,8 +1544,8 @@ void MainWindowImpl::UpdateRadarSite()
 
       timelineManager_->SetRadarSite(radarSite->id());
 
-      mainWindow_->ui->saveRadarProductsButton->setVisible(
-            radarSite->id() == homeRadarSite);
+      mainWindow_->ui->saveRadarProductsButton->setVisible(radarSite->id() ==
+                                                           homeRadarSite);
    }
    else
    {
