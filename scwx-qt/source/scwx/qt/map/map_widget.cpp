@@ -275,7 +275,7 @@ public:
    bool productAvailabilityProductSelected_ {false};
 
    std::unordered_map<std::string, size_t> tiltsToIndices_;
-   size_t currentTiltIndex_ {0};
+   size_t                                  currentTiltIndex_ {0};
 
 public slots:
    void Update();
@@ -2163,7 +2163,6 @@ void MapWidgetImpl::CheckLevel3Availability()
                                   availableTilts[availableTilts.size() - 1],
                                   0,
                                   widget_->GetSelectedTime());
-
    }
    else
    {

@@ -1,3 +1,4 @@
+#include <scwx/common/characters.hpp>
 #include <scwx/qt/gl/draw/geo_icons.hpp>
 #include <scwx/qt/gl/draw/icons.hpp>
 #include <scwx/qt/gl/draw/rectangle.hpp>
@@ -426,15 +427,22 @@ void OverlayLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
    if (radarProductView != nullptr)
    {
       // Render product name
-      std::string productName = radarProductView->GetRadarProductName();
+      const std::string productName = radarProductView->GetRadarProductName();
+      const float       elevation   = radarProductView->elevation();
+
       if (productName.length() > 0 && !productName.starts_with('?'))
       {
+         const std::string elevationString =
+            (QString::number(elevation, 'f', 1) + common::Characters::DEGREE)
+               .toStdString();
+
          ImGui::SetNextWindowPos(ImVec2 {0.0f, 0.0f});
          ImGui::Begin("Product Name",
                       nullptr,
                       ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
                          ImGuiWindowFlags_AlwaysAutoResize);
-         ImGui::TextUnformatted(productName.c_str());
+         ImGui::TextUnformatted(
+            fmt::format("{} ({})", productName, elevationString).c_str());
          ImGui::End();
       }
    }
