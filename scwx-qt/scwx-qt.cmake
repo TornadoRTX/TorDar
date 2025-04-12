@@ -703,6 +703,7 @@ target_link_libraries(scwx-qt PUBLIC Qt${QT_VERSION_MAJOR}::Widgets
                                      glm::glm
                                      imgui
                                      qt6ct-common
+                                     qt6ct-widgets
                                      SQLite::SQLite3
                                      wxdata)
 

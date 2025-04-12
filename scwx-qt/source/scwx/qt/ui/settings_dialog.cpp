@@ -45,8 +45,14 @@
 #include <QGeoPositionInfo>
 #include <QPushButton>
 #include <QStandardItemModel>
+#include <QStandardPaths>
 #include <QToolButton>
 #include <utility>
+
+#define QT6CT_LIBRARY
+#include <qt6ct-common/qt6ct.h>
+#include <qt6ct/paletteeditdialog.h>
+#undef QT6CT_LIBRARY
 
 namespace scwx
 {
@@ -578,31 +584,49 @@ void SettingsDialogImpl::SetupGeneralTab()
       self_,
       [this]()
       {
-         static const std::string themeFilter = "Qt6Ct Theme File (*.conf)";
-         static const std::string allFilter   = "All Files (*)";
+         const settings::GeneralSettings& generalSettings =
+            settings::GeneralSettings::Instance();
+         QString file = generalSettings.theme_file().GetStagedOrValue().c_str();
 
-         QFileDialog* dialog = new QFileDialog(self_);
+         if (file.isEmpty())
+         {
+            const QString appDataPath {QStandardPaths::writableLocation(
+               QStandardPaths::AppLocalDataLocation)};
+            file = appDataPath + "/theme.conf";
+            self_->ui->themeFileLineEdit->setText(file);
+            // setText does not emit the textEdited signal
+            Q_EMIT self_->ui->themeFileLineEdit->textEdited(file);
+         }
 
-         dialog->setFileMode(QFileDialog::ExistingFile);
+         const QPalette palette =
+            Qt6CT::loadColorScheme(file, QApplication::palette());
+         QStyle* style = QApplication::style();
 
-         dialog->setNameFilters(
-            {QObject::tr(themeFilter.c_str()), QObject::tr(allFilter.c_str())});
+         // WA_DeleteOnClose manages memory
+         // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
+         auto* dialog = new PaletteEditDialog(palette, style, self_);
          dialog->setAttribute(Qt::WA_DeleteOnClose);
 
          QObject::connect(
             dialog,
-            &QFileDialog::fileSelected,
+            &QDialog::accepted,
             self_,
-            [this](const QString& file)
+            [dialog]()
             {
-               QString path = QDir::toNativeSeparators(file);
-               logger_->info("Selected theme file: {}", path.toStdString());
-               self_->ui->themeFileLineEdit->setText(path);
+               const QPalette palette = dialog->selectedPalette();
+               const settings::GeneralSettings& generalSettings =
+                  settings::GeneralSettings::Instance();
+               const QString file =
+                  generalSettings.theme_file().GetStagedOrValue().c_str();
+               Qt6CT::createColorScheme(file, palette);
 
-               // setText does not emit the textEdited signal
-               Q_EMIT self_->ui->themeFileLineEdit->textEdited(path);
+               auto uiStyle = scwx::qt::types::GetUiStyle(
+                  generalSettings.theme().GetValue());
+               if (uiStyle == scwx::qt::types::UiStyle::FusionCustom)
+               {
+                  QApplication::setPalette(palette);
+               }
             });
-
          dialog->open();
       });
 
