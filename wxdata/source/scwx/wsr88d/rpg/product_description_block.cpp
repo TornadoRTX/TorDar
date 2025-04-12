@@ -726,6 +726,8 @@ units::angle::degrees<double> ProductDescriptionBlock::elevation() const
 
    if (p->elevationNumber_ > 0)
    {
+      // Elevation is given in tenths of a degree
+      // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
       elevation = static_cast<int16_t>(p->parameters_[2]) * 0.1;
    }
 
