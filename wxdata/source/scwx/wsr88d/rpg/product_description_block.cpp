@@ -726,7 +726,7 @@ units::angle::degrees<double> ProductDescriptionBlock::elevation() const
 
    if (p->elevationNumber_ > 0)
    {
-      elevation = p->parameters_[2] * 0.1;
+      elevation = static_cast<int16_t>(p->parameters_[2]) * 0.1;
    }
 
    return units::angle::degrees<double> {elevation};
