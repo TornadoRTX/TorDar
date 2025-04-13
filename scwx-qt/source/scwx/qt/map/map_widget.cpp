@@ -615,7 +615,7 @@ common::Level3ProductCategoryMap MapWidget::GetAvailableLevel3Categories()
    }
 }
 
-float MapWidget::GetElevation() const
+std::optional<float> MapWidget::GetElevation() const
 {
    auto radarProductView = p->context_->radar_product_view();
 
@@ -625,7 +625,7 @@ float MapWidget::GetElevation() const
    }
    else
    {
-      return 0.0f;
+      return {};
    }
 }
 

@@ -428,21 +428,30 @@ void OverlayLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
    {
       // Render product name
       const std::string productName = radarProductView->GetRadarProductName();
-      const float       elevation   = radarProductView->elevation();
+      const std::optional<float> elevation = radarProductView->elevation();
 
       if (productName.length() > 0 && !productName.starts_with('?'))
       {
-         const std::string elevationString =
-            (QString::number(elevation, 'f', 1) + common::Characters::DEGREE)
-               .toStdString();
-
          ImGui::SetNextWindowPos(ImVec2 {0.0f, 0.0f});
          ImGui::Begin("Product Name",
                       nullptr,
                       ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
                          ImGuiWindowFlags_AlwaysAutoResize);
-         ImGui::TextUnformatted(
-            fmt::format("{} ({})", productName, elevationString).c_str());
+
+         if (elevation.has_value())
+         {
+            const std::string elevationString =
+               (QString::number(*elevation, 'f', 1) +
+                common::Characters::DEGREE)
+                  .toStdString();
+            ImGui::TextUnformatted(
+               fmt::format("{} ({})", productName, elevationString).c_str());
+         }
+         else
+         {
+            ImGui::TextUnformatted(productName.c_str());
+         }
+
          ImGui::End();
       }
    }

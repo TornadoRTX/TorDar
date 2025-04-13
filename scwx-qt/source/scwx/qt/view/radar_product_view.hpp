@@ -16,11 +16,7 @@
 #include <QObject>
 #include <boost/asio/thread_pool.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace view
+namespace scwx::qt::view
 {
 
 class RadarProductViewImpl;
@@ -32,20 +28,27 @@ class RadarProductView : public QObject
 public:
    explicit RadarProductView(
       std::shared_ptr<manager::RadarProductManager> radarProductManager);
-   virtual ~RadarProductView();
+   ~RadarProductView() override;
 
-   virtual std::shared_ptr<common::ColorTable> color_table() const = 0;
-   virtual const std::vector<boost::gil::rgba8_pixel_t>&
-                                                 color_table_lut() const;
-   virtual std::uint16_t                         color_table_min() const;
-   virtual std::uint16_t                         color_table_max() const;
-   virtual float                                 elevation() const;
-   virtual float                                 range() const;
-   virtual std::chrono::system_clock::time_point sweep_time() const;
-   virtual float                                 unit_scale() const = 0;
-   virtual std::string                           units() const      = 0;
-   virtual std::uint16_t                         vcp() const        = 0;
-   virtual const std::vector<float>&             vertices() const   = 0;
+   RadarProductView(const RadarProductView&)            = delete;
+   RadarProductView(RadarProductView&&)                 = delete;
+   RadarProductView& operator=(const RadarProductView&) = delete;
+   RadarProductView& operator=(RadarProductView&&)      = delete;
+
+   [[nodiscard]] virtual std::shared_ptr<common::ColorTable>
+   color_table() const = 0;
+   [[nodiscard]] virtual const std::vector<boost::gil::rgba8_pixel_t>&
+                                              color_table_lut() const;
+   [[nodiscard]] virtual std::uint16_t        color_table_min() const;
+   [[nodiscard]] virtual std::uint16_t        color_table_max() const;
+   [[nodiscard]] virtual std::optional<float> elevation() const;
+   [[nodiscard]] virtual float                range() const;
+   [[nodiscard]] virtual std::chrono::system_clock::time_point
+                                                   sweep_time() const;
+   [[nodiscard]] virtual float                     unit_scale() const = 0;
+   [[nodiscard]] virtual std::string               units() const      = 0;
+   [[nodiscard]] virtual std::uint16_t             vcp() const        = 0;
+   [[nodiscard]] virtual const std::vector<float>& vertices() const   = 0;
 
    [[nodiscard]] std::shared_ptr<manager::RadarProductManager>
    radar_product_manager() const;
@@ -66,24 +69,26 @@ public:
    void         SelectTime(std::chrono::system_clock::time_point time);
    void         Update();
 
-   bool IsInitialized() const;
+   [[nodiscard]] bool IsInitialized() const;
 
-   virtual common::RadarProductGroup GetRadarProductGroup() const = 0;
-   virtual std::string               GetRadarProductName() const  = 0;
-   virtual std::vector<float>        GetElevationCuts() const;
-   virtual std::tuple<const void*, std::size_t, std::size_t>
+   [[nodiscard]] virtual common::RadarProductGroup
+                                            GetRadarProductGroup() const = 0;
+   [[nodiscard]] virtual std::string        GetRadarProductName() const  = 0;
+   [[nodiscard]] virtual std::vector<float> GetElevationCuts() const;
+   [[nodiscard]] virtual std::tuple<const void*, std::size_t, std::size_t>
    GetMomentData() const = 0;
-   virtual std::tuple<const void*, std::size_t, std::size_t>
+   [[nodiscard]] virtual std::tuple<const void*, std::size_t, std::size_t>
    GetCfpMomentData() const;
 
-   virtual std::optional<std::uint16_t>
+   [[nodiscard]] virtual std::optional<std::uint16_t>
    GetBinLevel(const common::Coordinate& coordinate) const = 0;
-   virtual std::optional<wsr88d::DataLevelCode>
-                                GetDataLevelCode(std::uint16_t level) const = 0;
-   virtual std::optional<float> GetDataValue(std::uint16_t level) const     = 0;
-   virtual bool                 IgnoreUnits() const;
+   [[nodiscard]] virtual std::optional<wsr88d::DataLevelCode>
+   GetDataLevelCode(std::uint16_t level) const = 0;
+   [[nodiscard]] virtual std::optional<float>
+                              GetDataValue(std::uint16_t level) const = 0;
+   [[nodiscard]] virtual bool IgnoreUnits() const;
 
-   virtual std::vector<std::pair<std::string, std::string>>
+   [[nodiscard]] virtual std::vector<std::pair<std::string, std::string>>
    GetDescriptionFields() const;
 
 protected:
@@ -105,6 +110,4 @@ private:
    std::unique_ptr<RadarProductViewImpl> p;
 };
 
-} // namespace view
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::view

@@ -271,7 +271,7 @@ uint16_t Level2ProductView::color_table_max() const
    }
 }
 
-float Level2ProductView::elevation() const
+std::optional<float> Level2ProductView::elevation() const
 {
    return p->elevationCut_;
 }

@@ -6,11 +6,7 @@
 #include <memory>
 #include <vector>
 
-namespace scwx
-{
-namespace qt
-{
-namespace view
+namespace scwx::qt::view
 {
 
 class Level3RadialView : public Level3ProductView
@@ -21,19 +17,24 @@ public:
    explicit Level3RadialView(
       const std::string&                            product,
       std::shared_ptr<manager::RadarProductManager> radarProductManager);
-   ~Level3RadialView();
+   ~Level3RadialView() override;
 
-   [[nodiscard]] float elevation() const override;
-   [[nodiscard]] float range() const override;
+   Level3RadialView(const Level3RadialView&)            = delete;
+   Level3RadialView(Level3RadialView&&)                 = delete;
+   Level3RadialView& operator=(const Level3RadialView&) = delete;
+   Level3RadialView& operator=(Level3RadialView&&)      = delete;
+
+   [[nodiscard]] std::optional<float> elevation() const override;
+   [[nodiscard]] float                range() const override;
    [[nodiscard]] std::chrono::system_clock::time_point
                                            sweep_time() const override;
    [[nodiscard]] std::uint16_t             vcp() const override;
    [[nodiscard]] const std::vector<float>& vertices() const override;
 
-   std::tuple<const void*, std::size_t, std::size_t>
+   [[nodiscard]] std::tuple<const void*, std::size_t, std::size_t>
    GetMomentData() const override;
 
-   std::optional<std::uint16_t>
+   [[nodiscard]] std::optional<std::uint16_t>
    GetBinLevel(const common::Coordinate& coordinate) const override;
 
    static std::shared_ptr<Level3RadialView>
@@ -51,6 +52,4 @@ private:
    std::unique_ptr<Impl> p;
 };
 
-} // namespace view
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::view

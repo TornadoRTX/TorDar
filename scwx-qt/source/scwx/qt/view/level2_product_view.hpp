@@ -8,11 +8,7 @@
 #include <memory>
 #include <vector>
 
-namespace scwx
-{
-namespace qt
-{
-namespace view
+namespace scwx::qt::view
 {
 
 class Level2ProductView : public RadarProductView
@@ -23,38 +19,47 @@ public:
    explicit Level2ProductView(
       common::Level2Product                         product,
       std::shared_ptr<manager::RadarProductManager> radarProductManager);
-   ~Level2ProductView();
+   ~Level2ProductView() override;
 
-   std::shared_ptr<common::ColorTable> color_table() const override;
-   const std::vector<boost::gil::rgba8_pixel_t>&
-                                         color_table_lut() const override;
-   std::uint16_t                         color_table_min() const override;
-   std::uint16_t                         color_table_max() const override;
-   float                                 elevation() const override;
-   float                                 range() const override;
-   std::chrono::system_clock::time_point sweep_time() const override;
-   float                                 unit_scale() const override;
-   std::string                           units() const override;
-   std::uint16_t                         vcp() const override;
-   const std::vector<float>&             vertices() const override;
+   Level2ProductView(const Level2ProductView&)            = delete;
+   Level2ProductView(Level2ProductView&&)                 = delete;
+   Level2ProductView& operator=(const Level2ProductView&) = delete;
+   Level2ProductView& operator=(Level2ProductView&&)      = delete;
+
+   [[nodiscard]] std::shared_ptr<common::ColorTable>
+   color_table() const override;
+   [[nodiscard]] const std::vector<boost::gil::rgba8_pixel_t>&
+                                      color_table_lut() const override;
+   [[nodiscard]] std::uint16_t        color_table_min() const override;
+   [[nodiscard]] std::uint16_t        color_table_max() const override;
+   [[nodiscard]] std::optional<float> elevation() const override;
+   [[nodiscard]] float                range() const override;
+   [[nodiscard]] std::chrono::system_clock::time_point
+                                           sweep_time() const override;
+   [[nodiscard]] float                     unit_scale() const override;
+   [[nodiscard]] std::string               units() const override;
+   [[nodiscard]] std::uint16_t             vcp() const override;
+   [[nodiscard]] const std::vector<float>& vertices() const override;
 
    void LoadColorTable(std::shared_ptr<common::ColorTable> colorTable) override;
    void SelectElevation(float elevation) override;
    void SelectProduct(const std::string& productName) override;
 
-   common::RadarProductGroup GetRadarProductGroup() const override;
-   std::string               GetRadarProductName() const override;
-   std::vector<float>        GetElevationCuts() const override;
-   std::tuple<const void*, std::size_t, std::size_t>
+   [[nodiscard]] common::RadarProductGroup
+                                    GetRadarProductGroup() const override;
+   [[nodiscard]] std::string        GetRadarProductName() const override;
+   [[nodiscard]] std::vector<float> GetElevationCuts() const override;
+   [[nodiscard]] std::tuple<const void*, std::size_t, std::size_t>
    GetMomentData() const override;
-   std::tuple<const void*, std::size_t, std::size_t>
+   [[nodiscard]] std::tuple<const void*, std::size_t, std::size_t>
    GetCfpMomentData() const override;
 
-   std::optional<std::uint16_t>
+   [[nodiscard]] std::optional<std::uint16_t>
    GetBinLevel(const common::Coordinate& coordinate) const override;
-   std::optional<wsr88d::DataLevelCode>
-                        GetDataLevelCode(std::uint16_t level) const override;
-   std::optional<float> GetDataValue(std::uint16_t level) const override;
+   [[nodiscard]] std::optional<wsr88d::DataLevelCode>
+   GetDataLevelCode(std::uint16_t level) const override;
+   [[nodiscard]] std::optional<float>
+   GetDataValue(std::uint16_t level) const override;
 
    static std::shared_ptr<Level2ProductView>
    Create(common::Level2Product                         product,
@@ -75,6 +80,4 @@ private:
    std::unique_ptr<Impl> p;
 };
 
-} // namespace view
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::view
