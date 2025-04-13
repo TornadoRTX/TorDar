@@ -6,6 +6,7 @@ find_package(Boost)
 find_package(cpr)
 find_package(LibXml2)
 find_package(OpenSSL)
+find_package(range-v3)
 find_package(re2)
 find_package(spdlog)
 
@@ -303,6 +304,7 @@ target_link_libraries(wxdata PUBLIC aws-cpp-sdk-core
                                     cpr::cpr
                                     LibXml2::LibXml2
                                     OpenSSL::Crypto
+                                    range-v3::range-v3
                                     re2::re2
                                     spdlog::spdlog
                                     units::units)
