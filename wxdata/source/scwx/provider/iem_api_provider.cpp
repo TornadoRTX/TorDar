@@ -6,7 +6,9 @@
 
 #include <boost/json.hpp>
 #include <cpr/cpr.h>
+#include <range/v3/range/conversion.hpp>
 #include <range/v3/view/cartesian_product.hpp>
+#include <range/v3/view/single.hpp>
 
 #if (__cpp_lib_chrono < 201907L)
 #   include <date/date.h>
@@ -50,17 +52,18 @@ IemApiProvider::ListTextProducts(std::chrono::sys_time<std::chrono::days> date,
    std::string_view pil =
       optionalPil.has_value() ? optionalPil.value() : std::string_view {};
 
-   return ListTextProducts(
-      std::vector<std::chrono::sys_time<std::chrono::days>> {date},
-      {cccc},
-      {pil});
+   const auto dateArray = std::array {date};
+   const auto ccccArray = std::array {cccc};
+   const auto pilArray  = std::array {pil};
+
+   return ListTextProducts(dateArray, ccccArray, pilArray);
 }
 
 boost::outcome_v2::result<std::vector<std::string>>
 IemApiProvider::ListTextProducts(
-   std::vector<std::chrono::sys_time<std::chrono::days>> dates,
-   std::vector<std::string_view>                         ccccs,
-   std::vector<std::string_view>                         pils)
+   ranges::any_view<std::chrono::sys_time<std::chrono::days>> dates,
+   ranges::any_view<std::string_view>                         ccccs,
+   ranges::any_view<std::string_view>                         pils)
 {
    using namespace std::chrono;
 
@@ -75,20 +78,24 @@ IemApiProvider::ListTextProducts(
 #   define kDateFormat "%Y-%m-%d"
 #endif
 
-   if (ccccs.empty())
+   if (ccccs.begin() == ccccs.end())
    {
-      ccccs.push_back({});
+      ccccs = ranges::views::single(std::string_view {});
    }
 
-   if (pils.empty())
+   if (pils.begin() == pils.end())
    {
-      pils.push_back({});
+      pils = ranges::views::single(std::string_view {});
    }
+
+   const auto dv = ranges::to<std::vector>(dates);
+   const auto cv = ranges::to<std::vector>(ccccs);
+   const auto pv = ranges::to<std::vector>(pils);
 
    std::vector<cpr::AsyncResponse> responses {};
 
    for (const auto& [date, cccc, pil] :
-        ranges::views::cartesian_product(dates, ccccs, pils))
+        ranges::views::cartesian_product(dv, cv, pv))
    {
       auto parameters =
          cpr::Parameters {{"date", df::format(kDateFormat, date)}};
