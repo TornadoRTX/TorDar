@@ -1283,7 +1283,7 @@ void MainWindowImpl::ConnectOtherSignals()
       generalSettings.default_radar_site().changed_signal().connect(
          [this]()
          {
-            std::shared_ptr<config::RadarSite> radarSite =
+            const std::shared_ptr<config::RadarSite> radarSite =
                activeMap_->GetRadarSite();
             const std::string homeRadarSite =
                settings::GeneralSettings::Instance()
@@ -1291,8 +1291,7 @@ void MainWindowImpl::ConnectOtherSignals()
                   .GetValue();
             if (radarSite == nullptr)
             {
-               mainWindow_->ui->saveRadarProductsButton->setVisible(
-                  false);
+               mainWindow_->ui->saveRadarProductsButton->setVisible(false);
             }
             else
             {

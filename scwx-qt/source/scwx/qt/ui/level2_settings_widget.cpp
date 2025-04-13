@@ -243,7 +243,7 @@ void Level2SettingsWidget::UpdateElevationSelection(float elevation)
 void Level2SettingsWidget::UpdateSettings(map::MapWidget* activeMap)
 {
    std::optional<float> currentElevationOption = activeMap->GetElevation();
-   float                currentElevation =
+   const float          currentElevation =
       currentElevationOption.has_value() ? *currentElevationOption : 0.0f;
    std::vector<float> elevationCuts    = activeMap->GetElevationCuts();
 
