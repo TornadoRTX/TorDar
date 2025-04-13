@@ -15,6 +15,8 @@
 #include <boost/asio/post.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/thread_pool.hpp>
+#include <range/v3/view/any_view.hpp>
+#include <range/v3/view/filter.hpp>
 
 namespace scwx
 {
@@ -89,18 +91,15 @@ public:
 
    void
    HandleMessage(const std::shared_ptr<awips::TextProductMessage>& message);
-   void LoadArchive(std::chrono::sys_days date, const std::string& pil);
-   void LoadArchives(std::chrono::sys_days date);
+   void LoadArchives(ranges::any_view<std::chrono::sys_days> dates);
    void RefreshAsync();
    void Refresh();
-   void UpdateArchiveDates(std::chrono::sys_days date);
+   void UpdateArchiveDates(ranges::any_view<std::chrono::sys_days> dates);
 
    // Thread pool sized for:
    // - Live Refresh (1x)
-   // - Archive Loading (15x)
-   //   - 3 day window (3x)
-   //   - TOR, SVR, SVS, FFW, FFS (5x)
-   boost::asio::thread_pool threadPool_ {16u};
+   // - Archive Loading (1x)
+   boost::asio::thread_pool threadPool_ {2u};
 
    TextEventManager* self_;
 
@@ -123,10 +122,8 @@ public:
 
    std::mutex                       archiveMutex_ {};
    std::list<std::chrono::sys_days> archiveDates_ {};
-   std::map<
-      std::chrono::sys_days,
-      std::unordered_map<std::string,
-                         std::vector<std::shared_ptr<awips::TextProductFile>>>>
+   std::map<std::chrono::sys_days,
+            std::vector<std::shared_ptr<awips::TextProductFile>>>
       archiveMap_;
 
    boost::uuids::uuid warningsProviderChangedCallbackUuid_ {};
@@ -212,16 +209,17 @@ void TextEventManager::SelectTime(
    const auto today     = std::chrono::floor<std::chrono::days>(dateTime);
    const auto yesterday = today - std::chrono::days {1};
    const auto tomorrow  = today + std::chrono::days {1};
-   const auto dates     = {today, yesterday, tomorrow};
+   const auto dateArray = std::array {today, yesterday, tomorrow};
 
-   for (auto& date : dates)
-   {
-      if (p->archiveLimit_ == std::chrono::sys_days {} ||
-          date < p->archiveLimit_)
-      {
-         p->LoadArchives(date);
-      }
-   }
+   const ranges::any_view<std::chrono::sys_days> dates =
+      dateArray | ranges::views::filter(
+                     [this](const auto& date)
+                     {
+                        return p->archiveLimit_ == std::chrono::sys_days {} ||
+                               date < p->archiveLimit_;
+                     });
+
+   p->LoadArchives(dates);
 }
 
 void TextEventManager::Impl::HandleMessage(
@@ -283,7 +281,8 @@ void TextEventManager::Impl::HandleMessage(
          it->second.end(),
          message,
          [](const std::shared_ptr<awips::TextProductMessage>& a,
-            const std::shared_ptr<awips::TextProductMessage>& b) {
+            const std::shared_ptr<awips::TextProductMessage>& b)
+         {
             return a->wmo_header()->GetDateTime() <
                    b->wmo_header()->GetDateTime();
          });
@@ -302,26 +301,27 @@ void TextEventManager::Impl::HandleMessage(
    }
 }
 
-void TextEventManager::Impl::LoadArchive(std::chrono::sys_days date,
-                                         const std::string&    pil)
+void TextEventManager::Impl::LoadArchives(
+   ranges::any_view<std::chrono::sys_days> dates)
 {
+   UpdateArchiveDates(dates);
+
    std::unique_lock lock {archiveMutex_};
-   auto&            dateArchive = archiveMap_[date];
-   if (dateArchive.contains(pil))
-   {
-      // Don't reload data that has already been loaded
-      return;
-   }
+
+   // Don't reload data that has already been loaded
+   const ranges::any_view<std::chrono::sys_days> filteredDates =
+      dates | ranges::views::filter([this](const auto& date)
+                                    { return !archiveMap_.contains(date); });
+
    lock.unlock();
 
-   logger_->debug("Load Archive: {}, {}", util::TimeString(date), pil);
-
    // Query for products
-   const auto& productIds = iemApiProvider_->ListTextProducts(date, {}, pil);
+   const auto& productIds =
+      iemApiProvider_->ListTextProducts(filteredDates, {}, kPils_);
 
    if (productIds.has_value())
    {
-      logger_->debug("Loading {} {} products", productIds.value().size(), pil);
+      logger_->debug("Loading {} products", productIds.value().size());
 
       // Load listed products
       auto products = iemApiProvider_->LoadTextProducts(productIds.value());
@@ -338,27 +338,14 @@ void TextEventManager::Impl::LoadArchive(std::chrono::sys_days date,
 
       lock.lock();
 
-      // Ensure the archive map still contains the date, and has not been pruned
-      if (archiveMap_.contains(date))
+      for (const auto& date : dates)
       {
-         // Store the products associated with the PIL in the archive
-         dateArchive.try_emplace(pil, std::move(products));
+         archiveMap_[date];
+
+         // TODO: Store the products in the archive
       }
 
       lock.unlock();
-   }
-}
-
-void TextEventManager::Impl::LoadArchives(std::chrono::sys_days date)
-{
-   logger_->trace("Load Archives: {}", util::TimeString(date));
-
-   UpdateArchiveDates(date);
-
-   for (auto& pil : kPils_)
-   {
-      boost::asio::post(threadPool_,
-                        [this, date, &pil]() { LoadArchive(date, pil); });
    }
 }
 
@@ -445,13 +432,17 @@ void TextEventManager::Impl::Refresh()
       });
 }
 
-void TextEventManager::Impl::UpdateArchiveDates(std::chrono::sys_days date)
+void TextEventManager::Impl::UpdateArchiveDates(
+   ranges::any_view<std::chrono::sys_days> dates)
 {
    std::unique_lock lock {archiveMutex_};
 
-   // Remove any existing occurrences of day, and add to the back of the list
-   archiveDates_.remove(date);
-   archiveDates_.push_back(date);
+   for (const auto& date : dates)
+   {
+      // Remove any existing occurrences of day, and add to the back of the list
+      archiveDates_.remove(date);
+      archiveDates_.push_back(date);
+   }
 }
 
 std::shared_ptr<TextEventManager> TextEventManager::Instance()
