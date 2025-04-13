@@ -2097,6 +2097,10 @@ void MapWidgetImpl::CheckLevel3Availability()
 
    // Get radar product view for fallback and level2 selection
    auto radarProductView = context_->radar_product_view();
+   if (radarProductView == nullptr)
+   {
+      return;
+   }
 
    // Only do this for level3 products
    if (widget_->GetRadarProductGroup() != common::RadarProductGroup::Level3)
