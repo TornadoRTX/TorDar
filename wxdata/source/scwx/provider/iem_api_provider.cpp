@@ -6,6 +6,7 @@
 
 #include <boost/json.hpp>
 #include <cpr/cpr.h>
+#include <range/v3/view/cartesian_product.hpp>
 
 #if (__cpp_lib_chrono < 201907L)
 #   include <date/date.h>
@@ -41,8 +42,25 @@ IemApiProvider& IemApiProvider::operator=(IemApiProvider&&) noexcept = default;
 
 boost::outcome_v2::result<std::vector<std::string>>
 IemApiProvider::ListTextProducts(std::chrono::sys_time<std::chrono::days> date,
-                                 std::optional<std::string_view>          cccc,
-                                 std::optional<std::string_view>          pil)
+                                 std::optional<std::string_view> optionalCccc,
+                                 std::optional<std::string_view> optionalPil)
+{
+   std::string_view cccc =
+      optionalCccc.has_value() ? optionalCccc.value() : std::string_view {};
+   std::string_view pil =
+      optionalPil.has_value() ? optionalPil.value() : std::string_view {};
+
+   return ListTextProducts(
+      std::vector<std::chrono::sys_time<std::chrono::days>> {date},
+      {cccc},
+      {pil});
+}
+
+boost::outcome_v2::result<std::vector<std::string>>
+IemApiProvider::ListTextProducts(
+   std::vector<std::chrono::sys_time<std::chrono::days>> dates,
+   std::vector<std::string_view>                         ccccs,
+   std::vector<std::string_view>                         pils)
 {
    using namespace std::chrono;
 
@@ -57,93 +75,120 @@ IemApiProvider::ListTextProducts(std::chrono::sys_time<std::chrono::days> date,
 #   define kDateFormat "%Y-%m-%d"
 #endif
 
-   auto parameters = cpr::Parameters {{"date", df::format(kDateFormat, date)}};
-
-   // WMO Source Code
-   if (cccc.has_value())
+   if (ccccs.empty())
    {
-      parameters.Add({"cccc", std::string {cccc.value()}});
+      ccccs.push_back({});
    }
 
-   // AFOS / AWIPS ID / 3-6 length identifier
-   if (pil.has_value())
+   if (pils.empty())
    {
-      parameters.Add({"pil", std::string {pil.value()}});
+      pils.push_back({});
    }
 
-   auto response =
-      cpr::Get(cpr::Url {kBaseUrl_ + kListNwsTextProductsEndpoint_},
-               network::cpr::GetHeader(),
-               parameters);
-   boost::json::value json = util::json::ReadJsonString(response.text);
+   std::vector<cpr::AsyncResponse> responses {};
+
+   for (const auto& [date, cccc, pil] :
+        ranges::views::cartesian_product(dates, ccccs, pils))
+   {
+      auto parameters =
+         cpr::Parameters {{"date", df::format(kDateFormat, date)}};
+
+      // WMO Source Code
+      if (!cccc.empty())
+      {
+         parameters.Add({"cccc", std::string {cccc}});
+      }
+
+      // AFOS / AWIPS ID / 3-6 length identifier
+      if (!pil.empty())
+      {
+         parameters.Add({"pil", std::string {pil}});
+      }
+
+      responses.emplace_back(
+         cpr::GetAsync(cpr::Url {kBaseUrl_ + kListNwsTextProductsEndpoint_},
+                       network::cpr::GetHeader(),
+                       parameters));
+   }
 
    std::vector<std::string> textProducts {};
 
-   if (response.status_code == cpr::status::HTTP_OK)
+   for (auto& asyncResponse : responses)
    {
-      try
-      {
-         // Get AFOS list from response
-         auto entries = boost::json::value_to<types::iem::AfosList>(json);
+      auto response = asyncResponse.get();
 
-         for (auto& entry : entries.data_)
+      boost::json::value json = util::json::ReadJsonString(response.text);
+
+      if (response.status_code == cpr::status::HTTP_OK)
+      {
+         try
          {
-            textProducts.push_back(entry.productId_);
+            // Get AFOS list from response
+            auto entries = boost::json::value_to<types::iem::AfosList>(json);
+
+            for (auto& entry : entries.data_)
+            {
+               textProducts.push_back(entry.productId_);
+            }
+
+            logger_->trace("Found {} products", entries.data_.size());
+         }
+         catch (const std::exception& ex)
+         {
+            // Unexpected bad response
+            logger_->warn("Error parsing JSON: {}", ex.what());
+            return boost::system::errc::make_error_code(
+               boost::system::errc::bad_message);
+         }
+      }
+      else if (response.status_code == cpr::status::HTTP_BAD_REQUEST &&
+               json != nullptr)
+      {
+         try
+         {
+            // Log bad request details
+            auto badRequest =
+               boost::json::value_to<types::iem::BadRequest>(json);
+            logger_->warn("ListTextProducts bad request: {}",
+                          badRequest.detail_);
+         }
+         catch (const std::exception& ex)
+         {
+            // Unexpected bad response
+            logger_->warn("Error parsing bad response: {}", ex.what());
          }
 
-         logger_->trace("Found {} products", entries.data_.size());
-      }
-      catch (const std::exception& ex)
-      {
-         // Unexpected bad response
-         logger_->warn("Error parsing JSON: {}", ex.what());
          return boost::system::errc::make_error_code(
-            boost::system::errc::bad_message);
+            boost::system::errc::invalid_argument);
       }
-   }
-   else if (response.status_code == cpr::status::HTTP_BAD_REQUEST &&
-            json != nullptr)
-   {
-      try
+      else if (response.status_code == cpr::status::HTTP_UNPROCESSABLE_ENTITY &&
+               json != nullptr)
       {
-         // Log bad request details
-         auto badRequest = boost::json::value_to<types::iem::BadRequest>(json);
-         logger_->warn("ListTextProducts bad request: {}", badRequest.detail_);
-      }
-      catch (const std::exception& ex)
-      {
-         // Unexpected bad response
-         logger_->warn("Error parsing bad response: {}", ex.what());
-      }
+         try
+         {
+            // Log validation error details
+            auto error =
+               boost::json::value_to<types::iem::ValidationError>(json);
+            logger_->warn("ListTextProducts validation error: {}",
+                          error.detail_.at(0).msg_);
+         }
+         catch (const std::exception& ex)
+         {
+            // Unexpected bad response
+            logger_->warn("Error parsing validation error: {}", ex.what());
+         }
 
-      return boost::system::errc::make_error_code(
-         boost::system::errc::invalid_argument);
-   }
-   else if (response.status_code == cpr::status::HTTP_UNPROCESSABLE_ENTITY &&
-            json != nullptr)
-   {
-      try
-      {
-         // Log validation error details
-         auto error = boost::json::value_to<types::iem::ValidationError>(json);
-         logger_->warn("ListTextProducts validation error: {}",
-                       error.detail_.at(0).msg_);
+         return boost::system::errc::make_error_code(
+            boost::system::errc::no_message_available);
       }
-      catch (const std::exception& ex)
+      else
       {
-         // Unexpected bad response
-         logger_->warn("Error parsing validation error: {}", ex.what());
+         logger_->warn("Could not list text products: {}",
+                       response.status_line);
+
+         return boost::system::errc::make_error_code(
+            boost::system::errc::no_message);
       }
-
-      return boost::system::errc::make_error_code(
-         boost::system::errc::no_message_available);
-   }
-   else
-   {
-      logger_->warn("Could not list text products: {}", response.status_line);
-
-      return boost::system::errc::make_error_code(
-         boost::system::errc::no_message);
    }
 
    return textProducts;
