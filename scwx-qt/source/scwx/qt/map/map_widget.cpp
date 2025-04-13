@@ -2095,14 +2095,19 @@ void MapWidgetImpl::CheckLevel3Availability()
    }
    productAvailabilityCheckNeeded_ = false;
 
+   // Get radar product view for fallback and level2 selection
+   auto radarProductView = context_->radar_product_view();
+
    // Only do this for level3 products
    if (widget_->GetRadarProductGroup() != common::RadarProductGroup::Level3)
    {
+      widget_->SelectRadarProduct(radarProductView->GetRadarProductGroup(),
+                                  radarProductView->GetRadarProductName(),
+                                  0,
+                                  radarProductView->selected_time(),
+                                  false);
       return;
    }
-
-   // Get radar product view for fallback selection
-   auto radarProductView = context_->radar_product_view();
 
    const common::Level3ProductCategoryMap& categoryMap =
       widget_->GetAvailableLevel3Categories();
