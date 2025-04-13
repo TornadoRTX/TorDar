@@ -139,6 +139,8 @@ public:
    }
    ~MainWindowImpl()
    {
+      homeRadarConnection_.disconnect();
+
       auto& generalSettings = settings::GeneralSettings::Instance();
 
       auto& customStyleUrl       = generalSettings.custom_style_url();
@@ -238,6 +240,8 @@ public:
    std::set<std::tuple<types::LayerType, types::LayerDescription, QAction*>>
         layerActions_ {};
    bool layerActionsInitialized_ {false};
+
+   boost::signals2::scoped_connection homeRadarConnection_ {};
 
    std::vector<map::MapWidget*> maps_;
 
@@ -1273,6 +1277,29 @@ void MainWindowImpl::ConnectOtherSignals()
               timeLabel_->setVisible(true);
            });
    clockTimer_.start(1000);
+
+   auto& generalSettings = settings::GeneralSettings::Instance();
+   homeRadarConnection_ =
+      generalSettings.default_radar_site().changed_signal().connect(
+         [this]()
+         {
+            std::shared_ptr<config::RadarSite> radarSite =
+               activeMap_->GetRadarSite();
+            const std::string homeRadarSite =
+               settings::GeneralSettings::Instance()
+                  .default_radar_site()
+                  .GetValue();
+            if (radarSite == nullptr)
+            {
+               mainWindow_->ui->saveRadarProductsButton->setVisible(
+                  false);
+            }
+            else
+            {
+               mainWindow_->ui->saveRadarProductsButton->setVisible(
+                  radarSite->id() == homeRadarSite);
+            }
+         });
 }
 
 void MainWindowImpl::InitializeLayerDisplayActions()
