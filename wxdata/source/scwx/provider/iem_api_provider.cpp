@@ -1,6 +1,5 @@
 #include <scwx/provider/iem_api_provider.hpp>
 #include <scwx/network/cpr.hpp>
-#include <scwx/types/iem_types.hpp>
 #include <scwx/util/json.hpp>
 #include <scwx/util/logger.hpp>
 
@@ -42,7 +41,7 @@ IemApiProvider::~IemApiProvider() = default;
 IemApiProvider::IemApiProvider(IemApiProvider&&) noexcept            = default;
 IemApiProvider& IemApiProvider::operator=(IemApiProvider&&) noexcept = default;
 
-boost::outcome_v2::result<std::vector<std::string>>
+boost::outcome_v2::result<std::vector<types::iem::AfosEntry>>
 IemApiProvider::ListTextProducts(std::chrono::sys_time<std::chrono::days> date,
                                  std::optional<std::string_view> optionalCccc,
                                  std::optional<std::string_view> optionalPil)
@@ -59,7 +58,7 @@ IemApiProvider::ListTextProducts(std::chrono::sys_time<std::chrono::days> date,
    return ListTextProducts(dateArray, ccccArray, pilArray);
 }
 
-boost::outcome_v2::result<std::vector<std::string>>
+boost::outcome_v2::result<std::vector<types::iem::AfosEntry>>
 IemApiProvider::ListTextProducts(
    ranges::any_view<std::chrono::sys_time<std::chrono::days>> dates,
    ranges::any_view<std::string_view>                         ccccs,
@@ -118,7 +117,7 @@ IemApiProvider::ListTextProducts(
                        parameters));
    }
 
-   std::vector<std::string> textProducts {};
+   std::vector<types::iem::AfosEntry> textProducts {};
 
    for (auto& asyncResponse : responses)
    {
@@ -132,13 +131,9 @@ IemApiProvider::ListTextProducts(
          {
             // Get AFOS list from response
             auto entries = boost::json::value_to<types::iem::AfosList>(json);
-
-            for (auto& entry : entries.data_)
-            {
-               textProducts.push_back(entry.productId_);
-            }
-
-            logger_->trace("Found {} products", entries.data_.size());
+            textProducts.insert(textProducts.end(),
+                                std::make_move_iterator(entries.data_.begin()),
+                                std::make_move_iterator(entries.data_.end()));
          }
          catch (const std::exception& ex)
          {
@@ -197,6 +192,8 @@ IemApiProvider::ListTextProducts(
             boost::system::errc::no_message);
       }
    }
+
+   logger_->trace("Found {} products", textProducts.size());
 
    return textProducts;
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <scwx/awips/text_product_file.hpp>
+#include <scwx/types/iem_types.hpp>
 
 #include <memory>
 #include <string>
@@ -36,11 +37,12 @@ public:
    IemApiProvider(IemApiProvider&&) noexcept;
    IemApiProvider& operator=(IemApiProvider&&) noexcept;
 
-   static boost::outcome_v2::result<std::vector<std::string>>
+   static boost::outcome_v2::result<std::vector<types::iem::AfosEntry>>
    ListTextProducts(std::chrono::sys_time<std::chrono::days> date,
                     std::optional<std::string_view>          cccc = {},
                     std::optional<std::string_view>          pil  = {});
-   static boost::outcome_v2::result<std::vector<std::string>> ListTextProducts(
+   static boost::outcome_v2::result<std::vector<types::iem::AfosEntry>>
+   ListTextProducts(
       ranges::any_view<std::chrono::sys_time<std::chrono::days>> dates,
       ranges::any_view<std::string_view>                         ccccs = {},
       ranges::any_view<std::string_view>                         pils  = {});

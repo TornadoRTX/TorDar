@@ -23,11 +23,13 @@ TEST(IemApiProviderTest, ListTextProducts)
 
    if (torProducts.value().size() >= 1)
    {
-      EXPECT_EQ(torProducts.value().at(0), "202303250016-KMEG-WFUS54-TORMEG");
+      EXPECT_EQ(torProducts.value().at(0).productId_,
+                "202303250016-KMEG-WFUS54-TORMEG");
    }
    if (torProducts.value().size() >= 35)
    {
-      EXPECT_EQ(torProducts.value().at(34), "202303252015-KFFC-WFUS52-TORFFC");
+      EXPECT_EQ(torProducts.value().at(34).productId_,
+                "202303252015-KFFC-WFUS52-TORFFC");
    }
 }
 
