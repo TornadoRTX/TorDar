@@ -85,9 +85,9 @@ std::uint16_t RadarProductView::color_table_max() const
    return kDefaultColorTableMax_;
 }
 
-float RadarProductView::elevation() const
+std::optional<float> RadarProductView::elevation() const
 {
-   return 0.0f;
+   return {};
 }
 
 std::shared_ptr<manager::RadarProductManager>

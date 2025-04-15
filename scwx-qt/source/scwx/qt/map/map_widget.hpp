@@ -9,6 +9,7 @@
 
 #include <chrono>
 #include <memory>
+#include <optional>
 
 #include <qmaplibre.hpp>
 
@@ -41,7 +42,7 @@ public:
 
    [[nodiscard]] common::Level3ProductCategoryMap
                                            GetAvailableLevel3Categories();
-   [[nodiscard]] float                     GetElevation() const;
+   [[nodiscard]] std::optional<float>      GetElevation() const;
    [[nodiscard]] std::vector<float>        GetElevationCuts() const;
    [[nodiscard]] std::vector<std::string>  GetLevel3Products();
    [[nodiscard]] std::string               GetMapStyle() const;

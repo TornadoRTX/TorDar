@@ -724,12 +724,19 @@ units::angle::degrees<double> ProductDescriptionBlock::elevation() const
 {
    double elevation = 0.0;
 
-   if (p->elevationNumber_ > 0)
+   if (has_elevation())
    {
-      elevation = p->parameters_[2] * 0.1;
+      // Elevation is given in tenths of a degree
+      // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
+      elevation = static_cast<int16_t>(p->parameters_[2]) * 0.1;
    }
 
    return units::angle::degrees<double> {elevation};
+}
+
+bool ProductDescriptionBlock::has_elevation() const
+{
+   return p->elevationNumber_ > 0;
 }
 
 bool ProductDescriptionBlock::IsCompressionEnabled() const

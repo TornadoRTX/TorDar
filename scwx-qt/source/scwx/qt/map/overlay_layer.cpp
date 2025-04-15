@@ -1,3 +1,4 @@
+#include <scwx/common/characters.hpp>
 #include <scwx/qt/gl/draw/geo_icons.hpp>
 #include <scwx/qt/gl/draw/icons.hpp>
 #include <scwx/qt/gl/draw/rectangle.hpp>
@@ -426,7 +427,9 @@ void OverlayLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
    if (radarProductView != nullptr)
    {
       // Render product name
-      std::string productName = radarProductView->GetRadarProductName();
+      const std::string productName = radarProductView->GetRadarProductName();
+      const std::optional<float> elevation = radarProductView->elevation();
+
       if (productName.length() > 0 && !productName.starts_with('?'))
       {
          ImGui::SetNextWindowPos(ImVec2 {0.0f, 0.0f});
@@ -434,7 +437,21 @@ void OverlayLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
                       nullptr,
                       ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
                          ImGuiWindowFlags_AlwaysAutoResize);
-         ImGui::TextUnformatted(productName.c_str());
+
+         if (elevation.has_value())
+         {
+            const std::string elevationString =
+               (QString::number(*elevation, 'f', 1) +
+                common::Characters::DEGREE)
+                  .toStdString();
+            ImGui::TextUnformatted(
+               fmt::format("{} ({})", productName, elevationString).c_str());
+         }
+         else
+         {
+            ImGui::TextUnformatted(productName.c_str());
+         }
+
          ImGui::End();
       }
    }

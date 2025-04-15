@@ -98,7 +98,8 @@ public:
        prevLongitude_ {0.0},
        prevZoom_ {0.0},
        prevBearing_ {0.0},
-       prevPitch_ {0.0}
+       prevPitch_ {0.0},
+       tiltsToIndices_ {}
    {
       // Create views
       auto overlayProductView = std::make_shared<view::OverlayProductView>();
@@ -272,6 +273,9 @@ public:
    bool productAvailabilityCheckNeeded_ {false};
    bool productAvailabilityUpdated_ {false};
    bool productAvailabilityProductSelected_ {false};
+
+   std::unordered_map<std::string, size_t> tiltsToIndices_;
+   size_t                                  currentTiltIndex_ {0};
 
 public slots:
    void Update();
@@ -611,7 +615,7 @@ common::Level3ProductCategoryMap MapWidget::GetAvailableLevel3Categories()
    }
 }
 
-float MapWidget::GetElevation() const
+std::optional<float> MapWidget::GetElevation() const
 {
    auto radarProductView = p->context_->radar_product_view();
 
@@ -621,7 +625,7 @@ float MapWidget::GetElevation() const
    }
    else
    {
-      return 0.0f;
+      return {};
    }
 }
 
@@ -829,6 +833,17 @@ void MapWidget::SelectRadarProduct(common::RadarProductGroup group,
       productCode = common::GetLevel3ProductCodeByAwipsId(productName);
    }
 
+   if (group == common::RadarProductGroup::Level3)
+   {
+      const auto& tiltIndex = p->tiltsToIndices_.find(productName);
+      p->currentTiltIndex_ =
+         tiltIndex != p->tiltsToIndices_.cend() ? tiltIndex->second : 0;
+   }
+   else
+   {
+      p->currentTiltIndex_ = 0;
+   }
+
    if (radarProductView == nullptr ||
        radarProductView->GetRadarProductGroup() != group ||
        (radarProductView->GetRadarProductGroup() ==
@@ -933,11 +948,6 @@ void MapWidget::SelectRadarSite(std::shared_ptr<config::RadarSite> radarSite,
       if (radarProductView != nullptr)
       {
          radarProductView->set_radar_product_manager(p->radarProductManager_);
-         SelectRadarProduct(radarProductView->GetRadarProductGroup(),
-                            radarProductView->GetRadarProductName(),
-                            0,
-                            radarProductView->selected_time(),
-                            false);
       }
 
       p->AddLayers();
@@ -1756,6 +1766,24 @@ void MapWidgetImpl::RadarProductManagerConnect()
               this,
               [this]()
               {
+                 const common::Level3ProductCategoryMap& categoryMap =
+                    widget_->GetAvailableLevel3Categories();
+
+                 tiltsToIndices_.clear();
+                 for (const auto& category : categoryMap)
+                 {
+                    for (const auto& product : category.second)
+                    {
+                       for (size_t tiltIndex = 0;
+                            tiltIndex < product.second.size();
+                            tiltIndex++)
+                       {
+                          tiltsToIndices_.emplace(product.second[tiltIndex],
+                                                  tiltIndex);
+                       }
+                    }
+                 }
+
                  productAvailabilityUpdated_ = true;
                  CheckLevel3Availability();
                  Q_EMIT widget_->Level3ProductsChanged();
@@ -2058,7 +2086,7 @@ void MapWidgetImpl::CheckLevel3Availability()
     * has been updated
     *
     * productAvailabilityProductSelected_ Only update once the radar site is
-    * fully selected, including the current product
+    * fully selected
     */
    if (!(productAvailabilityCheckNeeded_ && productAvailabilityUpdated_ &&
          productAvailabilityProductSelected_))
@@ -2067,9 +2095,21 @@ void MapWidgetImpl::CheckLevel3Availability()
    }
    productAvailabilityCheckNeeded_ = false;
 
+   // Get radar product view for fallback and level2 selection
+   auto radarProductView = context_->radar_product_view();
+   if (radarProductView == nullptr)
+   {
+      return;
+   }
+
    // Only do this for level3 products
    if (widget_->GetRadarProductGroup() != common::RadarProductGroup::Level3)
    {
+      widget_->SelectRadarProduct(radarProductView->GetRadarProductGroup(),
+                                  radarProductView->GetRadarProductName(),
+                                  0,
+                                  radarProductView->selected_time(),
+                                  false);
       return;
    }
 
@@ -2083,6 +2123,12 @@ void MapWidgetImpl::CheckLevel3Availability()
       common::GetLevel3CategoryByProduct(productName);
    if (productCategory == common::Level3ProductCategory::Unknown)
    {
+      // Default to the same as already selected
+      widget_->SelectRadarProduct(radarProductView->GetRadarProductGroup(),
+                                  radarProductView->GetRadarProductName(),
+                                  0,
+                                  radarProductView->selected_time(),
+                                  false);
       return;
    }
 
@@ -2090,38 +2136,53 @@ void MapWidgetImpl::CheckLevel3Availability()
    // Has no products in this category, do not change categories
    if (availableProductsIt == categoryMap.cend())
    {
+      // Default to the same as already selected
+      widget_->SelectRadarProduct(radarProductView->GetRadarProductGroup(),
+                                  radarProductView->GetRadarProductName(),
+                                  0,
+                                  radarProductView->selected_time(),
+                                  false);
       return;
    }
 
    const auto& availableProducts = availableProductsIt->second;
    const auto& availableTiltsIt  = availableProducts.find(productName);
-   // Does not have the same product, but has others in the same category.
-   // Switch to the default product and tilt in this category.
-   if (availableTiltsIt == availableProducts.cend())
-   {
-      widget_->SelectRadarProduct(
-         common::RadarProductGroup::Level3,
-         common::GetLevel3CategoryDefaultProduct(productCategory, categoryMap),
-         0,
-         widget_->GetSelectedTime());
-      return;
-   }
 
-   const auto& availableTilts = availableTiltsIt->second;
-   const auto& tilt           = std::ranges::find_if(
-      availableTilts,
-      [productTilt](const std::string& tilt) { return productTilt == tilt; });
-   // Tilt is not available, set it to first tilt
-   if (tilt == availableTilts.cend() && availableTilts.size() > 0)
+   const auto& availableTilts =
+      availableTiltsIt == availableProducts.cend() ?
+         // Does not have the same product, but has others in the same category.
+         // Switch to the default product and tilt in this category.
+         availableProducts.at(common::GetLevel3ProductByAwipsId(
+            common::GetLevel3CategoryDefaultProduct(productCategory,
+                                                    categoryMap))) :
+         // Has the same product
+         availableTiltsIt->second;
+
+   // Try to match the tilt to the last tilt.
+   if (currentTiltIndex_ < availableTilts.size())
    {
       widget_->SelectRadarProduct(common::RadarProductGroup::Level3,
-                                  availableTilts[0],
+                                  availableTilts[currentTiltIndex_],
                                   0,
                                   widget_->GetSelectedTime());
-      return;
    }
-
-   // Tilt is available, no change needed
+   else if (availableTilts.size() > 0)
+   {
+      widget_->SelectRadarProduct(common::RadarProductGroup::Level3,
+                                  availableTilts[availableTilts.size() - 1],
+                                  0,
+                                  widget_->GetSelectedTime());
+   }
+   else
+   {
+      // No tilts available in this case, default to the same as already
+      // selected
+      widget_->SelectRadarProduct(radarProductView->GetRadarProductGroup(),
+                                  radarProductView->GetRadarProductName(),
+                                  0,
+                                  radarProductView->selected_time(),
+                                  false);
+   }
 }
 
 } // namespace map

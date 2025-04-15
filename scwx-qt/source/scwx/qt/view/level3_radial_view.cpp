@@ -67,6 +67,7 @@ public:
 
    float         latitude_;
    float         longitude_;
+   std::optional<float> elevation_ {};
    float         range_;
    std::uint16_t vcp_;
 
@@ -89,6 +90,11 @@ Level3RadialView::~Level3RadialView()
 boost::asio::thread_pool& Level3RadialView::thread_pool()
 {
    return p->threadPool_;
+}
+
+std::optional<float> Level3RadialView::elevation() const
+{
+   return p->elevation_;
 }
 
 float Level3RadialView::range() const
@@ -306,6 +312,10 @@ void Level3RadialView::ComputeSweep()
    p->latitude_  = descriptionBlock->latitude_of_radar();
    p->longitude_ = descriptionBlock->longitude_of_radar();
    p->range_     = descriptionBlock->range();
+   p->elevation_ =
+      descriptionBlock->has_elevation() ?
+         static_cast<float>(descriptionBlock->elevation().value()) :
+         std::optional<float> {};
    p->sweepTime_ =
       scwx::util::TimePoint(descriptionBlock->volume_scan_date(),
                             descriptionBlock->volume_scan_start_time() * 1000);

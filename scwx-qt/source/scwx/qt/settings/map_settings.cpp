@@ -76,7 +76,7 @@ public:
             {
                common::RadarProductGroup radarProductGroup =
                   common::GetRadarProductGroup(
-                     map_.at(i).radarProductGroup_.GetValue());
+                     map_.at(i).radarProductGroup_.GetStagedOrValue());
 
                if (radarProductGroup == common::RadarProductGroup::Level2)
                {
@@ -193,6 +193,8 @@ bool MapSettings::Shutdown()
 
       dataChanged |= mapRecordSettings.mapStyle_.Commit();
       dataChanged |= mapRecordSettings.smoothingEnabled_.Commit();
+      dataChanged |= mapRecordSettings.radarProductGroup_.Commit();
+      dataChanged |= mapRecordSettings.radarProduct_.Commit();
    }
 
    return dataChanged;
