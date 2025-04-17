@@ -692,6 +692,7 @@ target_link_libraries(scwx-qt PUBLIC Qt${QT_VERSION_MAJOR}::Widgets
                                      Qt${QT_VERSION_MAJOR}::Positioning
                                      Qt${QT_VERSION_MAJOR}::SerialPort
                                      Qt${QT_VERSION_MAJOR}::Svg
+                                     atomic
                                      Boost::json
                                      Boost::timer
                                      QMapLibre::Core
