@@ -1,10 +1,10 @@
 #include <scwx/provider/iem_api_provider.hpp>
-#include <scwx/network/cpr.hpp>
 #include <scwx/util/json.hpp>
 #include <scwx/util/logger.hpp>
 
 #include <boost/json.hpp>
 #include <cpr/cpr.h>
+#include <range/v3/iterator/operations.hpp>
 #include <range/v3/range/conversion.hpp>
 #include <range/v3/view/cartesian_product.hpp>
 #include <range/v3/view/single.hpp>
@@ -19,10 +19,12 @@ namespace scwx::provider
 static const std::string logPrefix_ = "scwx::provider::iem_api_provider";
 static const auto        logger_    = util::Logger::Create(logPrefix_);
 
-static const std::string kBaseUrl_ = "https://mesonet.agron.iastate.edu/api/1";
+const std::string IemApiProvider::kBaseUrl_ =
+   "https://mesonet.agron.iastate.edu/api/1";
 
-static const std::string kListNwsTextProductsEndpoint_ = "/nws/afos/list.json";
-static const std::string kNwsTextProductEndpoint_      = "/nwstext/";
+const std::string IemApiProvider::kListNwsTextProductsEndpoint_ =
+   "/nws/afos/list.json";
+const std::string IemApiProvider::kNwsTextProductEndpoint_ = "/nwstext/";
 
 class IemApiProvider::Impl
 {
@@ -199,25 +201,9 @@ IemApiProvider::ListTextProducts(
 }
 
 std::vector<std::shared_ptr<awips::TextProductFile>>
-IemApiProvider::LoadTextProducts(const std::vector<std::string>& textProducts)
+IemApiProvider::ProcessTextProductResponses(
+   std::vector<std::pair<std::string, cpr::AsyncResponse>>& asyncResponses)
 {
-   auto parameters = cpr::Parameters {{"nolimit", "true"}};
-
-   std::vector<std::pair<const std::string&, cpr::AsyncResponse>>
-      asyncResponses {};
-   asyncResponses.reserve(textProducts.size());
-
-   const std::string endpointUrl = kBaseUrl_ + kNwsTextProductEndpoint_;
-
-   for (auto& productId : textProducts)
-   {
-      asyncResponses.emplace_back(
-         productId,
-         cpr::GetAsync(cpr::Url {endpointUrl + productId},
-                       network::cpr::GetHeader(),
-                       parameters));
-   }
-
    std::vector<std::shared_ptr<awips::TextProductFile>> textProductFiles;
 
    for (auto& asyncResponse : asyncResponses)

@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <list>
 #include <map>
+#include <ranges>
 #include <shared_mutex>
 #include <unordered_map>
 
@@ -148,9 +149,8 @@ public:
 
    std::mutex                       archiveMutex_ {};
    std::list<std::chrono::sys_days> archiveDates_ {};
-   std::map<std::chrono::sys_days,
-            std::vector<std::shared_ptr<awips::TextProductFile>>>
-      archiveMap_;
+
+   std::mutex unloadedProductMapMutex_ {};
    std::map<std::chrono::sys_days,
             boost::container::stable_vector<scwx::types::iem::AfosEntry>>
       unloadedProductMap_;
@@ -248,6 +248,9 @@ void TextEventManager::SelectTime(
                                date < p->archiveLimit_;
                      });
 
+   std::unique_lock lock {p->archiveMutex_};
+
+   p->UpdateArchiveDates(dates);
    p->ListArchives(dates);
    p->LoadArchives(dateTime);
 }
@@ -334,17 +337,11 @@ void TextEventManager::Impl::HandleMessage(
 void TextEventManager::Impl::ListArchives(
    ranges::any_view<std::chrono::sys_days> dates)
 {
-   std::unique_lock lock {archiveMutex_};
-
-   UpdateArchiveDates(dates);
-
    // Don't reload data that has already been loaded
    ranges::any_view<std::chrono::sys_days> filteredDates =
       dates |
       ranges::views::filter([this](const auto& date)
                             { return !unloadedProductMap_.contains(date); });
-
-   lock.unlock();
 
    const auto dv = ranges::to<std::vector>(filteredDates);
 
@@ -359,14 +356,15 @@ void TextEventManager::Impl::ListArchives(
          auto productEntries =
             iemApiProvider_->ListTextProducts(dateArray, {}, kPils_);
 
-         std::unique_lock lock {archiveMutex_};
+         std::unique_lock lock {unloadedProductMapMutex_};
 
          if (productEntries.has_value())
          {
             unloadedProductMap_.try_emplace(
                date,
-               {std::make_move_iterator(productEntries.value().begin()),
-                std::make_move_iterator(productEntries.value().end())});
+               boost::container::stable_vector<scwx::types::iem::AfosEntry> {
+                  std::make_move_iterator(productEntries.value().begin()),
+                  std::make_move_iterator(productEntries.value().end())});
          }
       });
 }
@@ -409,9 +407,7 @@ void TextEventManager::Impl::LoadArchives(
             df::format(kDateFormat, (dateTime + loadWindow.second.second))});
    }
 
-   std::vector<scwx::types::iem::AfosEntry> loadList {};
-
-   std::unique_lock lock {archiveMutex_};
+   std::vector<scwx::types::iem::AfosEntry> loadListEntries {};
 
    for (auto date : boost::irange(startDate, endDate))
    {
@@ -441,7 +437,7 @@ void TextEventManager::Impl::LoadArchives(
                if (windowStart <= productId && productId <= windowEnd)
                {
                   // Product matches, move it to the load list
-                  loadList.emplace_back(std::move(*it));
+                  loadListEntries.emplace_back(std::move(*it));
                   it = mapIt->second.erase(it);
                   continue;
                }
@@ -453,33 +449,21 @@ void TextEventManager::Impl::LoadArchives(
       }
    }
 
-   if (productIds.has_value())
+   // Load the load list
+   auto loadView = loadListEntries |
+                   std::ranges::views::transform([](const auto& entry)
+                                                 { return entry.productId_; });
+   auto products = iemApiProvider_->LoadTextProducts(loadView);
+
+   // Process loaded products
+   for (auto& product : products)
    {
-      logger_->debug("Loading {} products", productIds.value().size());
+      const auto& messages = product->messages();
 
-      // Load listed products
-      auto products = iemApiProvider_->LoadTextProducts(productIds.value());
-
-      for (auto& product : products)
+      for (auto& message : messages)
       {
-         const auto& messages = product->messages();
-
-         for (auto& message : messages)
-         {
-            HandleMessage(message);
-         }
+         HandleMessage(message);
       }
-
-      lock.lock();
-
-      for (const auto& date : dates)
-      {
-         archiveMap_[date];
-
-         // TODO: Store the products in the archive
-      }
-
-      lock.unlock();
    }
 }
 
