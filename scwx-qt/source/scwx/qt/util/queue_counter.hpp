@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include <atomic>
+#include <boost/atomic/atomic.hpp>
 
 namespace scwx::qt::util
 {
@@ -54,7 +54,7 @@ public:
     * otherwise
     */
    static constexpr bool is_always_lock_free =
-      std::atomic<size_t>::is_always_lock_free;
+      boost::atomic<size_t>::is_always_lock_free;
 
 private:
    class Impl;

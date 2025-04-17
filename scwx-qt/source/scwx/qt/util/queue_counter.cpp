@@ -1,6 +1,6 @@
 #include <scwx/qt/util/queue_counter.hpp>
 
-#include <atomic>
+#include <boost/atomic/atomic.hpp>
 
 namespace scwx::qt::util
 {
@@ -10,8 +10,8 @@ class QueueCounter::Impl
 public:
    explicit Impl(size_t maxCount) : maxCount_ {maxCount} {}
 
-   const size_t        maxCount_;
-   std::atomic<size_t> count_ {0};
+   const size_t          maxCount_;
+   boost::atomic<size_t> count_ {0};
 };
 
 QueueCounter::QueueCounter(size_t maxCount) :
