@@ -686,13 +686,17 @@ else()
     target_compile_options(supercell-wx PRIVATE "$<$<CONFIG:Release>:-g>")
 endif()
 
+# link atomic only for Linux
+if (!MSVC)
+    target_link_libraries(scwx-qt PUBLIC atomic)
+endif()
+
 target_link_libraries(scwx-qt PUBLIC Qt${QT_VERSION_MAJOR}::Widgets
                                      Qt${QT_VERSION_MAJOR}::OpenGLWidgets
                                      Qt${QT_VERSION_MAJOR}::Multimedia
                                      Qt${QT_VERSION_MAJOR}::Positioning
                                      Qt${QT_VERSION_MAJOR}::SerialPort
                                      Qt${QT_VERSION_MAJOR}::Svg
-                                     atomic
                                      Boost::json
                                      Boost::timer
                                      QMapLibre::Core
