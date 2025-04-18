@@ -568,6 +568,15 @@ Ar2vFile::Ar2vFile(const std::shared_ptr<Ar2vFile>& current,
                continue;
             }
 
+            // Add previous scans for stepping back in time
+            for (auto scan = ++(elevation.second.rbegin());
+                 scan != elevation.second.rend();
+                 ++scan)
+            {
+               p->index_[type.first][elevation.first][scan->first] =
+                  scan->second;
+            }
+
             // Merge this scan with the last one if it is incomplete
             if (IsRadarDataIncomplete(mostRecent->second))
             {
