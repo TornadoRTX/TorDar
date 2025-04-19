@@ -1,6 +1,6 @@
 # TorDar (Tornado Radar)
 
-Tornado Radar (TorDar for short) is currently in devolpment and is based off of Supercell WX, which is free and open source. TorDar will feature a more modern and updated UI than Supercell WX.
+Tornado Radar (TorDar for short) is currently in devolpment and is a fork of Supercell WX, which is free and open source. TorDar will feature a more modern and updated UI than Supercell WX.
 
 Go check out Supercell WX here: https://github.com/dpaulat/supercell-wx
 
