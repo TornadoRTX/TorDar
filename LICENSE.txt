@@ -1,5 +1,6 @@
-The MIT License (MIT)
+# Supercell WX License
 
+The MIT License (MIT)
 Copyright (c) 2021-2024 Dan Paulat
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,3 +20,9 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+# Tornado Radar (TorDar) License
+
+This software will be free of charge, and any person can download this "Software" at will.
+
+THE SOFTWARE WILL BE PROVIDED WITHOUT ANY WARRANTY.
