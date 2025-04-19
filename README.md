@@ -4,6 +4,6 @@ Tornado Radar (TorDar for short) is currently in devolpment and is based off of 
 
 Go check out Supercell WX here: https://github.com/dpaulat/supercell-wx
 
-TorDar will only be available on Windows at launch, but may be fitted to other operating systems at a later date.
+TorDar will only be available on Windows at launch, but may be fitted to other operating systems at a later date. (Not guaranteed)
 
 More updates will be shown here for devolpment, as well as a trailer on YouTube once TorDar is ready to be released into Beta.
