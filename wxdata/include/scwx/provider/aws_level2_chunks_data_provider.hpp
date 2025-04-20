@@ -1,6 +1,7 @@
 #pragma once
 
 #include <scwx/provider/nexrad_data_provider.hpp>
+#include <scwx/provider/aws_level2_data_provider.hpp>
 
 #include <optional>
 
@@ -60,6 +61,9 @@ public:
    std::vector<std::string> GetAvailableProducts() override;
 
    std::optional<float> GetCurrentElevation();
+
+   void SetLevel2DataProvider(
+      const std::shared_ptr<AwsLevel2DataProvider>& provider);
 
 private:
    class Impl;

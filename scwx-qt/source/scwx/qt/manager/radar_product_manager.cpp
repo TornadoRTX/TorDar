@@ -151,6 +151,16 @@ public:
       level2ChunksProviderManager_->provider_ =
          provider::NexradDataProviderFactory::CreateLevel2ChunksDataProvider(
             radarId);
+
+      auto level2ChunksProvider =
+         std::dynamic_pointer_cast<provider::AwsLevel2ChunksDataProvider>(
+            level2ChunksProviderManager_->provider_);
+      if (level2ChunksProvider != nullptr)
+      {
+         level2ChunksProvider->SetLevel2DataProvider(
+            std::dynamic_pointer_cast<provider::AwsLevel2DataProvider>(
+               level2ProviderManager_->provider_));
+      }
    }
    ~RadarProductManagerImpl()
    {
