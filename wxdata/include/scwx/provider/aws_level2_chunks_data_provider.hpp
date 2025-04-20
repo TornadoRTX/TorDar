@@ -2,6 +2,8 @@
 
 #include <scwx/provider/nexrad_data_provider.hpp>
 
+#include <optional>
+
 namespace Aws::S3
 {
 class S3Client;
@@ -16,7 +18,6 @@ namespace scwx::provider
 class AwsLevel2ChunksDataProvider : public NexradDataProvider
 {
 public:
-   constexpr static const float INVALID_ELEVATION = -90.0;
    explicit AwsLevel2ChunksDataProvider(const std::string& radarSite);
    explicit AwsLevel2ChunksDataProvider(const std::string& radarSite,
                                         const std::string& bucketName,
@@ -58,7 +59,7 @@ public:
    void                     RequestAvailableProducts() override;
    std::vector<std::string> GetAvailableProducts() override;
 
-   float GetCurrentElevation();
+   std::optional<float> GetCurrentElevation();
 
 private:
    class Impl;

@@ -272,8 +272,7 @@ public:
    common::Level3ProductCategoryMap availableCategoryMap_ {};
    std::shared_mutex                availableCategoryMutex_ {};
 
-   float incomingLevel2Elevation_ {
-      provider::AwsLevel2ChunksDataProvider::INVALID_ELEVATION};
+   std::optional<float> incomingLevel2Elevation_ {};
 
    std::unordered_map<boost::uuids::uuid,
                       std::shared_ptr<ProviderManager>,
@@ -454,7 +453,7 @@ float RadarProductManager::gate_size() const
    return (is_tdwr()) ? 150.0f : 250.0f;
 }
 
-float RadarProductManager::incoming_level_2_elevation() const
+std::optional<float> RadarProductManager::incoming_level_2_elevation() const
 {
    return p->incomingLevel2Elevation_;
 }
@@ -1552,7 +1551,7 @@ RadarProductManager::GetLevel2Data(wsr88d::rda::DataBlockType dataBlockType,
             scwx::util::TimePoint(radarData0->modified_julian_date(),
                                   radarData0->collection_time()));
 
-         const float incomingElevation =
+         const std::optional<float> incomingElevation =
             std::dynamic_pointer_cast<provider::AwsLevel2ChunksDataProvider>(
                p->level2ChunksProviderManager_->provider_)
                ->GetCurrentElevation();
@@ -1597,14 +1596,11 @@ RadarProductManager::GetLevel2Data(wsr88d::rda::DataBlockType dataBlockType,
                   elevationCuts = std::move(recordElevationCuts);
                   foundTime     = collectionTime;
 
-                  if (p->incomingLevel2Elevation_ !=
-                      provider::AwsLevel2ChunksDataProvider::INVALID_ELEVATION)
+                  if (!p->incomingLevel2Elevation_.has_value())
                   {
-                     p->incomingLevel2Elevation_ = provider::
-                        AwsLevel2ChunksDataProvider::INVALID_ELEVATION;
+                     p->incomingLevel2Elevation_ = {};
                      Q_EMIT IncomingLevel2ElevationChanged(
-                        provider::AwsLevel2ChunksDataProvider::
-                           INVALID_ELEVATION);
+                        p->incomingLevel2Elevation_);
                   }
                }
             }

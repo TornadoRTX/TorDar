@@ -656,7 +656,7 @@ std::vector<float> MapWidget::GetElevationCuts() const
    }
 }
 
-float MapWidget::GetIncomingLevel2Elevation() const
+std::optional<float> MapWidget::GetIncomingLevel2Elevation() const
 {
    return p->radarProductManager_->incoming_level_2_elevation();
 }
@@ -1804,7 +1804,7 @@ void MapWidgetImpl::RadarProductManagerConnect()
       connect(radarProductManager_.get(),
               &manager::RadarProductManager::IncomingLevel2ElevationChanged,
               this,
-              [this](float incomingElevation)
+              [this](std::optional<float> incomingElevation)
               {
                  Q_EMIT widget_->IncomingLevel2ElevationChanged(
                     incomingElevation);

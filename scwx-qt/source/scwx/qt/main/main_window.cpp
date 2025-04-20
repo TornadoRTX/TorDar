@@ -967,7 +967,8 @@ void MainWindowImpl::ConnectMapSignals()
          mapWidget,
          &map::MapWidget::IncomingLevel2ElevationChanged,
          this,
-         [this](float) { level2SettingsWidget_->UpdateSettings(activeMap_); },
+         [this](std::optional<float>)
+         { level2SettingsWidget_->UpdateSettings(activeMap_); },
          Qt::QueuedConnection);
    }
 }

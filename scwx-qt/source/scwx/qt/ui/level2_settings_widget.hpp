@@ -2,6 +2,8 @@
 
 #include <scwx/qt/map/map_widget.hpp>
 
+#include <optional>
+
 namespace scwx
 {
 namespace qt
@@ -23,7 +25,7 @@ public:
    void showEvent(QShowEvent* event) override;
 
    void UpdateElevationSelection(float elevation);
-   void UpdateIncomingElevation(float incomingElevation);
+   void UpdateIncomingElevation(std::optional<float> incomingElevation);
    void UpdateSettings(map::MapWidget* activeMap);
 
 signals:

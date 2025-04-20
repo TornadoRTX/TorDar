@@ -699,12 +699,12 @@ AwsLevel2ChunksDataProvider::AwsLevel2ChunksDataProvider(
 AwsLevel2ChunksDataProvider& AwsLevel2ChunksDataProvider::operator=(
    AwsLevel2ChunksDataProvider&&) noexcept = default;
 
-float AwsLevel2ChunksDataProvider::GetCurrentElevation()
+std::optional<float> AwsLevel2ChunksDataProvider::GetCurrentElevation()
 {
    if (!p->currentScan_.valid_ || p->currentScan_.nexradFile_ == nullptr)
    {
       // Does not have any scan elevation. -90 is beyond what is possible
-      return INVALID_ELEVATION;
+      return {};
    }
 
    auto vcpData   = p->currentScan_.nexradFile_->vcp_data();
@@ -712,7 +712,7 @@ float AwsLevel2ChunksDataProvider::GetCurrentElevation()
    if (radarData.size() == 0)
    {
       // Does not have any scan elevation. -90 is beyond what is possible
-      return INVALID_ELEVATION;
+      return {};
    }
 
    const auto& lastElevation = radarData.crbegin();
@@ -729,7 +729,7 @@ float AwsLevel2ChunksDataProvider::GetCurrentElevation()
       return digitalRadarData0->elevation_angle().value();
    }
 
-   return INVALID_ELEVATION;
+   return {};
 }
 
 } // namespace scwx::provider

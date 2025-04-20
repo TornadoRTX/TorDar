@@ -242,11 +242,19 @@ void Level2SettingsWidget::UpdateElevationSelection(float elevation)
    p->currentElevationButton_ = newElevationButton;
 }
 
-void Level2SettingsWidget::UpdateIncomingElevation(float incomingElevation)
+void Level2SettingsWidget::UpdateIncomingElevation(
+   std::optional<float> incomingElevation)
 {
-   p->incomingElevationLabel_->setText(
-      "Incoming Elevation: " + QString::number(incomingElevation, 'f', 1) +
-      common::Characters::DEGREE);
+   if (incomingElevation.has_value())
+   {
+      p->incomingElevationLabel_->setText(
+         "Incoming Elevation: " + QString::number(*incomingElevation, 'f', 1) +
+         common::Characters::DEGREE);
+   }
+   else
+   {
+      p->incomingElevationLabel_->setText("Incoming Elevation: None");
+   }
 }
 
 void Level2SettingsWidget::UpdateSettings(map::MapWidget* activeMap)
@@ -254,8 +262,9 @@ void Level2SettingsWidget::UpdateSettings(map::MapWidget* activeMap)
    std::optional<float> currentElevationOption = activeMap->GetElevation();
    const float          currentElevation =
       currentElevationOption.has_value() ? *currentElevationOption : 0.0f;
-   const std::vector<float> elevationCuts = activeMap->GetElevationCuts();
-   const float incomingElevation = activeMap->GetIncomingLevel2Elevation();
+   const std::vector<float>   elevationCuts = activeMap->GetElevationCuts();
+   const std::optional<float> incomingElevation =
+      activeMap->GetIncomingLevel2Elevation();
 
    if (p->elevationCuts_ != elevationCuts)
    {
