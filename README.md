@@ -10,7 +10,7 @@ More updates will be shown here for devolpment, as well as a trailer on YouTube 
 
 This is the current vision and blueprint for TorDar:
 
-![TorDar Blueprint](https://github.com/user-attachments/assets/da3fca3b-2394-428e-a8c0-08aec2aaea99)
+![TorDar Blueprint](https://github.com/user-attachments/assets/3a2c8a94-cb8a-406c-ae2a-59e10430eb94)
 
 A ton of elements have been taken from the radar program Ryan Hall Y'all built.
 
