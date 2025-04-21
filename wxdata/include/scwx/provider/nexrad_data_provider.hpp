@@ -99,20 +99,6 @@ public:
    LoadObjectByTime(std::chrono::system_clock::time_point time) = 0;
 
    /**
-    * Loads the latest NEXRAD file object
-    *
-    * @return NEXRAD data
-    */
-   virtual std::shared_ptr<wsr88d::NexradFile> LoadLatestObject() = 0;
-
-   /**
-    * Loads the second NEXRAD file object
-    *
-    * @return NEXRAD data
-    */
-   virtual std::shared_ptr<wsr88d::NexradFile> LoadSecondLatestObject() = 0;
-
-   /**
     * Lists NEXRAD objects for the current date, and adds them to the cache. If
     * no objects have been added to the cache for the current date, the previous
     * date is also queried for data.

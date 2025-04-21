@@ -205,16 +205,20 @@ size_t AwsLevel2ChunksDataProvider::cache_size() const
 std::chrono::system_clock::time_point
 AwsLevel2ChunksDataProvider::last_modified() const
 {
+   // There is a slight delay between the "modified time" and when it is
+   // actually available. Radar product manager uses this as available time
+   static const auto extra = std::chrono::seconds(2);
+
    const std::shared_lock lock(p->scansMutex_);
    if (p->currentScan_.valid_ && p->currentScan_.lastModified_ !=
                                     std::chrono::system_clock::time_point {})
    {
-      return p->currentScan_.lastModified_;
+      return p->currentScan_.lastModified_ + extra;
    }
    else if (p->lastScan_.valid_ && p->lastScan_.lastModified_ !=
                                       std::chrono::system_clock::time_point {})
    {
-      return p->lastScan_.lastModified_;
+      return p->lastScan_.lastModified_ + extra;
    }
    else
    {
@@ -224,20 +228,18 @@ AwsLevel2ChunksDataProvider::last_modified() const
 std::chrono::seconds AwsLevel2ChunksDataProvider::update_period() const
 {
    const std::shared_lock lock(p->scansMutex_);
-   // Add an extra second of delay
-   static const auto extra = std::chrono::seconds(2);
    // get update period from time between chunks
    if (p->currentScan_.valid_ && p->currentScan_.nextFile_ > 2)
    {
       auto delta =
          p->currentScan_.lastModified_ - p->currentScan_.secondLastModified_;
-      return std::chrono::duration_cast<std::chrono::seconds>(delta) + extra;
+      return std::chrono::duration_cast<std::chrono::seconds>(delta);
    }
    else if (p->lastScan_.valid_ && p->lastScan_.nextFile_ > 2)
    {
       auto delta =
          p->lastScan_.lastModified_ - p->lastScan_.secondLastModified_;
-      return std::chrono::duration_cast<std::chrono::seconds>(delta) + extra;
+      return std::chrono::duration_cast<std::chrono::seconds>(delta);
    }
 
    // default to a set update period
@@ -645,20 +647,6 @@ AwsLevel2ChunksDataProvider::LoadObjectByTime(
    }
 }
 
-std::shared_ptr<wsr88d::NexradFile>
-AwsLevel2ChunksDataProvider::LoadLatestObject()
-{
-   const std::unique_lock lock(p->scansMutex_);
-   return std::make_shared<wsr88d::Ar2vFile>(p->currentScan_.nexradFile_,
-                                             p->lastScan_.nexradFile_);
-}
-
-std::shared_ptr<wsr88d::NexradFile>
-AwsLevel2ChunksDataProvider::LoadSecondLatestObject()
-{
-   return p->lastScan_.nexradFile_;
-}
-
 int AwsLevel2ChunksDataProvider::Impl::GetScanNumber(const std::string& prefix)
 {
    // KIND/585/20250324-134727-001-S
@@ -728,7 +716,7 @@ std::pair<size_t, size_t> AwsLevel2ChunksDataProvider::Refresh()
          });
    }
 
-   threadPool.wait();
+   threadPool.join();
    if (newCurrent)
    {
       newObjects += 1;
@@ -759,7 +747,7 @@ std::optional<float> AwsLevel2ChunksDataProvider::GetCurrentElevation()
 {
    if (!p->currentScan_.valid_ || p->currentScan_.nexradFile_ == nullptr)
    {
-      // Does not have any scan elevation. -90 is beyond what is possible
+      // Does not have any scan elevation.
       return {};
    }
 
@@ -767,7 +755,7 @@ std::optional<float> AwsLevel2ChunksDataProvider::GetCurrentElevation()
    auto radarData = p->currentScan_.nexradFile_->radar_data();
    if (radarData.size() == 0)
    {
-      // Does not have any scan elevation. -90 is beyond what is possible
+      // Does not have any scan elevation.
       return {};
    }
 
