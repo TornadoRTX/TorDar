@@ -8,9 +8,10 @@ TorDar will only be available on Windows at launch, but may be fitted to other o
 
 More updates will be shown here for devolpment, as well as a trailer on YouTube once TorDar is ready to be released into Beta.
 
-This is the current vision and blueprint for TorDar:
+This is the current vision and blueprint for TorDar, and also the full version of the blueprint:
 
-![TorDar Blueprint](https://github.com/user-attachments/assets/3a2c8a94-cb8a-406c-ae2a-59e10430eb94)
+![TorDar Blueprint](https://github.com/user-attachments/assets/d8fa5869-e240-4fd3-9523-5efa1165f65a)
+
 
 A ton of elements have been taken from the radar program Ryan Hall Y'all built.
 
