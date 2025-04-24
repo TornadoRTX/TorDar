@@ -31,7 +31,9 @@ class SupercellWxConan(ConanFile):
         if self.settings.os == "Windows":
             self.options["libcurl"].with_ssl = "schannel"
         elif self.settings.os == "Linux":
-            self.options["openssl"].shared = True
+            self.options["openssl"].shared    = True
+            self.options["libcurl"].ca_bundle = "none"
+            self.options["libcurl"].ca_path   = "none"
 
     def requirements(self):
         if self.settings.os == "Linux":
