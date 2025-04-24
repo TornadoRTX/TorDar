@@ -1131,7 +1131,7 @@ void Level2ProductView::Impl::ComputeCoordinates(
          units::degrees<float> angle {};
 
          auto radialData = radarData->find(radial);
-         if (radialData != radarData->cend() && !smoothingEnabled)
+         if (radialData != radarData->cend() && smoothingEnabled)
          {
             angle = radialData->second->azimuth_angle();
          }
@@ -1143,7 +1143,7 @@ void Level2ProductView::Impl::ComputeCoordinates(
                (radial >= 2) ? radial - 2 : numRadials - (2 - radial));
 
             if (radialData != radarData->cend() &&
-                prevRadial1 != radarData->cend() && smoothingEnabled)
+                prevRadial1 != radarData->cend() && !smoothingEnabled)
             {
                const units::degrees<float> currentAngle =
                   radialData->second->azimuth_angle();
@@ -1154,13 +1154,13 @@ void Level2ProductView::Impl::ComputeCoordinates(
                const units::degrees<float> deltaAngle =
                   NormalizeAngle(currentAngle - prevAngle);
 
-               // Delta scale is half the delta angle to reach the center of the
-               // bin, because smoothing is enabled
+               // Delta scale is half the delta angle to reach the end of the
+               // bin, because smoothing is not enabled
                constexpr float deltaScale = 0.5f;
 
-               angle = currentAngle + deltaAngle * deltaScale;
+               angle = currentAngle - deltaAngle * deltaScale;
             }
-            else if (radialData != radarData->cend() && smoothingEnabled)
+            else if (radialData != radarData->cend() && !smoothingEnabled)
             {
                const units::degrees<float> currentAngle =
                   radialData->second->azimuth_angle();
@@ -1169,11 +1169,11 @@ void Level2ProductView::Impl::ComputeCoordinates(
                // to determine a delta angle
                constexpr units::degrees<float> deltaAngle {0.5f};
 
-               // Delta scale is half the delta angle to reach the center of the
+               // Delta scale is half the delta angle to reach the edge of the
                // bin, because smoothing is enabled
                constexpr float deltaScale = 0.5f;
 
-               angle = currentAngle + deltaAngle * deltaScale;
+               angle = currentAngle - deltaAngle * deltaScale;
             }
             else if (prevRadial1 != radarData->cend() &&
                      prevRadial2 != radarData->cend())
@@ -1189,11 +1189,12 @@ void Level2ProductView::Impl::ComputeCoordinates(
 
                const float deltaScale =
                   (smoothingEnabled) ?
-                     // Delta scale is 1.5x the delta angle to reach the center
+                     // Delta scale is 1.0x the delta angle to reach the center
                      // of the next bin, because smoothing is enabled
-                     1.5f :
-                     // Delta scale is 1.0x the delta angle
-                     1.0f;
+                     1.0f :
+                     // Delta scale is 0.5x the delta angle to reach the edge of
+                     // the next bin
+                     0.5f;
 
                angle = prevAngle1 + deltaAngle * deltaScale;
             }
@@ -1208,11 +1209,12 @@ void Level2ProductView::Impl::ComputeCoordinates(
 
                const float deltaScale =
                   (smoothingEnabled) ?
-                     // Delta scale is 1.5x the delta angle to reach the center
+                     // Delta scale is 1.0x the delta angle to reach the center
                      // of the next bin, because smoothing is enabled
-                     1.5f :
-                     // Delta scale is 1.0x the delta angle
-                     1.0f;
+                     1.0f :
+                     // Delta scale is 0.5x the delta angle to reach the edge of
+                     // the next bin
+                     0.5f;
 
                angle = prevAngle1 + deltaAngle * deltaScale;
             }
@@ -1368,6 +1370,13 @@ Level2ProductView::GetBinLevel(const common::Coordinate& coordinate) const
             if (nextRadial != radarData->cend())
             {
                nextAngle    = nextRadial->second->azimuth_angle();
+
+               // Level 2 angles are the center of the bins.
+               const units::degrees<float> deltaAngle =
+                  common::GetAngleDelta(startAngle, nextAngle);
+               startAngle -= deltaAngle / 2;
+               nextAngle -= deltaAngle / 2;
+
                hasNextAngle = true;
             }
             else
@@ -1384,7 +1393,9 @@ Level2ProductView::GetBinLevel(const common::Coordinate& coordinate) const
                   const units::degrees<float> deltaAngle =
                      common::GetAngleDelta(startAngle, prevAngle);
 
-                  nextAngle    = startAngle + deltaAngle;
+                  // Level 2 angles are the center of the bins.
+                  nextAngle = startAngle + deltaAngle / 2;
+                  startAngle -= deltaAngle / 2;
                   hasNextAngle = true;
                }
             }
