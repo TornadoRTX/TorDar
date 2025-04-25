@@ -15,6 +15,7 @@
 #include <mutex>
 #include <shared_mutex>
 #include <unordered_set>
+#include <utility>
 
 #if defined(_MSC_VER)
 #   pragma warning(push, 0)
@@ -87,16 +88,14 @@ class ProviderManager : public QObject
    Q_OBJECT
 public:
    explicit ProviderManager(RadarProductManager*      self,
-                            const std::string&        radarId,
-                            common::RadarProductGroup group) :
-       ProviderManager(self, radarId, group, "???")
-   {
-   }
-   explicit ProviderManager(RadarProductManager*      self,
-                            const std::string&        radarId,
+                            std::string               radarId,
                             common::RadarProductGroup group,
-                            const std::string&        product) :
-       radarId_ {radarId}, group_ {group}, product_ {product}
+                            std::string               product     = "???",
+                            bool                      fastRefresh = false) :
+       radarId_ {std::move(radarId)},
+       group_ {group},
+       product_ {std::move(product)},
+       fastRefresh_ {fastRefresh}
    {
       connect(this,
               &ProviderManager::NewDataAvailable,
@@ -114,10 +113,12 @@ public:
    const std::string                             radarId_;
    const common::RadarProductGroup               group_;
    const std::string                             product_;
+   const bool                                    fastRefresh_;
    bool                                          refreshEnabled_ {false};
    boost::asio::steady_timer                     refreshTimer_ {threadPool_};
    std::mutex                                    refreshTimerMutex_ {};
    std::shared_ptr<provider::NexradDataProvider> provider_ {nullptr};
+   size_t                                        refreshCount_ {0};
 
 signals:
    void NewDataAvailable(common::RadarProductGroup             group,
@@ -138,7 +139,7 @@ public:
        level2ProviderManager_ {std::make_shared<ProviderManager>(
           self_, radarId_, common::RadarProductGroup::Level2)},
        level2ChunksProviderManager_ {std::make_shared<ProviderManager>(
-          self_, radarId_, common::RadarProductGroup::Level2)}
+          self_, radarId_, common::RadarProductGroup::Level2, "???", true)}
    {
       if (radarSite_ == nullptr)
       {
@@ -191,9 +192,10 @@ public:
    std::shared_ptr<ProviderManager>
    GetLevel3ProviderManager(const std::string& product);
 
-   void EnableRefresh(boost::uuids::uuid               uuid,
-                      std::shared_ptr<ProviderManager> providerManager,
-                      bool                             enabled);
+   void EnableRefresh(
+      boost::uuids::uuid                                uuid,
+      const std::set<std::shared_ptr<ProviderManager>>& providerManagers,
+      bool                                              enabled);
    void RefreshData(std::shared_ptr<ProviderManager> providerManager);
    void RefreshDataSync(std::shared_ptr<ProviderManager> providerManager);
 
@@ -285,7 +287,7 @@ public:
    std::optional<float> incomingLevel2Elevation_ {};
 
    std::unordered_map<boost::uuids::uuid,
-                      std::shared_ptr<ProviderManager>,
+                      std::set<std::shared_ptr<ProviderManager>>,
                       boost::hash<boost::uuids::uuid>>
                      refreshMap_ {};
    std::shared_mutex refreshMapMutex_ {};
@@ -664,8 +666,10 @@ void RadarProductManager::EnableRefresh(common::RadarProductGroup group,
 {
    if (group == common::RadarProductGroup::Level2)
    {
-      // p->EnableRefresh(uuid, p->level2ProviderManager_, enabled);
-      p->EnableRefresh(uuid, p->level2ChunksProviderManager_, enabled);
+      p->EnableRefresh(
+         uuid,
+         {p->level2ProviderManager_, p->level2ChunksProviderManager_},
+         enabled);
    }
    else
    {
@@ -688,7 +692,7 @@ void RadarProductManager::EnableRefresh(common::RadarProductGroup group,
                              availableProducts.cend(),
                              product) != availableProducts.cend())
                {
-                  p->EnableRefresh(uuid, providerManager, enabled);
+                  p->EnableRefresh(uuid, {providerManager}, enabled);
                }
             }
             catch (const std::exception& ex)
@@ -700,50 +704,45 @@ void RadarProductManager::EnableRefresh(common::RadarProductGroup group,
 }
 
 void RadarProductManagerImpl::EnableRefresh(
-   boost::uuids::uuid               uuid,
-   std::shared_ptr<ProviderManager> providerManager,
-   bool                             enabled)
+   boost::uuids::uuid                                uuid,
+   const std::set<std::shared_ptr<ProviderManager>>& providerManagers,
+   bool                                              enabled)
 {
    // Lock the refresh map
    std::unique_lock lock {refreshMapMutex_};
 
-   auto currentProviderManager = refreshMap_.find(uuid);
-   if (currentProviderManager != refreshMap_.cend())
+   auto currentProviderManagers = refreshMap_.find(uuid);
+   if (currentProviderManagers != refreshMap_.cend())
    {
-      // If the enabling refresh for a different product, or disabling refresh
-      if (currentProviderManager->second != providerManager || !enabled)
+      for (const auto& currentProviderManager : currentProviderManagers->second)
       {
-         // Determine number of entries in the map for the current provider
-         // manager
-         auto currentProviderManagerCount = std::count_if(
-            refreshMap_.cbegin(),
-            refreshMap_.cend(),
-            [&](const auto& provider)
-            { return provider.second == currentProviderManager->second; });
-
-         // If this is the last reference to the provider in the refresh map
-         if (currentProviderManagerCount == 1)
+         currentProviderManager->refreshCount_ -= 1;
+         // If the enabling refresh for a different product, or disabling
+         // refresh
+         if (!providerManagers.contains(currentProviderManager) || !enabled)
          {
-            // Disable current provider
-            currentProviderManager->second->Disable();
-         }
-
-         // Dissociate uuid from current provider manager
-         refreshMap_.erase(currentProviderManager);
-
-         // If we are enabling a new provider manager
-         if (enabled)
-         {
-            // Associate uuid to providerManager
-            refreshMap_.emplace(uuid, providerManager);
+            // If this is the last reference to the provider in the refresh map
+            if (currentProviderManager->refreshCount_ == 0)
+            {
+               // Disable current provider
+               currentProviderManager->Disable();
+            }
          }
       }
+
+      // Dissociate uuid from current provider managers
+      refreshMap_.erase(currentProviderManagers);
    }
-   else if (enabled)
+
+   if (enabled)
    {
-      // We are enabling a new provider manager
+      // We are enabling provider managers
       // Associate uuid to provider manager
-      refreshMap_.emplace(uuid, providerManager);
+      refreshMap_.emplace(uuid, providerManagers);
+      for (const auto& providerManager : providerManagers)
+      {
+         providerManager->refreshCount_ += 1;
+      }
    }
 
    // Release the refresh map mutex
@@ -751,13 +750,15 @@ void RadarProductManagerImpl::EnableRefresh(
 
    // We have already handled a disable request by this point. If enabling, and
    // the provider manager refresh isn't already enabled, enable it.
-   if (enabled && providerManager->refreshEnabled_ != enabled)
+   if (enabled)
    {
-      providerManager->refreshEnabled_ = enabled;
-
-      if (enabled)
+      for (const auto& providerManager : providerManagers)
       {
-         RefreshData(providerManager);
+         if (providerManager->refreshEnabled_ != enabled)
+         {
+            providerManager->refreshEnabled_ = enabled;
+            RefreshData(providerManager);
+         }
       }
    }
 }
@@ -795,13 +796,11 @@ void RadarProductManagerImpl::RefreshDataSync(
 
    // Level2 chunked data is updated quickly and uses a faster interval
    const std::chrono::milliseconds fastRetryInterval =
-      providerManager == level2ChunksProviderManager_ ?
-         kFastRetryIntervalChunks_ :
-         kFastRetryInterval_;
+      providerManager->fastRefresh_ ? kFastRetryIntervalChunks_ :
+                                      kFastRetryInterval_;
    const std::chrono::milliseconds slowRetryInterval =
-      providerManager == level2ChunksProviderManager_ ?
-         kSlowRetryIntervalChunks_ :
-         kSlowRetryInterval_;
+      providerManager->fastRefresh_ ? kSlowRetryIntervalChunks_ :
+                                      kSlowRetryInterval_;
    std::chrono::milliseconds interval = fastRetryInterval;
 
    if (totalObjects > 0)
@@ -896,10 +895,13 @@ RadarProductManager::GetActiveVolumeTimes(
    std::shared_lock refreshLock {p->refreshMapMutex_};
 
    // For each entry in the refresh map (refresh is enabled)
-   for (auto& refreshEntry : p->refreshMap_)
+   for (auto& refreshSet : p->refreshMap_)
    {
-      // Add the provider for the current entry
-      providers.insert(refreshEntry.second->provider_);
+      for (const auto& refreshEntry : refreshSet.second)
+      {
+         // Add the provider for the current entry
+         providers.insert(refreshEntry->provider_);
+      }
    }
 
    // Unlock the refresh map
