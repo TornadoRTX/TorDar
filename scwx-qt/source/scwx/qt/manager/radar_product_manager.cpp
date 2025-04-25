@@ -1548,8 +1548,8 @@ RadarProductManager::GetLevel2Data(wsr88d::rda::DataBlockType dataBlockType,
    std::vector<float>                          elevationCuts {};
    std::chrono::system_clock::time_point       foundTime {};
 
-   const bool isEpox = time == std::chrono::system_clock::time_point{};
-   bool needArchive = true;
+   const bool        isEpox = time == std::chrono::system_clock::time_point {};
+   bool              needArchive   = true;
    static const auto maxChunkDelay = std::chrono::minutes(10);
    const std::chrono::system_clock::time_point firstValidChunkTime =
       (isEpox ? std::chrono::system_clock::now() : time) - maxChunkDelay;
