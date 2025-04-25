@@ -10,7 +10,6 @@
 #include <algorithm>
 #include <list>
 #include <map>
-#include <ranges>
 #include <shared_mutex>
 #include <unordered_map>
 
@@ -20,8 +19,9 @@
 #include <boost/container/stable_vector.hpp>
 #include <boost/range/irange.hpp>
 #include <range/v3/range/conversion.hpp>
-#include <range/v3/view/any_view.hpp>
 #include <range/v3/view/filter.hpp>
+#include <range/v3/view/single.hpp>
+#include <range/v3/view/transform.hpp>
 
 #if (__cpp_lib_chrono < 201907L)
 #   include <date/date.h>
@@ -117,11 +117,17 @@ public:
 
    void
    HandleMessage(const std::shared_ptr<awips::TextProductMessage>& message);
-   void ListArchives(ranges::any_view<std::chrono::sys_days> dates);
+   template<ranges::forward_range DateRange>
+      requires std::same_as<ranges::range_value_t<DateRange>,
+                            std::chrono::sys_days>
+   void ListArchives(DateRange dates);
    void LoadArchives(std::chrono::system_clock::time_point dateTime);
    void RefreshAsync();
    void Refresh();
-   void UpdateArchiveDates(ranges::any_view<std::chrono::sys_days> dates);
+   template<ranges::forward_range DateRange>
+      requires std::same_as<ranges::range_value_t<DateRange>,
+                            std::chrono::sys_days>
+   void UpdateArchiveDates(DateRange dates);
 
    // Thread pool sized for:
    // - Live Refresh (1x)
@@ -139,8 +145,6 @@ public:
                      textEventMap_;
    std::shared_mutex textEventMutex_;
 
-   std::unique_ptr<provider::IemApiProvider> iemApiProvider_ {
-      std::make_unique<provider::IemApiProvider>()};
    std::shared_ptr<provider::WarningsProvider> warningsProvider_ {nullptr};
 
    std::chrono::hours loadHistoryDuration_ {kInitialLoadHistoryDuration_};
@@ -240,7 +244,7 @@ void TextEventManager::SelectTime(
    const auto tomorrow  = today + std::chrono::days {1};
    const auto dateArray = std::array {today, yesterday, tomorrow};
 
-   const ranges::any_view<std::chrono::sys_days> dates =
+   const auto dates =
       dateArray | ranges::views::filter(
                      [this](const auto& date)
                      {
@@ -334,11 +338,13 @@ void TextEventManager::Impl::HandleMessage(
    }
 }
 
-void TextEventManager::Impl::ListArchives(
-   ranges::any_view<std::chrono::sys_days> dates)
+template<ranges::forward_range DateRange>
+   requires std::same_as<ranges::range_value_t<DateRange>,
+                         std::chrono::sys_days>
+void TextEventManager::Impl::ListArchives(DateRange dates)
 {
    // Don't reload data that has already been loaded
-   ranges::any_view<std::chrono::sys_days> filteredDates =
+   auto filteredDates =
       dates |
       ranges::views::filter([this](const auto& date)
                             { return !unloadedProductMap_.contains(date); });
@@ -351,10 +357,17 @@ void TextEventManager::Impl::ListArchives(
       dv.end(),
       [this](const auto& date)
       {
+         static const auto kEmptyRange_ =
+            ranges::views::single(std::string_view {});
+         static const auto kPilsView_ =
+            kPils_ |
+            ranges::views::transform([](const std::string& pil)
+                                     { return std::string_view {pil}; });
+
          const auto dateArray = std::array {date};
 
-         auto productEntries =
-            iemApiProvider_->ListTextProducts(dateArray, {}, kPils_);
+         auto productEntries = provider::IemApiProvider::ListTextProducts(
+            dateArray | ranges::views::all, kEmptyRange_, kPilsView_);
 
          std::unique_lock lock {unloadedProductMapMutex_};
 
@@ -450,10 +463,10 @@ void TextEventManager::Impl::LoadArchives(
    }
 
    // Load the load list
-   auto loadView = loadListEntries |
-                   std::ranges::views::transform([](const auto& entry)
+   auto loadView =
+      loadListEntries | ranges::views::transform([](const auto& entry)
                                                  { return entry.productId_; });
-   auto products = iemApiProvider_->LoadTextProducts(loadView);
+   auto products = provider::IemApiProvider::LoadTextProducts(loadView);
 
    // Process loaded products
    for (auto& product : products)
@@ -550,8 +563,10 @@ void TextEventManager::Impl::Refresh()
       });
 }
 
-void TextEventManager::Impl::UpdateArchiveDates(
-   ranges::any_view<std::chrono::sys_days> dates)
+template<ranges::forward_range DateRange>
+   requires std::same_as<ranges::range_value_t<DateRange>,
+                         std::chrono::sys_days>
+void TextEventManager::Impl::UpdateArchiveDates(DateRange dates)
 {
    for (const auto& date : dates)
    {

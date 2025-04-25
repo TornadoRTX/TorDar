@@ -44,7 +44,7 @@ IemApiProvider::IemApiProvider(IemApiProvider&&) noexcept            = default;
 IemApiProvider& IemApiProvider::operator=(IemApiProvider&&) noexcept = default;
 
 boost::outcome_v2::result<std::vector<types::iem::AfosEntry>>
-IemApiProvider::ListTextProducts(std::chrono::sys_time<std::chrono::days> date,
+IemApiProvider::ListTextProducts(std::chrono::sys_days           date,
                                  std::optional<std::string_view> optionalCccc,
                                  std::optional<std::string_view> optionalPil)
 {
@@ -61,67 +61,12 @@ IemApiProvider::ListTextProducts(std::chrono::sys_time<std::chrono::days> date,
 }
 
 boost::outcome_v2::result<std::vector<types::iem::AfosEntry>>
-IemApiProvider::ListTextProducts(
-   ranges::any_view<std::chrono::sys_time<std::chrono::days>> dates,
-   ranges::any_view<std::string_view>                         ccccs,
-   ranges::any_view<std::string_view>                         pils)
+IemApiProvider::ProcessTextProductLists(
+   std::vector<cpr::AsyncResponse>& asyncResponses)
 {
-   using namespace std::chrono;
-
-#if (__cpp_lib_chrono >= 201907L)
-   namespace df = std;
-
-   static constexpr std::string_view kDateFormat {"{:%Y-%m-%d}"};
-#else
-   using namespace date;
-   namespace df = date;
-
-#   define kDateFormat "%Y-%m-%d"
-#endif
-
-   if (ccccs.begin() == ccccs.end())
-   {
-      ccccs = ranges::views::single(std::string_view {});
-   }
-
-   if (pils.begin() == pils.end())
-   {
-      pils = ranges::views::single(std::string_view {});
-   }
-
-   const auto dv = ranges::to<std::vector>(dates);
-   const auto cv = ranges::to<std::vector>(ccccs);
-   const auto pv = ranges::to<std::vector>(pils);
-
-   std::vector<cpr::AsyncResponse> responses {};
-
-   for (const auto& [date, cccc, pil] :
-        ranges::views::cartesian_product(dv, cv, pv))
-   {
-      auto parameters =
-         cpr::Parameters {{"date", df::format(kDateFormat, date)}};
-
-      // WMO Source Code
-      if (!cccc.empty())
-      {
-         parameters.Add({"cccc", std::string {cccc}});
-      }
-
-      // AFOS / AWIPS ID / 3-6 length identifier
-      if (!pil.empty())
-      {
-         parameters.Add({"pil", std::string {pil}});
-      }
-
-      responses.emplace_back(
-         cpr::GetAsync(cpr::Url {kBaseUrl_ + kListNwsTextProductsEndpoint_},
-                       network::cpr::GetHeader(),
-                       parameters));
-   }
-
    std::vector<types::iem::AfosEntry> textProducts {};
 
-   for (auto& asyncResponse : responses)
+   for (auto& asyncResponse : asyncResponses)
    {
       auto response = asyncResponse.get();
 
@@ -201,7 +146,7 @@ IemApiProvider::ListTextProducts(
 }
 
 std::vector<std::shared_ptr<awips::TextProductFile>>
-IemApiProvider::ProcessTextProductResponses(
+IemApiProvider::ProcessTextProductFiles(
    std::vector<std::pair<std::string, cpr::AsyncResponse>>& asyncResponses)
 {
    std::vector<std::shared_ptr<awips::TextProductFile>> textProductFiles;

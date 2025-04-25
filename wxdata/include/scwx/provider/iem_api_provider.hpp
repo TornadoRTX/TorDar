@@ -1,23 +1,20 @@
 #pragma once
 
 #include <scwx/awips/text_product_file.hpp>
-#include <scwx/network/cpr.hpp>
 #include <scwx/types/iem_types.hpp>
 
 #include <memory>
-#include <ranges>
 #include <string>
 #include <vector>
 
 #include <boost/outcome/result.hpp>
-#include <cpr/cpr.h>
+#include <cpr/session.h>
+#include <range/v3/range/concepts.hpp>
 
 #if defined(_MSC_VER)
 #   pragma warning(push)
 #   pragma warning(disable : 4702)
 #endif
-
-#include <range/v3/view/any_view.hpp>
 
 #if defined(_MSC_VER)
 #   pragma warning(pop)
@@ -42,50 +39,41 @@ public:
    IemApiProvider& operator=(IemApiProvider&&) noexcept;
 
    static boost::outcome_v2::result<std::vector<types::iem::AfosEntry>>
-   ListTextProducts(std::chrono::sys_time<std::chrono::days> date,
-                    std::optional<std::string_view>          cccc = {},
-                    std::optional<std::string_view>          pil  = {});
+   ListTextProducts(std::chrono::sys_days           date,
+                    std::optional<std::string_view> cccc = {},
+                    std::optional<std::string_view> pil  = {});
+
+   template<ranges::forward_range DateRange,
+            ranges::forward_range CcccRange,
+            ranges::forward_range PilRange>
+      requires std::same_as<ranges::range_value_t<DateRange>,
+                            std::chrono::sys_days> &&
+               std::same_as<ranges::range_value_t<CcccRange>,
+                            std::string_view> &&
+               std::same_as<ranges::range_value_t<PilRange>, std::string_view>
    static boost::outcome_v2::result<std::vector<types::iem::AfosEntry>>
-   ListTextProducts(
-      ranges::any_view<std::chrono::sys_time<std::chrono::days>> dates,
-      ranges::any_view<std::string_view>                         ccccs = {},
-      ranges::any_view<std::string_view>                         pils  = {});
+   ListTextProducts(DateRange dates, CcccRange ccccs, PilRange pils);
 
-   template<std::ranges::forward_range Range>
-      requires std::same_as<std::ranges::range_value_t<Range>, std::string>
+   template<ranges::forward_range Range>
+      requires std::same_as<ranges::range_value_t<Range>, std::string>
    static std::vector<std::shared_ptr<awips::TextProductFile>>
-   LoadTextProducts(const Range& textProducts)
-   {
-      auto parameters = cpr::Parameters {{"nolimit", "true"}};
-
-      std::vector<std::pair<std::string, cpr::AsyncResponse>> asyncResponses {};
-      asyncResponses.reserve(textProducts.size());
-
-      const std::string endpointUrl = kBaseUrl_ + kNwsTextProductEndpoint_;
-
-      for (const auto& productId : textProducts)
-      {
-         asyncResponses.emplace_back(
-            productId,
-            cpr::GetAsync(cpr::Url {endpointUrl + productId},
-                          network::cpr::GetHeader(),
-                          parameters));
-      }
-
-      return ProcessTextProductResponses(asyncResponses);
-   }
+   LoadTextProducts(const Range& textProducts);
 
 private:
    class Impl;
    std::unique_ptr<Impl> p;
 
+   static boost::outcome_v2::result<std::vector<types::iem::AfosEntry>>
+   ProcessTextProductLists(std::vector<cpr::AsyncResponse>& asyncResponses);
+   static std::vector<std::shared_ptr<awips::TextProductFile>>
+   ProcessTextProductFiles(
+      std::vector<std::pair<std::string, cpr::AsyncResponse>>& asyncResponses);
+
    static const std::string kBaseUrl_;
    static const std::string kListNwsTextProductsEndpoint_;
    static const std::string kNwsTextProductEndpoint_;
-
-   static std::vector<std::shared_ptr<awips::TextProductFile>>
-   ProcessTextProductResponses(
-      std::vector<std::pair<std::string, cpr::AsyncResponse>>& asyncResponses);
 };
 
 } // namespace scwx::provider
+
+#include <scwx/provider/iem_api_provider.ipp>

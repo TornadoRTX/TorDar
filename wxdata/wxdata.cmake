@@ -63,6 +63,7 @@ set(HDR_PROVIDER include/scwx/provider/aws_level2_data_provider.hpp
                  include/scwx/provider/aws_level3_data_provider.hpp
                  include/scwx/provider/aws_nexrad_data_provider.hpp
                  include/scwx/provider/iem_api_provider.hpp
+                 include/scwx/provider/iem_api_provider.ipp
                  include/scwx/provider/nexrad_data_provider.hpp
                  include/scwx/provider/nexrad_data_provider_factory.hpp
                  include/scwx/provider/warnings_provider.hpp)
