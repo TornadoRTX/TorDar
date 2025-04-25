@@ -1548,6 +1548,12 @@ RadarProductManager::GetLevel2Data(wsr88d::rda::DataBlockType dataBlockType,
    std::vector<float>                          elevationCuts {};
    std::chrono::system_clock::time_point       foundTime {};
 
+   const bool isEpox = time == std::chrono::system_clock::time_point{};
+   bool needArchive = true;
+   static const auto maxChunkDelay = std::chrono::minutes(10);
+   const std::chrono::system_clock::time_point firstValidChunkTime =
+      (isEpox ? std::chrono::system_clock::now() : time) - maxChunkDelay;
+
    // See if we have this one in the chunk provider.
    auto chunkFile = std::dynamic_pointer_cast<wsr88d::Ar2vFile>(
       p->level2ChunksProviderManager_->provider_->LoadObjectByTime(time));
@@ -1572,9 +1578,16 @@ RadarProductManager::GetLevel2Data(wsr88d::rda::DataBlockType dataBlockType,
             p->incomingLevel2Elevation_ = incomingElevation;
             Q_EMIT IncomingLevel2ElevationChanged(incomingElevation);
          }
+
+         if (foundTime >= firstValidChunkTime)
+         {
+            needArchive = false;
+         }
       }
    }
-   else // It is not in the chunk provider, so get it from the archive
+
+   // It is not in the chunk provider, so get it from the archive
+   if (needArchive)
    {
       auto records = p->GetLevel2ProductRecords(time);
       for (auto& recordPair : records)
@@ -1601,7 +1614,8 @@ RadarProductManager::GetLevel2Data(wsr88d::rda::DataBlockType dataBlockType,
 
                // Find the newest radar data, not newer than the selected time
                if (radarData == nullptr ||
-                   (collectionTime <= time && foundTime < collectionTime))
+                   (collectionTime <= time && foundTime < collectionTime) ||
+                   (isEpox && foundTime < collectionTime))
                {
                   radarData     = recordRadarData;
                   elevationCut  = recordElevationCut;
