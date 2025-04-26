@@ -239,24 +239,37 @@ void TextEventManager::SelectTime(
 
    logger_->trace("Select Time: {}", util::TimeString(dateTime));
 
-   const auto today     = std::chrono::floor<std::chrono::days>(dateTime);
-   const auto yesterday = today - std::chrono::days {1};
-   const auto tomorrow  = today + std::chrono::days {1};
-   const auto dateArray = std::array {today, yesterday, tomorrow};
+   boost::asio::post(
+      p->threadPool_,
+      [=, this]()
+      {
+         try
+         {
+            const auto today = std::chrono::floor<std::chrono::days>(dateTime);
+            const auto yesterday = today - std::chrono::days {1};
+            const auto tomorrow  = today + std::chrono::days {1};
+            const auto dateArray = std::array {today, yesterday, tomorrow};
 
-   const auto dates =
-      dateArray | ranges::views::filter(
-                     [this](const auto& date)
-                     {
-                        return p->archiveLimit_ == std::chrono::sys_days {} ||
-                               date < p->archiveLimit_;
-                     });
+            const auto dates =
+               dateArray |
+               ranges::views::filter(
+                  [this](const auto& date)
+                  {
+                     return p->archiveLimit_ == std::chrono::sys_days {} ||
+                            date < p->archiveLimit_;
+                  });
 
-   std::unique_lock lock {p->archiveMutex_};
+            std::unique_lock lock {p->archiveMutex_};
 
-   p->UpdateArchiveDates(dates);
-   p->ListArchives(dates);
-   p->LoadArchives(dateTime);
+            p->UpdateArchiveDates(dates);
+            p->ListArchives(dates);
+            p->LoadArchives(dateTime);
+         }
+         catch (const std::exception& ex)
+         {
+            logger_->error(ex.what());
+         }
+      });
 }
 
 void TextEventManager::Impl::HandleMessage(
