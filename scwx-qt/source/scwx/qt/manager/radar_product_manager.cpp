@@ -766,7 +766,7 @@ void RadarProductManagerImpl::EnableRefresh(
 void RadarProductManagerImpl::RefreshData(
    std::shared_ptr<ProviderManager> providerManager)
 {
-   logger_->debug("RefreshData: {}", providerManager->name());
+   // logger_->debug("RefreshData: {}", providerManager->name());
 
    {
       std::unique_lock lock(providerManager->refreshTimerMutex_);
@@ -846,10 +846,12 @@ void RadarProductManagerImpl::RefreshDataSync(
 
    if (providerManager->refreshEnabled_)
    {
+      /*
       logger_->debug(
          "[{}] Scheduled refresh in {:%M:%S}",
          providerManager->name(),
          std::chrono::duration_cast<std::chrono::seconds>(interval));
+         */
 
       {
          providerManager->refreshTimer_.expires_after(interval);
@@ -960,9 +962,9 @@ void RadarProductManagerImpl::LoadProviderData(
    std::mutex&                                        loadDataMutex,
    const std::shared_ptr<request::NexradFileRequest>& request)
 {
-   logger_->debug("LoadProviderData: {}, {}",
+   /*logger_->debug("LoadProviderData: {}, {}",
                   providerManager->name(),
-                  scwx::util::TimeString(time));
+                  scwx::util::TimeString(time));*/
 
    LoadNexradFileAsync(
       [=, &recordMap, &recordMutex]() -> std::shared_ptr<wsr88d::NexradFile>
@@ -1013,7 +1015,7 @@ void RadarProductManager::LoadLevel2Data(
    std::chrono::system_clock::time_point              time,
    const std::shared_ptr<request::NexradFileRequest>& request)
 {
-   logger_->debug("LoadLevel2Data: {}", scwx::util::TimeString(time));
+   // logger_->debug("LoadLevel2Data: {}", scwx::util::TimeString(time));
 
    p->LoadProviderData(time,
                        p->level2ProviderManager_,
