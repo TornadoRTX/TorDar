@@ -462,11 +462,16 @@ void TextEventManager::Impl::LoadArchives(
       }
    }
 
+   std::vector<std::shared_ptr<awips::TextProductFile>> products {};
+
    // Load the load list
-   auto loadView =
-      loadListEntries | ranges::views::transform([](const auto& entry)
-                                                 { return entry.productId_; });
-   auto products = provider::IemApiProvider::LoadTextProducts(loadView);
+   if (!loadListEntries.empty())
+   {
+      auto loadView = loadListEntries |
+                      ranges::views::transform([](const auto& entry)
+                                               { return entry.productId_; });
+      products = provider::IemApiProvider::LoadTextProducts(loadView);
+   }
 
    // Process loaded products
    for (auto& product : products)

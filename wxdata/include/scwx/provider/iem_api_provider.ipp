@@ -2,10 +2,13 @@
 
 #include <scwx/provider/iem_api_provider.hpp>
 #include <scwx/network/cpr.hpp>
+#include <scwx/util/time.hpp>
 
+#include <boost/algorithm/string/join.hpp>
 #include <cpr/cpr.h>
 #include <range/v3/view/cartesian_product.hpp>
 #include <range/v3/view/single.hpp>
+#include <range/v3/view/transform.hpp>
 
 #if (__cpp_lib_chrono < 201907L)
 #   include <date/date.h>
@@ -38,6 +41,13 @@ IemApiProvider::ListTextProducts(DateRange dates,
 
 #   define kDateFormat "%Y-%m-%d"
 #endif
+
+   auto formattedDates = dates | ranges::views::transform(
+                                    [](const std::chrono::sys_days& date)
+                                    { return df::format(kDateFormat, date); });
+
+   logger_->debug("Listing text products for: {}",
+                  boost::algorithm::join(formattedDates, ", "));
 
    std::vector<cpr::AsyncResponse> asyncResponses {};
 
@@ -74,6 +84,8 @@ std::vector<std::shared_ptr<awips::TextProductFile>>
 IemApiProvider::LoadTextProducts(const Range& textProducts)
 {
    auto parameters = cpr::Parameters {{"nolimit", "true"}};
+
+   logger_->debug("Loading {} text products", textProducts.size());
 
    std::vector<std::pair<std::string, cpr::AsyncResponse>> asyncResponses {};
    asyncResponses.reserve(textProducts.size());

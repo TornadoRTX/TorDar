@@ -17,7 +17,8 @@ namespace scwx::provider
 {
 
 static const std::string logPrefix_ = "scwx::provider::iem_api_provider";
-static const auto        logger_    = util::Logger::Create(logPrefix_);
+
+const auto IemApiProvider::logger_ = util::Logger::Create(logPrefix_);
 
 const std::string IemApiProvider::kBaseUrl_ =
    "https://mesonet.agron.iastate.edu/api/1";
@@ -140,7 +141,7 @@ IemApiProvider::ProcessTextProductLists(
       }
    }
 
-   logger_->trace("Found {} products", textProducts.size());
+   logger_->debug("Found {} products", textProducts.size());
 
    return textProducts;
 }
@@ -174,6 +175,8 @@ IemApiProvider::ProcessTextProductFiles(
                        response.status_line);
       }
    }
+
+   logger_->debug("Loaded {} text products", textProductFiles.size());
 
    return textProductFiles;
 }

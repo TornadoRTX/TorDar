@@ -2,6 +2,7 @@
 
 #include <scwx/awips/text_product_file.hpp>
 #include <scwx/types/iem_types.hpp>
+#include <scwx/util/logger.hpp>
 
 #include <memory>
 #include <string>
@@ -68,6 +69,8 @@ private:
    static std::vector<std::shared_ptr<awips::TextProductFile>>
    ProcessTextProductFiles(
       std::vector<std::pair<std::string, cpr::AsyncResponse>>& asyncResponses);
+
+   static const std::shared_ptr<spdlog::logger> logger_;
 
    static const std::string kBaseUrl_;
    static const std::string kListNwsTextProductsEndpoint_;
