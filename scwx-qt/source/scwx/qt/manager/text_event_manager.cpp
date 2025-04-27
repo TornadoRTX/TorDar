@@ -241,7 +241,7 @@ void TextEventManager::SelectTime(
 
    boost::asio::post(
       p->threadPool_,
-      [this]()
+      [dateTime, this]()
       {
          try
          {
