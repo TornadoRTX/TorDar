@@ -104,4 +104,8 @@ IemApiProvider::LoadTextProducts(const Range& textProducts)
    return ProcessTextProductFiles(asyncResponses);
 }
 
+#ifdef kDateFormat
+#   undef kDateFormat
+#endif
+
 } // namespace scwx::provider

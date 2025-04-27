@@ -18,7 +18,8 @@ namespace scwx::provider
 
 static const std::string logPrefix_ = "scwx::provider::iem_api_provider";
 
-const auto IemApiProvider::logger_ = util::Logger::Create(logPrefix_);
+const std::shared_ptr<spdlog::logger> IemApiProvider::logger_ =
+   util::Logger::Create(logPrefix_);
 
 const std::string IemApiProvider::kBaseUrl_ =
    "https://mesonet.agron.iastate.edu/api/1";
