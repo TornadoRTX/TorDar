@@ -268,6 +268,8 @@ void AlertLayer::Initialize()
 
    auto& alertLayerHandler = AlertLayerHandler::Instance();
 
+   p->selectedTime_ = manager::TimelineManager::Instance()->GetSelectedTime();
+
    // Take a shared lock to prevent handling additional alerts while populating
    // initial lists
    std::shared_lock lock {alertLayerHandler.alertMutex_};

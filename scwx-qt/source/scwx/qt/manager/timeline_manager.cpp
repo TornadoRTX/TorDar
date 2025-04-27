@@ -112,6 +112,11 @@ public:
 TimelineManager::TimelineManager() : p(std::make_unique<Impl>(this)) {}
 TimelineManager::~TimelineManager() = default;
 
+std::chrono::system_clock::time_point TimelineManager::GetSelectedTime() const
+{
+   return p->selectedTime_;
+}
+
 void TimelineManager::SetMapCount(std::size_t mapCount)
 {
    p->mapCount_ = mapCount;

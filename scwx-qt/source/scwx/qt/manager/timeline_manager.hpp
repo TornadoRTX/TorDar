@@ -24,6 +24,8 @@ public:
 
    static std::shared_ptr<TimelineManager> Instance();
 
+   std::chrono::system_clock::time_point GetSelectedTime() const;
+
    void SetMapCount(std::size_t mapCount);
 
 public slots:
