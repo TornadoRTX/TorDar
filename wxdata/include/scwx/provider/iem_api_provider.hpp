@@ -78,5 +78,3 @@ private:
 };
 
 } // namespace scwx::provider
-
-#include <scwx/provider/iem_api_provider.ipp>

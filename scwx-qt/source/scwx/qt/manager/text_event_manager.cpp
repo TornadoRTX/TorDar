@@ -2,7 +2,7 @@
 #include <scwx/qt/main/application.hpp>
 #include <scwx/qt/settings/general_settings.hpp>
 #include <scwx/awips/text_product_file.hpp>
-#include <scwx/provider/iem_api_provider.hpp>
+#include <scwx/provider/iem_api_provider.ipp>
 #include <scwx/provider/warnings_provider.hpp>
 #include <scwx/util/logger.hpp>
 #include <scwx/util/time.hpp>
