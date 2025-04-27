@@ -598,6 +598,8 @@ void AlertLayer::Impl::AddAlert(
                lineHover,
                drawItems.first->second);
    }
+
+   Q_EMIT self_->NeedsRendering();
 }
 
 void AlertLayer::Impl::UpdateAlert(
@@ -621,6 +623,8 @@ void AlertLayer::Impl::UpdateAlert(
          geoLines->SetLineEndTime(line, segmentRecord->segmentEnd_);
       }
    }
+
+   Q_EMIT self_->NeedsRendering();
 }
 
 void AlertLayer::Impl::AddLines(
