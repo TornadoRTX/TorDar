@@ -9,6 +9,7 @@
 
 #include <filesystem>
 #include <shared_mutex>
+#include <utility>
 #include <vector>
 #include <string>
 #include <unordered_map>
@@ -70,7 +71,7 @@ public:
 class MarkerManager::Impl::MarkerRecord
 {
 public:
-   MarkerRecord(const types::MarkerInfo& info) : markerInfo_ {info} {}
+   MarkerRecord(types::MarkerInfo info) : markerInfo_ {std::move(info)} {}
 
    const types::MarkerInfo& toMarkerInfo() { return markerInfo_; }
 

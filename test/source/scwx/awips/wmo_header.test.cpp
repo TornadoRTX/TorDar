@@ -16,7 +16,7 @@ TEST(WmoHeader, WmoFields)
 {
    std::stringstream ss {kWmoHeaderSample_};
    WmoHeader         header;
-   bool              valid = header.Parse(ss);
+   const bool        valid = header.Parse(ss);
 
    EXPECT_EQ(valid, true);
    EXPECT_EQ(header.sequence_number(), "887");
@@ -40,7 +40,7 @@ TEST(WmoHeader, DateHintBeforeParse)
    WmoHeader         header;
 
    header.SetDateHint(2022y / October);
-   bool valid = header.Parse(ss);
+   const bool valid = header.Parse(ss);
 
    EXPECT_EQ(valid, true);
    EXPECT_EQ(header.GetDateTime(),
@@ -54,7 +54,7 @@ TEST(WmoHeader, DateHintAfterParse)
    std::stringstream ss {kWmoHeaderSample_};
    WmoHeader         header;
 
-   bool valid = header.Parse(ss);
+   const bool valid = header.Parse(ss);
    header.SetDateHint(2022y / October);
 
    EXPECT_EQ(valid, true);
@@ -69,7 +69,7 @@ TEST(WmoHeader, EndTimeHintSameMonth)
    std::stringstream ss {kWmoHeaderSample_};
    WmoHeader         header;
 
-   bool valid = header.Parse(ss);
+   const bool valid = header.Parse(ss);
 
    auto endTimeHint = sys_days {2022y / October / 29d} + 0h + 0min + 0s;
 
@@ -85,7 +85,7 @@ TEST(WmoHeader, EndTimeHintPreviousMonth)
    std::stringstream ss {kWmoHeaderSample_};
    WmoHeader         header;
 
-   bool valid = header.Parse(ss);
+   const bool valid = header.Parse(ss);
 
    auto endTimeHint = sys_days {2022y / October / 27d} + 0h + 0min + 0s;
 
@@ -101,7 +101,7 @@ TEST(WmoHeader, EndTimeHintPreviousYear)
    std::stringstream ss {kWmoHeaderSample_};
    WmoHeader         header;
 
-   bool valid = header.Parse(ss);
+   const bool valid = header.Parse(ss);
 
    auto endTimeHint = sys_days {2022y / January / 27d} + 0h + 0min + 0s;
 
@@ -118,7 +118,7 @@ TEST(WmoHeader, EndTimeHintIgnored)
    WmoHeader         header;
 
    header.SetDateHint(2022y / October);
-   bool valid = header.Parse(ss);
+   const bool valid = header.Parse(ss);
 
    auto endTimeHint = sys_days {2020y / January / 1d} + 0h + 0min + 0s;
 

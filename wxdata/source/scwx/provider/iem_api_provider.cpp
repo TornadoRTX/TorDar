@@ -50,9 +50,9 @@ IemApiProvider::ListTextProducts(std::chrono::sys_days           date,
                                  std::optional<std::string_view> optionalCccc,
                                  std::optional<std::string_view> optionalPil)
 {
-   std::string_view cccc =
+   const std::string_view cccc =
       optionalCccc.has_value() ? optionalCccc.value() : std::string_view {};
-   std::string_view pil =
+   const std::string_view pil =
       optionalPil.has_value() ? optionalPil.value() : std::string_view {};
 
    const auto dateArray = std::array {date};
@@ -72,7 +72,7 @@ IemApiProvider::ProcessTextProductLists(
    {
       auto response = asyncResponse.get();
 
-      boost::json::value json = util::json::ReadJsonString(response.text);
+      const boost::json::value json = util::json::ReadJsonString(response.text);
 
       if (response.status_code == cpr::status::HTTP_OK)
       {
@@ -161,7 +161,7 @@ IemApiProvider::ProcessTextProductFiles(
       {
          // Load file
          auto& productId = asyncResponse.first;
-         std::shared_ptr<awips::TextProductFile> textProductFile {
+         const std::shared_ptr<awips::TextProductFile> textProductFile {
             std::make_shared<awips::TextProductFile>()};
          std::istringstream responseBody {response.text};
          if (textProductFile->LoadData(productId, responseBody))

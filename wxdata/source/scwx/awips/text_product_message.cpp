@@ -593,8 +593,8 @@ std::optional<Vtec> TryParseVtecString(std::istream& is)
 
    if (RE2::PartialMatch(line, *rePVtecString))
    {
-      vtec           = Vtec();
-      bool vtecValid = vtec->pVtec_.Parse(line);
+      vtec                 = Vtec();
+      const bool vtecValid = vtec->pVtec_.Parse(line);
 
       isBegin = is.tellg();
 

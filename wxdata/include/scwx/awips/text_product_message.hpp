@@ -96,7 +96,7 @@ public:
    TextProductMessage(TextProductMessage&&) noexcept;
    TextProductMessage& operator=(TextProductMessage&&) noexcept;
 
-   boost::uuids::uuid                          uuid() const;
+   [[nodiscard]] boost::uuids::uuid            uuid() const;
    std::string                                 message_content() const;
    std::shared_ptr<WmoHeader>                  wmo_header() const;
    std::vector<std::string>                    mnd_header() const;

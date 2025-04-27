@@ -2,9 +2,7 @@
 
 #include <gtest/gtest.h>
 
-namespace scwx
-{
-namespace provider
+namespace scwx::provider
 {
 
 TEST(IemApiProviderTest, ListTextProducts)
@@ -12,11 +10,9 @@ TEST(IemApiProviderTest, ListTextProducts)
    using namespace std::chrono;
    using sys_days = time_point<system_clock, days>;
 
-   IemApiProvider provider {};
-
    auto date = sys_days {2023y / March / 25d};
 
-   auto torProducts = provider.ListTextProducts(date, {}, "TOR");
+   auto torProducts = IemApiProvider::ListTextProducts(date, {}, "TOR");
 
    ASSERT_EQ(torProducts.has_value(), true);
    EXPECT_EQ(torProducts.value().size(), 35);
@@ -40,9 +36,7 @@ TEST(IemApiProviderTest, LoadTextProducts)
       "202303252015-KFFC-WFUS52-TORFFC",
       "202303311942-KLZK-WWUS54-SVSLZK"};
 
-   IemApiProvider provider {};
-
-   auto textProducts = provider.LoadTextProducts(productIds);
+   auto textProducts = IemApiProvider::LoadTextProducts(productIds);
 
    EXPECT_EQ(textProducts.size(), 3);
 
@@ -60,5 +54,4 @@ TEST(IemApiProviderTest, LoadTextProducts)
    }
 }
 
-} // namespace provider
-} // namespace scwx
+} // namespace scwx::provider

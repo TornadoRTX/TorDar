@@ -5,6 +5,7 @@
 
 // Enable chrono formatters
 #ifndef __cpp_lib_format
+// NOLINTNEXTLINE(bugprone-reserved-identifier, cppcoreguidelines-macro-usage)
 #   define __cpp_lib_format 202110L
 #endif
 
@@ -106,7 +107,7 @@ WarningsProvider::LoadUpdatedFiles(
                                                         asyncCallbacks;
    std::vector<std::shared_ptr<awips::TextProductFile>> updatedFiles;
 
-   std::chrono::sys_time<std::chrono::hours> now =
+   const std::chrono::sys_time<std::chrono::hours> now =
       std::chrono::floor<std::chrono::hours>(std::chrono::system_clock::now());
    std::chrono::sys_time<std::chrono::hours> currentHour =
       (startTime != std::chrono::sys_time<std::chrono::hours> {}) ?
@@ -130,7 +131,8 @@ WarningsProvider::LoadUpdatedFiles(
             {
                if (headResponse.status_code == cpr::status::HTTP_OK)
                {
-                  bool updated = p->UpdateFileRecord(headResponse, filename);
+                  const bool updated =
+                     p->UpdateFileRecord(headResponse, filename);
 
                   if (updated)
                   {
@@ -173,7 +175,7 @@ WarningsProvider::LoadUpdatedFiles(
                logger_->debug("Loading file: {}", filename);
 
                // Load file
-               std::shared_ptr<awips::TextProductFile> textProductFile {
+               const std::shared_ptr<awips::TextProductFile> textProductFile {
                   std::make_shared<awips::TextProductFile>()};
                std::istringstream responseBody {response.text};
                if (textProductFile->LoadData(filename, responseBody))
@@ -218,7 +220,7 @@ bool WarningsProvider::Impl::UpdateFileRecord(const cpr::Response& response,
       lastModified = lastModifiedIt->second;
    }
 
-   std::unique_lock lock(filesMutex_);
+   const std::unique_lock lock(filesMutex_);
 
    auto it = files_.find(filename);
    if (it != files_.cend())

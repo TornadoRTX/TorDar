@@ -10,6 +10,7 @@ Checks:
   - '-cppcoreguidelines-pro-type-reinterpret-cast'
   - '-misc-include-cleaner'
   - '-misc-non-private-member-variables-in-classes'
+  - '-misc-use-anonymous-namespace'
   - '-modernize-return-braced-init-list'
   - '-modernize-use-trailing-return-type'
 FormatStyle: 'file'

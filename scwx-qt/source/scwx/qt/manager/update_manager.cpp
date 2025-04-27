@@ -126,7 +126,7 @@ size_t UpdateManager::Impl::PopulateReleases()
       // Successful REST API query
       if (r.status_code == 200)
       {
-         boost::json::value json = util::json::ReadJsonString(r.text);
+         const boost::json::value json = util::json::ReadJsonString(r.text);
          if (json == nullptr)
          {
             logger_->warn("Response not JSON: {}", r.header["content-type"]);

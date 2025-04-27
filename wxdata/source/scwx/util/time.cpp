@@ -21,9 +21,7 @@
 #   include <date/date.h>
 #endif
 
-namespace scwx
-{
-namespace util
+namespace scwx::util
 {
 
 static const std::string logPrefix_ = "scwx::util::time";
@@ -48,6 +46,7 @@ std::chrono::system_clock::time_point TimePoint(uint32_t modifiedJulianDate,
    using sys_days       = time_point<system_clock, days>;
    constexpr auto epoch = sys_days {1969y / December / 31d};
 
+   // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers): literals are used
    return epoch + (modifiedJulianDate * 24h) +
           std::chrono::milliseconds {milliseconds};
 }
@@ -154,5 +153,4 @@ template std::optional<std::chrono::sys_time<std::chrono::seconds>>
 TryParseDateTime<std::chrono::seconds>(const std::string& dateTimeFormat,
                                        const std::string& str);
 
-} // namespace util
-} // namespace scwx
+} // namespace scwx::util

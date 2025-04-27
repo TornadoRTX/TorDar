@@ -143,9 +143,11 @@ std::chrono::sys_time<std::chrono::minutes> WmoHeader::GetDateTime(
 {
    std::chrono::sys_time<std::chrono::minutes> wmoDateTime {};
 
-   if (p->absoluteDateTime_.has_value())
+   const auto absoluteDateTime = p->absoluteDateTime_;
+
+   if (absoluteDateTime.has_value())
    {
-      wmoDateTime = p->absoluteDateTime_.value();
+      wmoDateTime = absoluteDateTime.value();
    }
    else if (endTimeHint.has_value())
    {
@@ -160,8 +162,8 @@ std::chrono::sys_time<std::chrono::minutes> WmoHeader::GetDateTime(
       {
          using namespace std::chrono;
 
-         auto           endDays = floor<days>(endTimeHint.value());
-         year_month_day endDate {endDays};
+         const auto           endDays = floor<days>(endTimeHint.value());
+         const year_month_day endDate {endDays};
 
          // Combine end date year and month with WMO date time
          wmoDateTime =

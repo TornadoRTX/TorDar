@@ -241,7 +241,7 @@ void TextEventManager::SelectTime(
 
    boost::asio::post(
       p->threadPool_,
-      [=, this]()
+      [this]()
       {
          try
          {
@@ -259,7 +259,7 @@ void TextEventManager::SelectTime(
                             date < p->archiveLimit_;
                   });
 
-            std::unique_lock lock {p->archiveMutex_};
+            const std::unique_lock lock {p->archiveMutex_};
 
             p->UpdateArchiveDates(dates);
             p->ListArchives(dates);
@@ -382,7 +382,7 @@ void TextEventManager::Impl::ListArchives(DateRange dates)
          auto productEntries = provider::IemApiProvider::ListTextProducts(
             dateArray | ranges::views::all, kEmptyRange_, kPilsView_);
 
-         std::unique_lock lock {unloadedProductMapMutex_};
+         const std::unique_lock lock {unloadedProductMapMutex_};
 
          if (productEntries.has_value())
          {
