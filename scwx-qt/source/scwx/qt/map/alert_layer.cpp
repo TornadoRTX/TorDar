@@ -336,26 +336,27 @@ void AlertLayerHandler::HandleAlert(const types::TextEventKey& key,
       alertsUpdated {};
 
    const auto& messageList = textEventManager_->message_list(key);
-   auto        message     = messageList.at(messageIndex);
 
-   if (message->uuid() != uuid)
+   // Find message by UUID instead of index, as the message index could have
+   // changed between the signal being emitted and the handler being called
+   auto messageIt = std::find_if(messageList.cbegin(),
+                                 messageList.cend(),
+                                 [&uuid](const auto& message)
+                                 { return uuid == message->uuid(); });
+
+   if (messageIt == messageList.cend())
    {
-      // Find message by UUID instead of index, as the message index could have
-      // changed between the signal being emitted and the handler being called
-      auto it = std::find_if(messageList.cbegin(),
-                             messageList.cend(),
-                             [&uuid](const auto& message)
-                             { return uuid == message->uuid(); });
-
-      if (it == messageList.cend())
-      {
-         logger_->warn(
-            "Could not find alert uuid: {} ({})", key.ToString(), messageIndex);
-         return;
-      }
-
-      message = *it;
+      logger_->warn(
+         "Could not find alert uuid: {} ({})", key.ToString(), messageIndex);
+      return;
    }
+
+   auto& message       = *messageIt;
+   auto  nextMessageIt = std::next(messageIt);
+
+   // Store the current message index
+   messageIndex =
+      static_cast<std::size_t>(std::distance(messageList.cbegin(), messageIt));
 
    // Determine start time for first segment
    std::chrono::system_clock::time_point segmentBegin {};
@@ -364,14 +365,31 @@ void AlertLayerHandler::HandleAlert(const types::TextEventKey& key,
       segmentBegin = message->segment(0)->event_begin();
    }
 
+   // Determine the start time for the first segment of the next message
+   std::optional<std::chrono::system_clock::time_point> nextMessageBegin {};
+   if (nextMessageIt != messageList.cend())
+   {
+      nextMessageBegin =
+         (*nextMessageIt)
+            ->wmo_header()
+            ->GetDateTime((*nextMessageIt)->segment(0)->event_begin());
+   }
+
    // Take a unique mutex before modifying segments
    std::unique_lock lock {alertMutex_};
 
-   // Update any existing segments with new end time
+   // Update any existing earlier segments with new end time
    auto& segmentsForKey = segmentsByKey_[key];
    for (auto& segmentRecord : segmentsForKey)
    {
-      if (segmentRecord->segmentEnd_ > segmentBegin)
+      // Determine if the segment is earlier than the current message
+      auto it = std::find(
+         messageList.cbegin(), messageList.cend(), segmentRecord->message_);
+      auto segmentIndex =
+         static_cast<std::size_t>(std::distance(messageList.cbegin(), it));
+
+      if (segmentIndex < messageIndex &&
+          segmentRecord->segmentEnd_ > segmentBegin)
       {
          segmentRecord->segmentEnd_ = segmentBegin;
 
@@ -397,6 +415,14 @@ void AlertLayerHandler::HandleAlert(const types::TextEventKey& key,
       // Insert segment into lists
       std::shared_ptr<SegmentRecord> segmentRecord =
          std::make_shared<SegmentRecord>(segment, key, message);
+
+      // Update segment end time to be no later than the begin time of the next
+      // message (if present)
+      if (nextMessageBegin.has_value() &&
+          segmentRecord->segmentEnd_ > nextMessageBegin)
+      {
+         segmentRecord->segmentEnd_ = nextMessageBegin.value();
+      }
 
       segmentsForKey.push_back(segmentRecord);
       segmentsForType.push_back(segmentRecord);
