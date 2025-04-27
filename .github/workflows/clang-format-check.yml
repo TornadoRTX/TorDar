@@ -31,6 +31,8 @@ jobs:
       shell: bash
       run: |
         sudo apt-get install clang-format-19
+        sudo rm -f /usr/bin/clang-format
+        sudo ln -s /usr/bin/clang-format-19 /usr/bin/clang-format
 
     - name: Check Formatting
       shell: bash
