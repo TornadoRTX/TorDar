@@ -1,6 +1,7 @@
 #include <scwx/qt/manager/timeline_manager.hpp>
 #include <scwx/qt/manager/radar_product_manager.hpp>
 #include <scwx/qt/settings/general_settings.hpp>
+#include <scwx/qt/util/queue_counter.hpp>
 #include <scwx/util/logger.hpp>
 #include <scwx/util/map.hpp>
 #include <scwx/util/time.hpp>
@@ -31,6 +32,8 @@ enum class Direction
 
 // Wait up to 5 seconds for radar sweeps to update
 static constexpr std::chrono::seconds kRadarSweepMonitorTimeout_ {5};
+// Only allow for 3 steps to be queued at any time
+static constexpr size_t kMaxQueuedSteps_ {3};
 
 class TimelineManager::Impl
 {
@@ -79,6 +82,8 @@ public:
 
    boost::asio::thread_pool playThreadPool_ {1};
    boost::asio::thread_pool selectThreadPool_ {1};
+
+   util::QueueCounter stepCounter_ {kMaxQueuedSteps_};
 
    std::size_t                           mapCount_ {0};
    std::string                           radarSite_ {"?"};
@@ -256,7 +261,7 @@ void TimelineManager::AnimationStepEnd()
    if (p->viewType_ == types::MapTime::Live)
    {
       // If the selected view type is live, select the current products
-      p->SelectTime();
+      p->SelectTimeAsync();
    }
    else
    {
@@ -395,8 +400,9 @@ void TimelineManager::Impl::UpdateCacheLimit(
 {
    // Calculate the number of volume scans in the loop
    auto [startTime, endTime] = GetLoopStartAndEndTimes();
-   auto startIter = util::GetBoundedElementIterator(volumeTimes, startTime);
-   auto endIter   = util::GetBoundedElementIterator(volumeTimes, endTime);
+   auto startIter =
+      scwx::util::GetBoundedElementIterator(volumeTimes, startTime);
+   auto endIter = scwx::util::GetBoundedElementIterator(volumeTimes, endTime);
    std::size_t numVolumeScans = std::distance(startIter, endIter) + 1;
 
    // Dynamically update maximum cached volume scans to the lesser of
@@ -571,7 +577,8 @@ std::pair<bool, bool> TimelineManager::Impl::SelectTime(
    UpdateCacheLimit(radarProductManager, volumeTimes);
 
    // Find the best match bounded time
-   auto elementPtr = util::GetBoundedElementPointer(volumeTimes, selectedTime);
+   auto elementPtr =
+      scwx::util::GetBoundedElementPointer(volumeTimes, selectedTime);
 
    // The timeline is no longer live
    Q_EMIT self_->LiveStateUpdated(false);
@@ -612,6 +619,12 @@ std::pair<bool, bool> TimelineManager::Impl::SelectTime(
 
 void TimelineManager::Impl::StepAsync(Direction direction)
 {
+   // Prevent too many steps from being added to the queue
+   if (!stepCounter_.add())
+   {
+      return;
+   }
+
    boost::asio::post(selectThreadPool_,
                      [=, this]()
                      {
@@ -623,6 +636,7 @@ void TimelineManager::Impl::StepAsync(Direction direction)
                         {
                            logger_->error(ex.what());
                         }
+                        stepCounter_.remove();
                      });
 }
 
