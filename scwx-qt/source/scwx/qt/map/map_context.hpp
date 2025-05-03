@@ -4,13 +4,12 @@
 #include <scwx/qt/map/map_provider.hpp>
 #include <scwx/common/geographic.hpp>
 #include <scwx/common/products.hpp>
+#include <scwx/qt/config/radar_site.hpp>
 
 #include <qmaplibre.hpp>
 #include <QMargins>
 
-namespace scwx
-{
-namespace qt
+namespace scwx::qt
 {
 namespace view
 {
@@ -30,7 +29,7 @@ class MapContext : public gl::GlContext
 public:
    explicit MapContext(
       std::shared_ptr<view::RadarProductView> radarProductView = nullptr);
-   ~MapContext();
+   ~MapContext() override;
 
    MapContext(const MapContext&)            = delete;
    MapContext& operator=(const MapContext&) = delete;
@@ -48,11 +47,12 @@ public:
    [[nodiscard]] std::shared_ptr<view::OverlayProductView>
    overlay_product_view() const;
    [[nodiscard]] std::shared_ptr<view::RadarProductView>
-                                           radar_product_view() const;
-   [[nodiscard]] common::RadarProductGroup radar_product_group() const;
-   [[nodiscard]] std::string               radar_product() const;
-   [[nodiscard]] int16_t                   radar_product_code() const;
-   [[nodiscard]] QWidget*                  widget() const;
+                                                    radar_product_view() const;
+   [[nodiscard]] common::RadarProductGroup          radar_product_group() const;
+   [[nodiscard]] std::string                        radar_product() const;
+   [[nodiscard]] int16_t                            radar_product_code() const;
+   [[nodiscard]] std::shared_ptr<config::RadarSite> radar_site() const;
+   [[nodiscard]] QWidget*                           widget() const;
 
    void set_map(const std::shared_ptr<QMapLibre::Map>& map);
    void set_map_copyrights(const std::string& copyrights);
@@ -67,6 +67,7 @@ public:
    void set_radar_product_group(common::RadarProductGroup radarProductGroup);
    void set_radar_product(const std::string& radarProduct);
    void set_radar_product_code(int16_t radarProductCode);
+   void set_radar_site(const std::shared_ptr<config::RadarSite>& site);
    void set_widget(QWidget* widget);
 
 private:
@@ -76,5 +77,4 @@ private:
 };
 
 } // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt

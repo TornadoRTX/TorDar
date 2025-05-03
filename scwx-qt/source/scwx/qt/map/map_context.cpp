@@ -27,6 +27,7 @@ public:
       common::RadarProductGroup::Unknown};
    std::string                            radarProduct_ {"???"};
    int16_t                                radarProductCode_ {0};
+   std::shared_ptr<config::RadarSite>     radarSite_ {nullptr};
 
    MapProvider mapProvider_ {MapProvider::Unknown};
    std::string mapCopyrights_ {};
@@ -106,6 +107,11 @@ std::string MapContext::radar_product() const
    return p->radarProduct_;
 }
 
+std::shared_ptr<config::RadarSite> MapContext::radar_site() const
+{
+   return p->radarSite_;
+}
+
 int16_t MapContext::radar_product_code() const
 {
    return p->radarProductCode_;
@@ -172,6 +178,11 @@ void MapContext::set_radar_product(const std::string& radarProduct)
 void MapContext::set_radar_product_code(int16_t radarProductCode)
 {
    p->radarProductCode_ = radarProductCode;
+}
+
+void MapContext::set_radar_site(const std::shared_ptr<config::RadarSite>& site)
+{
+   p->radarSite_ = site;
 }
 
 void MapContext::set_widget(QWidget* widget)
