@@ -295,7 +295,7 @@ GetRadarBeamAltititude(units::length::meters<double> range,
                        units::angle::degrees<double> elevation,
                        units::length::meters<double> height)
 {
-   static const units::length::meters<double> earthRadius {6367444 * 4/3};
+   static const units::length::meters<double> earthRadius {6367444 * 4 / 3};
 
    height += earthRadius;
 

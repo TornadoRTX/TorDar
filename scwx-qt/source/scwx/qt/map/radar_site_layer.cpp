@@ -27,8 +27,7 @@ class RadarSiteLayer::Impl
 {
 public:
    explicit Impl(RadarSiteLayer* self, std::shared_ptr<MapContext>& context) :
-       self_ {self},
-       geoLines_ {std::make_shared<gl::draw::GeoLines>(context)}
+       self_ {self}, geoLines_ {std::make_shared<gl::draw::GeoLines>(context)}
    {
       geoLines_->StartLines();
       radarSiteLines_[0] = geoLines_->AddLine();
@@ -37,7 +36,7 @@ public:
 
       static const boost::gil::rgba32f_pixel_t color0 {0.0f, 0.0f, 0.0f, 1.0f};
       static const boost::gil::rgba32f_pixel_t color1 {1.0f, 1.0f, 1.0f, 1.0f};
-      static const float width = 1;
+      static const float                       width = 1;
       geoLines_->SetLineModulate(radarSiteLines_[0], color0);
       geoLines_->SetLineWidth(radarSiteLines_[0], width + 2);
 
@@ -71,7 +70,8 @@ public:
 };
 
 RadarSiteLayer::RadarSiteLayer(std::shared_ptr<MapContext> context) :
-    DrawLayer(context, "RadarSiteLayer"), p(std::make_unique<Impl>(this, context))
+    DrawLayer(context, "RadarSiteLayer"),
+    p(std::make_unique<Impl>(this, context))
 {
 }
 

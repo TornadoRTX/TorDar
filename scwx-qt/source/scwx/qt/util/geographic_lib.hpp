@@ -135,7 +135,6 @@ GetRadarBeamAltititude(units::length::meters<double> range,
                        units::angle::degrees<double> elevation,
                        units::length::meters<double> height);
 
-
 } // namespace GeographicLib
 } // namespace util
 } // namespace qt

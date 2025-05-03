@@ -365,11 +365,11 @@ bool RadarProductLayer::RunMousePicking(
       const double radarLatitude  = context()->radar_site()->latitude();
       const double radarLongitude = context()->radar_site()->longitude();
 
-      const auto distanceMeters = util::GeographicLib::GetDistance(
-            mouseGeoCoords.latitude_,
-            mouseGeoCoords.longitude_,
-            radarLatitude,
-            radarLongitude);
+      const auto distanceMeters =
+         util::GeographicLib::GetDistance(mouseGeoCoords.latitude_,
+                                          mouseGeoCoords.longitude_,
+                                          radarLatitude,
+                                          radarLongitude);
 
       const std::string distanceUnitName =
          settings::UnitSettings::Instance().distance_units().GetValue();
