@@ -27,11 +27,7 @@
 #   include <date/date.h>
 #endif
 
-namespace scwx
-{
-namespace qt
-{
-namespace manager
+namespace scwx::qt::manager
 {
 
 using namespace std::chrono_literals;
@@ -114,6 +110,11 @@ public:
 
       threadPool_.join();
    }
+
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    void
    HandleMessage(const std::shared_ptr<awips::TextProductMessage>& message);
@@ -298,9 +299,10 @@ void TextEventManager::Impl::HandleMessage(
    }
 
    // Determine year
-   std::chrono::year_month_day wmoDate = std::chrono::floor<std::chrono::days>(
-      message->wmo_header()->GetDateTime());
-   std::chrono::year wmoYear = wmoDate.year();
+   const std::chrono::year_month_day wmoDate =
+      std::chrono::floor<std::chrono::days>(
+         message->wmo_header()->GetDateTime());
+   const std::chrono::year wmoYear = wmoDate.year();
 
    std::unique_lock lock(textEventMutex_);
 
@@ -319,6 +321,7 @@ void TextEventManager::Impl::HandleMessage(
       // The message was on January 1
       wmoDate.month() == std::chrono::January && wmoDate.day() == 1d &&
       // This is at least the 10th ETN of the year
+      // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers): Readability
       vtecString[0].pVtec_.event_tracking_number() > 10)
    {
       // Attempt to find a matching event from last year
@@ -635,6 +638,4 @@ std::shared_ptr<TextEventManager> TextEventManager::Instance()
    return textEventManager;
 }
 
-} // namespace manager
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::manager

@@ -21,14 +21,16 @@ struct TextEventKey
    {
       using namespace std::chrono_literals;
 
+      static constexpr std::chrono::year kMinYear_ = 1970y;
+
       std::chrono::year_month_day ymd =
          std::chrono::floor<std::chrono::days>(pvtec.event_begin());
-      if (ymd.year() > 1970y)
+      if (ymd.year() > kMinYear_)
       {
          // Prefer the year from the event begin
          year_ = ymd.year();
       }
-      else if (yearHint > 1970y)
+      else if (yearHint > kMinYear_)
       {
          // Otherwise, use the year hint
          year_ = yearHint;
@@ -49,7 +51,7 @@ struct TextEventKey
    awips::Phenomenon   phenomenon_;
    awips::Significance significance_;
    std::int16_t        etn_;
-   std::chrono::year   year_;
+   std::chrono::year   year_ {};
 };
 
 template<class Key>
