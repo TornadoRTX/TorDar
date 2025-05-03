@@ -275,6 +275,8 @@ void TextEventManager::SelectTime(
 void TextEventManager::Impl::HandleMessage(
    const std::shared_ptr<awips::TextProductMessage>& message)
 {
+   using namespace std::chrono_literals;
+
    auto segments = message->segments();
 
    // If there are no segments, skip this message
@@ -295,14 +297,34 @@ void TextEventManager::Impl::HandleMessage(
       }
    }
 
+   // Determine year
+   std::chrono::year_month_day wmoDate = std::chrono::floor<std::chrono::days>(
+      message->wmo_header()->GetDateTime());
+   std::chrono::year wmoYear = wmoDate.year();
+
    std::unique_lock lock(textEventMutex_);
 
    // Find a matching event in the event map
    auto&               vtecString = segments[0]->header_->vtecString_;
-   types::TextEventKey key {vtecString[0].pVtec_};
+   types::TextEventKey key {vtecString[0].pVtec_, wmoYear};
    size_t              messageIndex = 0;
    auto                it           = textEventMap_.find(key);
    bool                updated      = false;
+
+   if (
+      // If there was no matching event
+      it == textEventMap_.cend() &&
+      // The event is not new
+      vtecString[0].pVtec_.action() != awips::PVtec::Action::New &&
+      // The message was on January 1
+      wmoDate.month() == std::chrono::January && wmoDate.day() == 1d &&
+      // This is at least the 10th ETN of the year
+      vtecString[0].pVtec_.event_tracking_number() > 10)
+   {
+      // Attempt to find a matching event from last year
+      key = {vtecString[0].pVtec_, wmoYear - std::chrono::years {1}};
+      it  = textEventMap_.find(key);
+   }
 
    if (it == textEventMap_.cend())
    {
