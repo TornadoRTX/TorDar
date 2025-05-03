@@ -6,12 +6,9 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <units/length.h>
 
-namespace scwx
-{
-namespace qt
-{
-namespace config
+namespace scwx::qt::config
 {
 
 class RadarSiteImpl;
@@ -28,18 +25,19 @@ public:
    RadarSite(RadarSite&&) noexcept;
    RadarSite& operator=(RadarSite&&) noexcept;
 
-   std::string type() const;
-   std::string type_name() const;
-   std::string id() const;
-   double      latitude() const;
-   double      longitude() const;
-   std::string country() const;
-   std::string state() const;
-   std::string place() const;
-   std::string location_name() const;
-   std::string tz_name() const;
+   [[nodiscard]] std::string                 type() const;
+   [[nodiscard]] std::string                 type_name() const;
+   [[nodiscard]] std::string                 id() const;
+   [[nodiscard]] double                      latitude() const;
+   [[nodiscard]] double                      longitude() const;
+   [[nodiscard]] std::string                 country() const;
+   [[nodiscard]] std::string                 state() const;
+   [[nodiscard]] std::string                 place() const;
+   [[nodiscard]] std::string                 location_name() const;
+   [[nodiscard]] std::string                 tz_name() const;
+   [[nodiscard]] units::length::feet<double> altitude() const;
 
-   const scwx::util::time_zone* time_zone() const;
+   [[nodiscard]] const scwx::util::time_zone* time_zone() const;
 
    static std::shared_ptr<RadarSite>              Get(const std::string& id);
    static std::vector<std::shared_ptr<RadarSite>> GetAll();
@@ -67,6 +65,4 @@ private:
 
 std::string GetRadarIdFromSiteId(const std::string& siteId);
 
-} // namespace config
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::config
