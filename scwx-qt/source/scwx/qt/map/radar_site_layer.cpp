@@ -29,22 +29,6 @@ public:
    explicit Impl(RadarSiteLayer* self, std::shared_ptr<MapContext>& context) :
        self_ {self}, geoLines_ {std::make_shared<gl::draw::GeoLines>(context)}
    {
-      geoLines_->StartLines();
-      radarSiteLines_[0] = geoLines_->AddLine();
-      radarSiteLines_[1] = geoLines_->AddLine();
-      geoLines_->FinishLines();
-
-      static const boost::gil::rgba32f_pixel_t color0 {0.0f, 0.0f, 0.0f, 1.0f};
-      static const boost::gil::rgba32f_pixel_t color1 {1.0f, 1.0f, 1.0f, 1.0f};
-      static const float                       width = 1;
-      geoLines_->SetLineModulate(radarSiteLines_[0], color0);
-      geoLines_->SetLineWidth(radarSiteLines_[0], width + 2);
-
-      geoLines_->SetLineModulate(radarSiteLines_[1], color1);
-      geoLines_->SetLineWidth(radarSiteLines_[1], width);
-
-      self_->AddDrawItem(geoLines_);
-      geoLines_->set_thresholded(false);
    }
    ~Impl() = default;
 
@@ -66,7 +50,8 @@ public:
    std::string hoverText_ {};
 
    std::shared_ptr<gl::draw::GeoLines>                       geoLines_;
-   std::array<std::shared_ptr<gl::draw::GeoLineDrawItem>, 2> radarSiteLines_;
+   std::array<std::shared_ptr<gl::draw::GeoLineDrawItem>, 2> radarSiteLines_ {
+      nullptr, nullptr};
 };
 
 RadarSiteLayer::RadarSiteLayer(std::shared_ptr<MapContext> context) :
@@ -82,6 +67,23 @@ void RadarSiteLayer::Initialize()
    logger_->debug("Initialize()");
 
    p->radarSites_ = config::RadarSite::GetAll();
+
+   p->geoLines_->StartLines();
+   p->radarSiteLines_[0] = p->geoLines_->AddLine();
+   p->radarSiteLines_[1] = p->geoLines_->AddLine();
+   p->geoLines_->FinishLines();
+
+   static const boost::gil::rgba32f_pixel_t color0 {0.0f, 0.0f, 0.0f, 1.0f};
+   static const boost::gil::rgba32f_pixel_t color1 {1.0f, 1.0f, 1.0f, 1.0f};
+   static const float                       width = 1;
+   p->geoLines_->SetLineModulate(p->radarSiteLines_[0], color0);
+   p->geoLines_->SetLineWidth(p->radarSiteLines_[0], width + 2);
+
+   p->geoLines_->SetLineModulate(p->radarSiteLines_[1], color1);
+   p->geoLines_->SetLineWidth(p->radarSiteLines_[1], width);
+
+   AddDrawItem(p->geoLines_);
+   p->geoLines_->set_thresholded(false);
 
    DrawLayer::Initialize();
 }
@@ -196,7 +198,6 @@ void RadarSiteLayer::Impl::RenderRadarSite(
 
 void RadarSiteLayer::Impl::RenderRadarLine()
 {
-   // TODO check if state is updated.
    if ((QGuiApplication::keyboardModifiers() &
         Qt::KeyboardModifier::ShiftModifier) &&
        self_->context()->radar_site() != nullptr)
