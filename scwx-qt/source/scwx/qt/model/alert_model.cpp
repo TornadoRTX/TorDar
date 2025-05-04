@@ -338,7 +338,7 @@ void AlertModel::HandleAlert(const types::TextEventKey& alertKey,
    auto alertMessages = p->textEventManager_->message_list(alertKey);
 
    // Skip alert if this is not the most recent message
-   if (messageIndex + 1 < alertMessages.size())
+   if (alertMessages.empty() || messageIndex + 1 < alertMessages.size())
    {
       return;
    }
@@ -390,6 +390,35 @@ void AlertModel::HandleAlert(const types::TextEventKey& alertKey,
       QModelIndex bottomRight = createIndex(row, kLastColumn);
 
       Q_EMIT dataChanged(topLeft, bottomRight);
+   }
+}
+
+void AlertModel::HandleAlertsRemoved(
+   const std::unordered_set<types::TextEventKey,
+                            types::TextEventHash<types::TextEventKey>>&
+      alertKeys)
+{
+   logger_->trace("Handle alerts removed");
+
+   for (const auto& alertKey : alertKeys)
+   {
+      // Remove from the list of text event keys
+      auto it = std::find(
+         p->textEventKeys_.begin(), p->textEventKeys_.end(), alertKey);
+      if (it != p->textEventKeys_.end())
+      {
+         int row = std::distance(p->textEventKeys_.begin(), it);
+         beginRemoveRows(QModelIndex(), row, row);
+         p->textEventKeys_.erase(it);
+         endRemoveRows();
+      }
+
+      // Remove from internal maps
+      p->observedMap_.erase(alertKey);
+      p->threatCategoryMap_.erase(alertKey);
+      p->tornadoPossibleMap_.erase(alertKey);
+      p->centroidMap_.erase(alertKey);
+      p->distanceMap_.erase(alertKey);
    }
 }
 

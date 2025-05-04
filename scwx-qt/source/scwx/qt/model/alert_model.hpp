@@ -4,6 +4,7 @@
 #include <scwx/common/geographic.hpp>
 
 #include <memory>
+#include <unordered_set>
 
 #include <QAbstractTableModel>
 
@@ -51,6 +52,10 @@ public:
 
 public slots:
    void HandleAlert(const types::TextEventKey& alertKey, size_t messageIndex);
+   void HandleAlertsRemoved(
+      const std::unordered_set<types::TextEventKey,
+                               types::TextEventHash<types::TextEventKey>>&
+         alertKeys);
    void HandleMapUpdate(double latitude, double longitude);
 
 private:

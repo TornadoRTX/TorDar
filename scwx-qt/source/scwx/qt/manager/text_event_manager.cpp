@@ -116,13 +116,14 @@ public:
    Impl(const Impl&&)            = delete;
    Impl& operator=(const Impl&&) = delete;
 
-   void
-   HandleMessage(const std::shared_ptr<awips::TextProductMessage>& message);
+   void HandleMessage(const std::shared_ptr<awips::TextProductMessage>& message,
+                      bool archiveEvent = false);
    template<ranges::forward_range DateRange>
       requires std::same_as<ranges::range_value_t<DateRange>,
                             std::chrono::sys_days>
    void ListArchives(DateRange dates);
    void LoadArchives(std::chrono::system_clock::time_point dateTime);
+   void PruneArchives();
    void RefreshAsync();
    void Refresh();
    template<ranges::forward_range DateRange>
@@ -154,6 +155,15 @@ public:
 
    std::mutex                       archiveMutex_ {};
    std::list<std::chrono::sys_days> archiveDates_ {};
+
+   std::mutex archiveEventKeyMutex_ {};
+   std::map<std::chrono::sys_days,
+            std::unordered_set<types::TextEventKey,
+                               types::TextEventHash<types::TextEventKey>>>
+      archiveEventKeys_ {};
+   std::unordered_set<types::TextEventKey,
+                      types::TextEventHash<types::TextEventKey>>
+      liveEventKeys_ {};
 
    std::mutex unloadedProductMapMutex_ {};
    std::map<std::chrono::sys_days,
@@ -249,7 +259,7 @@ void TextEventManager::SelectTime(
             const auto today = std::chrono::floor<std::chrono::days>(dateTime);
             const auto yesterday = today - std::chrono::days {1};
             const auto tomorrow  = today + std::chrono::days {1};
-            const auto dateArray = std::array {today, yesterday, tomorrow};
+            const auto dateArray = std::array {yesterday, today, tomorrow};
 
             const auto dates =
                dateArray |
@@ -265,6 +275,7 @@ void TextEventManager::SelectTime(
             p->UpdateArchiveDates(dates);
             p->ListArchives(dates);
             p->LoadArchives(dateTime);
+            p->PruneArchives();
          }
          catch (const std::exception& ex)
          {
@@ -274,7 +285,7 @@ void TextEventManager::SelectTime(
 }
 
 void TextEventManager::Impl::HandleMessage(
-   const std::shared_ptr<awips::TextProductMessage>& message)
+   const std::shared_ptr<awips::TextProductMessage>& message, bool archiveEvent)
 {
    using namespace std::chrono_literals;
 
@@ -335,6 +346,12 @@ void TextEventManager::Impl::HandleMessage(
       textEventMap_.emplace(key, std::vector {message});
       messageIndex = 0;
       updated      = true;
+
+      if (!archiveEvent)
+      {
+         // Add the Text Event Key to the list of live events to prevent pruning
+         liveEventKeys_.insert(key);
+      }
    }
    else if (std::find_if(it->second.cbegin(),
                          it->second.cend(),
@@ -367,6 +384,17 @@ void TextEventManager::Impl::HandleMessage(
       it->second.insert(insertionPoint, message);
       updated = true;
    };
+
+   // If this is an archive event, and the key does not exist in the live events
+   // Assumption: A live event will always be loaded before a duplicate archive
+   // event
+   if (archiveEvent && !liveEventKeys_.contains(key))
+   {
+      // Add the Text Event Key to the current date's archive
+      const std::unique_lock archiveEventKeyLock {archiveEventKeyMutex_};
+      auto&                  archiveKeys = archiveEventKeys_[wmoDate];
+      archiveKeys.insert(key);
+   }
 
    lock.unlock();
 
@@ -518,8 +546,84 @@ void TextEventManager::Impl::LoadArchives(
 
       for (auto& message : messages)
       {
-         HandleMessage(message);
+         HandleMessage(message, true);
       }
+   }
+}
+
+void TextEventManager::Impl::PruneArchives()
+{
+   static constexpr std::size_t kMaxArchiveDates_ = 5;
+
+   std::unordered_set<types::TextEventKey,
+                      types::TextEventHash<types::TextEventKey>>
+      eventKeysToKeep {};
+   std::unordered_set<types::TextEventKey,
+                      types::TextEventHash<types::TextEventKey>>
+      eventKeysToPrune {};
+
+   // Remove oldest dates from the archive
+   while (archiveDates_.size() > kMaxArchiveDates_)
+   {
+      archiveDates_.pop_front();
+   }
+
+   const std::unique_lock archiveEventKeyLock {archiveEventKeyMutex_};
+
+   // If there are the same number of dates in both archiveEventKeys_ and
+   // archiveDates_, there is nothing to prune
+   if (archiveEventKeys_.size() == archiveDates_.size())
+   {
+      // Nothing to prune
+      return;
+   }
+
+   const std::unique_lock unloadedProductMapLock {unloadedProductMapMutex_};
+
+   for (auto it = archiveEventKeys_.begin(); it != archiveEventKeys_.end();)
+   {
+      const auto& date      = it->first;
+      const auto& eventKeys = it->second;
+
+      // If date is not in recent days map
+      if (std::find(archiveDates_.cbegin(), archiveDates_.cend(), date) ==
+          archiveDates_.cend())
+      {
+         // Prune these keys (unless they are in the eventKeysToKeep set)
+         eventKeysToPrune.insert(eventKeys.begin(), eventKeys.end());
+
+         // The date is not in the list of recent dates, remove it
+         it = archiveEventKeys_.erase(it);
+         unloadedProductMap_.erase(date);
+      }
+      else
+      {
+         // Make sure these keys don't get pruned
+         eventKeysToKeep.insert(eventKeys.begin(), eventKeys.end());
+
+         // The date is recent, keep it
+         ++it;
+      }
+   }
+
+   // Remove elements from eventKeysToPrune if they are in eventKeysToKeep
+   for (const auto& eventKey : eventKeysToKeep)
+   {
+      eventKeysToPrune.erase(eventKey);
+   }
+
+   // Remove eventKeysToPrune from textEventMap
+   for (const auto& eventKey : eventKeysToPrune)
+   {
+      textEventMap_.erase(eventKey);
+   }
+
+   // If event keys were pruned, emit a signal
+   if (!eventKeysToPrune.empty())
+   {
+      logger_->debug("Pruned {} archive events", eventKeysToPrune.size());
+
+      Q_EMIT self_->AlertsRemoved(eventKeysToPrune);
    }
 }
 

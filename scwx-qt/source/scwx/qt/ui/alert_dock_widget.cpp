@@ -132,6 +132,11 @@ void AlertDockWidgetImpl::ConnectSignals()
            proxyModel_.get(),
            &model::AlertProxyModel::SetAlertActiveFilter);
    connect(textEventManager_.get(),
+           &manager::TextEventManager::AlertsRemoved,
+           alertModel_.get(),
+           &model::AlertModel::HandleAlertsRemoved,
+           Qt::QueuedConnection);
+   connect(textEventManager_.get(),
            &manager::TextEventManager::AlertUpdated,
            alertModel_.get(),
            &model::AlertModel::HandleAlert,

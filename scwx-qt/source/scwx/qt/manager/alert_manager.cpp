@@ -138,8 +138,10 @@ common::Coordinate AlertManager::Impl::CurrentCoordinate(
 void AlertManager::Impl::HandleAlert(const types::TextEventKey& key,
                                      size_t messageIndex) const
 {
+   auto messages = textEventManager_->message_list(key);
+
    // Skip alert if there are more messages to be processed
-   if (messageIndex + 1 < textEventManager_->message_count(key))
+   if (messages.empty() || messageIndex + 1 < messages.size())
    {
       return;
    }
@@ -153,7 +155,7 @@ void AlertManager::Impl::HandleAlert(const types::TextEventKey& key,
       audioSettings.alert_radius().GetValue());
    std::string alertWFO = audioSettings.alert_wfo().GetValue();
 
-   auto message = textEventManager_->message_list(key).at(messageIndex);
+   auto message = messages.at(messageIndex);
 
    for (auto& segment : message->segments())
    {

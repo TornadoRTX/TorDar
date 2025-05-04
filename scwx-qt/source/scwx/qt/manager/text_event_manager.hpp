@@ -6,6 +6,7 @@
 #include <chrono>
 #include <memory>
 #include <string>
+#include <unordered_set>
 
 #include <boost/uuid/uuid.hpp>
 #include <QObject>
@@ -35,6 +36,10 @@ public:
    static std::shared_ptr<TextEventManager> Instance();
 
 signals:
+   void AlertsRemoved(
+      const std::unordered_set<types::TextEventKey,
+                               types::TextEventHash<types::TextEventKey>>&
+         keys);
    void AlertUpdated(const types::TextEventKey& key,
                      std::size_t                messageIndex,
                      boost::uuids::uuid         uuid);
