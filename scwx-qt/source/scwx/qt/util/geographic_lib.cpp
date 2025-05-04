@@ -2,6 +2,7 @@
 #include <scwx/util/logger.hpp>
 
 #include <numbers>
+#include <cmath>
 
 #include <GeographicLib/Gnomonic.hpp>
 #include <geos/algorithm/PointLocation.h>
@@ -287,6 +288,25 @@ bool AreaInRangeOfPoint(const std::vector<common::Coordinate>& area,
                         const units::length::meters<double>    distance)
 {
     return GetDistanceAreaPoint(area, point) <= distance;
+}
+
+units::length::meters<double>
+GetRadarBeamAltititude(units::length::meters<double> range,
+                       units::angle::degrees<double> elevation,
+                       units::length::meters<double> height)
+{
+   static const units::length::meters<double> earthRadius {6367444 * 4 / 3};
+
+   height += earthRadius;
+
+   const double elevationRadians =
+      units::angle::radians<double>(elevation).value();
+   const auto altitudeSquared =
+      (range * range + height * height +
+       2 * range * height * std::sin(elevationRadians));
+
+   return units::length::meters<double>(std::sqrt(altitudeSquared.value())) -
+          earthRadius;
 }
 
 } // namespace GeographicLib

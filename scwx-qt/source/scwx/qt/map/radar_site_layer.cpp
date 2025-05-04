@@ -1,5 +1,6 @@
 #include <scwx/qt/map/radar_site_layer.hpp>
 #include <scwx/qt/config/radar_site.hpp>
+#include <scwx/qt/gl/draw/geo_lines.hpp>
 #include <scwx/qt/settings/general_settings.hpp>
 #include <scwx/qt/settings/text_settings.hpp>
 #include <scwx/qt/util/maplibre.hpp>
@@ -9,6 +10,8 @@
 
 #include <imgui.h>
 #include <mbgl/util/constants.hpp>
+
+#include <QGuiApplication>
 
 namespace scwx
 {
@@ -23,11 +26,15 @@ static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 class RadarSiteLayer::Impl
 {
 public:
-   explicit Impl(RadarSiteLayer* self) : self_ {self} {}
+   explicit Impl(RadarSiteLayer* self, std::shared_ptr<MapContext>& context) :
+       self_ {self}, geoLines_ {std::make_shared<gl::draw::GeoLines>(context)}
+   {
+   }
    ~Impl() = default;
 
    void RenderRadarSite(const QMapLibre::CustomLayerRenderParameters& params,
                         std::shared_ptr<config::RadarSite>& radarSite);
+   void RenderRadarLine();
 
    RadarSiteLayer* self_;
 
@@ -41,10 +48,15 @@ public:
    float     halfHeight_ {};
 
    std::string hoverText_ {};
+
+   std::shared_ptr<gl::draw::GeoLines>                       geoLines_;
+   std::array<std::shared_ptr<gl::draw::GeoLineDrawItem>, 2> radarSiteLines_ {
+      nullptr, nullptr};
 };
 
 RadarSiteLayer::RadarSiteLayer(std::shared_ptr<MapContext> context) :
-    DrawLayer(context, "RadarSiteLayer"), p(std::make_unique<Impl>(this))
+    DrawLayer(context, "RadarSiteLayer"),
+    p(std::make_unique<Impl>(this, context))
 {
 }
 
@@ -56,7 +68,24 @@ void RadarSiteLayer::Initialize()
 
    p->radarSites_ = config::RadarSite::GetAll();
 
-   ImGuiInitialize();
+   p->geoLines_->StartLines();
+   p->radarSiteLines_[0] = p->geoLines_->AddLine();
+   p->radarSiteLines_[1] = p->geoLines_->AddLine();
+   p->geoLines_->FinishLines();
+
+   static const boost::gil::rgba32f_pixel_t color0 {0.0f, 0.0f, 0.0f, 1.0f};
+   static const boost::gil::rgba32f_pixel_t color1 {1.0f, 1.0f, 1.0f, 1.0f};
+   static const float                       width = 1;
+   p->geoLines_->SetLineModulate(p->radarSiteLines_[0], color0);
+   p->geoLines_->SetLineWidth(p->radarSiteLines_[0], width + 2);
+
+   p->geoLines_->SetLineModulate(p->radarSiteLines_[1], color1);
+   p->geoLines_->SetLineWidth(p->radarSiteLines_[1], width);
+
+   AddDrawItem(p->geoLines_);
+   p->geoLines_->set_thresholded(false);
+
+   DrawLayer::Initialize();
 }
 
 void RadarSiteLayer::Render(
@@ -96,8 +125,12 @@ void RadarSiteLayer::Render(
    }
 
    ImGui::PopStyleVar();
-   ImGuiFrameEnd();
 
+   p->RenderRadarLine();
+
+   DrawLayer::RenderWithoutImGui(params);
+
+   ImGuiFrameEnd();
    SCWX_GL_CHECK_ERROR();
 }
 
@@ -160,6 +193,37 @@ void RadarSiteLayer::Impl::RenderRadarSite(
 
       // End window
       ImGui::End();
+   }
+}
+
+void RadarSiteLayer::Impl::RenderRadarLine()
+{
+   if ((QGuiApplication::keyboardModifiers() &
+        Qt::KeyboardModifier::ShiftModifier) &&
+       self_->context()->radar_site() != nullptr)
+   {
+      const auto&  mouseCoord     = self_->context()->mouse_coordinate();
+      const double radarLatitude  = self_->context()->radar_site()->latitude();
+      const double radarLongitude = self_->context()->radar_site()->longitude();
+
+      geoLines_->SetLineLocation(radarSiteLines_[0],
+                                 static_cast<float>(mouseCoord.latitude_),
+                                 static_cast<float>(mouseCoord.longitude_),
+                                 static_cast<float>(radarLatitude),
+                                 static_cast<float>(radarLongitude));
+      geoLines_->SetLineVisible(radarSiteLines_[0], true);
+
+      geoLines_->SetLineLocation(radarSiteLines_[1],
+                                 static_cast<float>(mouseCoord.latitude_),
+                                 static_cast<float>(mouseCoord.longitude_),
+                                 static_cast<float>(radarLatitude),
+                                 static_cast<float>(radarLongitude));
+      geoLines_->SetLineVisible(radarSiteLines_[1], true);
+   }
+   else
+   {
+      geoLines_->SetLineVisible(radarSiteLines_[0], false);
+      geoLines_->SetLineVisible(radarSiteLines_[1], false);
    }
 }
 

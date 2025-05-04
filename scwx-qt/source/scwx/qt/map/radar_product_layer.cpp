@@ -1,6 +1,9 @@
 #include <scwx/qt/map/radar_product_layer.hpp>
 #include <scwx/qt/map/map_settings.hpp>
 #include <scwx/qt/gl/shader_program.hpp>
+#include <scwx/qt/settings/unit_settings.hpp>
+#include <scwx/qt/types/unit_types.hpp>
+#include <scwx/qt/util/geographic_lib.hpp>
 #include <scwx/qt/util/maplibre.hpp>
 #include <scwx/qt/util/tooltip.hpp>
 #include <scwx/qt/view/radar_product_view.hpp>
@@ -353,9 +356,64 @@ bool RadarProductLayer::RunMousePicking(
       std::shared_ptr<view::RadarProductView> radarProductView =
          context()->radar_product_view();
 
-      if (radarProductView == nullptr)
+      if (context()->radar_site() == nullptr)
       {
          return itemPicked;
+      }
+
+      // Get distance and altitude of point
+      const double radarLatitude  = context()->radar_site()->latitude();
+      const double radarLongitude = context()->radar_site()->longitude();
+
+      const auto distanceMeters =
+         util::GeographicLib::GetDistance(mouseGeoCoords.latitude_,
+                                          mouseGeoCoords.longitude_,
+                                          radarLatitude,
+                                          radarLongitude);
+
+      const std::string distanceUnitName =
+         settings::UnitSettings::Instance().distance_units().GetValue();
+      const types::DistanceUnits distanceUnits =
+         types::GetDistanceUnitsFromName(distanceUnitName);
+      const double distanceScale = types::GetDistanceUnitsScale(distanceUnits);
+      const std::string distanceAbbrev =
+         types::GetDistanceUnitsAbbreviation(distanceUnits);
+
+      const double distance = distanceMeters.value() *
+                              scwx::common::kKilometersPerMeter * distanceScale;
+      std::string distanceHeightStr =
+         fmt::format("{:.2f} {}", distance, distanceAbbrev);
+
+      if (radarProductView == nullptr)
+      {
+         util::tooltip::Show(distanceHeightStr, mouseGlobalPos);
+         itemPicked = true;
+         return itemPicked;
+      }
+
+      std::optional<float> elevation = radarProductView->elevation();
+      if (elevation.has_value())
+      {
+         const auto altitudeMeters =
+            util::GeographicLib::GetRadarBeamAltititude(
+               distanceMeters,
+               units::angle::degrees<double>(*elevation),
+               context()->radar_site()->altitude());
+
+         const std::string heightUnitName =
+            settings::UnitSettings::Instance().echo_tops_units().GetValue();
+         const types::EchoTopsUnits heightUnits =
+            types::GetEchoTopsUnitsFromName(heightUnitName);
+         const double heightScale = types::GetEchoTopsUnitsScale(heightUnits);
+         const std::string heightAbbrev =
+            types::GetEchoTopsUnitsAbbreviation(heightUnits);
+
+         const double altitude = altitudeMeters.value() *
+                                 scwx::common::kKilometersPerMeter *
+                                 heightScale;
+
+         distanceHeightStr = fmt::format(
+            "{}\n{:.2f} {}", distanceHeightStr, altitude, heightAbbrev);
       }
 
       std::optional<std::uint16_t> binLevel =
@@ -383,12 +441,13 @@ bool RadarProductLayer::RunMousePicking(
             if (codeName != codeShortName && !codeShortName.empty())
             {
                // There is a unique long and short name for the code
-               hoverText = fmt::format("{}: {}", codeShortName, codeName);
+               hoverText = fmt::format(
+                  "{}: {}\n{}", codeShortName, codeName, distanceHeightStr);
             }
             else
             {
                // Otherwise, only use the long name (always present)
-               hoverText = codeName;
+               hoverText = fmt::format("{}\n{}", codeName, distanceHeightStr);
             }
 
             // Show the tooltip
@@ -439,17 +498,20 @@ bool RadarProductLayer::RunMousePicking(
             {
                // Don't display a units value that wasn't intended to be
                // displayed
-               hoverText = fmt::format("{}{}", f, suffix);
+               hoverText =
+                  fmt::format("{}{}\n{}", f, suffix, distanceHeightStr);
             }
             else if (std::isalpha(static_cast<unsigned char>(units.at(0))))
             {
                // dBZ, Kts, etc.
-               hoverText = fmt::format("{} {}{}", f, units, suffix);
+               hoverText = fmt::format(
+                  "{} {}{}\n{}", f, units, suffix, distanceHeightStr);
             }
             else
             {
                // %, etc.
-               hoverText = fmt::format("{}{}{}", f, units, suffix);
+               hoverText = fmt::format(
+                  "{}{}{}\n{}", f, units, suffix, distanceHeightStr);
             }
 
             // Show the tooltip
@@ -457,6 +519,12 @@ bool RadarProductLayer::RunMousePicking(
 
             itemPicked = true;
          }
+      }
+      else
+      {
+         // Always show tooltip for distance and altitude
+         util::tooltip::Show(distanceHeightStr, mouseGlobalPos);
+         itemPicked = true;
       }
    }
 

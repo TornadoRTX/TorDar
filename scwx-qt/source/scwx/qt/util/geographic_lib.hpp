@@ -121,6 +121,20 @@ bool AreaInRangeOfPoint(const std::vector<common::Coordinate>& area,
                         const common::Coordinate&              point,
                         const units::length::meters<double>    distance);
 
+/**
+ * Get the altitude of the radar beam at a given distance, elevation and height
+ *
+ * @param [in] range The range to the radar site
+ * @param [in] elevation The elevation of the radar site
+ * @param [in] height The height of the radar site
+ *
+ * @return The altitude of the radar at that range
+ */
+units::length::meters<double>
+GetRadarBeamAltititude(units::length::meters<double> range,
+                       units::angle::degrees<double> elevation,
+                       units::length::meters<double> height);
+
 } // namespace GeographicLib
 } // namespace util
 } // namespace qt

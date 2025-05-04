@@ -2008,6 +2008,9 @@ void MapWidgetImpl::SelectNearestRadarSite(double                     latitude,
 void MapWidgetImpl::SetRadarSite(const std::string& radarSite,
                                  bool               checkProductAvailability)
 {
+   // Set the radar site in the context
+   context_->set_radar_site(config::RadarSite::Get(radarSite));
+
    // Check if radar site has changed
    if (radarProductManager_ == nullptr ||
        radarSite != radarProductManager_->radar_site()->id())

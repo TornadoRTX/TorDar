@@ -51,6 +51,7 @@ public:
    std::string state_ {};
    std::string place_ {};
    std::string tzName_ {};
+   double      altitude_ {0.0};
 
    const scwx::util::time_zone* timeZone_ {nullptr};
 };
@@ -140,6 +141,11 @@ std::string RadarSite::tz_name() const
 const scwx::util::time_zone* RadarSite::time_zone() const
 {
    return p->timeZone_;
+}
+
+units::length::feet<double> RadarSite::altitude() const
+{
+   return units::length::feet<double>(p->altitude_);
 }
 
 std::shared_ptr<RadarSite> RadarSite::Get(const std::string& id)
@@ -268,6 +274,8 @@ size_t RadarSite::ReadConfig(const std::string& path)
             site->p->state_ = boost::json::value_to<std::string>(o.at("state"));
             site->p->place_ = boost::json::value_to<std::string>(o.at("place"));
             site->p->tzName_ = boost::json::value_to<std::string>(o.at("tz"));
+            site->p->altitude_ =
+               boost::json::value_to<double>(o.at("elevation"));
 
             try
             {
