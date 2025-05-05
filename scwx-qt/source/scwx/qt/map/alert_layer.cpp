@@ -19,12 +19,9 @@
 #include <boost/container/stable_vector.hpp>
 #include <boost/container_hash/hash.hpp>
 #include <QEvent>
+#include <utility>
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 static const std::string logPrefix_ = "scwx::qt::map::alert_layer";
@@ -46,6 +43,8 @@ static bool IsAlertActive(const std::shared_ptr<const awips::Segment>& segment);
 class AlertLayerHandler : public QObject
 {
    Q_OBJECT
+   Q_DISABLE_COPY_MOVE(AlertLayerHandler)
+
 public:
    struct SegmentRecord
    {
@@ -57,10 +56,10 @@ public:
 
       SegmentRecord(
          const std::shared_ptr<const awips::Segment>&            segment,
-         const types::TextEventKey&                              key,
+         types::TextEventKey                                     key,
          const std::shared_ptr<const awips::TextProductMessage>& message) :
           segment_ {segment},
-          key_ {key},
+          key_ {std::move(key)},
           message_ {message},
           segmentBegin_ {segment->event_begin()},
           segmentEnd_ {segment->event_end()}
@@ -161,6 +160,11 @@ public:
       std::unique_lock lock(linesMutex_);
    };
 
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
+
    void AddAlert(
       const std::shared_ptr<AlertLayerHandler::SegmentRecord>& segmentRecord);
    void UpdateAlert(
@@ -182,14 +186,14 @@ public:
                 std::shared_ptr<gl::draw::GeoLineDrawItem>& di,
                 const common::Coordinate&                   p1,
                 const common::Coordinate&                   p2,
-                boost::gil::rgba32f_pixel_t                 color,
+                const boost::gil::rgba32f_pixel_t&          color,
                 float                                       width,
                 std::chrono::system_clock::time_point       startTime,
                 std::chrono::system_clock::time_point       endTime,
                 bool                                        enableHover);
    void AddLines(std::shared_ptr<gl::draw::GeoLines>&   geoLines,
                  const std::vector<common::Coordinate>& coordinates,
-                 boost::gil::rgba32f_pixel_t            color,
+                 const boost::gil::rgba32f_pixel_t&     color,
                  float                                  width,
                  std::chrono::system_clock::time_point  startTime,
                  std::chrono::system_clock::time_point  endTime,
@@ -238,8 +242,8 @@ public:
    std::vector<boost::signals2::scoped_connection> connections_ {};
 };
 
-AlertLayer::AlertLayer(std::shared_ptr<MapContext> context,
-                       awips::Phenomenon           phenomenon) :
+AlertLayer::AlertLayer(const std::shared_ptr<MapContext>& context,
+                       awips::Phenomenon                  phenomenon) :
     DrawLayer(
        context,
        fmt::format("AlertLayer {}", awips::GetPhenomenonText(phenomenon))),
@@ -620,9 +624,9 @@ void AlertLayer::Impl::AddAlert(
    // If draw items were added
    if (drawItems.second)
    {
-      const float borderWidth    = lineData.borderWidth_;
-      const float highlightWidth = lineData.highlightWidth_;
-      const float lineWidth      = lineData.lineWidth_;
+      const float borderWidth    = static_cast<float>(lineData.borderWidth_);
+      const float highlightWidth = static_cast<float>(lineData.highlightWidth_);
+      const float lineWidth      = static_cast<float>(lineData.lineWidth_);
 
       const float totalHighlightWidth = lineWidth + (highlightWidth * 2.0f);
       const float totalBorderWidth = totalHighlightWidth + (borderWidth * 2.0f);
@@ -699,7 +703,7 @@ void AlertLayer::Impl::UpdateAlert(
 void AlertLayer::Impl::AddLines(
    std::shared_ptr<gl::draw::GeoLines>&   geoLines,
    const std::vector<common::Coordinate>& coordinates,
-   boost::gil::rgba32f_pixel_t            color,
+   const boost::gil::rgba32f_pixel_t&     color,
    float                                  width,
    std::chrono::system_clock::time_point  startTime,
    std::chrono::system_clock::time_point  endTime,
@@ -739,14 +743,17 @@ void AlertLayer::Impl::AddLine(std::shared_ptr<gl::draw::GeoLines>& geoLines,
                                std::shared_ptr<gl::draw::GeoLineDrawItem>& di,
                                const common::Coordinate&                   p1,
                                const common::Coordinate&                   p2,
-                               boost::gil::rgba32f_pixel_t           color,
+                               const boost::gil::rgba32f_pixel_t&    color,
                                float                                 width,
                                std::chrono::system_clock::time_point startTime,
                                std::chrono::system_clock::time_point endTime,
                                bool enableHover)
 {
-   geoLines->SetLineLocation(
-      di, p1.latitude_, p1.longitude_, p2.latitude_, p2.longitude_);
+   geoLines->SetLineLocation(di,
+                             static_cast<float>(p1.latitude_),
+                             static_cast<float>(p1.longitude_),
+                             static_cast<float>(p2.latitude_),
+                             static_cast<float>(p2.longitude_));
    geoLines->SetLineModulate(di, color);
    geoLines->SetLineWidth(di, width);
    geoLines->SetLineStartTime(di, startTime);
@@ -805,9 +812,9 @@ void AlertLayer::Impl::UpdateLines()
       auto& lineData         = GetLineData(segment, alertActive);
       auto& geoLines         = geoLines_.at(alertActive);
 
-      const float borderWidth    = lineData.borderWidth_;
-      const float highlightWidth = lineData.highlightWidth_;
-      const float lineWidth      = lineData.lineWidth_;
+      const float borderWidth    = static_cast<float>(lineData.borderWidth_);
+      const float highlightWidth = static_cast<float>(lineData.highlightWidth_);
+      const float lineWidth      = static_cast<float>(lineData.lineWidth_);
 
       const float totalHighlightWidth = lineWidth + (highlightWidth * 2.0f);
       const float totalBorderWidth = totalHighlightWidth + (borderWidth * 2.0f);
@@ -982,8 +989,6 @@ size_t AlertTypeHash<std::pair<awips::Phenomenon, bool>>::operator()(
    return seed;
 }
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map
 
 #include "alert_layer.moc"
