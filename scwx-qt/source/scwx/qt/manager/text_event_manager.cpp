@@ -570,9 +570,10 @@ void TextEventManager::Impl::PruneArchives()
 
    const std::unique_lock archiveEventKeyLock {archiveEventKeyMutex_};
 
-   // If there are the same number of dates in both archiveEventKeys_ and
-   // archiveDates_, there is nothing to prune
-   if (archiveEventKeys_.size() == archiveDates_.size())
+   // If there are the same number of dates in archiveEventKeys_, archiveDates_
+   // and unloadedProductMap_, there is nothing to prune
+   if (archiveEventKeys_.size() == archiveDates_.size() &&
+       unloadedProductMap_.size() == archiveDates_.size())
    {
       // Nothing to prune
       return;
@@ -594,13 +595,30 @@ void TextEventManager::Impl::PruneArchives()
 
          // The date is not in the list of recent dates, remove it
          it = archiveEventKeys_.erase(it);
-         unloadedProductMap_.erase(date);
       }
       else
       {
          // Make sure these keys don't get pruned
          eventKeysToKeep.insert(eventKeys.begin(), eventKeys.end());
 
+         // The date is recent, keep it
+         ++it;
+      }
+   }
+
+   for (auto it = unloadedProductMap_.begin(); it != unloadedProductMap_.end();)
+   {
+      const auto& date = it->first;
+
+      // If date is not in recent days map
+      if (std::find(archiveDates_.cbegin(), archiveDates_.cend(), date) ==
+          archiveDates_.cend())
+      {
+         // The date is not in the list of recent dates, remove it
+         it = unloadedProductMap_.erase(it);
+      }
+      else
+      {
          // The date is recent, keep it
          ++it;
       }
