@@ -73,10 +73,11 @@ public:
       connect(textEventManager_.get(),
               &manager::TextEventManager::AlertUpdated,
               this,
-              [this](const types::TextEventKey& key,
-                     std::size_t                messageIndex,
-                     boost::uuids::uuid         uuid)
-              { HandleAlert(key, messageIndex, uuid); });
+              &AlertLayerHandler::HandleAlert);
+      connect(textEventManager_.get(),
+              &manager::TextEventManager::AlertsRemoved,
+              this,
+              &AlertLayerHandler::HandleAlertsRemoved);
    }
    ~AlertLayerHandler()
    {
@@ -100,6 +101,10 @@ public:
    void HandleAlert(const types::TextEventKey& key,
                     size_t                     messageIndex,
                     boost::uuids::uuid         uuid);
+   void HandleAlertsRemoved(
+      const std::unordered_set<types::TextEventKey,
+                               types::TextEventHash<types::TextEventKey>>&
+         keys);
 
    static AlertLayerHandler& Instance();
 
@@ -112,6 +117,7 @@ signals:
    void AlertAdded(const std::shared_ptr<SegmentRecord>& segmentRecord,
                    awips::Phenomenon                     phenomenon);
    void AlertUpdated(const std::shared_ptr<SegmentRecord>& segmentRecord);
+   void AlertsRemoved(awips::Phenomenon phenomenon, bool alertActive);
    void AlertsUpdated(awips::Phenomenon phenomenon, bool alertActive);
 };
 
@@ -190,6 +196,7 @@ public:
                  bool                                   enableHover,
                  boost::container::stable_vector<
                     std::shared_ptr<gl::draw::GeoLineDrawItem>>& drawItems);
+   void PopulateLines(bool alertActive);
    void UpdateLines();
 
    static LineData CreateLineData(const settings::LineSettings& lineSettings);
@@ -276,22 +283,7 @@ void AlertLayer::Initialize()
 
    for (auto alertActive : {false, true})
    {
-      auto& geoLines = p->geoLines_.at(alertActive);
-
-      geoLines->StartLines();
-
-      // Populate initial segments
-      auto segmentsIt =
-         alertLayerHandler.segmentsByType_.find({p->phenomenon_, alertActive});
-      if (segmentsIt != alertLayerHandler.segmentsByType_.cend())
-      {
-         for (auto& segment : segmentsIt->second)
-         {
-            p->AddAlert(segment);
-         }
-      }
-
-      geoLines->FinishLines();
+      p->PopulateLines(alertActive);
    }
 
    p->ConnectAlertHandlerSignals();
@@ -444,6 +436,65 @@ void AlertLayerHandler::HandleAlert(const types::TextEventKey& key,
    }
 }
 
+void AlertLayerHandler::HandleAlertsRemoved(
+   const std::unordered_set<types::TextEventKey,
+                            types::TextEventHash<types::TextEventKey>>& keys)
+{
+   logger_->trace("HandleAlertsRemoved: {} keys", keys.size());
+
+   std::unordered_set<std::pair<awips::Phenomenon, bool>,
+                      AlertTypeHash<std::pair<awips::Phenomenon, bool>>>
+      alertsRemoved {};
+
+   // Take a unique lock before modifying segments
+   std::unique_lock lock {alertMutex_};
+
+   for (const auto& key : keys)
+   {
+      // Remove segments associated with the key
+      auto segmentsIt = segmentsByKey_.find(key);
+      if (segmentsIt != segmentsByKey_.end())
+      {
+         for (const auto& segmentRecord : segmentsIt->second)
+         {
+            auto& segment     = segmentRecord->segment_;
+            bool  alertActive = IsAlertActive(segment);
+
+            // Remove from segmentsByType_
+            auto typeIt = segmentsByType_.find({key.phenomenon_, alertActive});
+            if (typeIt != segmentsByType_.end())
+            {
+               auto& segmentsForType = typeIt->second;
+               segmentsForType.erase(std::remove(segmentsForType.begin(),
+                                                 segmentsForType.end(),
+                                                 segmentRecord),
+                                     segmentsForType.end());
+
+               // If no segments remain for this type, erase the entry
+               if (segmentsForType.empty())
+               {
+                  segmentsByType_.erase(typeIt);
+               }
+            }
+
+            alertsRemoved.emplace(key.phenomenon_, alertActive);
+         }
+
+         // Remove the key from segmentsByKey_
+         segmentsByKey_.erase(segmentsIt);
+      }
+   }
+
+   // Release the lock after completing segment updates
+   lock.unlock();
+
+   // Emit signal to notify that alerts have been removed
+   for (auto& alert : alertsRemoved)
+   {
+      Q_EMIT AlertsRemoved(alert.first, alert.second);
+   }
+}
+
 void AlertLayer::Impl::ConnectAlertHandlerSignals()
 {
    auto& alertLayerHandler = AlertLayerHandler::Instance();
@@ -471,6 +522,22 @@ void AlertLayer::Impl::ConnectAlertHandlerSignals()
          if (segmentRecord->key_.phenomenon_ == phenomenon_)
          {
             UpdateAlert(segmentRecord);
+         }
+      });
+   QObject::connect(
+      &alertLayerHandler,
+      &AlertLayerHandler::AlertsRemoved,
+      receiver_.get(),
+      [&alertLayerHandler, this](awips::Phenomenon phenomenon, bool alertActive)
+      {
+         if (phenomenon == phenomenon_)
+         {
+            // Take a shared lock to prevent handling additional alerts while
+            // populating initial lists
+            const std::shared_lock lock {alertLayerHandler.alertMutex_};
+
+            // Re-populate the lines if multiple alerts were removed
+            PopulateLines(alertActive);
          }
       });
 }
@@ -702,6 +769,27 @@ void AlertLayer::Impl::AddLine(std::shared_ptr<gl::draw::GeoLines>& geoLines,
                    diWeak,
                    std::placeholders::_1));
    }
+}
+
+void AlertLayer::Impl::PopulateLines(bool alertActive)
+{
+   auto& alertLayerHandler = AlertLayerHandler::Instance();
+   auto& geoLines          = geoLines_.at(alertActive);
+
+   geoLines->StartLines();
+
+   // Populate initial segments
+   auto segmentsIt =
+      alertLayerHandler.segmentsByType_.find({phenomenon_, alertActive});
+   if (segmentsIt != alertLayerHandler.segmentsByType_.cend())
+   {
+      for (auto& segment : segmentsIt->second)
+      {
+         AddAlert(segment);
+      }
+   }
+
+   geoLines->FinishLines();
 }
 
 void AlertLayer::Impl::UpdateLines()
