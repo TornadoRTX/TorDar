@@ -9,21 +9,22 @@
 
 #include <boost/asio/steady_timer.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace model
+namespace scwx::qt::model
 {
 
 static const std::string logPrefix_ = "scwx::qt::model::alert_proxy_model";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 
-class AlertProxyModelImpl
+class AlertProxyModel::Impl
 {
 public:
-   explicit AlertProxyModelImpl(AlertProxyModel* self);
-   ~AlertProxyModelImpl();
+   explicit Impl(AlertProxyModel* self);
+   ~Impl();
+
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    void UpdateAlerts();
 
@@ -36,8 +37,7 @@ public:
 };
 
 AlertProxyModel::AlertProxyModel(QObject* parent) :
-    QSortFilterProxyModel(parent),
-    p(std::make_unique<AlertProxyModelImpl>(this))
+    QSortFilterProxyModel(parent), p(std::make_unique<Impl>(this))
 {
 }
 AlertProxyModel::~AlertProxyModel() = default;
@@ -77,7 +77,7 @@ bool AlertProxyModel::filterAcceptsRow(int                sourceRow,
           QSortFilterProxyModel::filterAcceptsRow(sourceRow, sourceParent);
 }
 
-AlertProxyModelImpl::AlertProxyModelImpl(AlertProxyModel* self) :
+AlertProxyModel::Impl::Impl(AlertProxyModel* self) :
     self_ {self},
     alertActiveFilterEnabled_ {false},
     alertUpdateTimer_ {scwx::util::io_context()}
@@ -86,13 +86,13 @@ AlertProxyModelImpl::AlertProxyModelImpl(AlertProxyModel* self) :
    UpdateAlerts();
 }
 
-AlertProxyModelImpl::~AlertProxyModelImpl()
+AlertProxyModel::Impl::~Impl()
 {
    std::unique_lock lock(alertMutex_);
    alertUpdateTimer_.cancel();
 }
 
-void AlertProxyModelImpl::UpdateAlerts()
+void AlertProxyModel::Impl::UpdateAlerts()
 {
    logger_->trace("UpdateAlerts");
 
@@ -102,10 +102,15 @@ void AlertProxyModelImpl::UpdateAlerts()
    // Re-evaluate for expired alerts
    if (alertActiveFilterEnabled_)
    {
-      self_->invalidateRowsFilter();
+      QMetaObject::invokeMethod(
+         self_,
+         static_cast<void (QSortFilterProxyModel::*)()>(
+            &QSortFilterProxyModel::invalidateRowsFilter));
    }
 
    using namespace std::chrono;
+
+   // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers): Readability
    alertUpdateTimer_.expires_after(15s);
    alertUpdateTimer_.async_wait(
       [this](const boost::system::error_code& e)
@@ -132,6 +137,4 @@ void AlertProxyModelImpl::UpdateAlerts()
       });
 }
 
-} // namespace model
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::model
