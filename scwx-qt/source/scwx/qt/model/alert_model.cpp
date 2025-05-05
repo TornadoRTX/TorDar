@@ -10,16 +10,10 @@
 #include <scwx/util/strings.hpp>
 #include <scwx/util/time.hpp>
 
-#include <format>
-
 #include <QApplication>
 #include <QFontMetrics>
 
-namespace scwx
-{
-namespace qt
-{
-namespace model
+namespace scwx::qt::model
 {
 
 static const std::string logPrefix_ = "scwx::qt::model::alert_model";
@@ -407,7 +401,8 @@ void AlertModel::HandleAlertsRemoved(
          p->textEventKeys_.begin(), p->textEventKeys_.end(), alertKey);
       if (it != p->textEventKeys_.end())
       {
-         int row = std::distance(p->textEventKeys_.begin(), it);
+         const int row =
+            static_cast<int>(std::distance(p->textEventKeys_.begin(), it));
          beginRemoveRows(QModelIndex(), row, row);
          p->textEventKeys_.erase(it);
          endRemoveRows();
@@ -597,6 +592,4 @@ std::string AlertModelImpl::GetEndTimeString(const types::TextEventKey& key)
    return scwx::util::TimeString(GetEndTime(key));
 }
 
-} // namespace model
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::model
