@@ -461,8 +461,8 @@ void AlertLayerHandler::HandleAlertsRemoved(
       {
          for (const auto& segmentRecord : segmentsIt->second)
          {
-            auto& segment     = segmentRecord->segment_;
-            bool  alertActive = IsAlertActive(segment);
+            auto&      segment     = segmentRecord->segment_;
+            const bool alertActive = IsAlertActive(segment);
 
             // Remove from segmentsByType_
             auto typeIt = segmentsByType_.find({key.phenomenon_, alertActive});
@@ -624,9 +624,9 @@ void AlertLayer::Impl::AddAlert(
    // If draw items were added
    if (drawItems.second)
    {
-      const float borderWidth    = static_cast<float>(lineData.borderWidth_);
-      const float highlightWidth = static_cast<float>(lineData.highlightWidth_);
-      const float lineWidth      = static_cast<float>(lineData.lineWidth_);
+      const auto borderWidth    = static_cast<float>(lineData.borderWidth_);
+      const auto highlightWidth = static_cast<float>(lineData.highlightWidth_);
+      const auto lineWidth      = static_cast<float>(lineData.lineWidth_);
 
       const float totalHighlightWidth = lineWidth + (highlightWidth * 2.0f);
       const float totalBorderWidth = totalHighlightWidth + (borderWidth * 2.0f);
@@ -812,9 +812,9 @@ void AlertLayer::Impl::UpdateLines()
       auto& lineData         = GetLineData(segment, alertActive);
       auto& geoLines         = geoLines_.at(alertActive);
 
-      const float borderWidth    = static_cast<float>(lineData.borderWidth_);
-      const float highlightWidth = static_cast<float>(lineData.highlightWidth_);
-      const float lineWidth      = static_cast<float>(lineData.lineWidth_);
+      const auto borderWidth    = static_cast<float>(lineData.borderWidth_);
+      const auto highlightWidth = static_cast<float>(lineData.highlightWidth_);
+      const auto lineWidth      = static_cast<float>(lineData.lineWidth_);
 
       const float totalHighlightWidth = lineWidth + (highlightWidth * 2.0f);
       const float totalBorderWidth = totalHighlightWidth + (borderWidth * 2.0f);

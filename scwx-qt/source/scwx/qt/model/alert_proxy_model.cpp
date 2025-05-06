@@ -88,8 +88,15 @@ AlertProxyModel::Impl::Impl(AlertProxyModel* self) :
 
 AlertProxyModel::Impl::~Impl()
 {
-   std::unique_lock lock(alertMutex_);
-   alertUpdateTimer_.cancel();
+   try
+   {
+      std::unique_lock lock(alertMutex_);
+      alertUpdateTimer_.cancel();
+   }
+   catch (const std::exception& ex)
+   {
+      logger_->error(ex.what());
+   }
 }
 
 void AlertProxyModel::Impl::UpdateAlerts()
