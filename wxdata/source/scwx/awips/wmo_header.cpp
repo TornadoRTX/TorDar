@@ -12,13 +12,18 @@
 #   include <arpa/inet.h>
 #endif
 
-namespace scwx
-{
-namespace awips
+namespace scwx::awips
 {
 
 static const std::string logPrefix_ = "scwx::awips::wmo_header";
 static const auto        logger_    = util::Logger::Create(logPrefix_);
+
+static constexpr std::size_t kWmoHeaderMinLineLength_    = 18;
+static constexpr std::size_t kWmoIdentifierLengthMin_    = 5;
+static constexpr std::size_t kWmoIdentifierLengthMax_    = 6;
+static constexpr std::size_t kIcaoLength_                = 4;
+static constexpr std::size_t kDateTimeLength_            = 6;
+static constexpr std::size_t kAwipsIdentifierLineLength_ = 6;
 
 class WmoHeaderImpl
 {
@@ -37,17 +42,31 @@ public:
    }
    ~WmoHeaderImpl() = default;
 
+   WmoHeaderImpl(const WmoHeaderImpl&)             = delete;
+   WmoHeaderImpl& operator=(const WmoHeaderImpl&)  = delete;
+   WmoHeaderImpl(const WmoHeaderImpl&&)            = delete;
+   WmoHeaderImpl& operator=(const WmoHeaderImpl&&) = delete;
+
+   void CalculateAbsoluteDateTime();
+   bool ParseDateTime(unsigned int&  dayOfMonth,
+                      unsigned long& hour,
+                      unsigned long& minute);
+
    bool operator==(const WmoHeaderImpl& o) const;
 
-   std::string sequenceNumber_;
-   std::string dataType_;
-   std::string geographicDesignator_;
-   std::string bulletinId_;
-   std::string icao_;
-   std::string dateTime_;
-   std::string bbbIndicator_;
-   std::string productCategory_;
-   std::string productDesignator_;
+   std::string sequenceNumber_ {};
+   std::string dataType_ {};
+   std::string geographicDesignator_ {};
+   std::string bulletinId_ {};
+   std::string icao_ {};
+   std::string dateTime_ {};
+   std::string bbbIndicator_ {};
+   std::string productCategory_ {};
+   std::string productDesignator_ {};
+
+   std::optional<std::chrono::year_month> dateHint_ {};
+   std::optional<std::chrono::sys_time<std::chrono::minutes>>
+      absoluteDateTime_ {};
 };
 
 WmoHeader::WmoHeader() : p(std::make_unique<WmoHeaderImpl>()) {}
@@ -119,6 +138,71 @@ std::string WmoHeader::product_designator() const
    return p->productDesignator_;
 }
 
+std::chrono::sys_time<std::chrono::minutes> WmoHeader::GetDateTime(
+   std::optional<std::chrono::system_clock::time_point> endTimeHint)
+{
+   std::chrono::sys_time<std::chrono::minutes> wmoDateTime {};
+
+   const auto absoluteDateTime = p->absoluteDateTime_;
+
+   if (absoluteDateTime.has_value())
+   {
+      wmoDateTime = absoluteDateTime.value();
+   }
+   else if (endTimeHint.has_value())
+   {
+      bool          dateTimeValid = false;
+      unsigned int  dayOfMonth    = 0;
+      unsigned long hour          = 0;
+      unsigned long minute        = 0;
+
+      dateTimeValid = p->ParseDateTime(dayOfMonth, hour, minute);
+
+      if (dateTimeValid)
+      {
+         using namespace std::chrono;
+
+         const auto           endDays = floor<days>(endTimeHint.value());
+         const year_month_day endDate {endDays};
+
+         // Combine end date year and month with WMO date time
+         wmoDateTime =
+            sys_days {endDate.year() / endDate.month() / day {dayOfMonth}} +
+            hours {hour} + minutes {minute};
+
+         // If the begin date is after the end date, assume the start time
+         // was the previous month (give a 1 day grace period for expiring
+         // events in the past)
+         // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
+         if (wmoDateTime > endTimeHint.value() + 24h)
+         {
+            // If the current end month is January
+            if (endDate.month() == January)
+            {
+               // The begin month must be December of last year
+               wmoDateTime =
+                  sys_days {
+                     year {static_cast<int>((endDate.year() - 1y).count())} /
+                     December / day {dayOfMonth}} +
+                  hours {hour} + minutes {minute};
+            }
+            else
+            {
+               // Back up one month
+               wmoDateTime =
+                  sys_days {endDate.year() /
+                            month {static_cast<unsigned int>(
+                               (endDate.month() - month {1}).count())} /
+                            day {dayOfMonth}} +
+                  hours {hour} + minutes {minute};
+            }
+         }
+      }
+   }
+
+   return wmoDateTime;
+}
+
 bool WmoHeader::Parse(std::istream& is)
 {
    bool headerValid = true;
@@ -132,9 +216,21 @@ bool WmoHeader::Parse(std::istream& is)
    {
       util::getline(is, sohLine);
       util::getline(is, sequenceLine);
+      util::getline(is, wmoLine);
+   }
+   else
+   {
+      // The next line could be the WMO line or the sequence line
+      util::getline(is, wmoLine);
+      if (wmoLine.length() < kWmoHeaderMinLineLength_)
+      {
+         // This is likely the sequence line instead
+         sequenceLine.swap(wmoLine);
+         util::getline(is, wmoLine);
+      }
    }
 
-   util::getline(is, wmoLine);
+   auto awipsLinePos = is.tellg();
    util::getline(is, awipsLine);
 
    if (is.eof())
@@ -179,17 +275,18 @@ bool WmoHeader::Parse(std::istream& is)
          logger_->warn("Invalid number of WMO tokens");
          headerValid = false;
       }
-      else if (wmoTokenList[0].size() != 6)
+      else if (wmoTokenList[0].size() < kWmoIdentifierLengthMin_ ||
+               wmoTokenList[0].size() > kWmoIdentifierLengthMax_)
       {
          logger_->warn("WMO identifier malformed");
          headerValid = false;
       }
-      else if (wmoTokenList[1].size() != 4)
+      else if (wmoTokenList[1].size() != kIcaoLength_)
       {
          logger_->warn("ICAO malformed");
          headerValid = false;
       }
-      else if (wmoTokenList[2].size() != 6)
+      else if (wmoTokenList[2].size() != kDateTimeLength_)
       {
          logger_->warn("Date/time malformed");
          headerValid = false;
@@ -204,9 +301,11 @@ bool WmoHeader::Parse(std::istream& is)
       {
          p->dataType_             = wmoTokenList[0].substr(0, 2);
          p->geographicDesignator_ = wmoTokenList[0].substr(2, 2);
-         p->bulletinId_           = wmoTokenList[0].substr(4, 2);
-         p->icao_                 = wmoTokenList[1];
-         p->dateTime_             = wmoTokenList[2];
+         p->bulletinId_ = wmoTokenList[0].substr(4, wmoTokenList[0].size() - 4);
+         p->icao_       = wmoTokenList[1];
+         p->dateTime_   = wmoTokenList[2];
+
+         p->CalculateAbsoluteDateTime();
 
          if (wmoTokenList.size() == 4)
          {
@@ -224,10 +323,14 @@ bool WmoHeader::Parse(std::istream& is)
 
    if (headerValid)
    {
-      if (awipsLine.size() != 6)
+      if (awipsLine.size() != kAwipsIdentifierLineLength_)
       {
-         logger_->warn("AWIPS Identifier Line bad size");
-         headerValid = false;
+         // Older products may be missing an AWIPS Identifier Line
+         logger_->trace("AWIPS Identifier Line bad size");
+
+         is.seekg(awipsLinePos);
+         p->productCategory_   = "";
+         p->productDesignator_ = "";
       }
       else
       {
@@ -239,5 +342,60 @@ bool WmoHeader::Parse(std::istream& is)
    return headerValid;
 }
 
-} // namespace awips
-} // namespace scwx
+void WmoHeader::SetDateHint(std::chrono::year_month dateHint)
+{
+   p->dateHint_ = dateHint;
+   p->CalculateAbsoluteDateTime();
+}
+
+bool WmoHeaderImpl::ParseDateTime(unsigned int&  dayOfMonth,
+                                  unsigned long& hour,
+                                  unsigned long& minute)
+{
+   bool dateTimeValid = false;
+
+   try
+   {
+      // WMO date time is in the format DDHHMM
+      dayOfMonth =
+         static_cast<unsigned int>(std::stoul(dateTime_.substr(0, 2)));
+      hour          = std::stoul(dateTime_.substr(2, 2));
+      minute        = std::stoul(dateTime_.substr(4, 2));
+      dateTimeValid = true;
+   }
+   catch (const std::exception&)
+   {
+      logger_->warn("Malformed WMO date/time: {}", dateTime_);
+   }
+
+   return dateTimeValid;
+}
+
+void WmoHeaderImpl::CalculateAbsoluteDateTime()
+{
+   bool dateTimeValid = false;
+
+   if (dateHint_.has_value() && !dateTime_.empty())
+   {
+      unsigned int  dayOfMonth = 0;
+      unsigned long hour       = 0;
+      unsigned long minute     = 0;
+
+      dateTimeValid = ParseDateTime(dayOfMonth, hour, minute);
+
+      if (dateTimeValid)
+      {
+         using namespace std::chrono;
+         absoluteDateTime_ = sys_days {dateHint_->year() / dateHint_->month() /
+                                       day {dayOfMonth}} +
+                             hours {hour} + minutes {minute};
+      }
+   }
+
+   if (!dateTimeValid)
+   {
+      absoluteDateTime_.reset();
+   }
+}
+
+} // namespace scwx::awips

@@ -3,9 +3,12 @@
 #include <scwx/awips/text_product_message.hpp>
 #include <scwx/qt/types/text_event_key.hpp>
 
+#include <chrono>
 #include <memory>
 #include <string>
+#include <unordered_set>
 
+#include <boost/uuid/uuid.hpp>
 #include <QObject>
 
 namespace scwx
@@ -28,11 +31,18 @@ public:
    message_list(const types::TextEventKey& key) const;
 
    void LoadFile(const std::string& filename);
+   void SelectTime(std::chrono::system_clock::time_point dateTime);
 
    static std::shared_ptr<TextEventManager> Instance();
 
 signals:
-   void AlertUpdated(const types::TextEventKey& key, size_t messageIndex);
+   void AlertsRemoved(
+      const std::unordered_set<types::TextEventKey,
+                               types::TextEventHash<types::TextEventKey>>&
+         keys);
+   void AlertUpdated(const types::TextEventKey& key,
+                     std::size_t                messageIndex,
+                     boost::uuids::uuid         uuid);
 
 private:
    class Impl;

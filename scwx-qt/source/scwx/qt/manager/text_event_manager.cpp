@@ -2,28 +2,61 @@
 #include <scwx/qt/main/application.hpp>
 #include <scwx/qt/settings/general_settings.hpp>
 #include <scwx/awips/text_product_file.hpp>
+#include <scwx/provider/iem_api_provider.ipp>
 #include <scwx/provider/warnings_provider.hpp>
 #include <scwx/util/logger.hpp>
+#include <scwx/util/time.hpp>
 
+#include <algorithm>
+#include <list>
+#include <map>
 #include <shared_mutex>
 #include <unordered_map>
 
 #include <boost/asio/post.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/thread_pool.hpp>
+#include <boost/container/stable_vector.hpp>
+#include <boost/range/irange.hpp>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/filter.hpp>
+#include <range/v3/view/single.hpp>
+#include <range/v3/view/transform.hpp>
 
-namespace scwx
+#if (__cpp_lib_chrono < 201907L)
+#   include <date/date.h>
+#endif
+
+namespace scwx::qt::manager
 {
-namespace qt
-{
-namespace manager
-{
+
+using namespace std::chrono_literals;
 
 static const std::string logPrefix_ = "scwx::qt::manager::text_event_manager";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 
-static const std::string& kDefaultWarningsProviderUrl {
-   "https://warnings.allisonhouse.com"};
+static constexpr std::chrono::hours kInitialLoadHistoryDuration_ =
+   std::chrono::days {3};
+static constexpr std::chrono::hours kDefaultLoadHistoryDuration_ =
+   std::chrono::hours {1};
+
+static const std::array<std::string, 8> kPils_ = {
+   "FFS", "FFW", "MWS", "SMW", "SQW", "SVR", "SVS", "TOR"};
+
+static const std::
+   unordered_map<std::string, std::pair<std::chrono::hours, std::chrono::hours>>
+      kPilLoadWindows_ {{"FFS", {-24h, 1h}},
+                        {"FFW", {-24h, 1h}},
+                        {"MWS", {-4h, 1h}},
+                        {"SMW", {-4h, 1h}},
+                        {"SQW", {-4h, 1h}},
+                        {"SVR", {-4h, 1h}},
+                        {"SVS", {-4h, 1h}},
+                        {"TOR", {-4h, 1h}}};
+
+// Widest load window provided by kPilLoadWindows_
+static const std::pair<std::chrono::hours, std::chrono::hours>
+   kArchiveLoadWindow_ {-24h, 1h};
 
 class TextEventManager::Impl
 {
@@ -42,7 +75,9 @@ public:
 
       warningsProviderChangedCallbackUuid_ =
          generalSettings.warnings_provider().RegisterValueChangedCallback(
-            [this](const std::string& value) {
+            [this](const std::string& value)
+            {
+               loadHistoryDuration_ = kInitialLoadHistoryDuration_;
                warningsProvider_ =
                   std::make_shared<provider::WarningsProvider>(value);
             });
@@ -76,11 +111,30 @@ public:
       threadPool_.join();
    }
 
-   void HandleMessage(std::shared_ptr<awips::TextProductMessage> message);
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
+
+   void HandleMessage(const std::shared_ptr<awips::TextProductMessage>& message,
+                      bool archiveEvent = false);
+   template<ranges::forward_range DateRange>
+      requires std::same_as<ranges::range_value_t<DateRange>,
+                            std::chrono::sys_days>
+   void ListArchives(DateRange dates);
+   void LoadArchives(std::chrono::system_clock::time_point dateTime);
+   void PruneArchives();
    void RefreshAsync();
    void Refresh();
+   template<ranges::forward_range DateRange>
+      requires std::same_as<ranges::range_value_t<DateRange>,
+                            std::chrono::sys_days>
+   void UpdateArchiveDates(DateRange dates);
 
-   boost::asio::thread_pool threadPool_ {1u};
+   // Thread pool sized for:
+   // - Live Refresh (1x)
+   // - Archive Loading (1x)
+   boost::asio::thread_pool threadPool_ {2u};
 
    TextEventManager* self_;
 
@@ -94,6 +148,27 @@ public:
    std::shared_mutex textEventMutex_;
 
    std::shared_ptr<provider::WarningsProvider> warningsProvider_ {nullptr};
+
+   std::chrono::hours loadHistoryDuration_ {kInitialLoadHistoryDuration_};
+   std::chrono::sys_time<std::chrono::hours> prevLoadTime_ {};
+   std::chrono::sys_days                     archiveLimit_ {};
+
+   std::mutex                       archiveMutex_ {};
+   std::list<std::chrono::sys_days> archiveDates_ {};
+
+   std::mutex archiveEventKeyMutex_ {};
+   std::map<std::chrono::sys_days,
+            std::unordered_set<types::TextEventKey,
+                               types::TextEventHash<types::TextEventKey>>>
+      archiveEventKeys_ {};
+   std::unordered_set<types::TextEventKey,
+                      types::TextEventHash<types::TextEventKey>>
+      liveEventKeys_ {};
+
+   std::mutex unloadedProductMapMutex_ {};
+   std::map<std::chrono::sys_days,
+            boost::container::stable_vector<scwx::types::iem::AfosEntry>>
+      unloadedProductMap_;
 
    boost::uuids::uuid warningsProviderChangedCallbackUuid_ {};
 };
@@ -164,9 +239,56 @@ void TextEventManager::LoadFile(const std::string& filename)
                      });
 }
 
-void TextEventManager::Impl::HandleMessage(
-   std::shared_ptr<awips::TextProductMessage> message)
+void TextEventManager::SelectTime(
+   std::chrono::system_clock::time_point dateTime)
 {
+   if (dateTime == std::chrono::system_clock::time_point {})
+   {
+      // Ignore a default date/time selection
+      return;
+   }
+
+   logger_->trace("Select Time: {}", util::TimeString(dateTime));
+
+   boost::asio::post(
+      p->threadPool_,
+      [dateTime, this]()
+      {
+         try
+         {
+            const auto today = std::chrono::floor<std::chrono::days>(dateTime);
+            const auto yesterday = today - std::chrono::days {1};
+            const auto tomorrow  = today + std::chrono::days {1};
+            const auto dateArray = std::array {yesterday, today, tomorrow};
+
+            const auto dates =
+               dateArray |
+               ranges::views::filter(
+                  [this](const auto& date)
+                  {
+                     return p->archiveLimit_ == std::chrono::sys_days {} ||
+                            date < p->archiveLimit_;
+                  });
+
+            const std::unique_lock lock {p->archiveMutex_};
+
+            p->UpdateArchiveDates(dates);
+            p->ListArchives(dates);
+            p->LoadArchives(dateTime);
+            p->PruneArchives();
+         }
+         catch (const std::exception& ex)
+         {
+            logger_->error(ex.what());
+         }
+      });
+}
+
+void TextEventManager::Impl::HandleMessage(
+   const std::shared_ptr<awips::TextProductMessage>& message, bool archiveEvent)
+{
+   using namespace std::chrono_literals;
+
    auto segments = message->segments();
 
    // If there are no segments, skip this message
@@ -187,14 +309,36 @@ void TextEventManager::Impl::HandleMessage(
       }
    }
 
+   // Determine year
+   const std::chrono::year_month_day wmoDate =
+      std::chrono::floor<std::chrono::days>(
+         message->wmo_header()->GetDateTime());
+   const std::chrono::year wmoYear = wmoDate.year();
+
    std::unique_lock lock(textEventMutex_);
 
    // Find a matching event in the event map
    auto&               vtecString = segments[0]->header_->vtecString_;
-   types::TextEventKey key {vtecString[0].pVtec_};
+   types::TextEventKey key {vtecString[0].pVtec_, wmoYear};
    size_t              messageIndex = 0;
    auto                it           = textEventMap_.find(key);
    bool                updated      = false;
+
+   if (
+      // If there was no matching event
+      it == textEventMap_.cend() &&
+      // The event is not new
+      vtecString[0].pVtec_.action() != awips::PVtec::Action::New &&
+      // The message was on January 1
+      wmoDate.month() == std::chrono::January && wmoDate.day() == 1d &&
+      // This is at least the 10th ETN of the year
+      // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers): Readability
+      vtecString[0].pVtec_.event_tracking_number() > 10)
+   {
+      // Attempt to find a matching event from last year
+      key = {vtecString[0].pVtec_, wmoYear - std::chrono::years {1}};
+      it  = textEventMap_.find(key);
+   }
 
    if (it == textEventMap_.cend())
    {
@@ -202,6 +346,12 @@ void TextEventManager::Impl::HandleMessage(
       textEventMap_.emplace(key, std::vector {message});
       messageIndex = 0;
       updated      = true;
+
+      if (!archiveEvent)
+      {
+         // Add the Text Event Key to the list of live events to prevent pruning
+         liveEventKeys_.insert(key);
+      }
    }
    else if (std::find_if(it->second.cbegin(),
                          it->second.cend(),
@@ -214,16 +364,284 @@ void TextEventManager::Impl::HandleMessage(
       // If there was a matching event, and this message has not been stored
       // (WMO header equivalence check), add the updated message to the existing
       // event
-      messageIndex = it->second.size();
-      it->second.push_back(message);
+
+      // Determine the chronological sequence of the message. Note, if there
+      // were no time hints given to the WMO header, this will place the message
+      // at the end of the vector.
+      auto insertionPoint = std::upper_bound(
+         it->second.begin(),
+         it->second.end(),
+         message,
+         [](const std::shared_ptr<awips::TextProductMessage>& a,
+            const std::shared_ptr<awips::TextProductMessage>& b)
+         {
+            return a->wmo_header()->GetDateTime() <
+                   b->wmo_header()->GetDateTime();
+         });
+
+      // Insert the message in chronological order
+      messageIndex = std::distance(it->second.begin(), insertionPoint);
+      it->second.insert(insertionPoint, message);
       updated = true;
    };
+
+   // If this is an archive event, and the key does not exist in the live events
+   // Assumption: A live event will always be loaded before a duplicate archive
+   // event
+   if (archiveEvent && !liveEventKeys_.contains(key))
+   {
+      // Add the Text Event Key to the current date's archive
+      const std::unique_lock archiveEventKeyLock {archiveEventKeyMutex_};
+      auto&                  archiveKeys = archiveEventKeys_[wmoDate];
+      archiveKeys.insert(key);
+   }
 
    lock.unlock();
 
    if (updated)
    {
-      Q_EMIT self_->AlertUpdated(key, messageIndex);
+      Q_EMIT self_->AlertUpdated(key, messageIndex, message->uuid());
+   }
+}
+
+template<ranges::forward_range DateRange>
+   requires std::same_as<ranges::range_value_t<DateRange>,
+                         std::chrono::sys_days>
+void TextEventManager::Impl::ListArchives(DateRange dates)
+{
+   // Don't reload data that has already been loaded
+   auto filteredDates =
+      dates |
+      ranges::views::filter([this](const auto& date)
+                            { return !unloadedProductMap_.contains(date); });
+
+   const auto dv = ranges::to<std::vector>(filteredDates);
+
+   std::for_each(
+      std::execution::par,
+      dv.begin(),
+      dv.end(),
+      [this](const auto& date)
+      {
+         static const auto kEmptyRange_ =
+            ranges::views::single(std::string_view {});
+         static const auto kPilsView_ =
+            kPils_ |
+            ranges::views::transform([](const std::string& pil)
+                                     { return std::string_view {pil}; });
+
+         const auto dateArray = std::array {date};
+
+         auto productEntries = provider::IemApiProvider::ListTextProducts(
+            dateArray | ranges::views::all, kEmptyRange_, kPilsView_);
+
+         const std::unique_lock lock {unloadedProductMapMutex_};
+
+         if (productEntries.has_value())
+         {
+            unloadedProductMap_.try_emplace(
+               date,
+               boost::container::stable_vector<scwx::types::iem::AfosEntry> {
+                  std::make_move_iterator(productEntries.value().begin()),
+                  std::make_move_iterator(productEntries.value().end())});
+         }
+      });
+}
+
+void TextEventManager::Impl::LoadArchives(
+   std::chrono::system_clock::time_point dateTime)
+{
+   using namespace std::chrono;
+
+#if (__cpp_lib_chrono >= 201907L)
+   namespace df = std;
+
+   static constexpr std::string_view kDateFormat {"{:%Y%m%d%H%M}"};
+#else
+   using namespace date;
+   namespace df = date;
+
+#   define kDateFormat "%Y%m%d%H%M"
+#endif
+
+   // Search unloaded products in the widest archive load window
+   const std::chrono::sys_days startDate =
+      std::chrono::floor<std::chrono::days>(dateTime +
+                                            kArchiveLoadWindow_.first);
+   const std::chrono::sys_days endDate = std::chrono::floor<std::chrono::days>(
+      dateTime + kArchiveLoadWindow_.second + std::chrono::days {1});
+
+   // Determine load windows for each PIL
+   std::unordered_map<std::string, std::pair<std::string, std::string>>
+      pilLoadWindowStrings;
+
+   for (auto& loadWindow : kPilLoadWindows_)
+   {
+      const std::string& pil = loadWindow.first;
+
+      pilLoadWindowStrings.insert_or_assign(
+         pil,
+         std::pair<std::string, std::string> {
+            df::format(kDateFormat, (dateTime + loadWindow.second.first)),
+            df::format(kDateFormat, (dateTime + loadWindow.second.second))});
+   }
+
+   std::vector<scwx::types::iem::AfosEntry> loadListEntries {};
+
+   for (auto date : boost::irange(startDate, endDate))
+   {
+      auto mapIt = unloadedProductMap_.find(date);
+      if (mapIt == unloadedProductMap_.cend())
+      {
+         continue;
+      }
+
+      for (auto it = mapIt->second.begin(); it != mapIt->second.end();)
+      {
+         const auto& pil = it->pil_;
+
+         // Check PIL
+         if (pil.size() >= 3)
+         {
+            auto pilPrefix = pil.substr(0, 3);
+            auto windowIt  = pilLoadWindowStrings.find(pilPrefix);
+
+            // Check Window
+            if (windowIt != pilLoadWindowStrings.cend())
+            {
+               const auto& productId   = it->productId_;
+               const auto& windowStart = windowIt->second.first;
+               const auto& windowEnd   = windowIt->second.second;
+
+               if (windowStart <= productId && productId <= windowEnd)
+               {
+                  // Product matches, move it to the load list
+                  loadListEntries.emplace_back(std::move(*it));
+                  it = mapIt->second.erase(it);
+                  continue;
+               }
+            }
+         }
+
+         // Current iterator was not matched
+         ++it;
+      }
+   }
+
+   std::vector<std::shared_ptr<awips::TextProductFile>> products {};
+
+   // Load the load list
+   if (!loadListEntries.empty())
+   {
+      auto loadView = loadListEntries |
+                      ranges::views::transform([](const auto& entry)
+                                               { return entry.productId_; });
+      products = provider::IemApiProvider::LoadTextProducts(loadView);
+   }
+
+   // Process loaded products
+   for (auto& product : products)
+   {
+      const auto& messages = product->messages();
+
+      for (auto& message : messages)
+      {
+         HandleMessage(message, true);
+      }
+   }
+}
+
+void TextEventManager::Impl::PruneArchives()
+{
+   static constexpr std::size_t kMaxArchiveDates_ = 5;
+
+   std::unordered_set<types::TextEventKey,
+                      types::TextEventHash<types::TextEventKey>>
+      eventKeysToKeep {};
+   std::unordered_set<types::TextEventKey,
+                      types::TextEventHash<types::TextEventKey>>
+      eventKeysToPrune {};
+
+   // Remove oldest dates from the archive
+   while (archiveDates_.size() > kMaxArchiveDates_)
+   {
+      archiveDates_.pop_front();
+   }
+
+   const std::unique_lock archiveEventKeyLock {archiveEventKeyMutex_};
+
+   // If there are the same number of dates in archiveEventKeys_, archiveDates_
+   // and unloadedProductMap_, there is nothing to prune
+   if (archiveEventKeys_.size() == archiveDates_.size() &&
+       unloadedProductMap_.size() == archiveDates_.size())
+   {
+      // Nothing to prune
+      return;
+   }
+
+   const std::unique_lock unloadedProductMapLock {unloadedProductMapMutex_};
+
+   for (auto it = archiveEventKeys_.begin(); it != archiveEventKeys_.end();)
+   {
+      const auto& date      = it->first;
+      const auto& eventKeys = it->second;
+
+      // If date is not in recent days map
+      if (std::find(archiveDates_.cbegin(), archiveDates_.cend(), date) ==
+          archiveDates_.cend())
+      {
+         // Prune these keys (unless they are in the eventKeysToKeep set)
+         eventKeysToPrune.insert(eventKeys.begin(), eventKeys.end());
+
+         // The date is not in the list of recent dates, remove it
+         it = archiveEventKeys_.erase(it);
+      }
+      else
+      {
+         // Make sure these keys don't get pruned
+         eventKeysToKeep.insert(eventKeys.begin(), eventKeys.end());
+
+         // The date is recent, keep it
+         ++it;
+      }
+   }
+
+   for (auto it = unloadedProductMap_.begin(); it != unloadedProductMap_.end();)
+   {
+      const auto& date = it->first;
+
+      // If date is not in recent days map
+      if (std::find(archiveDates_.cbegin(), archiveDates_.cend(), date) ==
+          archiveDates_.cend())
+      {
+         // The date is not in the list of recent dates, remove it
+         it = unloadedProductMap_.erase(it);
+      }
+      else
+      {
+         // The date is recent, keep it
+         ++it;
+      }
+   }
+
+   // Remove elements from eventKeysToPrune if they are in eventKeysToKeep
+   for (const auto& eventKey : eventKeysToKeep)
+   {
+      eventKeysToPrune.erase(eventKey);
+   }
+
+   // Remove eventKeysToPrune from textEventMap
+   for (const auto& eventKey : eventKeysToPrune)
+   {
+      textEventMap_.erase(eventKey);
+   }
+
+   // If event keys were pruned, emit a signal
+   if (!eventKeysToPrune.empty())
+   {
+      logger_->debug("Pruned {} archive events", eventKeysToPrune.size());
+
+      Q_EMIT self_->AlertsRemoved(eventKeysToPrune);
    }
 }
 
@@ -254,21 +672,38 @@ void TextEventManager::Impl::Refresh()
    std::shared_ptr<provider::WarningsProvider> warningsProvider =
       warningsProvider_;
 
-   // Update the file listing from the warnings provider
-   auto [newFiles, totalFiles] = warningsProvider->ListFiles();
+   // Load updated files from the warnings provider
+   // Start time should default to:
+   // - 3 days of history for the first load
+   // - 1 hour of history for subsequent loads
+   // If the time jumps, we should attempt to load from no later than the
+   // previous load time
+   auto loadTime =
+      std::chrono::floor<std::chrono::hours>(std::chrono::system_clock::now());
+   auto startTime = loadTime - loadHistoryDuration_;
 
-   if (newFiles > 0)
+   if (prevLoadTime_ != std::chrono::sys_time<std::chrono::hours> {})
    {
-      // Load new files
-      auto updatedFiles = warningsProvider->LoadUpdatedFiles();
+      startTime = std::min(startTime, prevLoadTime_);
+   }
 
-      // Handle messages
-      for (auto& file : updatedFiles)
+   if (archiveLimit_ == std::chrono::sys_days {})
+   {
+      archiveLimit_ = std::chrono::ceil<std::chrono::days>(startTime);
+   }
+
+   auto updatedFiles = warningsProvider->LoadUpdatedFiles(startTime);
+
+   // Store the load time and reset the load history duration
+   prevLoadTime_        = loadTime;
+   loadHistoryDuration_ = kDefaultLoadHistoryDuration_;
+
+   // Handle messages
+   for (auto& file : updatedFiles)
+   {
+      for (auto& message : file->messages())
       {
-         for (auto& message : file->messages())
-         {
-            HandleMessage(message);
-         }
+         HandleMessage(message);
       }
    }
 
@@ -293,6 +728,19 @@ void TextEventManager::Impl::Refresh()
       });
 }
 
+template<ranges::forward_range DateRange>
+   requires std::same_as<ranges::range_value_t<DateRange>,
+                         std::chrono::sys_days>
+void TextEventManager::Impl::UpdateArchiveDates(DateRange dates)
+{
+   for (const auto& date : dates)
+   {
+      // Remove any existing occurrences of day, and add to the back of the list
+      archiveDates_.remove(date);
+      archiveDates_.push_back(date);
+   }
+}
+
 std::shared_ptr<TextEventManager> TextEventManager::Instance()
 {
    static std::weak_ptr<TextEventManager> textEventManagerReference_ {};
@@ -312,6 +760,4 @@ std::shared_ptr<TextEventManager> TextEventManager::Instance()
    return textEventManager;
 }
 
-} // namespace manager
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::manager

@@ -5,9 +5,7 @@
 #include <memory>
 #include <string>
 
-namespace scwx
-{
-namespace awips
+namespace scwx::awips
 {
 
 class TextProductFileImpl;
@@ -24,16 +22,17 @@ public:
    TextProductFile(TextProductFile&&) noexcept;
    TextProductFile& operator=(TextProductFile&&) noexcept;
 
-   size_t                                           message_count() const;
-   std::vector<std::shared_ptr<TextProductMessage>> messages() const;
-   std::shared_ptr<TextProductMessage>              message(size_t i) const;
+   [[nodiscard]] std::size_t message_count() const;
+   [[nodiscard]] std::vector<std::shared_ptr<TextProductMessage>>
+                                                     messages() const;
+   [[nodiscard]] std::shared_ptr<TextProductMessage> message(size_t i) const;
 
    bool LoadFile(const std::string& filename);
-   bool LoadData(std::istream& is);
+   bool LoadData(const std::string& filename, std::istream& is);
 
 private:
-   std::unique_ptr<TextProductFileImpl> p;
+   class Impl;
+   std::unique_ptr<Impl> p;
 };
 
-} // namespace awips
-} // namespace scwx
+} // namespace scwx::awips

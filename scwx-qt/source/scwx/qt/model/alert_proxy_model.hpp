@@ -4,11 +4,7 @@
 
 #include <QSortFilterProxyModel>
 
-namespace scwx
-{
-namespace qt
-{
-namespace model
+namespace scwx::qt::model
 {
 
 class AlertProxyModelImpl;
@@ -16,7 +12,7 @@ class AlertProxyModelImpl;
 class AlertProxyModel : public QSortFilterProxyModel
 {
 private:
-   Q_DISABLE_COPY(AlertProxyModel)
+   Q_DISABLE_COPY_MOVE(AlertProxyModel)
 
 public:
    explicit AlertProxyModel(QObject* parent = nullptr);
@@ -24,15 +20,13 @@ public:
 
    void SetAlertActiveFilter(bool enabled);
 
-   bool filterAcceptsRow(int                sourceRow,
-                         const QModelIndex& sourceParent) const override;
+   [[nodiscard]] bool
+   filterAcceptsRow(int                sourceRow,
+                    const QModelIndex& sourceParent) const override;
 
 private:
-   std::unique_ptr<AlertProxyModelImpl> p;
-
-   friend class AlertProxyModelImpl;
+   class Impl;
+   std::unique_ptr<Impl> p;
 };
 
-} // namespace model
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::model

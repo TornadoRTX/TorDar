@@ -13,6 +13,8 @@
 #include <memory>
 #include <string>
 
+#include <boost/uuid/uuid.hpp>
+
 namespace scwx
 {
 namespace awips
@@ -94,6 +96,7 @@ public:
    TextProductMessage(TextProductMessage&&) noexcept;
    TextProductMessage& operator=(TextProductMessage&&) noexcept;
 
+   [[nodiscard]] boost::uuids::uuid            uuid() const;
    std::string                                 message_content() const;
    std::shared_ptr<WmoHeader>                  wmo_header() const;
    std::vector<std::string>                    mnd_header() const;

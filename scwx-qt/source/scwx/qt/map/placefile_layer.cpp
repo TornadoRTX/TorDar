@@ -122,6 +122,8 @@ void PlacefileLayer::Initialize()
    logger_->debug("Initialize()");
 
    DrawLayer::Initialize();
+
+   p->selectedTime_ = manager::TimelineManager::Instance()->GetSelectedTime();
 }
 
 void PlacefileLayer::Render(

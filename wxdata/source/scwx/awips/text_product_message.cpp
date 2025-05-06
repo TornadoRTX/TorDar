@@ -9,11 +9,10 @@
 
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/uuid/random_generator.hpp>
 #include <re2/re2.h>
 
-namespace scwx
-{
-namespace awips
+namespace scwx::awips
 {
 
 static const std::string logPrefix_ = "scwx::awips::text_product_message";
@@ -27,8 +26,8 @@ static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 // Look for hhmm (xM|UTC) to key the date/time string
 static constexpr LazyRE2 reDateTimeString = {"^[0-9]{3,4} ([AP]M|UTC)"};
 
-static void ParseCodedInformation(std::shared_ptr<Segment> segment,
-                                  const std::string&       wfo);
+static void ParseCodedInformation(const std::shared_ptr<Segment>& segment,
+                                  const std::string&              wfo);
 static std::vector<std::string>     ParseProductContent(std::istream& is);
 static void                         SkipBlankLines(std::istream& is);
 static bool                         TryParseEndOfProduct(std::istream& is);
@@ -50,6 +49,13 @@ public:
    }
    ~TextProductMessageImpl() = default;
 
+   TextProductMessageImpl(const TextProductMessageImpl&)             = delete;
+   TextProductMessageImpl& operator=(const TextProductMessageImpl&)  = delete;
+   TextProductMessageImpl(const TextProductMessageImpl&&)            = delete;
+   TextProductMessageImpl& operator=(const TextProductMessageImpl&&) = delete;
+
+   boost::uuids::uuid uuid_ {boost::uuids::random_generator()()};
+
    std::string                           messageContent_;
    std::shared_ptr<WmoHeader>            wmoHeader_;
    std::vector<std::string>              mndHeader_;
@@ -66,6 +72,11 @@ TextProductMessage::~TextProductMessage() = default;
 TextProductMessage::TextProductMessage(TextProductMessage&&) noexcept = default;
 TextProductMessage&
 TextProductMessage::operator=(TextProductMessage&&) noexcept = default;
+
+boost::uuids::uuid TextProductMessage::uuid() const
+{
+   return p->uuid_;
+}
 
 std::string TextProductMessage::message_content() const
 {
@@ -116,71 +127,11 @@ std::chrono::system_clock::time_point Segment::event_begin() const
       // If event begin is 000000T0000Z
       if (eventBegin == std::chrono::system_clock::time_point {})
       {
-         using namespace std::chrono;
-
          // Determine event end from P-VTEC string
-         system_clock::time_point eventEnd =
+         std::chrono::system_clock::time_point eventEnd =
             header_->vtecString_[0].pVtec_.event_end();
 
-         auto           endDays = floor<days>(eventEnd);
-         year_month_day endDate {endDays};
-
-         // Determine WMO date/time
-         std::string wmoDateTime = wmoHeader_->date_time();
-
-         bool          wmoDateTimeValid = false;
-         unsigned int  dayOfMonth       = 0;
-         unsigned long beginHour        = 0;
-         unsigned long beginMinute      = 0;
-
-         try
-         {
-            // WMO date time is in the format DDHHMM
-            dayOfMonth =
-               static_cast<unsigned int>(std::stoul(wmoDateTime.substr(0, 2)));
-            beginHour        = std::stoul(wmoDateTime.substr(2, 2));
-            beginMinute      = std::stoul(wmoDateTime.substr(4, 2));
-            wmoDateTimeValid = true;
-         }
-         catch (const std::exception&)
-         {
-            logger_->warn("Malformed WMO date/time: {}", wmoDateTime);
-         }
-
-         if (wmoDateTimeValid)
-         {
-            // Combine end date year and month with WMO date time
-            eventBegin =
-               sys_days {endDate.year() / endDate.month() / day {dayOfMonth}} +
-               hours {beginHour} + minutes {beginMinute};
-
-            // If the begin date is after the end date, assume the start time
-            // was the previous month (give a 1 day grace period for expiring
-            // events in the past)
-            if (eventBegin > eventEnd + 24h)
-            {
-               // If the current end month is January
-               if (endDate.month() == January)
-               {
-                  // The begin month must be December of last year
-                  eventBegin =
-                     sys_days {
-                        year {static_cast<int>((endDate.year() - 1y).count())} /
-                        December / day {dayOfMonth}} +
-                     hours {beginHour} + minutes {beginMinute};
-               }
-               else
-               {
-                  // Back up one month
-                  eventBegin =
-                     sys_days {endDate.year() /
-                               month {static_cast<unsigned int>(
-                                  (endDate.month() - month {1}).count())} /
-                               day {dayOfMonth}} +
-                     hours {beginHour} + minutes {beginMinute};
-               }
-            }
-         }
+         eventBegin = wmoHeader_->GetDateTime(eventEnd);
       }
    }
 
@@ -232,7 +183,7 @@ bool TextProductMessage::Parse(std::istream& is)
 
       if (i == 0)
       {
-         if (is.peek() != '\r')
+         if (is.peek() != '\r' && is.peek() != '\n')
          {
             segment->header_ = TryParseSegmentHeader(is);
          }
@@ -318,8 +269,8 @@ bool TextProductMessage::Parse(std::istream& is)
    return dataValid;
 }
 
-void ParseCodedInformation(std::shared_ptr<Segment> segment,
-                           const std::string&       wfo)
+void ParseCodedInformation(const std::shared_ptr<Segment>& segment,
+                           const std::string&              wfo)
 {
    typedef std::vector<std::string>::const_iterator StringIterator;
 
@@ -352,8 +303,8 @@ void ParseCodedInformation(std::shared_ptr<Segment> segment,
          codedLocationEnd = it;
       }
 
-      else if (codedMotionBegin == productContent.cend() &&
-               it->starts_with("TIME...MOT...LOC"))
+      if (codedMotionBegin == productContent.cend() &&
+          it->starts_with("TIME...MOT...LOC"))
       {
          codedMotionBegin = it;
       }
@@ -366,8 +317,7 @@ void ParseCodedInformation(std::shared_ptr<Segment> segment,
          codedMotionEnd = it;
       }
 
-      else if (!segment->observed_ &&
-               it->find("...OBSERVED") != std::string::npos)
+      if (!segment->observed_ && it->find("...OBSERVED") != std::string::npos)
       {
          segment->observed_ = true;
       }
@@ -378,6 +328,8 @@ void ParseCodedInformation(std::shared_ptr<Segment> segment,
          segment->tornadoPossible_ = true;
       }
 
+      // Assignment of an iterator permitted
+      // NOLINTBEGIN(bugprone-assignment-in-if-condition)
       else if (segment->threatCategory_ == ibw::ThreatCategory::Base &&
                (threatTagIt = std::find_if(kThreatCategoryTags.cbegin(),
                                            kThreatCategoryTags.cend(),
@@ -385,6 +337,7 @@ void ParseCodedInformation(std::shared_ptr<Segment> segment,
                                               return it->starts_with(tag);
                                            })) != kThreatCategoryTags.cend() &&
                it->length() > threatTagIt->length())
+      // NOLINTEND(bugprone-assignment-in-if-condition)
       {
          const std::string threatCategoryName =
             it->substr(threatTagIt->length());
@@ -458,7 +411,7 @@ void SkipBlankLines(std::istream& is)
 {
    std::string line;
 
-   while (is.peek() == '\r')
+   while (is.peek() == '\r' || is.peek() == '\n')
    {
       util::getline(is, line);
    }
@@ -513,7 +466,7 @@ std::vector<std::string> TryParseMndHeader(std::istream& is)
    std::string              line;
    std::streampos           isBegin = is.tellg();
 
-   while (!is.eof() && is.peek() != '\r')
+   while (!is.eof() && is.peek() != '\r' && is.peek() != '\n')
    {
       util::getline(is, line);
       mndHeader.push_back(line);
@@ -546,7 +499,7 @@ std::vector<std::string> TryParseOverviewBlock(std::istream& is)
 
    if (is.peek() == '.')
    {
-      while (!is.eof() && is.peek() != '\r')
+      while (!is.eof() && is.peek() != '\r' && is.peek() != '\n')
       {
          util::getline(is, line);
          overviewBlock.push_back(line);
@@ -576,7 +529,7 @@ std::optional<SegmentHeader> TryParseSegmentHeader(std::istream& is)
       header->ugcString_.push_back(line);
 
       // If UGC is multi-line, continue parsing
-      while (!is.eof() && is.peek() != '\r' &&
+      while (!is.eof() && is.peek() != '\r' && is.peek() != '\n' &&
              !RE2::PartialMatch(line, *reUgcExpiration))
       {
          util::getline(is, line);
@@ -595,7 +548,7 @@ std::optional<SegmentHeader> TryParseSegmentHeader(std::istream& is)
          header->vtecString_.push_back(std::move(*vtec));
       }
 
-      while (!is.eof() && is.peek() != '\r')
+      while (!is.eof() && is.peek() != '\r' && is.peek() != '\n')
       {
          util::getline(is, line);
          if (!RE2::PartialMatch(line, *reDateTimeString))
@@ -640,10 +593,8 @@ std::optional<Vtec> TryParseVtecString(std::istream& is)
 
    if (RE2::PartialMatch(line, *rePVtecString))
    {
-      bool vtecValid;
-
-      vtec      = Vtec();
-      vtecValid = vtec->pVtec_.Parse(line);
+      vtec                 = Vtec();
+      const bool vtecValid = vtec->pVtec_.Parse(line);
 
       isBegin = is.tellg();
 
@@ -687,5 +638,4 @@ std::shared_ptr<TextProductMessage> TextProductMessage::Create(std::istream& is)
    return message;
 }
 
-} // namespace awips
-} // namespace scwx
+} // namespace scwx::awips

@@ -245,7 +245,7 @@ size_t RadarSite::ReadConfig(const std::string& path)
    bool   dataValid  = true;
    size_t sitesAdded = 0;
 
-   boost::json::value j = util::json::ReadJsonFile(path);
+   boost::json::value j = util::json::ReadJsonQFile(path);
 
    dataValid = j.is_array();
 

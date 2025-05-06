@@ -6,6 +6,7 @@ find_package(Boost)
 find_package(cpr)
 find_package(LibXml2)
 find_package(OpenSSL)
+find_package(range-v3)
 find_package(re2)
 find_package(spdlog)
 
@@ -61,21 +62,27 @@ set(SRC_NETWORK source/scwx/network/cpr.cpp
 set(HDR_PROVIDER include/scwx/provider/aws_level2_data_provider.hpp
                  include/scwx/provider/aws_level3_data_provider.hpp
                  include/scwx/provider/aws_nexrad_data_provider.hpp
+                 include/scwx/provider/iem_api_provider.hpp
+                 include/scwx/provider/iem_api_provider.ipp
                  include/scwx/provider/nexrad_data_provider.hpp
                  include/scwx/provider/nexrad_data_provider_factory.hpp
                  include/scwx/provider/warnings_provider.hpp)
 set(SRC_PROVIDER source/scwx/provider/aws_level2_data_provider.cpp
                  source/scwx/provider/aws_level3_data_provider.cpp
                  source/scwx/provider/aws_nexrad_data_provider.cpp
+                 source/scwx/provider/iem_api_provider.cpp
                  source/scwx/provider/nexrad_data_provider.cpp
                  source/scwx/provider/nexrad_data_provider_factory.cpp
                  source/scwx/provider/warnings_provider.cpp)
+set(HDR_TYPES include/scwx/types/iem_types.hpp)
+set(SRC_TYPES source/scwx/types/iem_types.cpp)
 set(HDR_UTIL include/scwx/util/digest.hpp
              include/scwx/util/enum.hpp
              include/scwx/util/environment.hpp
              include/scwx/util/float.hpp
              include/scwx/util/hash.hpp
              include/scwx/util/iterator.hpp
+             include/scwx/util/json.hpp
              include/scwx/util/logger.hpp
              include/scwx/util/map.hpp
              include/scwx/util/rangebuf.hpp
@@ -88,6 +95,7 @@ set(SRC_UTIL source/scwx/util/digest.cpp
              source/scwx/util/environment.cpp
              source/scwx/util/float.cpp
              source/scwx/util/hash.cpp
+             source/scwx/util/json.cpp
              source/scwx/util/logger.cpp
              source/scwx/util/rangebuf.cpp
              source/scwx/util/streams.cpp
@@ -224,6 +232,8 @@ add_library(wxdata OBJECT ${HDR_AWIPS}
                           ${SRC_NETWORK}
                           ${HDR_PROVIDER}
                           ${SRC_PROVIDER}
+                          ${HDR_TYPES}
+                          ${SRC_TYPES}
                           ${HDR_UTIL}
                           ${SRC_UTIL}
                           ${HDR_WSR88D}
@@ -244,6 +254,8 @@ source_group("Header Files\\network"     FILES ${HDR_NETWORK})
 source_group("Source Files\\network"     FILES ${SRC_NETWORK})
 source_group("Header Files\\provider"    FILES ${HDR_PROVIDER})
 source_group("Source Files\\provider"    FILES ${SRC_PROVIDER})
+source_group("Header Files\\types"       FILES ${HDR_TYPES})
+source_group("Source Files\\types"       FILES ${SRC_TYPES})
 source_group("Header Files\\util"        FILES ${HDR_UTIL})
 source_group("Source Files\\util"        FILES ${SRC_UTIL})
 source_group("Header Files\\wsr88d"      FILES ${HDR_WSR88D})
@@ -293,6 +305,7 @@ target_link_libraries(wxdata PUBLIC aws-cpp-sdk-core
                                     cpr::cpr
                                     LibXml2::LibXml2
                                     OpenSSL::Crypto
+                                    range-v3::range-v3
                                     re2::re2
                                     spdlog::spdlog
                                     units::units)

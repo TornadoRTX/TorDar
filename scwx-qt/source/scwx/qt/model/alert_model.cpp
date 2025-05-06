@@ -10,16 +10,10 @@
 #include <scwx/util/strings.hpp>
 #include <scwx/util/time.hpp>
 
-#include <format>
-
 #include <QApplication>
 #include <QFontMetrics>
 
-namespace scwx
-{
-namespace qt
-{
-namespace model
+namespace scwx::qt::model
 {
 
 static const std::string logPrefix_ = "scwx::qt::model::alert_model";
@@ -329,16 +323,45 @@ AlertModel::headerData(int section, Qt::Orientation orientation, int role) const
 }
 
 void AlertModel::HandleAlert(const types::TextEventKey& alertKey,
-                             size_t                     messageIndex)
+                             std::size_t                messageIndex,
+                             boost::uuids::uuid         uuid)
 {
    logger_->trace("Handle alert: {}", alertKey.ToString());
 
    double distanceInMeters;
 
+   const auto& alertMessages = p->textEventManager_->message_list(alertKey);
+
+   // Find message by UUID instead of index, as the message index could have
+   // changed between the signal being emitted and the handler being called
+   auto messageIt = std::find_if(alertMessages.cbegin(),
+                                 alertMessages.cend(),
+                                 [&uuid](const auto& message)
+                                 { return uuid == message->uuid(); });
+
+   if (messageIt == alertMessages.cend())
+   {
+      logger_->warn("Could not find alert uuid: {} ({})",
+                    alertKey.ToString(),
+                    messageIndex);
+      return;
+   }
+
+   auto& message = *messageIt;
+
+   // Store the current message index
+   messageIndex = static_cast<std::size_t>(
+      std::distance(alertMessages.cbegin(), messageIt));
+
+   // Skip alert if this is not the most recent message
+   if (messageIndex + 1 < alertMessages.size())
+   {
+      return;
+   }
+
    // Get the most recent segment for the event
-   auto alertMessages = p->textEventManager_->message_list(alertKey);
-   std::shared_ptr<const awips::Segment> alertSegment =
-      alertMessages[messageIndex]->segments().back();
+   const std::shared_ptr<const awips::Segment> alertSegment =
+      message->segments().back();
 
    p->observedMap_.insert_or_assign(alertKey, alertSegment->observed_);
    p->threatCategoryMap_.insert_or_assign(alertKey,
@@ -383,6 +406,36 @@ void AlertModel::HandleAlert(const types::TextEventKey& alertKey,
       QModelIndex bottomRight = createIndex(row, kLastColumn);
 
       Q_EMIT dataChanged(topLeft, bottomRight);
+   }
+}
+
+void AlertModel::HandleAlertsRemoved(
+   const std::unordered_set<types::TextEventKey,
+                            types::TextEventHash<types::TextEventKey>>&
+      alertKeys)
+{
+   logger_->trace("Handle alerts removed");
+
+   for (const auto& alertKey : alertKeys)
+   {
+      // Remove from the list of text event keys
+      auto it = std::find(
+         p->textEventKeys_.begin(), p->textEventKeys_.end(), alertKey);
+      if (it != p->textEventKeys_.end())
+      {
+         const int row =
+            static_cast<int>(std::distance(p->textEventKeys_.begin(), it));
+         beginRemoveRows(QModelIndex(), row, row);
+         p->textEventKeys_.erase(it);
+         endRemoveRows();
+      }
+
+      // Remove from internal maps
+      p->observedMap_.erase(alertKey);
+      p->threatCategoryMap_.erase(alertKey);
+      p->tornadoPossibleMap_.erase(alertKey);
+      p->centroidMap_.erase(alertKey);
+      p->distanceMap_.erase(alertKey);
    }
 }
 
@@ -488,8 +541,8 @@ std::string AlertModelImpl::GetCounties(const types::TextEventKey& key)
    }
    else
    {
-      logger_->warn("GetCounties(): No message associated with key: {}",
-                    key.ToString());
+      logger_->trace("GetCounties(): No message associated with key: {}",
+                     key.ToString());
       return {};
    }
 }
@@ -507,8 +560,8 @@ std::string AlertModelImpl::GetState(const types::TextEventKey& key)
    }
    else
    {
-      logger_->warn("GetState(): No message associated with key: {}",
-                    key.ToString());
+      logger_->trace("GetState(): No message associated with key: {}",
+                     key.ToString());
       return {};
    }
 }
@@ -525,8 +578,8 @@ AlertModelImpl::GetStartTime(const types::TextEventKey& key)
    }
    else
    {
-      logger_->warn("GetStartTime(): No message associated with key: {}",
-                    key.ToString());
+      logger_->trace("GetStartTime(): No message associated with key: {}",
+                     key.ToString());
       return {};
    }
 }
@@ -550,8 +603,8 @@ AlertModelImpl::GetEndTime(const types::TextEventKey& key)
    }
    else
    {
-      logger_->warn("GetEndTime(): No message associated with key: {}",
-                    key.ToString());
+      logger_->trace("GetEndTime(): No message associated with key: {}",
+                     key.ToString());
       return {};
    }
 }
@@ -561,6 +614,4 @@ std::string AlertModelImpl::GetEndTimeString(const types::TextEventKey& key)
    return scwx::util::TimeString(GetEndTime(key));
 }
 
-} // namespace model
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::model

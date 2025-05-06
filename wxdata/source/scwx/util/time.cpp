@@ -21,9 +21,7 @@
 #   include <date/date.h>
 #endif
 
-namespace scwx
-{
-namespace util
+namespace scwx::util
 {
 
 static const std::string logPrefix_ = "scwx::util::time";
@@ -48,6 +46,7 @@ std::chrono::system_clock::time_point TimePoint(uint32_t modifiedJulianDate,
    using sys_days       = time_point<system_clock, days>;
    constexpr auto epoch = sys_days {1969y / December / 31d};
 
+   // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers): literals are used
    return epoch + (modifiedJulianDate * 24h) +
           std::chrono::milliseconds {milliseconds};
 }
@@ -60,15 +59,19 @@ std::string TimeString(std::chrono::system_clock::time_point time,
    using namespace std::chrono;
 
 #if (__cpp_lib_chrono >= 201907L)
-#   define FORMAT_STRING_24_HOUR "{:%Y-%m-%d %H:%M:%S %Z}"
-#   define FORMAT_STRING_12_HOUR "{:%Y-%m-%d %I:%M:%S %p %Z}"
    namespace date = std::chrono;
    namespace df   = std;
+
+   static constexpr std::string_view kFormatString24Hour =
+      "{:%Y-%m-%d %H:%M:%S %Z}";
+   static constexpr std::string_view kFormatString12Hour =
+      "{:%Y-%m-%d %I:%M:%S %p %Z}";
 #else
-#   define FORMAT_STRING_24_HOUR "%Y-%m-%d %H:%M:%S %Z"
-#   define FORMAT_STRING_12_HOUR "%Y-%m-%d %I:%M:%S %p %Z"
    using namespace date;
    namespace df = date;
+
+#   define kFormatString24Hour "%Y-%m-%d %H:%M:%S %Z"
+#   define kFormatString12Hour "%Y-%m-%d %I:%M:%S %p %Z"
 #endif
 
    auto               timeInSeconds = time_point_cast<seconds>(time);
@@ -84,11 +87,11 @@ std::string TimeString(std::chrono::system_clock::time_point time,
 
             if (clockFormat == ClockFormat::_24Hour)
             {
-               os << df::format(FORMAT_STRING_24_HOUR, zt);
+               os << df::format(kFormatString24Hour, zt);
             }
             else
             {
-               os << df::format(FORMAT_STRING_12_HOUR, zt);
+               os << df::format(kFormatString12Hour, zt);
             }
          }
          catch (const std::exception& ex)
@@ -110,11 +113,11 @@ std::string TimeString(std::chrono::system_clock::time_point time,
       {
          if (clockFormat == ClockFormat::_24Hour)
          {
-            os << df::format(FORMAT_STRING_24_HOUR, timeInSeconds);
+            os << df::format(kFormatString24Hour, timeInSeconds);
          }
          else
          {
-            os << df::format(FORMAT_STRING_12_HOUR, timeInSeconds);
+            os << df::format(kFormatString12Hour, timeInSeconds);
          }
       }
    }
@@ -150,5 +153,4 @@ template std::optional<std::chrono::sys_time<std::chrono::seconds>>
 TryParseDateTime<std::chrono::seconds>(const std::string& dateTimeFormat,
                                        const std::string& str);
 
-} // namespace util
-} // namespace scwx
+} // namespace scwx::util

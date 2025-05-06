@@ -1,4 +1,5 @@
 #include <scwx/qt/manager/update_manager.hpp>
+#include <scwx/util/json.hpp>
 #include <scwx/util/logger.hpp>
 
 #include <mutex>
@@ -29,8 +30,7 @@ public:
 
    ~Impl() {}
 
-   static std::string        GetVersionString(const std::string& releaseName);
-   static boost::json::value ParseResponseText(const std::string& s);
+   static std::string GetVersionString(const std::string& releaseName);
 
    size_t PopulateReleases();
    size_t AddReleases(const boost::json::value& json);
@@ -68,28 +68,6 @@ UpdateManager::Impl::GetVersionString(const std::string& releaseName)
    RE2::PartialMatch(releaseName, *re, &versionString);
 
    return versionString;
-}
-
-boost::json::value UpdateManager::Impl::ParseResponseText(const std::string& s)
-{
-   boost::json::stream_parser p;
-   boost::system::error_code  ec;
-
-   p.write(s, ec);
-   if (ec)
-   {
-      logger_->warn("{}", ec.message());
-      return nullptr;
-   }
-
-   p.finish(ec);
-   if (ec)
-   {
-      logger_->warn("{}", ec.message());
-      return nullptr;
-   }
-
-   return p.release();
 }
 
 bool UpdateManager::CheckForUpdates(const std::string& currentVersion)
@@ -148,7 +126,7 @@ size_t UpdateManager::Impl::PopulateReleases()
       // Successful REST API query
       if (r.status_code == 200)
       {
-         boost::json::value json = Impl::ParseResponseText(r.text);
+         const boost::json::value json = util::json::ReadJsonString(r.text);
          if (json == nullptr)
          {
             logger_->warn("Response not JSON: {}", r.header["content-type"]);

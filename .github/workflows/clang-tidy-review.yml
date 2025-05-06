@@ -126,7 +126,7 @@ jobs:
                --build_dir='../build' \
                --base_dir='${{ github.workspace }}/source' \
                --clang_tidy_checks='' \
-               --config_file='.clang-tidy' \
+               --config_file='' \
                --include='*.[ch],*.[ch]xx,*.[chi]pp,*.[ch]++,*.cc,*.hh' \
                --exclude='' \
                --apt-packages='' \

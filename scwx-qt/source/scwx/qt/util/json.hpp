@@ -1,7 +1,5 @@
 #pragma once
 
-#include <optional>
-
 #include <boost/json/value.hpp>
 
 namespace scwx
@@ -13,10 +11,7 @@ namespace util
 namespace json
 {
 
-boost::json::value ReadJsonFile(const std::string& path);
-void               WriteJsonFile(const std::string&        path,
-                                 const boost::json::value& json,
-                                 bool                      prettyPrint = true);
+boost::json::value ReadJsonQFile(const std::string& path);
 
 } // namespace json
 } // namespace util
