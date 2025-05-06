@@ -90,7 +90,7 @@ AlertProxyModel::Impl::~Impl()
 {
    try
    {
-      std::unique_lock lock(alertMutex_);
+      const std::unique_lock lock(alertMutex_);
       alertUpdateTimer_.cancel();
    }
    catch (const std::exception& ex)
@@ -104,7 +104,7 @@ void AlertProxyModel::Impl::UpdateAlerts()
    logger_->trace("UpdateAlerts");
 
    // Take a unique lock before modifying feature lists
-   std::unique_lock lock(alertMutex_);
+   const std::unique_lock lock(alertMutex_);
 
    // Re-evaluate for expired alerts
    if (alertActiveFilterEnabled_)
