@@ -6,6 +6,7 @@
 #include <memory>
 #include <unordered_set>
 
+#include <boost/uuid/uuid.hpp>
 #include <QAbstractTableModel>
 
 namespace scwx
@@ -51,7 +52,9 @@ public:
                        int             role = Qt::DisplayRole) const override;
 
 public slots:
-   void HandleAlert(const types::TextEventKey& alertKey, size_t messageIndex);
+   void HandleAlert(const types::TextEventKey& alertKey,
+                    std::size_t                messageIndex,
+                    boost::uuids::uuid         uuid);
    void HandleAlertsRemoved(
       const std::unordered_set<types::TextEventKey,
                                types::TextEventHash<types::TextEventKey>>&
