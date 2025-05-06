@@ -10,6 +10,7 @@
 #include <chrono>
 #include <mutex>
 #include <ranges>
+#include <set>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -116,7 +117,7 @@ signals:
    void AlertAdded(const std::shared_ptr<SegmentRecord>& segmentRecord,
                    awips::Phenomenon                     phenomenon);
    void AlertUpdated(const std::shared_ptr<SegmentRecord>& segmentRecord);
-   void AlertsRemoved(awips::Phenomenon phenomenon, bool alertActive);
+   void AlertsRemoved(awips::Phenomenon phenomenon);
    void AlertsUpdated(awips::Phenomenon phenomenon, bool alertActive);
 };
 
@@ -201,6 +202,7 @@ public:
                  boost::container::stable_vector<
                     std::shared_ptr<gl::draw::GeoLineDrawItem>>& drawItems);
    void PopulateLines(bool alertActive);
+   void RepopulateLines();
    void UpdateLines();
 
    static LineData CreateLineData(const settings::LineSettings& lineSettings);
@@ -216,6 +218,7 @@ public:
    const awips::ibw::ImpactBasedWarningInfo& ibw_;
 
    std::unique_ptr<QObject> receiver_ {std::make_unique<QObject>()};
+   std::mutex               receiverMutex_ {};
 
    std::unordered_map<bool, std::shared_ptr<gl::draw::GeoLines>> geoLines_;
 
@@ -446,9 +449,7 @@ void AlertLayerHandler::HandleAlertsRemoved(
 {
    logger_->trace("HandleAlertsRemoved: {} keys", keys.size());
 
-   std::unordered_set<std::pair<awips::Phenomenon, bool>,
-                      AlertTypeHash<std::pair<awips::Phenomenon, bool>>>
-      alertsRemoved {};
+   std::set<awips::Phenomenon> alertsRemoved {};
 
    // Take a unique lock before modifying segments
    std::unique_lock lock {alertMutex_};
@@ -481,7 +482,7 @@ void AlertLayerHandler::HandleAlertsRemoved(
                }
             }
 
-            alertsRemoved.emplace(key.phenomenon_, alertActive);
+            alertsRemoved.emplace(key.phenomenon_);
          }
 
          // Remove the key from segmentsByKey_
@@ -495,7 +496,7 @@ void AlertLayerHandler::HandleAlertsRemoved(
    // Emit signal to notify that alerts have been removed
    for (auto& alert : alertsRemoved)
    {
-      Q_EMIT AlertsRemoved(alert.first, alert.second);
+      Q_EMIT AlertsRemoved(alert);
    }
 }
 
@@ -513,6 +514,9 @@ void AlertLayer::Impl::ConnectAlertHandlerSignals()
       {
          if (phenomenon == phenomenon_)
          {
+            // Only process one signal at a time
+            const std::unique_lock lock {receiverMutex_};
+
             AddAlert(segmentRecord);
          }
       });
@@ -525,25 +529,27 @@ void AlertLayer::Impl::ConnectAlertHandlerSignals()
       {
          if (segmentRecord->key_.phenomenon_ == phenomenon_)
          {
+            // Only process one signal at a time
+            const std::unique_lock lock {receiverMutex_};
+
             UpdateAlert(segmentRecord);
          }
       });
-   QObject::connect(
-      &alertLayerHandler,
-      &AlertLayerHandler::AlertsRemoved,
-      receiver_.get(),
-      [&alertLayerHandler, this](awips::Phenomenon phenomenon, bool alertActive)
-      {
-         if (phenomenon == phenomenon_)
-         {
-            // Take a shared lock to prevent handling additional alerts while
-            // populating initial lists
-            const std::shared_lock lock {alertLayerHandler.alertMutex_};
+   QObject::connect(&alertLayerHandler,
+                    &AlertLayerHandler::AlertsRemoved,
+                    receiver_.get(),
+                    [this](awips::Phenomenon phenomenon)
+                    {
+                       if (phenomenon == phenomenon_)
+                       {
+                          // Only process one signal at a time
+                          const std::unique_lock lock {receiverMutex_};
 
-            // Re-populate the lines if multiple alerts were removed
-            PopulateLines(alertActive);
-         }
-      });
+                          // Re-populate the lines if multiple alerts were
+                          // removed
+                          RepopulateLines();
+                       }
+                    });
 }
 
 void AlertLayer::Impl::ConnectSignals()
@@ -797,6 +803,25 @@ void AlertLayer::Impl::PopulateLines(bool alertActive)
    }
 
    geoLines->FinishLines();
+}
+
+void AlertLayer::Impl::RepopulateLines()
+{
+   auto& alertLayerHandler = AlertLayerHandler::Instance();
+
+   // Take a shared lock to prevent handling additional alerts while populating
+   // initial lists
+   const std::shared_lock alertLock {alertLayerHandler.alertMutex_};
+
+   linesBySegment_.clear();
+   segmentsByLine_.clear();
+
+   for (auto alertActive : {false, true})
+   {
+      PopulateLines(alertActive);
+   }
+
+   Q_EMIT self_->NeedsRendering();
 }
 
 void AlertLayer::Impl::UpdateLines()
