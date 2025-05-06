@@ -15,7 +15,7 @@ class SupercellWxConan(ConanFile):
                   "glm/1.0.1",
                   "gtest/1.16.0",
                   "libcurl/8.12.1",
-                  "libpng/1.6.47",
+                  "libpng/1.6.48",
                   "libxml2/2.13.6",
                   "openssl/3.4.1",
                   "range-v3/0.12.0",
