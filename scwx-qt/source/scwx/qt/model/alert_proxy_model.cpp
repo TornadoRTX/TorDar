@@ -102,10 +102,9 @@ void AlertProxyModel::Impl::UpdateAlerts()
    // Re-evaluate for expired alerts
    if (alertActiveFilterEnabled_)
    {
-      QMetaObject::invokeMethod(
-         self_,
-         static_cast<void (QSortFilterProxyModel::*)()>(
-            &QSortFilterProxyModel::invalidateRowsFilter));
+      QMetaObject::invokeMethod(self_,
+                                static_cast<void (QSortFilterProxyModel::*)()>(
+                                   &QSortFilterProxyModel::invalidate));
    }
 
    using namespace std::chrono;
