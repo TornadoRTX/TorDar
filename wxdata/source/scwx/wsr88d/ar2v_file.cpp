@@ -467,7 +467,7 @@ void Ar2vFileImpl::IndexFile()
       {
          elevationAngle =
             static_cast<float>(vcpData_->elevation_angle(elevationCut.first));
-         waveformType   = vcpData_->waveform_type(elevationCut.first);
+         waveformType = vcpData_->waveform_type(elevationCut.first);
       }
       else if ((digitalRadarData0 =
                    std::dynamic_pointer_cast<rda::DigitalRadarData>(radial0)) !=
@@ -705,8 +705,8 @@ Ar2vFile::Ar2vFile(const std::shared_ptr<Ar2vFile>& current,
          // Find the highest elevation this type has for the current scan
          // Start below any reasonable elevation
          // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
-         float       highestCurrentElevation  = -90;
-         const auto& elevationScans = p->index_.find(type.first);
+         float       highestCurrentElevation = -90;
+         const auto& elevationScans          = p->index_.find(type.first);
          if (elevationScans != p->index_.cend())
          {
             const auto& highestElevation = elevationScans->second.crbegin();
