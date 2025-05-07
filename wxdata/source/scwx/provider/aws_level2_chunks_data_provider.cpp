@@ -341,7 +341,7 @@ AwsLevel2ChunksDataProvider::Impl::ListObjects()
    {
       return {true, newObjects, totalObjects};
    }
-   logger_->debug("ListObjects");
+   logger_->trace("ListObjects");
    lastTimeListed_ = now;
 
    const std::string prefix = radarSite_ + "/";
@@ -356,7 +356,7 @@ AwsLevel2ChunksDataProvider::Impl::ListObjects()
    if (outcome.IsSuccess())
    {
       auto& scans = outcome.GetResult().GetCommonPrefixes();
-      // logger_->debug("Found {} scans", scans.size());
+      logger_->trace("Found {} scans", scans.size());
 
       if (scans.size() > 0)
       {
@@ -513,7 +513,7 @@ bool AwsLevel2ChunksDataProvider::Impl::LoadScan(Impl::ScanRecord& scanRecord)
 
    bool  hasNew = false;
    auto& chunks = listOutcome.GetResult().GetContents();
-   // logger_->debug("Found {} new chunks.", chunks.size());
+   logger_->trace("Found {} new chunks.", chunks.size());
    for (const auto& chunk : chunks)
    {
       const std::string& key = chunk.GetKey();
@@ -726,7 +726,7 @@ std::pair<size_t, size_t> AwsLevel2ChunksDataProvider::Refresh()
 
    timer.stop();
    // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers) format to 6 digits
-   // logger_->debug("Refresh() in {}", timer.format(6, "%ws"));
+   logger_->debug("Refresh() in {}", timer.format(6, "%ws"));
    return std::make_pair(newObjects, totalObjects);
 }
 

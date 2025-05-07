@@ -766,7 +766,7 @@ void RadarProductManagerImpl::EnableRefresh(
 void RadarProductManagerImpl::RefreshData(
    std::shared_ptr<ProviderManager> providerManager)
 {
-   // logger_->debug("RefreshData: {}", providerManager->name());
+   logger_->trace("RefreshData: {}", providerManager->name());
 
    {
       std::unique_lock lock(providerManager->refreshTimerMutex_);
@@ -846,12 +846,10 @@ void RadarProductManagerImpl::RefreshDataSync(
 
    if (providerManager->refreshEnabled_)
    {
-      /*
-      logger_->debug(
+      logger_->trace(
          "[{}] Scheduled refresh in {:%M:%S}",
          providerManager->name(),
          std::chrono::duration_cast<std::chrono::seconds>(interval));
-         */
 
       {
          providerManager->refreshTimer_.expires_after(interval);
@@ -962,9 +960,9 @@ void RadarProductManagerImpl::LoadProviderData(
    std::mutex&                                        loadDataMutex,
    const std::shared_ptr<request::NexradFileRequest>& request)
 {
-   /*logger_->debug("LoadProviderData: {}, {}",
+   logger_->trace("LoadProviderData: {}, {}",
                   providerManager->name(),
-                  scwx::util::TimeString(time));*/
+                  scwx::util::TimeString(time));
 
    LoadNexradFileAsync(
       [=, &recordMap, &recordMutex]() -> std::shared_ptr<wsr88d::NexradFile>
@@ -980,13 +978,11 @@ void RadarProductManagerImpl::LoadProviderData(
             {
                existingRecord = it->second.lock();
 
-               /*
                if (existingRecord != nullptr)
                {
-                  logger_->debug(
+                  logger_->trace(
                      "Data previously loaded, loading from data cache");
                }
-               */
             }
          }
 
@@ -1015,7 +1011,7 @@ void RadarProductManager::LoadLevel2Data(
    std::chrono::system_clock::time_point              time,
    const std::shared_ptr<request::NexradFileRequest>& request)
 {
-   // logger_->debug("LoadLevel2Data: {}", scwx::util::TimeString(time));
+   logger_->trace("LoadLevel2Data: {}", scwx::util::TimeString(time));
 
    p->LoadProviderData(time,
                        p->level2ProviderManager_,
@@ -1445,7 +1441,7 @@ std::shared_ptr<types::RadarProductRecord>
 RadarProductManagerImpl::StoreRadarProductRecord(
    std::shared_ptr<types::RadarProductRecord> record)
 {
-   // logger_->debug("StoreRadarProductRecord()");
+   logger_->trace("StoreRadarProductRecord()");
 
    std::shared_ptr<types::RadarProductRecord> storedRecord = nullptr;
 
@@ -1462,12 +1458,11 @@ RadarProductManagerImpl::StoreRadarProductRecord(
       {
          storedRecord = it->second.lock();
 
-         /*
          if (storedRecord != nullptr)
          {
-            logger_->debug(
+            logger_->trace(
                "Level 2 product previously loaded, loading from cache");
-         }*/
+         }
       }
 
       if (storedRecord == nullptr)
