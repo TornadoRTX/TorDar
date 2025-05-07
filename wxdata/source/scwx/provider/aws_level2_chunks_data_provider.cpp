@@ -405,7 +405,6 @@ AwsLevel2ChunksDataProvider::Impl::ListObjects()
          if (possibleLastNumbers.empty())
          {
             logger_->warn("Could not find last scan");
-            // TODO make sure this makes sence
             return {false, 0, 0};
          }
 
@@ -705,7 +704,6 @@ std::pair<size_t, size_t> AwsLevel2ChunksDataProvider::Refresh()
                      if (p->lastScan_.nexradFile_ != nullptr)
                      {
                         p->lastScan_.hasAllFiles_ = true;
-                        // TODO maybe set lastModified for timing
                      }
                   }
                   // Fall back to chunks if files did not load

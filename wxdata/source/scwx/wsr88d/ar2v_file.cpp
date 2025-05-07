@@ -528,7 +528,6 @@ bool Ar2vFile::IndexFile()
    return true;
 }
 
-// TODO not good
 // NOLINTNEXTLINE
 bool IsRadarDataIncomplete(
    const std::shared_ptr<const rda::ElevationScan>& radarData)
@@ -583,10 +582,10 @@ Ar2vFile::Ar2vFile(const std::shared_ptr<Ar2vFile>& current,
                std::shared_ptr<rda::ElevationScan> secondMostRecent = nullptr;
 
                // check if this volume scan has an earlier elevation scan
-               auto maybe = elevation.second.rbegin(); // TODO name
-               ++maybe;
+               auto possibleSecondMostRecent = elevation.second.rbegin();
+               ++possibleSecondMostRecent;
 
-               if (maybe == elevation.second.rend())
+               if (possibleSecondMostRecent == elevation.second.rend())
                {
                   if (last == nullptr)
                   {
@@ -613,7 +612,7 @@ Ar2vFile::Ar2vFile(const std::shared_ptr<Ar2vFile>& current,
                }
                else
                {
-                  secondMostRecent = maybe->second;
+                  secondMostRecent = possibleSecondMostRecent->second;
                }
 
                // Make the new scan
@@ -706,16 +705,16 @@ Ar2vFile::Ar2vFile(const std::shared_ptr<Ar2vFile>& current,
          // Find the highest elevation this type has for the current scan
          // Start below any reasonable elevation
          // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
-         float       highestCurrentElevation = -90;
-         const auto& maybe1                  = p->index_.find(type.first);
-         if (maybe1 != p->index_.cend())
+         float       highestCurrentElevation  = -90;
+         const auto& elevationScans = p->index_.find(type.first);
+         if (elevationScans != p->index_.cend())
          {
-            const auto& maybe2 = maybe1->second.crbegin();
-            if (maybe2 != maybe1->second.crend())
+            const auto& highestElevation = elevationScans->second.crbegin();
+            if (highestElevation != elevationScans->second.crend())
             {
                // Add a slight offset to ensure good floating point compare.
                // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
-               highestCurrentElevation = maybe2->first + 0.01f;
+               highestCurrentElevation = highestElevation->first + 0.01f;
             }
          }
 
