@@ -2,17 +2,13 @@
 
 #include <scwx/qt/map/draw_layer.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 class OverlayProductLayer : public DrawLayer
 {
 public:
-   explicit OverlayProductLayer(std::shared_ptr<MapContext> context);
+   explicit OverlayProductLayer(const std::shared_ptr<MapContext>& context);
    ~OverlayProductLayer();
 
    void Initialize() override final;
@@ -32,6 +28,4 @@ private:
    std::unique_ptr<Impl> p;
 };
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

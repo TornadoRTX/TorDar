@@ -3,11 +3,7 @@
 #include <scwx/qt/gl/draw/draw_item.hpp>
 #include <scwx/qt/map/generic_layer.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 class DrawLayerImpl;
@@ -44,6 +40,4 @@ private:
    std::unique_ptr<DrawLayerImpl> p;
 };
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

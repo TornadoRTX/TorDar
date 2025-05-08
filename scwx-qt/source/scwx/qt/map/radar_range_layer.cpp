@@ -5,11 +5,7 @@
 
 #include <glm/glm.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 static const std::string logPrefix_ = "scwx::qt::map::radar_range_layer";
@@ -98,6 +94,4 @@ GetRangeCircle(float range, QMapLibre::Coordinate center)
    return rangeCircle;
 }
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

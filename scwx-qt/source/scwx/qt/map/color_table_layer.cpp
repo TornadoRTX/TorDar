@@ -14,11 +14,7 @@
 #   pragma warning(pop)
 #endif
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 static const std::string logPrefix_ = "scwx::qt::map::color_table_layer";
@@ -51,7 +47,7 @@ public:
    bool colorTableNeedsUpdate_;
 };
 
-ColorTableLayer::ColorTableLayer(std::shared_ptr<MapContext> context) :
+ColorTableLayer::ColorTableLayer(const std::shared_ptr<MapContext>& context) :
     GenericLayer(context), p(std::make_unique<ColorTableLayerImpl>())
 {
 }
@@ -61,11 +57,13 @@ void ColorTableLayer::Initialize()
 {
    logger_->debug("Initialize()");
 
-   gl::OpenGLFunctions& gl = context()->gl();
+   auto glContext = context()->gl_context();
+
+   gl::OpenGLFunctions& gl = glContext->gl();
 
    // Load and configure overlay shader
    p->shaderProgram_ =
-      context()->GetShaderProgram(":/gl/texture1d.vert", ":/gl/texture1d.frag");
+      glContext->GetShaderProgram(":/gl/texture1d.vert", ":/gl/texture1d.frag");
 
    p->uMVPMatrixLocation_ =
       gl.glGetUniformLocation(p->shaderProgram_->id(), "uMVPMatrix");
@@ -118,7 +116,7 @@ void ColorTableLayer::Initialize()
 void ColorTableLayer::Render(
    const QMapLibre::CustomLayerRenderParameters& params)
 {
-   gl::OpenGLFunctions& gl               = context()->gl();
+   gl::OpenGLFunctions& gl               = context()->gl_context()->gl();
    auto                 radarProductView = context()->radar_product_view();
 
    if (context()->radar_product_view() == nullptr ||
@@ -196,7 +194,7 @@ void ColorTableLayer::Deinitialize()
 {
    logger_->debug("Deinitialize()");
 
-   gl::OpenGLFunctions& gl = context()->gl();
+   gl::OpenGLFunctions& gl = context()->gl_context()->gl();
 
    gl.glDeleteVertexArrays(1, &p->vao_);
    gl.glDeleteBuffers(2, p->vbo_.data());
@@ -210,6 +208,4 @@ void ColorTableLayer::Deinitialize()
    context()->set_color_table_margins(QMargins {});
 }
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

@@ -10,11 +10,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <qmaplibre.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 class GenericLayerImpl;
@@ -24,7 +20,7 @@ class GenericLayer : public QObject
    Q_OBJECT
 
 public:
-   explicit GenericLayer(std::shared_ptr<MapContext> context);
+   explicit GenericLayer(const std::shared_ptr<MapContext>& context);
    virtual ~GenericLayer();
 
    virtual void Initialize()                                          = 0;
@@ -61,6 +57,4 @@ private:
    std::unique_ptr<GenericLayerImpl> p;
 };
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

@@ -1,4 +1,3 @@
-#include <ranges>
 #include <scwx/qt/map/map_widget.hpp>
 #include <scwx/qt/gl/gl.hpp>
 #include <scwx/qt/manager/font_manager.hpp>
@@ -32,6 +31,7 @@
 #include <scwx/util/time.hpp>
 
 #include <algorithm>
+#include <ranges>
 #include <set>
 
 #include <backends/imgui_impl_opengl3.h>
@@ -57,11 +57,7 @@
 #include <QString>
 #include <QTextDocument>
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 static const std::string logPrefix_ = "scwx::qt::map::map_widget";
@@ -1545,7 +1541,8 @@ void MapWidget::initializeGL()
    logger_->debug("initializeGL()");
 
    makeCurrent();
-   p->context_->Initialize();
+
+   p->context_->gl_context()->Initialize();
 
    // Lock ImGui font atlas prior to new ImGui frame
    std::shared_lock imguiFontAtlasLock {
@@ -1599,7 +1596,7 @@ void MapWidget::paintGL()
 
    p->frameDraws_++;
 
-   p->context_->StartFrame();
+   p->context_->gl_context()->StartFrame();
 
    // Handle hotkey updates
    p->HandleHotkeyUpdates();
@@ -2251,8 +2248,6 @@ void MapWidgetImpl::CheckLevel3Availability()
    }
 }
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map
 
 #include "map_widget.moc"

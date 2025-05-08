@@ -22,11 +22,7 @@ class QKeyEvent;
 class QMouseEvent;
 class QWheelEvent;
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 class MapWidgetImpl;
@@ -188,6 +184,4 @@ signals:
    void IncomingLevel2ElevationChanged(std::optional<float> incomingElevation);
 };
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

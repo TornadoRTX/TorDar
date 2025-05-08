@@ -9,33 +9,33 @@
 #include <qmaplibre.hpp>
 #include <QMargins>
 
-namespace scwx::qt
-{
-namespace view
+namespace scwx::qt::view
 {
 
 class OverlayProductView;
 class RadarProductView;
 
-} // namespace view
+} // namespace scwx::qt::view
 
-namespace map
+namespace scwx::qt::map
 {
 
 struct MapSettings;
 
-class MapContext : public gl::GlContext
+class MapContext
 {
 public:
    explicit MapContext(
       std::shared_ptr<view::RadarProductView> radarProductView = nullptr);
-   ~MapContext() override;
+   ~MapContext();
 
    MapContext(const MapContext&)            = delete;
    MapContext& operator=(const MapContext&) = delete;
 
    MapContext(MapContext&&) noexcept;
    MapContext& operator=(MapContext&&) noexcept;
+
+   [[nodiscard]] std::shared_ptr<gl::GlContext> gl_context() const;
 
    [[nodiscard]] std::weak_ptr<QMapLibre::Map> map() const;
    [[nodiscard]] std::string                   map_copyrights() const;
@@ -76,5 +76,4 @@ private:
    std::unique_ptr<Impl> p;
 };
 
-} // namespace map
-} // namespace scwx::qt
+} // namespace scwx::qt::map

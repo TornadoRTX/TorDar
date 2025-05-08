@@ -1,17 +1,13 @@
 #include <scwx/qt/map/layer_wrapper.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 class LayerWrapperImpl
 {
 public:
    explicit LayerWrapperImpl(std::shared_ptr<GenericLayer> layer) :
-       layer_ {layer}
+       layer_ {std::move(layer)}
    {
    }
 
@@ -20,7 +16,7 @@ public:
    std::shared_ptr<GenericLayer> layer_;
 };
 
-LayerWrapper::LayerWrapper(std::shared_ptr<GenericLayer> layer) :
+LayerWrapper::LayerWrapper(const std::shared_ptr<GenericLayer>& layer) :
     p(std::make_unique<LayerWrapperImpl>(layer))
 {
 }
@@ -58,6 +54,4 @@ void LayerWrapper::deinitialize()
    }
 }
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

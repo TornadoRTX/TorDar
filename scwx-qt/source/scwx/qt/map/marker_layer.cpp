@@ -10,11 +10,7 @@
 
 #include <string>
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 static const std::string logPrefix_ = "scwx::qt::map::marker_layer";
@@ -23,7 +19,7 @@ static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 class MarkerLayer::Impl
 {
 public:
-   explicit Impl(MarkerLayer* self, std::shared_ptr<MapContext> context) :
+   explicit Impl(MarkerLayer* self, std::shared_ptr<gl::GlContext> context) :
        self_ {self},
        geoIcons_ {std::make_shared<gl::draw::GeoIcons>(context)},
        editMarkerDialog_ {std::make_shared<ui::EditMarkerDialog>()}
@@ -42,7 +38,7 @@ public:
 
    MarkerLayer* self_;
 
-   std::shared_ptr<gl::draw::GeoIcons> geoIcons_;
+   std::shared_ptr<gl::draw::GeoIcons>   geoIcons_;
    std::shared_ptr<ui::EditMarkerDialog> editMarkerDialog_;
 };
 
@@ -130,7 +126,7 @@ void MarkerLayer::Impl::ReloadMarkers()
 
 MarkerLayer::MarkerLayer(const std::shared_ptr<MapContext>& context) :
     DrawLayer(context, "MarkerLayer"),
-    p(std::make_unique<MarkerLayer::Impl>(this, context))
+    p(std::make_unique<MarkerLayer::Impl>(this, context->gl_context()))
 {
    AddDrawItem(p->geoIcons_);
 }
@@ -162,7 +158,7 @@ void MarkerLayer::Impl::set_icon_sheets()
 
 void MarkerLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
 {
-   gl::OpenGLFunctions& gl = context()->gl();
+   gl::OpenGLFunctions& gl = context()->gl_context()->gl();
 
    DrawLayer::Render(params);
 
@@ -176,6 +172,4 @@ void MarkerLayer::Deinitialize()
    DrawLayer::Deinitialize();
 }
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

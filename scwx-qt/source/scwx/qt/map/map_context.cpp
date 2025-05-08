@@ -3,11 +3,7 @@
 #include <scwx/qt/view/overlay_product_view.hpp>
 #include <scwx/qt/view/radar_product_view.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 class MapContext::Impl
@@ -20,14 +16,17 @@ public:
 
    ~Impl() {}
 
+   std::shared_ptr<gl::GlContext> glContext_ {
+      std::make_shared<gl::GlContext>()};
+
    std::weak_ptr<QMapLibre::Map> map_ {};
    MapSettings                   settings_ {};
    float                         pixelRatio_ {1.0f};
    common::RadarProductGroup     radarProductGroup_ {
       common::RadarProductGroup::Unknown};
-   std::string                            radarProduct_ {"???"};
-   int16_t                                radarProductCode_ {0};
-   std::shared_ptr<config::RadarSite>     radarSite_ {nullptr};
+   std::string                        radarProduct_ {"???"};
+   int16_t                            radarProductCode_ {0};
+   std::shared_ptr<config::RadarSite> radarSite_ {nullptr};
 
    MapProvider mapProvider_ {MapProvider::Unknown};
    std::string mapCopyrights_ {};
@@ -50,6 +49,11 @@ MapContext::~MapContext() = default;
 
 MapContext::MapContext(MapContext&&) noexcept            = default;
 MapContext& MapContext::operator=(MapContext&&) noexcept = default;
+
+std::shared_ptr<gl::GlContext> MapContext::gl_context() const
+{
+   return p->glContext_;
+}
 
 std::weak_ptr<QMapLibre::Map> MapContext::map() const
 {
@@ -190,6 +194,4 @@ void MapContext::set_widget(QWidget* widget)
    p->widget_ = widget;
 }
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

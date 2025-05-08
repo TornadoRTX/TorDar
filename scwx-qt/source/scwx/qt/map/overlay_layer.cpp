@@ -26,11 +26,7 @@
 #   pragma warning(pop)
 #endif
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 static const std::string logPrefix_ = "scwx::qt::map::overlay_layer";
@@ -39,8 +35,8 @@ static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 class OverlayLayerImpl
 {
 public:
-   explicit OverlayLayerImpl(OverlayLayer*               self,
-                             std::shared_ptr<MapContext> context) :
+   explicit OverlayLayerImpl(OverlayLayer*                  self,
+                             std::shared_ptr<gl::GlContext> context) :
        self_ {self},
        activeBoxOuter_ {std::make_shared<gl::draw::Rectangle>(context)},
        activeBoxInner_ {std::make_shared<gl::draw::Rectangle>(context)},
@@ -155,9 +151,9 @@ public:
    bool        sweepTimePicked_ {false};
 };
 
-OverlayLayer::OverlayLayer(std::shared_ptr<MapContext> context) :
+OverlayLayer::OverlayLayer(const std::shared_ptr<MapContext>& context) :
     DrawLayer(context, "OverlayLayer"),
-    p(std::make_unique<OverlayLayerImpl>(this, context))
+    p(std::make_unique<OverlayLayerImpl>(this, context->gl_context()))
 {
    AddDrawItem(p->activeBoxOuter_);
    AddDrawItem(p->activeBoxInner_);
@@ -336,7 +332,7 @@ void OverlayLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
 {
    const std::unique_lock lock {p->renderMutex_};
 
-   gl::OpenGLFunctions& gl               = context()->gl();
+   gl::OpenGLFunctions& gl               = context()->gl_context()->gl();
    auto                 radarProductView = context()->radar_product_view();
    auto&                settings         = context()->settings();
    const float          pixelRatio       = context()->pixel_ratio();
@@ -616,6 +612,4 @@ void OverlayLayer::UpdateSweepTimeNextFrame()
    p->sweepTimeNeedsUpdate_ = true;
 }
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

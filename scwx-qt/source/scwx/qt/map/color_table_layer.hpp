@@ -2,11 +2,7 @@
 
 #include <scwx/qt/map/generic_layer.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 class ColorTableLayerImpl;
@@ -14,7 +10,7 @@ class ColorTableLayerImpl;
 class ColorTableLayer : public GenericLayer
 {
 public:
-   explicit ColorTableLayer(std::shared_ptr<MapContext> context);
+   explicit ColorTableLayer(const std::shared_ptr<MapContext>& context);
    ~ColorTableLayer();
 
    void Initialize() override final;
@@ -25,6 +21,4 @@ private:
    std::unique_ptr<ColorTableLayerImpl> p;
 };
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

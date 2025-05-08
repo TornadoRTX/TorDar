@@ -6,11 +6,7 @@
 
 #include <QMapLibre/Settings>
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 enum class MapProvider
@@ -19,9 +15,8 @@ enum class MapProvider
    MapTiler,
    Unknown
 };
-typedef scwx::util::
-   Iterator<MapProvider, MapProvider::Mapbox, MapProvider::MapTiler>
-      MapProviderIterator;
+using MapProviderIterator = scwx::util::
+   Iterator<MapProvider, MapProvider::Mapbox, MapProvider::MapTiler>;
 
 struct MapStyle
 {
@@ -29,7 +24,7 @@ struct MapStyle
    std::string              url_;
    std::vector<std::string> drawBelow_;
 
-   bool IsValid() const;
+   [[nodiscard]] bool IsValid() const;
 };
 
 struct MapProviderInfo
@@ -45,6 +40,4 @@ std::string            GetMapProviderName(MapProvider mapProvider);
 std::string            GetMapProviderApiKey(MapProvider mapProvider);
 const MapProviderInfo& GetMapProviderInfo(MapProvider mapProvider);
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

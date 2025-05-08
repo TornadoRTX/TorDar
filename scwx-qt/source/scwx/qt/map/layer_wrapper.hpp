@@ -2,11 +2,7 @@
 
 #include <scwx/qt/map/generic_layer.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 class LayerWrapperImpl;
@@ -14,7 +10,7 @@ class LayerWrapperImpl;
 class LayerWrapper : public QMapLibre::CustomLayerHostInterface
 {
 public:
-   explicit LayerWrapper(std::shared_ptr<GenericLayer> layer);
+   explicit LayerWrapper(const std::shared_ptr<GenericLayer>& layer);
    ~LayerWrapper();
 
    LayerWrapper(const LayerWrapper&)            = delete;
@@ -31,6 +27,4 @@ private:
    std::unique_ptr<LayerWrapperImpl> p;
 };
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

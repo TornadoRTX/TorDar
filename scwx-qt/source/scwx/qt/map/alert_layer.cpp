@@ -135,9 +135,9 @@ public:
       std::size_t lineWidth_ {};
    };
 
-   explicit Impl(AlertLayer*                 self,
-                 std::shared_ptr<MapContext> context,
-                 awips::Phenomenon           phenomenon) :
+   explicit Impl(AlertLayer*                    self,
+                 std::shared_ptr<gl::GlContext> context,
+                 awips::Phenomenon              phenomenon) :
        self_ {self},
        phenomenon_ {phenomenon},
        ibw_ {awips::ibw::GetImpactBasedWarningInfo(phenomenon)},
@@ -250,7 +250,7 @@ AlertLayer::AlertLayer(const std::shared_ptr<MapContext>& context,
     DrawLayer(
        context,
        fmt::format("AlertLayer {}", awips::GetPhenomenonText(phenomenon))),
-    p(std::make_unique<Impl>(this, context, phenomenon))
+    p(std::make_unique<Impl>(this, context->gl_context(), phenomenon))
 {
    for (auto alertActive : {false, true})
    {
@@ -298,7 +298,7 @@ void AlertLayer::Initialize()
 
 void AlertLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
 {
-   gl::OpenGLFunctions& gl = context()->gl();
+   gl::OpenGLFunctions& gl = context()->gl_context()->gl();
 
    for (auto alertActive : {false, true})
    {

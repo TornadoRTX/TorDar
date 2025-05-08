@@ -13,11 +13,7 @@
 
 #include <QGuiApplication>
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 static const std::string logPrefix_ = "scwx::qt::map::radar_site_layer";
@@ -26,7 +22,7 @@ static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 class RadarSiteLayer::Impl
 {
 public:
-   explicit Impl(RadarSiteLayer* self, std::shared_ptr<MapContext>& context) :
+   explicit Impl(RadarSiteLayer* self, std::shared_ptr<gl::GlContext> context) :
        self_ {self}, geoLines_ {std::make_shared<gl::draw::GeoLines>(context)}
    {
    }
@@ -54,9 +50,9 @@ public:
       nullptr, nullptr};
 };
 
-RadarSiteLayer::RadarSiteLayer(std::shared_ptr<MapContext> context) :
+RadarSiteLayer::RadarSiteLayer(const std::shared_ptr<MapContext>& context) :
     DrawLayer(context, "RadarSiteLayer"),
-    p(std::make_unique<Impl>(this, context))
+    p(std::make_unique<Impl>(this, context->gl_context()))
 {
 }
 
@@ -103,7 +99,7 @@ void RadarSiteLayer::Render(
       return;
    }
 
-   gl::OpenGLFunctions& gl = context()->gl();
+   gl::OpenGLFunctions& gl = context()->gl_context()->gl();
 
    // Update map screen coordinate and scale information
    p->mapScreenCoordLocation_ = util::maplibre::LatLongToScreenCoordinate(
@@ -251,6 +247,4 @@ bool RadarSiteLayer::RunMousePicking(
    return false;
 }
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

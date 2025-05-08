@@ -1,17 +1,13 @@
 #include <scwx/qt/map/generic_layer.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 class GenericLayerImpl
 {
 public:
    explicit GenericLayerImpl(std::shared_ptr<MapContext> context) :
-       context_ {context}
+       context_ {std::move(context)}
    {
    }
 
@@ -20,7 +16,7 @@ public:
    std::shared_ptr<MapContext> context_;
 };
 
-GenericLayer::GenericLayer(std::shared_ptr<MapContext> context) :
+GenericLayer::GenericLayer(const std::shared_ptr<MapContext>& context) :
     p(std::make_unique<GenericLayerImpl>(context))
 {
 }
@@ -43,6 +39,4 @@ std::shared_ptr<MapContext> GenericLayer::context() const
    return p->context_;
 }
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

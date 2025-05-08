@@ -26,11 +26,7 @@
 #   pragma warning(pop)
 #endif
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 static const std::string logPrefix_ = "scwx::qt::map::radar_product_layer";
@@ -76,7 +72,8 @@ public:
    bool sweepNeedsUpdate_;
 };
 
-RadarProductLayer::RadarProductLayer(std::shared_ptr<MapContext> context) :
+RadarProductLayer::RadarProductLayer(
+   const std::shared_ptr<MapContext>& context) :
     GenericLayer(context), p(std::make_unique<RadarProductLayerImpl>())
 {
    auto radarProductView = context->radar_product_view();
@@ -95,11 +92,13 @@ void RadarProductLayer::Initialize()
 {
    logger_->debug("Initialize()");
 
-   gl::OpenGLFunctions& gl = context()->gl();
+   auto glContext = context()->gl_context();
+
+   gl::OpenGLFunctions& gl = glContext->gl();
 
    // Load and configure radar shader
    p->shaderProgram_ =
-      context()->GetShaderProgram(":/gl/radar.vert", ":/gl/radar.frag");
+      glContext->GetShaderProgram(":/gl/radar.vert", ":/gl/radar.frag");
 
    p->uMVPMatrixLocation_ =
       gl.glGetUniformLocation(p->shaderProgram_->id(), "uMVPMatrix");
@@ -159,7 +158,7 @@ void RadarProductLayer::Initialize()
 
 void RadarProductLayer::UpdateSweep()
 {
-   gl::OpenGLFunctions& gl = context()->gl();
+   gl::OpenGLFunctions& gl = context()->gl_context()->gl();
 
    boost::timer::cpu_timer timer;
 
@@ -261,7 +260,7 @@ void RadarProductLayer::UpdateSweep()
 void RadarProductLayer::Render(
    const QMapLibre::CustomLayerRenderParameters& params)
 {
-   gl::OpenGLFunctions& gl = context()->gl();
+   gl::OpenGLFunctions& gl = context()->gl_context()->gl();
 
    p->shaderProgram_->Use();
 
@@ -324,7 +323,7 @@ void RadarProductLayer::Deinitialize()
 {
    logger_->debug("Deinitialize()");
 
-   gl::OpenGLFunctions& gl = context()->gl();
+   gl::OpenGLFunctions& gl = context()->gl_context()->gl();
 
    gl.glDeleteVertexArrays(1, &p->vao_);
    gl.glDeleteBuffers(3, p->vbo_.data());
@@ -536,7 +535,7 @@ void RadarProductLayer::UpdateColorTable()
 
    p->colorTableNeedsUpdate_ = false;
 
-   gl::OpenGLFunctions&                    gl = context()->gl();
+   gl::OpenGLFunctions&                    gl = context()->gl_context()->gl();
    std::shared_ptr<view::RadarProductView> radarProductView =
       context()->radar_product_view();
 
@@ -563,6 +562,4 @@ void RadarProductLayer::UpdateColorTable()
    gl.glUniform1f(p->uDataMomentScaleLocation_, scale);
 }
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

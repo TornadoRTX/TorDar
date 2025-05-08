@@ -11,11 +11,7 @@
 #include <scwx/util/logger.hpp>
 #include <scwx/util/time.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 static const std::string logPrefix_ = "scwx::qt::map::overlay_product_layer";
@@ -24,8 +20,8 @@ static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 class OverlayProductLayer::Impl
 {
 public:
-   explicit Impl(OverlayProductLayer*               self,
-                 const std::shared_ptr<MapContext>& context) :
+   explicit Impl(OverlayProductLayer*           self,
+                 std::shared_ptr<gl::GlContext> context) :
        self_ {self},
        linkedVectors_ {std::make_shared<gl::draw::LinkedVectors>(context)}
    {
@@ -108,9 +104,10 @@ public:
    std::shared_ptr<gl::draw::LinkedVectors> linkedVectors_;
 };
 
-OverlayProductLayer::OverlayProductLayer(std::shared_ptr<MapContext> context) :
+OverlayProductLayer::OverlayProductLayer(
+   const std::shared_ptr<MapContext>& context) :
     DrawLayer(context, "OverlayProductLayer"),
-    p(std::make_unique<Impl>(this, context))
+    p(std::make_unique<Impl>(this, context->gl_context()))
 {
    auto overlayProductView = context->overlay_product_view();
    connect(overlayProductView.get(),
@@ -142,7 +139,7 @@ void OverlayProductLayer::Initialize()
 void OverlayProductLayer::Render(
    const QMapLibre::CustomLayerRenderParameters& params)
 {
-   gl::OpenGLFunctions& gl = context()->gl();
+   gl::OpenGLFunctions& gl = context()->gl_context()->gl();
 
    if (p->stiNeedsUpdate_)
    {
@@ -449,6 +446,4 @@ bool OverlayProductLayer::RunMousePicking(
                                      eventHandler);
 }
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

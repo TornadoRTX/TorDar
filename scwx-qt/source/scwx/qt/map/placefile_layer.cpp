@@ -12,11 +12,7 @@
 #include <boost/asio/post.hpp>
 #include <boost/asio/thread_pool.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 static const std::string logPrefix_ = "scwx::qt::map::placefile_layer";
@@ -25,9 +21,9 @@ static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 class PlacefileLayer::Impl
 {
 public:
-   explicit Impl(PlacefileLayer*                    self,
-                 const std::shared_ptr<MapContext>& context,
-                 const std::string&                 placefileName) :
+   explicit Impl(PlacefileLayer*                self,
+                 std::shared_ptr<gl::GlContext> context,
+                 const std::string&             placefileName) :
        self_ {self},
        placefileName_ {placefileName},
        placefileIcons_ {std::make_shared<gl::draw::PlacefileIcons>(context)},
@@ -67,7 +63,8 @@ public:
 PlacefileLayer::PlacefileLayer(const std::shared_ptr<MapContext>& context,
                                const std::string& placefileName) :
     DrawLayer(context, fmt::format("PlacefileLayer {}", placefileName)),
-    p(std::make_unique<PlacefileLayer::Impl>(this, context, placefileName))
+    p(std::make_unique<PlacefileLayer::Impl>(
+       this, context->gl_context(), placefileName))
 {
    AddDrawItem(p->placefileImages_);
    AddDrawItem(p->placefilePolygons_);
@@ -129,7 +126,7 @@ void PlacefileLayer::Initialize()
 void PlacefileLayer::Render(
    const QMapLibre::CustomLayerRenderParameters& params)
 {
-   gl::OpenGLFunctions& gl = context()->gl();
+   gl::OpenGLFunctions& gl = context()->gl_context()->gl();
 
    std::shared_ptr<manager::PlacefileManager> placefileManager =
       manager::PlacefileManager::Instance();
@@ -261,6 +258,4 @@ void PlacefileLayer::Impl::ReloadDataSync()
    Q_EMIT self_->DataReloaded();
 }
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

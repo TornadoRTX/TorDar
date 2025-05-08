@@ -2,13 +2,7 @@
 
 #include <scwx/qt/map/draw_layer.hpp>
 
-#include <string>
-
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 class MarkerLayer : public DrawLayer
@@ -28,6 +22,4 @@ private:
    std::unique_ptr<Impl> p;
 };
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

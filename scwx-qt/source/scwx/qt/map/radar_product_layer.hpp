@@ -2,11 +2,7 @@
 
 #include <scwx/qt/map/generic_layer.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 class RadarProductLayerImpl;
@@ -14,7 +10,7 @@ class RadarProductLayerImpl;
 class RadarProductLayer : public GenericLayer
 {
 public:
-   explicit RadarProductLayer(std::shared_ptr<MapContext> context);
+   explicit RadarProductLayer(const std::shared_ptr<MapContext>& context);
    ~RadarProductLayer();
 
    void Initialize() override final;
@@ -37,6 +33,4 @@ private:
    std::unique_ptr<RadarProductLayerImpl> p;
 };
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

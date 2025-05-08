@@ -77,7 +77,7 @@ DrawLayer::~DrawLayer() = default;
 
 void DrawLayer::Initialize()
 {
-   p->textureAtlas_ = p->context_->GetTextureAtlas();
+   p->textureAtlas_ = p->context_->gl_context()->GetTextureAtlas();
 
    for (auto& item : p->drawList_)
    {
@@ -123,13 +123,14 @@ void DrawLayer::ImGuiInitialize()
 void DrawLayer::RenderWithoutImGui(
    const QMapLibre::CustomLayerRenderParameters& params)
 {
-   gl::OpenGLFunctions& gl = p->context_->gl();
-   p->textureAtlas_        = p->context_->GetTextureAtlas();
+   auto glContext = p->context_->gl_context();
+
+   gl::OpenGLFunctions& gl = glContext->gl();
+   p->textureAtlas_        = glContext->GetTextureAtlas();
 
    // Determine if the texture atlas changed since last render
-   std::uint64_t newTextureAtlasBuildCount =
-      p->context_->texture_buffer_count();
-   bool textureAtlasChanged =
+   std::uint64_t newTextureAtlasBuildCount = glContext->texture_buffer_count();
+   bool          textureAtlasChanged =
       newTextureAtlasBuildCount != p->textureAtlasBuildCount_;
 
    // Set OpenGL blend mode for transparency
