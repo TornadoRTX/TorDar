@@ -23,10 +23,10 @@ public:
    explicit GenericLayer(std::shared_ptr<gl::GlContext> glContext);
    virtual ~GenericLayer();
 
-   virtual void Initialize(const std::shared_ptr<MapContext>& mapContext)   = 0;
+   virtual void Initialize(const std::shared_ptr<MapContext>& mapContext) = 0;
    virtual void Render(const std::shared_ptr<MapContext>& mapContext,
-                       const QMapLibre::CustomLayerRenderParameters&)       = 0;
-   virtual void Deinitialize() = 0;
+                       const QMapLibre::CustomLayerRenderParameters&)     = 0;
+   virtual void Deinitialize()                                            = 0;
 
    /**
     * @brief Run mouse picking on the layer.
