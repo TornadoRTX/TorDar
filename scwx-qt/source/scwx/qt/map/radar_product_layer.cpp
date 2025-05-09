@@ -32,67 +32,48 @@ namespace scwx::qt::map
 static const std::string logPrefix_ = "scwx::qt::map::radar_product_layer";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 
-class RadarProductLayerImpl
+class RadarProductLayer::Impl
 {
 public:
-   explicit RadarProductLayerImpl() :
-       shaderProgram_(nullptr),
-       uMVPMatrixLocation_(GL_INVALID_INDEX),
-       uMapScreenCoordLocation_(GL_INVALID_INDEX),
-       uDataMomentOffsetLocation_(GL_INVALID_INDEX),
-       uDataMomentScaleLocation_(GL_INVALID_INDEX),
-       uCFPEnabledLocation_(GL_INVALID_INDEX),
-       vbo_ {GL_INVALID_INDEX},
-       vao_ {GL_INVALID_INDEX},
-       texture_ {GL_INVALID_INDEX},
-       numVertices_ {0},
-       cfpEnabled_ {false},
-       colorTableNeedsUpdate_ {false},
-       sweepNeedsUpdate_ {false}
-   {
-   }
-   ~RadarProductLayerImpl() = default;
+   explicit Impl() = default;
+   ~Impl()         = default;
 
-   std::shared_ptr<gl::ShaderProgram> shaderProgram_;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
-   GLint                 uMVPMatrixLocation_;
-   GLint                 uMapScreenCoordLocation_;
-   GLint                 uDataMomentOffsetLocation_;
-   GLint                 uDataMomentScaleLocation_;
-   GLint                 uCFPEnabledLocation_;
-   std::array<GLuint, 3> vbo_;
-   GLuint                vao_;
-   GLuint                texture_;
+   std::shared_ptr<gl::ShaderProgram> shaderProgram_ {nullptr};
 
-   GLsizeiptr numVertices_;
+   GLint uMVPMatrixLocation_ {static_cast<GLint>(GL_INVALID_INDEX)};
+   GLint uMapScreenCoordLocation_ {static_cast<GLint>(GL_INVALID_INDEX)};
+   GLint uDataMomentOffsetLocation_ {static_cast<GLint>(GL_INVALID_INDEX)};
+   GLint uDataMomentScaleLocation_ {static_cast<GLint>(GL_INVALID_INDEX)};
+   GLint uCFPEnabledLocation_ {static_cast<GLint>(GL_INVALID_INDEX)};
+   std::array<GLuint, 3> vbo_ {GL_INVALID_INDEX};
+   GLuint                vao_ {GL_INVALID_INDEX};
+   GLuint                texture_ {GL_INVALID_INDEX};
 
-   bool cfpEnabled_;
+   GLsizeiptr numVertices_ {0};
 
-   bool colorTableNeedsUpdate_;
-   bool sweepNeedsUpdate_;
+   bool cfpEnabled_ {false};
+
+   bool colorTableNeedsUpdate_ {false};
+   bool sweepNeedsUpdate_ {false};
 };
 
-RadarProductLayer::RadarProductLayer(
-   const std::shared_ptr<MapContext>& context) :
-    GenericLayer(context), p(std::make_unique<RadarProductLayerImpl>())
+RadarProductLayer::RadarProductLayer(std::shared_ptr<gl::GlContext> glContext) :
+    GenericLayer(std::move(glContext)), p(std::make_unique<Impl>())
 {
-   auto radarProductView = context->radar_product_view();
-   connect(radarProductView.get(),
-           &view::RadarProductView::ColorTableLutUpdated,
-           this,
-           [this]() { p->colorTableNeedsUpdate_ = true; });
-   connect(radarProductView.get(),
-           &view::RadarProductView::SweepComputed,
-           this,
-           [this]() { p->sweepNeedsUpdate_ = true; });
 }
 RadarProductLayer::~RadarProductLayer() = default;
 
-void RadarProductLayer::Initialize()
+void RadarProductLayer::Initialize(
+   const std::shared_ptr<MapContext>& mapContext)
 {
    logger_->debug("Initialize()");
 
-   auto glContext = context()->gl_context();
+   auto glContext = gl_context();
 
    gl::OpenGLFunctions& gl = glContext->gl();
 
@@ -145,25 +126,36 @@ void RadarProductLayer::Initialize()
 
    // Update radar sweep
    p->sweepNeedsUpdate_ = true;
-   UpdateSweep();
+   UpdateSweep(mapContext);
 
    // Create color table
    gl.glGenTextures(1, &p->texture_);
    p->colorTableNeedsUpdate_ = true;
-   UpdateColorTable();
+   UpdateColorTable(mapContext);
    gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
    gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
    gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+
+   auto radarProductView = mapContext->radar_product_view();
+   connect(radarProductView.get(),
+           &view::RadarProductView::ColorTableLutUpdated,
+           this,
+           [this]() { p->colorTableNeedsUpdate_ = true; });
+   connect(radarProductView.get(),
+           &view::RadarProductView::SweepComputed,
+           this,
+           [this]() { p->sweepNeedsUpdate_ = true; });
 }
 
-void RadarProductLayer::UpdateSweep()
+void RadarProductLayer::UpdateSweep(
+   const std::shared_ptr<MapContext>& mapContext)
 {
-   gl::OpenGLFunctions& gl = context()->gl_context()->gl();
+   gl::OpenGLFunctions& gl = gl_context()->gl();
 
    boost::timer::cpu_timer timer;
 
    std::shared_ptr<view::RadarProductView> radarProductView =
-      context()->radar_product_view();
+      mapContext->radar_product_view();
 
    std::unique_lock sweepLock(radarProductView->sweep_mutex(),
                               std::try_to_lock);
@@ -258,16 +250,17 @@ void RadarProductLayer::UpdateSweep()
 }
 
 void RadarProductLayer::Render(
+   const std::shared_ptr<MapContext>&            mapContext,
    const QMapLibre::CustomLayerRenderParameters& params)
 {
-   gl::OpenGLFunctions& gl = context()->gl_context()->gl();
+   gl::OpenGLFunctions& gl = gl_context()->gl();
 
    p->shaderProgram_->Use();
 
    // Set OpenGL blend mode for transparency
    gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-   const bool wireframeEnabled = context()->settings().radarWireframeEnabled_;
+   const bool wireframeEnabled = mapContext->settings().radarWireframeEnabled_;
    if (wireframeEnabled)
    {
       // Set polygon mode to draw wireframe
@@ -276,12 +269,12 @@ void RadarProductLayer::Render(
 
    if (p->colorTableNeedsUpdate_)
    {
-      UpdateColorTable();
+      UpdateColorTable(mapContext);
    }
 
    if (p->sweepNeedsUpdate_)
    {
-      UpdateSweep();
+      UpdateSweep(mapContext);
    }
 
    const float scale = std::pow(2.0, params.zoom) * 2.0f *
@@ -323,7 +316,7 @@ void RadarProductLayer::Deinitialize()
 {
    logger_->debug("Deinitialize()");
 
-   gl::OpenGLFunctions& gl = context()->gl_context()->gl();
+   gl::OpenGLFunctions& gl = gl_context()->gl();
 
    gl.glDeleteVertexArrays(1, &p->vao_);
    gl.glDeleteBuffers(3, p->vbo_.data());
@@ -339,6 +332,7 @@ void RadarProductLayer::Deinitialize()
 }
 
 bool RadarProductLayer::RunMousePicking(
+   const std::shared_ptr<MapContext>& mapContext,
    const QMapLibre::CustomLayerRenderParameters& /* params */,
    const QPointF& /* mouseLocalPos */,
    const QPointF& mouseGlobalPos,
@@ -352,16 +346,16 @@ bool RadarProductLayer::RunMousePicking(
        Qt::KeyboardModifier::ShiftModifier)
    {
       std::shared_ptr<view::RadarProductView> radarProductView =
-         context()->radar_product_view();
+         mapContext->radar_product_view();
 
-      if (context()->radar_site() == nullptr)
+      if (mapContext->radar_site() == nullptr)
       {
          return itemPicked;
       }
 
       // Get distance and altitude of point
-      const double radarLatitude  = context()->radar_site()->latitude();
-      const double radarLongitude = context()->radar_site()->longitude();
+      const double radarLatitude  = mapContext->radar_site()->latitude();
+      const double radarLongitude = mapContext->radar_site()->longitude();
 
       const auto distanceMeters =
          util::GeographicLib::GetDistance(mouseGeoCoords.latitude_,
@@ -396,7 +390,7 @@ bool RadarProductLayer::RunMousePicking(
             util::GeographicLib::GetRadarBeamAltititude(
                distanceMeters,
                units::angle::degrees<double>(*elevation),
-               context()->radar_site()->altitude());
+               mapContext->radar_site()->altitude());
 
          const std::string heightUnitName =
             settings::UnitSettings::Instance().echo_tops_units().GetValue();
@@ -529,15 +523,16 @@ bool RadarProductLayer::RunMousePicking(
    return itemPicked;
 }
 
-void RadarProductLayer::UpdateColorTable()
+void RadarProductLayer::UpdateColorTable(
+   const std::shared_ptr<MapContext>& mapContext)
 {
    logger_->debug("UpdateColorTable()");
 
    p->colorTableNeedsUpdate_ = false;
 
-   gl::OpenGLFunctions&                    gl = context()->gl_context()->gl();
+   gl::OpenGLFunctions&                    gl = gl_context()->gl();
    std::shared_ptr<view::RadarProductView> radarProductView =
-      context()->radar_product_view();
+      mapContext->radar_product_view();
 
    const std::vector<boost::gil::rgba8_pixel_t>& colorTable =
       radarProductView->color_table_lut();

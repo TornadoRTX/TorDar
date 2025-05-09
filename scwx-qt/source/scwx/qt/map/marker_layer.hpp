@@ -8,14 +8,16 @@ namespace scwx::qt::map
 class MarkerLayer : public DrawLayer
 {
    Q_OBJECT
+   Q_DISABLE_COPY_MOVE(MarkerLayer)
 
 public:
-   explicit MarkerLayer(const std::shared_ptr<MapContext>& context);
+   explicit MarkerLayer(const std::shared_ptr<gl::GlContext>& context);
    ~MarkerLayer();
 
-   void Initialize() override final;
-   void Render(const QMapLibre::CustomLayerRenderParameters&) override final;
-   void Deinitialize() override final;
+   void Initialize(const std::shared_ptr<MapContext>& mapContext) final;
+   void Render(const std::shared_ptr<MapContext>& mapContext,
+               const QMapLibre::CustomLayerRenderParameters&) final;
+   void Deinitialize() final;
 
 private:
    class Impl;

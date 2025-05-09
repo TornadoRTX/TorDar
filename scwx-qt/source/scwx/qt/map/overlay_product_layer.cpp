@@ -20,10 +20,10 @@ static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 class OverlayProductLayer::Impl
 {
 public:
-   explicit Impl(OverlayProductLayer*           self,
-                 std::shared_ptr<gl::GlContext> context) :
+   explicit Impl(OverlayProductLayer*                  self,
+                 const std::shared_ptr<gl::GlContext>& glContext) :
        self_ {self},
-       linkedVectors_ {std::make_shared<gl::draw::LinkedVectors>(context)}
+       linkedVectors_ {std::make_shared<gl::draw::LinkedVectors>(glContext)}
    {
       auto& productSettings = settings::ProductSettings::Instance();
 
@@ -60,7 +60,8 @@ public:
          stiPastEnabledCallbackUuid_);
    }
 
-   void UpdateStormTrackingInformation();
+   void UpdateStormTrackingInformation(
+      const std::shared_ptr<MapContext>& mapContext);
 
    static void HandleLinkedVectorPacket(
       const std::shared_ptr<const wsr88d::rpg::Packet>& packet,
@@ -105,11 +106,21 @@ public:
 };
 
 OverlayProductLayer::OverlayProductLayer(
-   const std::shared_ptr<MapContext>& context) :
-    DrawLayer(context, "OverlayProductLayer"),
-    p(std::make_unique<Impl>(this, context->gl_context()))
+   const std::shared_ptr<gl::GlContext>& glContext) :
+    DrawLayer(glContext, "OverlayProductLayer"),
+    p(std::make_unique<Impl>(this, glContext))
 {
-   auto overlayProductView = context->overlay_product_view();
+   AddDrawItem(p->linkedVectors_);
+}
+
+OverlayProductLayer::~OverlayProductLayer() = default;
+
+void OverlayProductLayer::Initialize(
+   const std::shared_ptr<MapContext>& mapContext)
+{
+   logger_->debug("Initialize()");
+
+   auto overlayProductView = mapContext->overlay_product_view();
    connect(overlayProductView.get(),
            &view::OverlayProductView::ProductUpdated,
            this,
@@ -122,31 +133,23 @@ OverlayProductLayer::OverlayProductLayer(
               }
            });
 
-   AddDrawItem(p->linkedVectors_);
-}
+   p->UpdateStormTrackingInformation(mapContext);
 
-OverlayProductLayer::~OverlayProductLayer() = default;
-
-void OverlayProductLayer::Initialize()
-{
-   logger_->debug("Initialize()");
-
-   p->UpdateStormTrackingInformation();
-
-   DrawLayer::Initialize();
+   DrawLayer::Initialize(mapContext);
 }
 
 void OverlayProductLayer::Render(
+   const std::shared_ptr<MapContext>&            mapContext,
    const QMapLibre::CustomLayerRenderParameters& params)
 {
-   gl::OpenGLFunctions& gl = context()->gl_context()->gl();
+   gl::OpenGLFunctions& gl = gl_context()->gl();
 
    if (p->stiNeedsUpdate_)
    {
-      p->UpdateStormTrackingInformation();
+      p->UpdateStormTrackingInformation(mapContext);
    }
 
-   DrawLayer::Render(params);
+   DrawLayer::Render(mapContext, params);
 
    SCWX_GL_CHECK_ERROR();
 }
@@ -155,16 +158,19 @@ void OverlayProductLayer::Deinitialize()
 {
    logger_->debug("Deinitialize()");
 
+   disconnect(this);
+
    DrawLayer::Deinitialize();
 }
 
-void OverlayProductLayer::Impl::UpdateStormTrackingInformation()
+void OverlayProductLayer::Impl::UpdateStormTrackingInformation(
+   const std::shared_ptr<MapContext>& mapContext)
 {
    logger_->debug("Update Storm Tracking Information");
 
    stiNeedsUpdate_ = false;
 
-   auto overlayProductView  = self_->context()->overlay_product_view();
+   auto overlayProductView  = mapContext->overlay_product_view();
    auto radarProductManager = overlayProductView->radar_product_manager();
    auto message             = overlayProductView->radar_product_message("NST");
 
@@ -431,6 +437,7 @@ std::string OverlayProductLayer::Impl::BuildHoverText(
 }
 
 bool OverlayProductLayer::RunMousePicking(
+   const std::shared_ptr<MapContext>&            mapContext,
    const QMapLibre::CustomLayerRenderParameters& params,
    const QPointF&                                mouseLocalPos,
    const QPointF&                                mouseGlobalPos,
@@ -438,7 +445,8 @@ bool OverlayProductLayer::RunMousePicking(
    const common::Coordinate&                     mouseGeoCoords,
    std::shared_ptr<types::EventHandler>&         eventHandler)
 {
-   return DrawLayer::RunMousePicking(params,
+   return DrawLayer::RunMousePicking(mapContext,
+                                     params,
                                      mouseLocalPos,
                                      mouseGlobalPos,
                                      mouseCoords,

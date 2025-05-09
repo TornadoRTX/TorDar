@@ -32,16 +32,16 @@ namespace scwx::qt::map
 static const std::string logPrefix_ = "scwx::qt::map::overlay_layer";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 
-class OverlayLayerImpl
+class OverlayLayer::Impl
 {
 public:
-   explicit OverlayLayerImpl(OverlayLayer*                  self,
-                             std::shared_ptr<gl::GlContext> context) :
+   explicit Impl(OverlayLayer*                         self,
+                 const std::shared_ptr<gl::GlContext>& glContext) :
        self_ {self},
-       activeBoxOuter_ {std::make_shared<gl::draw::Rectangle>(context)},
-       activeBoxInner_ {std::make_shared<gl::draw::Rectangle>(context)},
-       geoIcons_ {std::make_shared<gl::draw::GeoIcons>(context)},
-       icons_ {std::make_shared<gl::draw::Icons>(context)},
+       activeBoxOuter_ {std::make_shared<gl::draw::Rectangle>(glContext)},
+       activeBoxInner_ {std::make_shared<gl::draw::Rectangle>(glContext)},
+       geoIcons_ {std::make_shared<gl::draw::GeoIcons>(glContext)},
+       icons_ {std::make_shared<gl::draw::Icons>(glContext)},
        renderMutex_ {}
    {
       auto& generalSettings = settings::GeneralSettings::Instance();
@@ -71,7 +71,7 @@ public:
             [this](const bool&) { Q_EMIT self_->NeedsRendering(); });
    }
 
-   ~OverlayLayerImpl()
+   ~Impl()
    {
       auto& generalSettings = settings::GeneralSettings::Instance();
 
@@ -86,6 +86,11 @@ public:
       generalSettings.show_map_logo().UnregisterValueChangedCallback(
          showMapLogoCallbackUuid_);
    }
+
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    void SetupGeoIcons();
    void SetCusorLocation(common::Coordinate coordinate);
@@ -151,9 +156,9 @@ public:
    bool        sweepTimePicked_ {false};
 };
 
-OverlayLayer::OverlayLayer(const std::shared_ptr<MapContext>& context) :
-    DrawLayer(context, "OverlayLayer"),
-    p(std::make_unique<OverlayLayerImpl>(this, context->gl_context()))
+OverlayLayer::OverlayLayer(const std::shared_ptr<gl::GlContext>& glContext) :
+    DrawLayer(glContext, "OverlayLayer"),
+    p(std::make_unique<Impl>(this, glContext))
 {
    AddDrawItem(p->activeBoxOuter_);
    AddDrawItem(p->activeBoxInner_);
@@ -168,13 +173,13 @@ OverlayLayer::~OverlayLayer()
    p->cursorScaleConnection_.disconnect();
 }
 
-void OverlayLayerImpl::SetCusorLocation(common::Coordinate coordinate)
+void OverlayLayer::Impl::SetCusorLocation(common::Coordinate coordinate)
 {
    geoIcons_->SetIconLocation(
       cursorIcon_, coordinate.latitude_, coordinate.longitude_);
 }
 
-void OverlayLayerImpl::SetupGeoIcons()
+void OverlayLayer::Impl::SetupGeoIcons()
 {
    const std::unique_lock lock {renderMutex_};
 
@@ -208,13 +213,13 @@ void OverlayLayerImpl::SetupGeoIcons()
    geoIcons_->FinishIcons();
 }
 
-void OverlayLayer::Initialize()
+void OverlayLayer::Initialize(const std::shared_ptr<MapContext>& mapContext)
 {
    logger_->debug("Initialize()");
 
-   DrawLayer::Initialize();
+   DrawLayer::Initialize(mapContext);
 
-   auto radarProductView = context()->radar_product_view();
+   auto radarProductView = mapContext->radar_product_view();
 
    if (radarProductView != nullptr)
    {
@@ -251,7 +256,7 @@ void OverlayLayer::Initialize()
    p->icons_->SetIconTexture(p->compassIcon_, p->cardinalPointIconName_, 0);
    gl::draw::Icons::RegisterEventHandler(
       p->compassIcon_,
-      [this](QEvent* ev)
+      [this, mapContext](QEvent* ev)
       {
          switch (ev->type())
          {
@@ -276,7 +281,7 @@ void OverlayLayer::Initialize()
             if (mouseEvent->buttons() == Qt::MouseButton::LeftButton &&
                 p->lastBearing_ != 0.0)
             {
-               auto map = context()->map().lock();
+               auto map = mapContext->map().lock();
                if (map != nullptr)
                {
                   map->setBearing(0.0);
@@ -295,11 +300,11 @@ void OverlayLayer::Initialize()
    p->icons_->SetIconTexture(p->mapCenterIcon_, p->mapCenterIconName_, 0);
 
    p->mapLogoIcon_ = p->icons_->AddIcon();
-   if (context()->map_provider() == MapProvider::Mapbox)
+   if (mapContext->map_provider() == MapProvider::Mapbox)
    {
       p->icons_->SetIconTexture(p->mapLogoIcon_, p->mapboxLogoImageName_, 0);
    }
-   else if (context()->map_provider() == MapProvider::MapTiler)
+   else if (mapContext->map_provider() == MapProvider::MapTiler)
    {
       p->icons_->SetIconTexture(p->mapLogoIcon_, p->mapTilerLogoImageName_, 0);
    }
@@ -328,16 +333,17 @@ void OverlayLayer::Initialize()
            });
 }
 
-void OverlayLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
+void OverlayLayer::Render(const std::shared_ptr<MapContext>& mapContext,
+                          const QMapLibre::CustomLayerRenderParameters& params)
 {
    const std::unique_lock lock {p->renderMutex_};
 
-   gl::OpenGLFunctions& gl               = context()->gl_context()->gl();
-   auto                 radarProductView = context()->radar_product_view();
-   auto&                settings         = context()->settings();
-   const float          pixelRatio       = context()->pixel_ratio();
+   gl::OpenGLFunctions& gl               = gl_context()->gl();
+   auto                 radarProductView = mapContext->radar_product_view();
+   auto&                settings         = mapContext->settings();
+   const float          pixelRatio       = mapContext->pixel_ratio();
 
-   ImGuiFrameStart();
+   ImGuiFrameStart(mapContext);
 
    p->sweepTimePicked_ = false;
 
@@ -383,7 +389,7 @@ void OverlayLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
    p->geoIcons_->SetIconVisible(p->cursorIcon_, cursorIconVisible);
    if (cursorIconVisible)
    {
-      p->SetCusorLocation(context()->mouse_coordinate());
+      p->SetCusorLocation(mapContext->mouse_coordinate());
    }
 
    // Location Icon
@@ -507,7 +513,7 @@ void OverlayLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
    p->icons_->SetIconVisible(p->mapCenterIcon_,
                              generalSettings.show_map_center().GetValue());
 
-   QMargins colorTableMargins = context()->color_table_margins();
+   QMargins colorTableMargins = mapContext->color_table_margins();
    if (colorTableMargins != p->lastColorTableMargins_ || p->firstRender_)
    {
       // Draw map logo with a 10x10 indent from the bottom left
@@ -520,7 +526,7 @@ void OverlayLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
 
    DrawLayer::RenderWithoutImGui(params);
 
-   auto mapCopyrights = context()->map_copyrights();
+   auto mapCopyrights = mapContext->map_copyrights();
    if (mapCopyrights.length() > 0 &&
        generalSettings.show_map_attribution().GetValue())
    {
@@ -563,29 +569,13 @@ void OverlayLayer::Deinitialize()
 
    DrawLayer::Deinitialize();
 
-   auto radarProductView = context()->radar_product_view();
-
-   if (radarProductView != nullptr)
-   {
-      disconnect(radarProductView.get(),
-                 &view::RadarProductView::SweepComputed,
-                 this,
-                 &OverlayLayer::UpdateSweepTimeNextFrame);
-   }
-
-   disconnect(p->positionManager_.get(),
-              &manager::PositionManager::LocationTrackingChanged,
-              this,
-              nullptr);
-   disconnect(p->positionManager_.get(),
-              &manager::PositionManager::PositionUpdated,
-              this,
-              nullptr);
+   disconnect(this);
 
    p->locationIcon_ = nullptr;
 }
 
 bool OverlayLayer::RunMousePicking(
+   const std::shared_ptr<MapContext>&            mapContext,
    const QMapLibre::CustomLayerRenderParameters& params,
    const QPointF&                                mouseLocalPos,
    const QPointF&                                mouseGlobalPos,
@@ -599,7 +589,8 @@ bool OverlayLayer::RunMousePicking(
       return true;
    }
 
-   return DrawLayer::RunMousePicking(params,
+   return DrawLayer::RunMousePicking(mapContext,
+                                     params,
                                      mouseLocalPos,
                                      mouseGlobalPos,
                                      mouseCoords,

@@ -6,21 +6,23 @@
 namespace scwx::qt::map
 {
 
-class DrawLayerImpl;
-
 class DrawLayer : public GenericLayer
 {
+   Q_DISABLE_COPY_MOVE(DrawLayer)
+
 public:
-   explicit DrawLayer(const std::shared_ptr<MapContext>& context,
-                      const std::string&                 imGuiContextName);
+   explicit DrawLayer(std::shared_ptr<gl::GlContext> glContext,
+                      const std::string&             imGuiContextName);
    virtual ~DrawLayer();
 
-   virtual void Initialize() override;
-   virtual void Render(const QMapLibre::CustomLayerRenderParameters&) override;
-   virtual void Deinitialize() override;
+   void Initialize(const std::shared_ptr<MapContext>& mapContext) override;
+   void Render(const std::shared_ptr<MapContext>& mapContext,
+               const QMapLibre::CustomLayerRenderParameters&) override;
+   void Deinitialize() override;
 
-   virtual bool
-   RunMousePicking(const QMapLibre::CustomLayerRenderParameters& params,
+   bool
+   RunMousePicking(const std::shared_ptr<MapContext>&            mapContext,
+                   const QMapLibre::CustomLayerRenderParameters& params,
                    const QPointF&                                mouseLocalPos,
                    const QPointF&                                mouseGlobalPos,
                    const glm::vec2&                              mouseCoords,
@@ -29,15 +31,16 @@ public:
 
 protected:
    void AddDrawItem(const std::shared_ptr<gl::draw::DrawItem>& drawItem);
-   void ImGuiFrameStart();
+   void ImGuiFrameStart(const std::shared_ptr<MapContext>& mapContext);
    void ImGuiFrameEnd();
-   void ImGuiInitialize();
+   void ImGuiInitialize(const std::shared_ptr<MapContext>& mapContext);
    void
    RenderWithoutImGui(const QMapLibre::CustomLayerRenderParameters& params);
    void ImGuiSelectContext();
 
 private:
-   std::unique_ptr<DrawLayerImpl> p;
+   class Impl;
+   std::unique_ptr<Impl> p;
 };
 
 } // namespace scwx::qt::map

@@ -16,9 +16,6 @@ public:
 
    ~Impl() {}
 
-   std::shared_ptr<gl::GlContext> glContext_ {
-      std::make_shared<gl::GlContext>()};
-
    std::weak_ptr<QMapLibre::Map> map_ {};
    MapSettings                   settings_ {};
    float                         pixelRatio_ {1.0f};
@@ -49,11 +46,6 @@ MapContext::~MapContext() = default;
 
 MapContext::MapContext(MapContext&&) noexcept            = default;
 MapContext& MapContext::operator=(MapContext&&) noexcept = default;
-
-std::shared_ptr<gl::GlContext> MapContext::gl_context() const
-{
-   return p->glContext_;
-}
 
 std::weak_ptr<QMapLibre::Map> MapContext::map() const
 {

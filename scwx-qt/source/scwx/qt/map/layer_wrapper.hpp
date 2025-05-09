@@ -1,16 +1,16 @@
 #pragma once
 
 #include <scwx/qt/map/generic_layer.hpp>
+#include <scwx/qt/map/map_context.hpp>
 
 namespace scwx::qt::map
 {
 
-class LayerWrapperImpl;
-
 class LayerWrapper : public QMapLibre::CustomLayerHostInterface
 {
 public:
-   explicit LayerWrapper(const std::shared_ptr<GenericLayer>& layer);
+   explicit LayerWrapper(std::shared_ptr<GenericLayer> layer,
+                         std::shared_ptr<MapContext>   mapContext);
    ~LayerWrapper();
 
    LayerWrapper(const LayerWrapper&)            = delete;
@@ -19,12 +19,13 @@ public:
    LayerWrapper(LayerWrapper&&) noexcept;
    LayerWrapper& operator=(LayerWrapper&&) noexcept;
 
-   void initialize() override final;
-   void render(const QMapLibre::CustomLayerRenderParameters&) override final;
-   void deinitialize() override final;
+   void initialize() final;
+   void render(const QMapLibre::CustomLayerRenderParameters&) final;
+   void deinitialize() final;
 
 private:
-   std::unique_ptr<LayerWrapperImpl> p;
+   class Impl;
+   std::unique_ptr<Impl> p;
 };
 
 } // namespace scwx::qt::map

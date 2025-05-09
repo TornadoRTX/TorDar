@@ -73,7 +73,6 @@ public:
                           const QMapLibre::Settings& settings) :
        id_ {id},
        uuid_ {boost::uuids::random_generator()()},
-       context_ {std::make_shared<MapContext>()},
        widget_ {widget},
        settings_(settings),
        map_(),
@@ -154,9 +153,9 @@ public:
    void AddLayer(types::LayerType        type,
                  types::LayerDescription description,
                  const std::string&      before = {});
-   void AddLayer(const std::string&            id,
-                 std::shared_ptr<GenericLayer> layer,
-                 const std::string&            before = {});
+   void AddLayer(const std::string&                   id,
+                 const std::shared_ptr<GenericLayer>& layer,
+                 const std::string&                   before = {});
    void AddLayers();
    void AddPlacefileLayer(const std::string& placefileName,
                           const std::string& before);
@@ -194,7 +193,9 @@ public:
    std::size_t        id_;
    boost::uuids::uuid uuid_;
 
-   std::shared_ptr<MapContext> context_;
+   std::shared_ptr<MapContext>    context_ {std::make_shared<MapContext>()};
+   std::shared_ptr<gl::GlContext> glContext_ {
+      std::make_shared<gl::GlContext>()};
 
    MapWidget*                      widget_;
    QMapLibre::Settings             settings_;
@@ -1239,7 +1240,7 @@ void MapWidgetImpl::AddLayer(types::LayerType        type,
       // If there is a radar product view, create the radar product layer
       if (radarProductView != nullptr)
       {
-         radarProductLayer_ = std::make_shared<RadarProductLayer>(context_);
+         radarProductLayer_ = std::make_shared<RadarProductLayer>(glContext_);
          AddLayer(layerName, radarProductLayer_, before);
       }
    }
@@ -1248,7 +1249,7 @@ void MapWidgetImpl::AddLayer(types::LayerType        type,
       auto phenomenon = std::get<awips::Phenomenon>(description);
 
       std::shared_ptr<AlertLayer> alertLayer =
-         std::make_shared<AlertLayer>(context_, phenomenon);
+         std::make_shared<AlertLayer>(glContext_, phenomenon);
       AddLayer(fmt::format("alert.{}", awips::GetPhenomenonCode(phenomenon)),
                alertLayer,
                before);
@@ -1272,7 +1273,7 @@ void MapWidgetImpl::AddLayer(types::LayerType        type,
       {
       // Create the map overlay layer
       case types::InformationLayer::MapOverlay:
-         overlayLayer_ = std::make_shared<OverlayLayer>(context_);
+         overlayLayer_ = std::make_shared<OverlayLayer>(glContext_);
          AddLayer(layerName, overlayLayer_, before);
          break;
 
@@ -1280,14 +1281,14 @@ void MapWidgetImpl::AddLayer(types::LayerType        type,
       case types::InformationLayer::ColorTable:
          if (radarProductView != nullptr)
          {
-            colorTableLayer_ = std::make_shared<ColorTableLayer>(context_);
+            colorTableLayer_ = std::make_shared<ColorTableLayer>(glContext_);
             AddLayer(layerName, colorTableLayer_, before);
          }
          break;
 
       // Create the radar site layer
       case types::InformationLayer::RadarSite:
-         radarSiteLayer_ = std::make_shared<RadarSiteLayer>(context_);
+         radarSiteLayer_ = std::make_shared<RadarSiteLayer>(glContext_);
          AddLayer(layerName, radarSiteLayer_, before);
          connect(
             radarSiteLayer_.get(),
@@ -1303,7 +1304,7 @@ void MapWidgetImpl::AddLayer(types::LayerType        type,
 
       // Create the location marker layer
       case types::InformationLayer::Markers:
-         markerLayer_ = std::make_shared<MarkerLayer>(context_);
+         markerLayer_ = std::make_shared<MarkerLayer>(glContext_);
          AddLayer(layerName, markerLayer_, before);
          break;
 
@@ -1320,7 +1321,7 @@ void MapWidgetImpl::AddLayer(types::LayerType        type,
          if (radarProductView != nullptr)
          {
             overlayProductLayer_ =
-               std::make_shared<OverlayProductLayer>(context_);
+               std::make_shared<OverlayProductLayer>(glContext_);
             AddLayer(layerName, overlayProductLayer_, before);
          }
          break;
@@ -1350,7 +1351,7 @@ void MapWidgetImpl::AddPlacefileLayer(const std::string& placefileName,
                                       const std::string& before)
 {
    std::shared_ptr<PlacefileLayer> placefileLayer =
-      std::make_shared<PlacefileLayer>(context_, placefileName);
+      std::make_shared<PlacefileLayer>(glContext_, placefileName);
    placefileLayers_.push_back(placefileLayer);
    AddLayer(GetPlacefileLayerName(placefileName), placefileLayer, before);
 
@@ -1367,13 +1368,13 @@ MapWidgetImpl::GetPlacefileLayerName(const std::string& placefileName)
    return types::GetLayerName(types::LayerType::Placefile, placefileName);
 }
 
-void MapWidgetImpl::AddLayer(const std::string&            id,
-                             std::shared_ptr<GenericLayer> layer,
-                             const std::string&            before)
+void MapWidgetImpl::AddLayer(const std::string&                   id,
+                             const std::shared_ptr<GenericLayer>& layer,
+                             const std::string&                   before)
 {
    // QMapLibre::addCustomLayer will take ownership of the std::unique_ptr
    std::unique_ptr<QMapLibre::CustomLayerHostInterface> pHost =
-      std::make_unique<LayerWrapper>(layer);
+      std::make_unique<LayerWrapper>(layer, context_);
 
    try
    {
@@ -1542,7 +1543,7 @@ void MapWidget::initializeGL()
 
    makeCurrent();
 
-   p->context_->gl_context()->Initialize();
+   p->glContext_->Initialize();
 
    // Lock ImGui font atlas prior to new ImGui frame
    std::shared_lock imguiFontAtlasLock {
@@ -1596,7 +1597,7 @@ void MapWidget::paintGL()
 
    p->frameDraws_++;
 
-   p->context_->gl_context()->StartFrame();
+   p->glContext_->StartFrame();
 
    // Handle hotkey updates
    p->HandleHotkeyUpdates();
@@ -1705,7 +1706,8 @@ void MapWidgetImpl::RunMousePicking()
    for (auto it = genericLayers_.rbegin(); it != genericLayers_.rend(); ++it)
    {
       // Run mouse picking for each layer
-      if ((*it)->RunMousePicking(params,
+      if ((*it)->RunMousePicking(context_,
+                                 params,
                                  lastPos_,
                                  lastGlobalPos_,
                                  mouseScreenCoordinate,

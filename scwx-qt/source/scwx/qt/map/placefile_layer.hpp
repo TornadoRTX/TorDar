@@ -10,19 +10,21 @@ namespace scwx::qt::map
 class PlacefileLayer : public DrawLayer
 {
    Q_OBJECT
+   Q_DISABLE_COPY_MOVE(PlacefileLayer)
 
 public:
-   explicit PlacefileLayer(const std::shared_ptr<MapContext>& context,
-                           const std::string&                 placefileName);
+   explicit PlacefileLayer(const std::shared_ptr<gl::GlContext>& glContext,
+                           const std::string&                    placefileName);
    ~PlacefileLayer();
 
    std::string placefile_name() const;
 
    void set_placefile_name(const std::string& placefileName);
 
-   void Initialize() override final;
-   void Render(const QMapLibre::CustomLayerRenderParameters&) override final;
-   void Deinitialize() override final;
+   void Initialize(const std::shared_ptr<MapContext>& mapContext) final;
+   void Render(const std::shared_ptr<MapContext>& mapContext,
+               const QMapLibre::CustomLayerRenderParameters&) final;
+   void Deinitialize() final;
 
    void ReloadData();
 

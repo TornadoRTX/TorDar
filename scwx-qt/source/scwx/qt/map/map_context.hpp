@@ -1,6 +1,5 @@
 #pragma once
 
-#include <scwx/qt/gl/gl_context.hpp>
 #include <scwx/qt/map/map_provider.hpp>
 #include <scwx/common/geographic.hpp>
 #include <scwx/common/products.hpp>
@@ -34,8 +33,6 @@ public:
 
    MapContext(MapContext&&) noexcept;
    MapContext& operator=(MapContext&&) noexcept;
-
-   [[nodiscard]] std::shared_ptr<gl::GlContext> gl_context() const;
 
    [[nodiscard]] std::weak_ptr<QMapLibre::Map> map() const;
    [[nodiscard]] std::string                   map_copyrights() const;

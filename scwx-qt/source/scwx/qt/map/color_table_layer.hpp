@@ -5,20 +5,22 @@
 namespace scwx::qt::map
 {
 
-class ColorTableLayerImpl;
-
 class ColorTableLayer : public GenericLayer
 {
+   Q_DISABLE_COPY_MOVE(ColorTableLayer)
+
 public:
-   explicit ColorTableLayer(const std::shared_ptr<MapContext>& context);
+   explicit ColorTableLayer(std::shared_ptr<gl::GlContext> glContext);
    ~ColorTableLayer();
 
-   void Initialize() override final;
-   void Render(const QMapLibre::CustomLayerRenderParameters&) override final;
-   void Deinitialize() override final;
+   void Initialize(const std::shared_ptr<MapContext>& mapContext) final;
+   void Render(const std::shared_ptr<MapContext>& mapContext,
+               const QMapLibre::CustomLayerRenderParameters&) final;
+   void Deinitialize() final;
 
 private:
-   std::unique_ptr<ColorTableLayerImpl> p;
+   class Impl;
+   std::unique_ptr<Impl> p;
 };
 
 } // namespace scwx::qt::map

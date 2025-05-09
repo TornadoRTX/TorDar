@@ -22,15 +22,21 @@ static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 class RadarSiteLayer::Impl
 {
 public:
-   explicit Impl(RadarSiteLayer* self, std::shared_ptr<gl::GlContext> context) :
-       self_ {self}, geoLines_ {std::make_shared<gl::draw::GeoLines>(context)}
+   explicit Impl(RadarSiteLayer*                       self,
+                 const std::shared_ptr<gl::GlContext>& glContext) :
+       self_ {self}, geoLines_ {std::make_shared<gl::draw::GeoLines>(glContext)}
    {
    }
    ~Impl() = default;
 
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
+
    void RenderRadarSite(const QMapLibre::CustomLayerRenderParameters& params,
                         std::shared_ptr<config::RadarSite>& radarSite);
-   void RenderRadarLine();
+   void RenderRadarLine(const std::shared_ptr<MapContext>& mapContext);
 
    RadarSiteLayer* self_;
 
@@ -50,15 +56,16 @@ public:
       nullptr, nullptr};
 };
 
-RadarSiteLayer::RadarSiteLayer(const std::shared_ptr<MapContext>& context) :
-    DrawLayer(context, "RadarSiteLayer"),
-    p(std::make_unique<Impl>(this, context->gl_context()))
+RadarSiteLayer::RadarSiteLayer(
+   const std::shared_ptr<gl::GlContext>& glContext) :
+    DrawLayer(glContext, "RadarSiteLayer"),
+    p(std::make_unique<Impl>(this, glContext))
 {
 }
 
 RadarSiteLayer::~RadarSiteLayer() = default;
 
-void RadarSiteLayer::Initialize()
+void RadarSiteLayer::Initialize(const std::shared_ptr<MapContext>& mapContext)
 {
    logger_->debug("Initialize()");
 
@@ -81,10 +88,11 @@ void RadarSiteLayer::Initialize()
    AddDrawItem(p->geoLines_);
    p->geoLines_->set_thresholded(false);
 
-   DrawLayer::Initialize();
+   DrawLayer::Initialize(mapContext);
 }
 
 void RadarSiteLayer::Render(
+   const std::shared_ptr<MapContext>&            mapContext,
    const QMapLibre::CustomLayerRenderParameters& params)
 {
    p->hoverText_.clear();
@@ -99,7 +107,7 @@ void RadarSiteLayer::Render(
       return;
    }
 
-   gl::OpenGLFunctions& gl = context()->gl_context()->gl();
+   gl::OpenGLFunctions& gl = gl_context()->gl();
 
    // Update map screen coordinate and scale information
    p->mapScreenCoordLocation_ = util::maplibre::LatLongToScreenCoordinate(
@@ -111,7 +119,7 @@ void RadarSiteLayer::Render(
    p->halfWidth_     = params.width * 0.5f;
    p->halfHeight_    = params.height * 0.5f;
 
-   ImGuiFrameStart();
+   ImGuiFrameStart(mapContext);
    // Radar site ImGui windows shouldn't have padding
    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2 {0.0f, 0.0f});
 
@@ -122,7 +130,7 @@ void RadarSiteLayer::Render(
 
    ImGui::PopStyleVar();
 
-   p->RenderRadarLine();
+   p->RenderRadarLine(mapContext);
 
    DrawLayer::RenderWithoutImGui(params);
 
@@ -192,15 +200,16 @@ void RadarSiteLayer::Impl::RenderRadarSite(
    }
 }
 
-void RadarSiteLayer::Impl::RenderRadarLine()
+void RadarSiteLayer::Impl::RenderRadarLine(
+   const std::shared_ptr<MapContext>& mapContext)
 {
    if ((QGuiApplication::keyboardModifiers() &
         Qt::KeyboardModifier::ShiftModifier) &&
-       self_->context()->radar_site() != nullptr)
+       mapContext->radar_site() != nullptr)
    {
-      const auto&  mouseCoord     = self_->context()->mouse_coordinate();
-      const double radarLatitude  = self_->context()->radar_site()->latitude();
-      const double radarLongitude = self_->context()->radar_site()->longitude();
+      const auto&  mouseCoord     = mapContext->mouse_coordinate();
+      const double radarLatitude  = mapContext->radar_site()->latitude();
+      const double radarLongitude = mapContext->radar_site()->longitude();
 
       geoLines_->SetLineLocation(radarSiteLines_[0],
                                  static_cast<float>(mouseCoord.latitude_),
@@ -231,6 +240,7 @@ void RadarSiteLayer::Deinitialize()
 }
 
 bool RadarSiteLayer::RunMousePicking(
+   const std::shared_ptr<MapContext>& /* mapContext */,
    const QMapLibre::CustomLayerRenderParameters& /* params */,
    const QPointF& /* mouseLocalPos */,
    const QPointF& mouseGlobalPos,
