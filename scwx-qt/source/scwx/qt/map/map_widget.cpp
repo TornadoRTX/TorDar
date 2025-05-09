@@ -33,6 +33,7 @@
 #include <algorithm>
 #include <ranges>
 #include <set>
+#include <utility>
 
 #include <backends/imgui_impl_opengl3.h>
 #include <backends/imgui_impl_qt.hpp>
@@ -70,13 +71,13 @@ class MapWidgetImpl : public QObject
 public:
    explicit MapWidgetImpl(MapWidget*                     widget,
                           std::size_t                    id,
-                          const QMapLibre::Settings&     settings,
+                          QMapLibre::Settings            settings,
                           std::shared_ptr<gl::GlContext> glContext) :
        id_ {id},
        uuid_ {boost::uuids::random_generator()()},
        glContext_ {std::move(glContext)},
        widget_ {widget},
-       settings_(settings),
+       settings_(std::move(settings)),
        map_(),
        layerList_ {},
        imGuiRendererInitialized_ {false},

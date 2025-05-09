@@ -788,6 +788,7 @@ void MainWindowImpl::ConfigureMapLayout()
       {
          if (maps_.at(mapIndex) == nullptr)
          {
+            // NOLINTNEXTLINE(cppcoreguidelines-owning-memory): Owned by parent
             maps_[mapIndex] =
                new map::MapWidget(mapIndex, settings_, glContext);
          }

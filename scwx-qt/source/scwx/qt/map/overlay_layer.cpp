@@ -513,7 +513,7 @@ void OverlayLayer::Render(const std::shared_ptr<MapContext>& mapContext,
    p->icons_->SetIconVisible(p->mapCenterIcon_,
                              generalSettings.show_map_center().GetValue());
 
-   QMargins colorTableMargins = mapContext->color_table_margins();
+   const QMargins colorTableMargins = mapContext->color_table_margins();
    if (colorTableMargins != p->lastColorTableMargins_ || p->firstRender_)
    {
       // Draw map logo with a 10x10 indent from the bottom left

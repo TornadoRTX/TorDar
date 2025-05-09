@@ -131,8 +131,9 @@ void DrawLayer::RenderWithoutImGui(
    p->textureAtlas_        = glContext->GetTextureAtlas();
 
    // Determine if the texture atlas changed since last render
-   std::uint64_t newTextureAtlasBuildCount = glContext->texture_buffer_count();
-   bool          textureAtlasChanged =
+   const std::uint64_t newTextureAtlasBuildCount =
+      glContext->texture_buffer_count();
+   const bool textureAtlasChanged =
       newTextureAtlasBuildCount != p->textureAtlasBuildCount_;
 
    // Set OpenGL blend mode for transparency

@@ -176,7 +176,13 @@ void ColorTableLayer::Render(
       gl.glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
       gl.glDrawArrays(GL_TRIANGLES, 0, 6);
 
-      mapContext->set_color_table_margins(QMargins {0, 0, 0, 10});
+      static constexpr int kLeftMargin_   = 0;
+      static constexpr int kTopMargin_    = 0;
+      static constexpr int kRightMargin_  = 0;
+      static constexpr int kBottomMargin_ = 10;
+
+      mapContext->set_color_table_margins(
+         QMargins {kLeftMargin_, kTopMargin_, kRightMargin_, kBottomMargin_});
    }
    else
    {
