@@ -1,6 +1,7 @@
 #include "main_window.hpp"
 #include "./ui_main_window.h"
 
+#include <scwx/qt/gl/gl_context.hpp>
 #include <scwx/qt/main/application.hpp>
 #include <scwx/qt/main/versions.hpp>
 #include <scwx/qt/manager/alert_manager.hpp>
@@ -776,6 +777,8 @@ void MainWindowImpl::ConfigureMapLayout()
       }
    };
 
+   auto glContext = std::make_shared<gl::GlContext>();
+
    for (int64_t y = 0; y < gridHeight; y++)
    {
       QSplitter* hs = new QSplitter(vs);
@@ -785,7 +788,8 @@ void MainWindowImpl::ConfigureMapLayout()
       {
          if (maps_.at(mapIndex) == nullptr)
          {
-            maps_[mapIndex] = new map::MapWidget(mapIndex, settings_);
+            maps_[mapIndex] =
+               new map::MapWidget(mapIndex, settings_, glContext);
          }
 
          hs->addWidget(maps_[mapIndex]);
@@ -818,9 +822,9 @@ void MainWindowImpl::ConfigureMapStyles()
       if ((customStyleAvailable_ && styleName == "Custom") ||
           std::find_if(mapProviderInfo.mapStyles_.cbegin(),
                        mapProviderInfo.mapStyles_.cend(),
-                       [&](const auto& mapStyle) {
-                          return mapStyle.name_ == styleName;
-                       }) != mapProviderInfo.mapStyles_.cend())
+                       [&](const auto& mapStyle)
+                       { return mapStyle.name_ == styleName; }) !=
+             mapProviderInfo.mapStyles_.cend())
       {
          // Initialize map style from settings
          maps_.at(i)->SetInitialMapStyle(styleName);
@@ -1154,22 +1158,22 @@ void MainWindowImpl::ConnectOtherSignals()
             mapSettings.radar_product(i).StageValue(map->GetRadarProductName());
          }
       });
-   connect(level2ProductsWidget_,
-           &ui::Level2ProductsWidget::RadarProductSelected,
-           mainWindow_,
-           [&](common::RadarProductGroup group,
-               const std::string&        productName,
-               int16_t                   productCode) {
-              SelectRadarProduct(activeMap_, group, productName, productCode);
-           });
-   connect(level3ProductsWidget_,
-           &ui::Level3ProductsWidget::RadarProductSelected,
-           mainWindow_,
-           [&](common::RadarProductGroup group,
-               const std::string&        productName,
-               int16_t                   productCode) {
-              SelectRadarProduct(activeMap_, group, productName, productCode);
-           });
+   connect(
+      level2ProductsWidget_,
+      &ui::Level2ProductsWidget::RadarProductSelected,
+      mainWindow_,
+      [&](common::RadarProductGroup group,
+          const std::string&        productName,
+          int16_t                   productCode)
+      { SelectRadarProduct(activeMap_, group, productName, productCode); });
+   connect(
+      level3ProductsWidget_,
+      &ui::Level3ProductsWidget::RadarProductSelected,
+      mainWindow_,
+      [&](common::RadarProductGroup group,
+          const std::string&        productName,
+          int16_t                   productCode)
+      { SelectRadarProduct(activeMap_, group, productName, productCode); });
    connect(level2SettingsWidget_,
            &ui::Level2SettingsWidget::ElevationSelected,
            mainWindow_,

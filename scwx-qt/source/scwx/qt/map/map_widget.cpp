@@ -68,11 +68,13 @@ class MapWidgetImpl : public QObject
    Q_OBJECT
 
 public:
-   explicit MapWidgetImpl(MapWidget*                 widget,
-                          std::size_t                id,
-                          const QMapLibre::Settings& settings) :
+   explicit MapWidgetImpl(MapWidget*                     widget,
+                          std::size_t                    id,
+                          const QMapLibre::Settings&     settings,
+                          std::shared_ptr<gl::GlContext> glContext) :
        id_ {id},
        uuid_ {boost::uuids::random_generator()()},
+       glContext_ {std::move(glContext)},
        widget_ {widget},
        settings_(settings),
        map_(),
@@ -194,8 +196,7 @@ public:
    boost::uuids::uuid uuid_;
 
    std::shared_ptr<MapContext>    context_ {std::make_shared<MapContext>()};
-   std::shared_ptr<gl::GlContext> glContext_ {
-      std::make_shared<gl::GlContext>()};
+   std::shared_ptr<gl::GlContext> glContext_;
 
    MapWidget*                      widget_;
    QMapLibre::Settings             settings_;
@@ -280,8 +281,10 @@ public slots:
    void Update();
 };
 
-MapWidget::MapWidget(std::size_t id, const QMapLibre::Settings& settings) :
-    p(std::make_unique<MapWidgetImpl>(this, id, settings))
+MapWidget::MapWidget(std::size_t                    id,
+                     const QMapLibre::Settings&     settings,
+                     std::shared_ptr<gl::GlContext> glContext) :
+    p(std::make_unique<MapWidgetImpl>(this, id, settings, std::move(glContext)))
 {
    if (settings::GeneralSettings::Instance().anti_aliasing_enabled().GetValue())
    {

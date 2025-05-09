@@ -22,6 +22,11 @@ class QKeyEvent;
 class QMouseEvent;
 class QWheelEvent;
 
+namespace scwx::qt::gl
+{
+class GlContext;
+}
+
 namespace scwx::qt::map
 {
 
@@ -32,7 +37,9 @@ class MapWidget : public QOpenGLWidget
    Q_OBJECT
 
 public:
-   explicit MapWidget(std::size_t id, const QMapLibre::Settings&);
+   explicit MapWidget(std::size_t id,
+                      const QMapLibre::Settings&,
+                      std::shared_ptr<gl::GlContext> glContext);
    ~MapWidget();
 
    void DumpLayerList() const;
