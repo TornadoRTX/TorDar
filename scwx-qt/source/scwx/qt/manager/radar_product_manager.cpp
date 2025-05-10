@@ -90,17 +90,23 @@ public:
    explicit ProviderManager(RadarProductManager*      self,
                             std::string               radarId,
                             common::RadarProductGroup group,
-                            std::string               product     = "???",
-                            bool                      fastRefresh = false) :
+                            std::string               product  = "???",
+                            bool                      isChunks = false) :
        radarId_ {std::move(radarId)},
        group_ {group},
        product_ {std::move(product)},
-       fastRefresh_ {fastRefresh}
+       isChunks_ {isChunks}
    {
       connect(this,
               &ProviderManager::NewDataAvailable,
               self,
-              &RadarProductManager::NewDataAvailable);
+              [this, self](common::RadarProductGroup             group,
+                           const std::string&                    product,
+                           std::chrono::system_clock::time_point latestTime)
+              {
+                 Q_EMIT self->NewDataAvailable(
+                    group, product, isChunks_, latestTime);
+              });
    }
    ~ProviderManager() { threadPool_.join(); };
 
@@ -113,7 +119,7 @@ public:
    const std::string                             radarId_;
    const common::RadarProductGroup               group_;
    const std::string                             product_;
-   const bool                                    fastRefresh_;
+   const bool                                    isChunks_;
    bool                                          refreshEnabled_ {false};
    boost::asio::steady_timer                     refreshTimer_ {threadPool_};
    std::mutex                                    refreshTimerMutex_ {};
@@ -796,11 +802,11 @@ void RadarProductManagerImpl::RefreshDataSync(
 
    // Level2 chunked data is updated quickly and uses a faster interval
    const std::chrono::milliseconds fastRetryInterval =
-      providerManager->fastRefresh_ ? kFastRetryIntervalChunks_ :
-                                      kFastRetryInterval_;
+      providerManager->isChunks_ ? kFastRetryIntervalChunks_ :
+                                   kFastRetryInterval_;
    const std::chrono::milliseconds slowRetryInterval =
-      providerManager->fastRefresh_ ? kSlowRetryIntervalChunks_ :
-                                      kSlowRetryInterval_;
+      providerManager->isChunks_ ? kSlowRetryIntervalChunks_ :
+                                   kSlowRetryInterval_;
    std::chrono::milliseconds interval = fastRetryInterval;
 
    if (totalObjects > 0)
@@ -1015,12 +1021,6 @@ void RadarProductManager::LoadLevel2Data(
 
    p->LoadProviderData(time,
                        p->level2ProviderManager_,
-                       p->level2ProductRecords_,
-                       p->level2ProductRecordMutex_,
-                       p->loadLevel2DataMutex_,
-                       request);
-   p->LoadProviderData(time,
-                       p->level2ChunksProviderManager_,
                        p->level2ProductRecords_,
                        p->level2ProductRecordMutex_,
                        p->loadLevel2DataMutex_,
@@ -1460,7 +1460,7 @@ RadarProductManagerImpl::StoreRadarProductRecord(
 
          if (storedRecord != nullptr)
          {
-            logger_->trace(
+            logger_->error(
                "Level 2 product previously loaded, loading from cache");
          }
       }

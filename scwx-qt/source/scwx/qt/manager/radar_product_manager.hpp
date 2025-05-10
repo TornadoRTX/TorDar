@@ -148,6 +148,7 @@ signals:
    void Level3ProductsChanged();
    void NewDataAvailable(common::RadarProductGroup             group,
                          const std::string&                    product,
+                         bool                                  isChunks,
                          std::chrono::system_clock::time_point latestTime);
    void IncomingLevel2ElevationChanged(std::optional<float> incomingElevation);
 
