@@ -53,6 +53,7 @@
 #include <QIcon>
 #include <QKeyEvent>
 #include <QMouseEvent>
+#include <QPinchGesture>
 #include <QString>
 #include <QTextDocument>
 
@@ -169,6 +170,7 @@ public:
    void HandleHotkeyPressed(types::Hotkey hotkey, bool isAutoRepeat);
    void HandleHotkeyReleased(types::Hotkey hotkey);
    void HandleHotkeyUpdates();
+   void HandlePinchGesture(QPinchGesture* gesture);
    void ImGuiCheckFonts();
    void InitializeCustomStyles();
    void InitializeNewRadarProductView(const std::string& colorPalette);
@@ -292,6 +294,8 @@ MapWidget::MapWidget(std::size_t id, const QMapLibre::Settings& settings) :
    }
 
    setFocusPolicy(Qt::StrongFocus);
+
+   grabGesture(Qt::GestureType::PinchGesture);
 
    ImGui_ImplQt_RegisterWidget(this);
 
@@ -600,6 +604,15 @@ void MapWidgetImpl::HandleHotkeyUpdates()
       default:
          break;
       }
+   }
+}
+
+void MapWidgetImpl::HandlePinchGesture(QPinchGesture* gesture)
+{
+   if (gesture->changeFlags() & QPinchGesture::ChangeFlag::ScaleFactorChanged)
+   {
+      map_->scaleBy(gesture->scaleFactor(),
+                    widget_->mapFromGlobal(gesture->centerPoint()));
    }
 }
 
@@ -1396,6 +1409,18 @@ bool MapWidget::event(QEvent* e)
    }
    pickedEventHandler.reset();
 
+   switch (e->type())
+   {
+   case QEvent::Type::Gesture:
+      // QEvent is always a QGestureEvent
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+      gestureEvent(static_cast<QGestureEvent*>(e));
+      break;
+
+   default:
+      break;
+   }
+
    return QOpenGLWidget::event(e);
 }
 
@@ -1422,6 +1447,16 @@ void MapWidget::keyReleaseEvent(QKeyEvent* ev)
    if (p->hotkeyManager_->HandleKeyRelease(ev))
    {
       ev->accept();
+   }
+}
+
+void MapWidget::gestureEvent(QGestureEvent* ev)
+{
+   if (QGesture* pinch = ev->gesture(Qt::PinchGesture))
+   {
+      // QGesture is always a QPinchGesture
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+      p->HandlePinchGesture(static_cast<QPinchGesture*>(pinch));
    }
 }
 
