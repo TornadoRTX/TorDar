@@ -611,8 +611,8 @@ void MapWidgetImpl::HandlePinchGesture(QPinchGesture* gesture)
 {
    if (gesture->changeFlags() & QPinchGesture::ChangeFlag::ScaleFactorChanged)
    {
-      double scale = gesture->scaleFactor();
-      map_->scaleBy(scale, widget_->mapFromGlobal(gesture->centerPoint()));
+      map_->scaleBy(gesture->scaleFactor(),
+                    widget_->mapFromGlobal(gesture->centerPoint()));
    }
 }
 
@@ -1412,6 +1412,8 @@ bool MapWidget::event(QEvent* e)
    switch (e->type())
    {
    case QEvent::Type::Gesture:
+      // QEvent is always a QGestureEvent
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
       gestureEvent(static_cast<QGestureEvent*>(e));
       break;
 
@@ -1452,6 +1454,8 @@ void MapWidget::gestureEvent(QGestureEvent* ev)
 {
    if (QGesture* pinch = ev->gesture(Qt::PinchGesture))
    {
+      // QGesture is always a QPinchGesture
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
       p->HandlePinchGesture(static_cast<QPinchGesture*>(pinch));
    }
 }
