@@ -116,8 +116,9 @@ void OverlayProductView::Impl::ConnectRadarProductManager()
       radarProductManager_.get(),
       &manager::RadarProductManager::NewDataAvailable,
       self_,
-      [this](common::RadarProductGroup             group,
-             const std::string&                    product,
+      [this](common::RadarProductGroup group,
+             const std::string&        product,
+             bool /*isChunks*/,
              std::chrono::system_clock::time_point latestTime)
       {
          if (autoRefreshEnabled_ &&

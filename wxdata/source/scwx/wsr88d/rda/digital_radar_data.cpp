@@ -154,7 +154,18 @@ std::uint16_t DigitalRadarData::elevation_angle_raw() const
 
 units::degrees<float> DigitalRadarData::elevation_angle() const
 {
-   return units::degrees<float> {p->elevationAngle_ * kAngleDataScale};
+   // NOLINTNEXTLINE This conversion is accurate
+   float elevationAngleConverted = p->elevationAngle_ * kAngleDataScale;
+   // Any elevation above 90 degrees should be interpreted as a
+   // negative angle
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+   if (elevationAngleConverted > 90)
+   {
+      elevationAngleConverted -= 360;
+   }
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+
+   return units::degrees<float> {elevationAngleConverted};
 }
 
 std::uint16_t DigitalRadarData::elevation_number() const

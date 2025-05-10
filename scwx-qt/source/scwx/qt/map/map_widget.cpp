@@ -656,6 +656,11 @@ std::vector<float> MapWidget::GetElevationCuts() const
    }
 }
 
+std::optional<float> MapWidget::GetIncomingLevel2Elevation() const
+{
+   return p->radarProductManager_->incoming_level_2_elevation();
+}
+
 common::Level2Product
 MapWidgetImpl::GetLevel2ProductOrDefault(const std::string& productName) const
 {
@@ -1797,6 +1802,14 @@ void MapWidgetImpl::RadarProductManagerConnect()
    if (radarProductManager_ != nullptr)
    {
       connect(radarProductManager_.get(),
+              &manager::RadarProductManager::IncomingLevel2ElevationChanged,
+              this,
+              [this](std::optional<float> incomingElevation)
+              {
+                 Q_EMIT widget_->IncomingLevel2ElevationChanged(
+                    incomingElevation);
+              });
+      connect(radarProductManager_.get(),
               &manager::RadarProductManager::Level3ProductsChanged,
               this,
               [this]()
@@ -1830,6 +1843,7 @@ void MapWidgetImpl::RadarProductManagerConnect()
          this,
          [this](common::RadarProductGroup             group,
                 const std::string&                    product,
+                bool                                  isChunks,
                 std::chrono::system_clock::time_point latestTime)
          {
             if (autoRefreshEnabled_ &&
@@ -1837,71 +1851,81 @@ void MapWidgetImpl::RadarProductManagerConnect()
                 (group == common::RadarProductGroup::Level2 ||
                  context_->radar_product() == product))
             {
-               // Create file request
-               std::shared_ptr<request::NexradFileRequest> request =
-                  std::make_shared<request::NexradFileRequest>(
-                     radarProductManager_->radar_id());
-
-               // File request callback
-               if (autoUpdateEnabled_)
+               if (isChunks && autoUpdateEnabled_)
                {
-                  connect(
-                     request.get(),
-                     &request::NexradFileRequest::RequestComplete,
-                     this,
-                     [=,
-                      this](std::shared_ptr<request::NexradFileRequest> request)
-                     {
-                        // Select loaded record
-                        auto record = request->radar_product_record();
+                  // Level 2 products may have multiple time points,
+                  // ensure the latest is selected
+                  widget_->SelectRadarProduct(group, product);
+               }
+               else
+               {
+                  // Create file request
+                  const std::shared_ptr<request::NexradFileRequest> request =
+                     std::make_shared<request::NexradFileRequest>(
+                        radarProductManager_->radar_id());
 
-                        // Validate record, and verify current map context
-                        // still displays site and product
-                        if (record != nullptr &&
-                            radarProductManager_ != nullptr &&
-                            radarProductManager_->radar_id() ==
-                               request->current_radar_site() &&
-                            context_->radar_product_group() == group &&
-                            (group == common::RadarProductGroup::Level2 ||
-                             context_->radar_product() == product))
+                  // File request callback
+                  if (autoUpdateEnabled_)
+                  {
+                     connect(
+                        request.get(),
+                        &request::NexradFileRequest::RequestComplete,
+                        this,
+                        [group, product, this](
+                           const std::shared_ptr<request::NexradFileRequest>&
+                              request)
+                        {
+                           // Select loaded record
+                           auto record = request->radar_product_record();
+
+                           // Validate record, and verify current map context
+                           // still displays site and product
+                           if (record != nullptr &&
+                               radarProductManager_ != nullptr &&
+                               radarProductManager_->radar_id() ==
+                                  request->current_radar_site() &&
+                               context_->radar_product_group() == group &&
+                               (group == common::RadarProductGroup::Level2 ||
+                                context_->radar_product() == product))
+                           {
+                              if (group == common::RadarProductGroup::Level2)
+                              {
+                                 // Level 2 products may have multiple time
+                                 // points, ensure the latest is selected
+                                 widget_->SelectRadarProduct(group, product);
+                              }
+                              else
+                              {
+                                 widget_->SelectRadarProduct(record);
+                              }
+                           }
+                        });
+                  }
+
+                  // Load file
+                  boost::asio::post(
+                     threadPool_,
+                     [group, latestTime, request, product, this]()
+                     {
+                        try
                         {
                            if (group == common::RadarProductGroup::Level2)
                            {
-                              // Level 2 products may have multiple time points,
-                              // ensure the latest is selected
-                              widget_->SelectRadarProduct(group, product);
+                              radarProductManager_->LoadLevel2Data(latestTime,
+                                                                   request);
                            }
                            else
                            {
-                              widget_->SelectRadarProduct(record);
+                              radarProductManager_->LoadLevel3Data(
+                                 product, latestTime, request);
                            }
+                        }
+                        catch (const std::exception& ex)
+                        {
+                           logger_->error(ex.what());
                         }
                      });
                }
-
-               // Load file
-               boost::asio::post(
-                  threadPool_,
-                  [=, this]()
-                  {
-                     try
-                     {
-                        if (group == common::RadarProductGroup::Level2)
-                        {
-                           radarProductManager_->LoadLevel2Data(latestTime,
-                                                                request);
-                        }
-                        else
-                        {
-                           radarProductManager_->LoadLevel3Data(
-                              product, latestTime, request);
-                        }
-                     }
-                     catch (const std::exception& ex)
-                     {
-                        logger_->error(ex.what());
-                     }
-                  });
             }
          },
          Qt::QueuedConnection);
@@ -1914,6 +1938,10 @@ void MapWidgetImpl::RadarProductManagerDisconnect()
    {
       disconnect(radarProductManager_.get(),
                  &manager::RadarProductManager::NewDataAvailable,
+                 this,
+                 nullptr);
+      disconnect(radarProductManager_.get(),
+                 &manager::RadarProductManager::IncomingLevel2ElevationChanged,
                  this,
                  nullptr);
    }

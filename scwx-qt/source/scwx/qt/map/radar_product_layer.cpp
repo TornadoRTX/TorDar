@@ -159,8 +159,6 @@ void RadarProductLayer::Initialize()
 
 void RadarProductLayer::UpdateSweep()
 {
-   logger_->debug("UpdateSweep()");
-
    gl::OpenGLFunctions& gl = context()->gl();
 
    boost::timer::cpu_timer timer;
@@ -172,9 +170,10 @@ void RadarProductLayer::UpdateSweep()
                               std::try_to_lock);
    if (!sweepLock.owns_lock())
    {
-      logger_->debug("Sweep locked, deferring update");
+      logger_->trace("Sweep locked, deferring update");
       return;
    }
+   logger_->debug("UpdateSweep()");
 
    p->sweepNeedsUpdate_ = false;
 

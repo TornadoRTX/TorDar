@@ -32,6 +32,9 @@ public:
    Ar2vFile(Ar2vFile&&) noexcept;
    Ar2vFile& operator=(Ar2vFile&&) noexcept;
 
+   Ar2vFile(const std::shared_ptr<Ar2vFile>& current,
+            const std::shared_ptr<Ar2vFile>& last);
+
    std::uint32_t julian_date() const;
    std::uint32_t milliseconds() const;
    std::string   icao() const;
@@ -52,6 +55,9 @@ public:
 
    bool LoadFile(const std::string& filename);
    bool LoadData(std::istream& is);
+
+   bool LoadLDMRecords(std::istream& is);
+   bool IndexFile();
 
 private:
    std::unique_ptr<Ar2vFileImpl> p;

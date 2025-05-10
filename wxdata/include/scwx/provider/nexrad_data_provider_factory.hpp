@@ -28,6 +28,9 @@ public:
    CreateLevel2DataProvider(const std::string& radarSite);
 
    static std::shared_ptr<NexradDataProvider>
+   CreateLevel2ChunksDataProvider(const std::string& radarSite);
+
+   static std::shared_ptr<NexradDataProvider>
    CreateLevel3DataProvider(const std::string& radarSite,
                             const std::string& product);
 };

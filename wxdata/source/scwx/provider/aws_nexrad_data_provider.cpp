@@ -170,6 +170,11 @@ std::string AwsNexradDataProvider::FindLatestKey()
    return key;
 }
 
+std::chrono::system_clock::time_point AwsNexradDataProvider::FindLatestTime()
+{
+   return GetTimePointByKey(FindLatestKey());
+}
+
 std::vector<std::chrono::system_clock::time_point>
 AwsNexradDataProvider::GetTimePointsByDate(
    std::chrono::system_clock::time_point date)
@@ -325,6 +330,20 @@ AwsNexradDataProvider::LoadObjectByKey(const std::string& key)
    }
 
    return nexradFile;
+}
+
+std::shared_ptr<wsr88d::NexradFile> AwsNexradDataProvider::LoadObjectByTime(
+   std::chrono::system_clock::time_point time)
+{
+   const std::string key = FindKey(time);
+   if (key.empty())
+   {
+      return nullptr;
+   }
+   else
+   {
+      return LoadObjectByKey(key);
+   }
 }
 
 std::pair<size_t, size_t> AwsNexradDataProvider::Refresh()

@@ -4,6 +4,7 @@
 #include <scwx/qt/types/time_types.hpp>
 #include <scwx/qt/util/geographic_lib.hpp>
 #include <scwx/common/constants.hpp>
+#include <scwx/provider/aws_level2_chunks_data_provider.hpp>
 #include <scwx/provider/nexrad_data_provider_factory.hpp>
 #include <scwx/util/logger.hpp>
 #include <scwx/util/map.hpp>
@@ -14,6 +15,7 @@
 #include <mutex>
 #include <shared_mutex>
 #include <unordered_set>
+#include <utility>
 
 #if defined(_MSC_VER)
 #   pragma warning(push, 0)
@@ -66,7 +68,9 @@ static const std::string kDefaultLevel3Product_ {"N0B"};
 static constexpr std::size_t kTimerPlaces_ {6u};
 
 static constexpr std::chrono::seconds kFastRetryInterval_ {15};
+static constexpr std::chrono::seconds kFastRetryIntervalChunks_ {3};
 static constexpr std::chrono::seconds kSlowRetryInterval_ {120};
+static constexpr std::chrono::seconds kSlowRetryIntervalChunks_ {20};
 
 static std::unordered_map<std::string, std::weak_ptr<RadarProductManager>>
                          instanceMap_;
@@ -84,21 +88,25 @@ class ProviderManager : public QObject
    Q_OBJECT
 public:
    explicit ProviderManager(RadarProductManager*      self,
-                            const std::string&        radarId,
-                            common::RadarProductGroup group) :
-       ProviderManager(self, radarId, group, "???")
-   {
-   }
-   explicit ProviderManager(RadarProductManager*      self,
-                            const std::string&        radarId,
+                            std::string               radarId,
                             common::RadarProductGroup group,
-                            const std::string&        product) :
-       radarId_ {radarId}, group_ {group}, product_ {product}
+                            std::string               product  = "???",
+                            bool                      isChunks = false) :
+       radarId_ {std::move(radarId)},
+       group_ {group},
+       product_ {std::move(product)},
+       isChunks_ {isChunks}
    {
       connect(this,
               &ProviderManager::NewDataAvailable,
               self,
-              &RadarProductManager::NewDataAvailable);
+              [this, self](common::RadarProductGroup             group,
+                           const std::string&                    product,
+                           std::chrono::system_clock::time_point latestTime)
+              {
+                 Q_EMIT self->NewDataAvailable(
+                    group, product, isChunks_, latestTime);
+              });
    }
    ~ProviderManager() { threadPool_.join(); };
 
@@ -111,10 +119,12 @@ public:
    const std::string                             radarId_;
    const common::RadarProductGroup               group_;
    const std::string                             product_;
+   const bool                                    isChunks_;
    bool                                          refreshEnabled_ {false};
    boost::asio::steady_timer                     refreshTimer_ {threadPool_};
    std::mutex                                    refreshTimerMutex_ {};
    std::shared_ptr<provider::NexradDataProvider> provider_ {nullptr};
+   size_t                                        refreshCount_ {0};
 
 signals:
    void NewDataAvailable(common::RadarProductGroup             group,
@@ -133,7 +143,9 @@ public:
        level3ProductsInitialized_ {false},
        radarSite_ {config::RadarSite::Get(radarId)},
        level2ProviderManager_ {std::make_shared<ProviderManager>(
-          self_, radarId_, common::RadarProductGroup::Level2)}
+          self_, radarId_, common::RadarProductGroup::Level2)},
+       level2ChunksProviderManager_ {std::make_shared<ProviderManager>(
+          self_, radarId_, common::RadarProductGroup::Level2, "???", true)}
    {
       if (radarSite_ == nullptr)
       {
@@ -143,10 +155,24 @@ public:
 
       level2ProviderManager_->provider_ =
          provider::NexradDataProviderFactory::CreateLevel2DataProvider(radarId);
+      level2ChunksProviderManager_->provider_ =
+         provider::NexradDataProviderFactory::CreateLevel2ChunksDataProvider(
+            radarId);
+
+      auto level2ChunksProvider =
+         std::dynamic_pointer_cast<provider::AwsLevel2ChunksDataProvider>(
+            level2ChunksProviderManager_->provider_);
+      if (level2ChunksProvider != nullptr)
+      {
+         level2ChunksProvider->SetLevel2DataProvider(
+            std::dynamic_pointer_cast<provider::AwsLevel2DataProvider>(
+               level2ProviderManager_->provider_));
+      }
    }
    ~RadarProductManagerImpl()
    {
       level2ProviderManager_->Disable();
+      level2ChunksProviderManager_->Disable();
 
       std::shared_lock lock(level3ProviderManagerMutex_);
       std::for_each(std::execution::par_unseq,
@@ -172,9 +198,10 @@ public:
    std::shared_ptr<ProviderManager>
    GetLevel3ProviderManager(const std::string& product);
 
-   void EnableRefresh(boost::uuids::uuid               uuid,
-                      std::shared_ptr<ProviderManager> providerManager,
-                      bool                             enabled);
+   void EnableRefresh(
+      boost::uuids::uuid                                uuid,
+      const std::set<std::shared_ptr<ProviderManager>>& providerManagers,
+      bool                                              enabled);
    void RefreshData(std::shared_ptr<ProviderManager> providerManager);
    void RefreshDataSync(std::shared_ptr<ProviderManager> providerManager);
 
@@ -250,6 +277,7 @@ public:
    std::shared_mutex level3ProductRecordMutex_ {};
 
    std::shared_ptr<ProviderManager> level2ProviderManager_;
+   std::shared_ptr<ProviderManager> level2ChunksProviderManager_;
    std::unordered_map<std::string, std::shared_ptr<ProviderManager>>
                      level3ProviderManagerMap_ {};
    std::shared_mutex level3ProviderManagerMutex_ {};
@@ -262,8 +290,10 @@ public:
    common::Level3ProductCategoryMap availableCategoryMap_ {};
    std::shared_mutex                availableCategoryMutex_ {};
 
+   std::optional<float> incomingLevel2Elevation_ {};
+
    std::unordered_map<boost::uuids::uuid,
-                      std::shared_ptr<ProviderManager>,
+                      std::set<std::shared_ptr<ProviderManager>>,
                       boost::hash<boost::uuids::uuid>>
                      refreshMap_ {};
    std::shared_mutex refreshMapMutex_ {};
@@ -439,6 +469,11 @@ float RadarProductManager::gate_size() const
    // tdwr is 150 meter per gate, wsr88d is 250 meter per gate
    // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
    return (is_tdwr()) ? 150.0f : 250.0f;
+}
+
+std::optional<float> RadarProductManager::incoming_level_2_elevation() const
+{
+   return p->incomingLevel2Elevation_;
 }
 
 std::string RadarProductManager::radar_id() const
@@ -637,7 +672,10 @@ void RadarProductManager::EnableRefresh(common::RadarProductGroup group,
 {
    if (group == common::RadarProductGroup::Level2)
    {
-      p->EnableRefresh(uuid, p->level2ProviderManager_, enabled);
+      p->EnableRefresh(
+         uuid,
+         {p->level2ProviderManager_, p->level2ChunksProviderManager_},
+         enabled);
    }
    else
    {
@@ -660,7 +698,7 @@ void RadarProductManager::EnableRefresh(common::RadarProductGroup group,
                              availableProducts.cend(),
                              product) != availableProducts.cend())
                {
-                  p->EnableRefresh(uuid, providerManager, enabled);
+                  p->EnableRefresh(uuid, {providerManager}, enabled);
                }
             }
             catch (const std::exception& ex)
@@ -672,50 +710,45 @@ void RadarProductManager::EnableRefresh(common::RadarProductGroup group,
 }
 
 void RadarProductManagerImpl::EnableRefresh(
-   boost::uuids::uuid               uuid,
-   std::shared_ptr<ProviderManager> providerManager,
-   bool                             enabled)
+   boost::uuids::uuid                                uuid,
+   const std::set<std::shared_ptr<ProviderManager>>& providerManagers,
+   bool                                              enabled)
 {
    // Lock the refresh map
    std::unique_lock lock {refreshMapMutex_};
 
-   auto currentProviderManager = refreshMap_.find(uuid);
-   if (currentProviderManager != refreshMap_.cend())
+   auto currentProviderManagers = refreshMap_.find(uuid);
+   if (currentProviderManagers != refreshMap_.cend())
    {
-      // If the enabling refresh for a different product, or disabling refresh
-      if (currentProviderManager->second != providerManager || !enabled)
+      for (const auto& currentProviderManager : currentProviderManagers->second)
       {
-         // Determine number of entries in the map for the current provider
-         // manager
-         auto currentProviderManagerCount = std::count_if(
-            refreshMap_.cbegin(),
-            refreshMap_.cend(),
-            [&](const auto& provider)
-            { return provider.second == currentProviderManager->second; });
-
-         // If this is the last reference to the provider in the refresh map
-         if (currentProviderManagerCount == 1)
+         currentProviderManager->refreshCount_ -= 1;
+         // If the enabling refresh for a different product, or disabling
+         // refresh
+         if (!providerManagers.contains(currentProviderManager) || !enabled)
          {
-            // Disable current provider
-            currentProviderManager->second->Disable();
-         }
-
-         // Dissociate uuid from current provider manager
-         refreshMap_.erase(currentProviderManager);
-
-         // If we are enabling a new provider manager
-         if (enabled)
-         {
-            // Associate uuid to providerManager
-            refreshMap_.emplace(uuid, providerManager);
+            // If this is the last reference to the provider in the refresh map
+            if (currentProviderManager->refreshCount_ == 0)
+            {
+               // Disable current provider
+               currentProviderManager->Disable();
+            }
          }
       }
+
+      // Dissociate uuid from current provider managers
+      refreshMap_.erase(currentProviderManagers);
    }
-   else if (enabled)
+
+   if (enabled)
    {
-      // We are enabling a new provider manager
+      // We are enabling provider managers
       // Associate uuid to provider manager
-      refreshMap_.emplace(uuid, providerManager);
+      refreshMap_.emplace(uuid, providerManagers);
+      for (const auto& providerManager : providerManagers)
+      {
+         providerManager->refreshCount_ += 1;
+      }
    }
 
    // Release the refresh map mutex
@@ -723,13 +756,15 @@ void RadarProductManagerImpl::EnableRefresh(
 
    // We have already handled a disable request by this point. If enabling, and
    // the provider manager refresh isn't already enabled, enable it.
-   if (enabled && providerManager->refreshEnabled_ != enabled)
+   if (enabled)
    {
-      providerManager->refreshEnabled_ = enabled;
-
-      if (enabled)
+      for (const auto& providerManager : providerManagers)
       {
-         RefreshData(providerManager);
+         if (providerManager->refreshEnabled_ != enabled)
+         {
+            providerManager->refreshEnabled_ = enabled;
+            RefreshData(providerManager);
+         }
       }
    }
 }
@@ -737,7 +772,7 @@ void RadarProductManagerImpl::EnableRefresh(
 void RadarProductManagerImpl::RefreshData(
    std::shared_ptr<ProviderManager> providerManager)
 {
-   logger_->debug("RefreshData: {}", providerManager->name());
+   logger_->trace("RefreshData: {}", providerManager->name());
 
    {
       std::unique_lock lock(providerManager->refreshTimerMutex_);
@@ -765,13 +800,18 @@ void RadarProductManagerImpl::RefreshDataSync(
 
    auto [newObjects, totalObjects] = providerManager->provider_->Refresh();
 
-   std::chrono::milliseconds interval = kFastRetryInterval_;
+   // Level2 chunked data is updated quickly and uses a faster interval
+   const std::chrono::milliseconds fastRetryInterval =
+      providerManager->isChunks_ ? kFastRetryIntervalChunks_ :
+                                   kFastRetryInterval_;
+   const std::chrono::milliseconds slowRetryInterval =
+      providerManager->isChunks_ ? kSlowRetryIntervalChunks_ :
+                                   kSlowRetryInterval_;
+   std::chrono::milliseconds interval = fastRetryInterval;
 
    if (totalObjects > 0)
    {
-      std::string key = providerManager->provider_->FindLatestKey();
-      auto latestTime = providerManager->provider_->GetTimePointByKey(key);
-
+      auto latestTime        = providerManager->provider_->FindLatestTime();
       auto updatePeriod      = providerManager->provider_->update_period();
       auto lastModified      = providerManager->provider_->last_modified();
       auto sinceLastModified = std::chrono::system_clock::now() - lastModified;
@@ -786,12 +826,12 @@ void RadarProductManagerImpl::RefreshDataSync(
       {
          // If it has been at least 5 update periods since the file has
          // been last modified, slow the retry period
-         interval = kSlowRetryInterval_;
+         interval = slowRetryInterval;
       }
-      else if (interval < std::chrono::milliseconds {kFastRetryInterval_})
+      else if (interval < std::chrono::milliseconds {fastRetryInterval})
       {
          // The interval should be no quicker than the fast retry interval
-         interval = kFastRetryInterval_;
+         interval = fastRetryInterval;
       }
 
       if (newObjects > 0)
@@ -805,14 +845,14 @@ void RadarProductManagerImpl::RefreshDataSync(
       logger_->info("[{}] No data found", providerManager->name());
 
       // If no data is found, retry at the slow retry interval
-      interval = kSlowRetryInterval_;
+      interval = slowRetryInterval;
    }
 
    std::unique_lock const lock(providerManager->refreshTimerMutex_);
 
    if (providerManager->refreshEnabled_)
    {
-      logger_->debug(
+      logger_->trace(
          "[{}] Scheduled refresh in {:%M:%S}",
          providerManager->name(),
          std::chrono::duration_cast<std::chrono::seconds>(interval));
@@ -861,10 +901,13 @@ RadarProductManager::GetActiveVolumeTimes(
    std::shared_lock refreshLock {p->refreshMapMutex_};
 
    // For each entry in the refresh map (refresh is enabled)
-   for (auto& refreshEntry : p->refreshMap_)
+   for (auto& refreshSet : p->refreshMap_)
    {
-      // Add the provider for the current entry
-      providers.insert(refreshEntry.second->provider_);
+      for (const auto& refreshEntry : refreshSet.second)
+      {
+         // Add the provider for the current entry
+         providers.insert(refreshEntry->provider_);
+      }
    }
 
    // Unlock the refresh map
@@ -923,7 +966,7 @@ void RadarProductManagerImpl::LoadProviderData(
    std::mutex&                                        loadDataMutex,
    const std::shared_ptr<request::NexradFileRequest>& request)
 {
-   logger_->debug("LoadProviderData: {}, {}",
+   logger_->trace("LoadProviderData: {}, {}",
                   providerManager->name(),
                   scwx::util::TimeString(time));
 
@@ -943,7 +986,7 @@ void RadarProductManagerImpl::LoadProviderData(
 
                if (existingRecord != nullptr)
                {
-                  logger_->debug(
+                  logger_->trace(
                      "Data previously loaded, loading from data cache");
                }
             }
@@ -951,13 +994,8 @@ void RadarProductManagerImpl::LoadProviderData(
 
          if (existingRecord == nullptr)
          {
-            std::string key = providerManager->provider_->FindKey(time);
-
-            if (!key.empty())
-            {
-               nexradFile = providerManager->provider_->LoadObjectByKey(key);
-            }
-            else
+            nexradFile = providerManager->provider_->LoadObjectByTime(time);
+            if (nexradFile == nullptr)
             {
                logger_->warn("Attempting to load object without key: {}",
                              scwx::util::TimeString(time));
@@ -979,7 +1017,7 @@ void RadarProductManager::LoadLevel2Data(
    std::chrono::system_clock::time_point              time,
    const std::shared_ptr<request::NexradFileRequest>& request)
 {
-   logger_->debug("LoadLevel2Data: {}", scwx::util::TimeString(time));
+   logger_->trace("LoadLevel2Data: {}", scwx::util::TimeString(time));
 
    p->LoadProviderData(time,
                        p->level2ProviderManager_,
@@ -1160,6 +1198,10 @@ void RadarProductManagerImpl::PopulateLevel2ProductTimes(
    std::chrono::system_clock::time_point time)
 {
    PopulateProductTimes(level2ProviderManager_,
+                        level2ProductRecords_,
+                        level2ProductRecordMutex_,
+                        time);
+   PopulateProductTimes(level2ChunksProviderManager_,
                         level2ProductRecords_,
                         level2ProductRecordMutex_,
                         time);
@@ -1399,7 +1441,7 @@ std::shared_ptr<types::RadarProductRecord>
 RadarProductManagerImpl::StoreRadarProductRecord(
    std::shared_ptr<types::RadarProductRecord> record)
 {
-   logger_->debug("StoreRadarProductRecord()");
+   logger_->trace("StoreRadarProductRecord()");
 
    std::shared_ptr<types::RadarProductRecord> storedRecord = nullptr;
 
@@ -1418,7 +1460,7 @@ RadarProductManagerImpl::StoreRadarProductRecord(
 
          if (storedRecord != nullptr)
          {
-            logger_->debug(
+            logger_->error(
                "Level 2 product previously loaded, loading from cache");
          }
       }
@@ -1503,37 +1545,87 @@ RadarProductManager::GetLevel2Data(wsr88d::rda::DataBlockType dataBlockType,
    std::vector<float>                          elevationCuts {};
    std::chrono::system_clock::time_point       foundTime {};
 
-   auto records = p->GetLevel2ProductRecords(time);
+   const bool        isEpox = time == std::chrono::system_clock::time_point {};
+   bool              needArchive   = true;
+   static const auto maxChunkDelay = std::chrono::minutes(10);
+   const std::chrono::system_clock::time_point firstValidChunkTime =
+      (isEpox ? std::chrono::system_clock::now() : time) - maxChunkDelay;
 
-   for (auto& recordPair : records)
+   // See if we have this one in the chunk provider.
+   auto chunkFile = std::dynamic_pointer_cast<wsr88d::Ar2vFile>(
+      p->level2ChunksProviderManager_->provider_->LoadObjectByTime(time));
+   if (chunkFile != nullptr)
    {
-      auto& record = recordPair.second;
+      std::tie(radarData, elevationCut, elevationCuts) =
+         chunkFile->GetElevationScan(dataBlockType, elevation, time);
 
-      if (record != nullptr)
+      if (radarData != nullptr)
       {
-         std::shared_ptr<wsr88d::rda::ElevationScan> recordRadarData = nullptr;
-         float                                       recordElevationCut = 0.0f;
-         std::vector<float>                          recordElevationCuts;
+         auto& radarData0 = (*radarData)[0];
+         foundTime        = std::chrono::floor<std::chrono::seconds>(
+            scwx::util::TimePoint(radarData0->modified_julian_date(),
+                                  radarData0->collection_time()));
 
-         std::tie(recordRadarData, recordElevationCut, recordElevationCuts) =
-            record->level2_file()->GetElevationScan(
-               dataBlockType, elevation, time);
-
-         if (recordRadarData != nullptr)
+         const std::optional<float> incomingElevation =
+            std::dynamic_pointer_cast<provider::AwsLevel2ChunksDataProvider>(
+               p->level2ChunksProviderManager_->provider_)
+               ->GetCurrentElevation();
+         if (incomingElevation != p->incomingLevel2Elevation_)
          {
-            auto& radarData0     = (*recordRadarData)[0];
-            auto  collectionTime = std::chrono::floor<std::chrono::seconds>(
-               scwx::util::TimePoint(radarData0->modified_julian_date(),
-                                     radarData0->collection_time()));
+            p->incomingLevel2Elevation_ = incomingElevation;
+            Q_EMIT IncomingLevel2ElevationChanged(incomingElevation);
+         }
 
-            // Find the newest radar data, not newer than the selected time
-            if (radarData == nullptr ||
-                (collectionTime <= time && foundTime < collectionTime))
+         if (foundTime >= firstValidChunkTime)
+         {
+            needArchive = false;
+         }
+      }
+   }
+
+   // It is not in the chunk provider, so get it from the archive
+   if (needArchive)
+   {
+      auto records = p->GetLevel2ProductRecords(time);
+      for (auto& recordPair : records)
+      {
+         auto& record = recordPair.second;
+
+         if (record != nullptr)
+         {
+            std::shared_ptr<wsr88d::rda::ElevationScan> recordRadarData =
+               nullptr;
+            float              recordElevationCut = 0.0f;
+            std::vector<float> recordElevationCuts;
+
+            std::tie(recordRadarData, recordElevationCut, recordElevationCuts) =
+               record->level2_file()->GetElevationScan(
+                  dataBlockType, elevation, time);
+
+            if (recordRadarData != nullptr)
             {
-               radarData     = recordRadarData;
-               elevationCut  = recordElevationCut;
-               elevationCuts = std::move(recordElevationCuts);
-               foundTime     = collectionTime;
+               auto& radarData0     = (*recordRadarData)[0];
+               auto  collectionTime = std::chrono::floor<std::chrono::seconds>(
+                  scwx::util::TimePoint(radarData0->modified_julian_date(),
+                                        radarData0->collection_time()));
+
+               // Find the newest radar data, not newer than the selected time
+               if (radarData == nullptr ||
+                   (collectionTime <= time && foundTime < collectionTime) ||
+                   (isEpox && foundTime < collectionTime))
+               {
+                  radarData     = recordRadarData;
+                  elevationCut  = recordElevationCut;
+                  elevationCuts = std::move(recordElevationCuts);
+                  foundTime     = collectionTime;
+
+                  if (!p->incomingLevel2Elevation_.has_value())
+                  {
+                     p->incomingLevel2Elevation_ = {};
+                     Q_EMIT IncomingLevel2ElevationChanged(
+                        p->incomingLevel2Elevation_);
+                  }
+               }
             }
          }
       }

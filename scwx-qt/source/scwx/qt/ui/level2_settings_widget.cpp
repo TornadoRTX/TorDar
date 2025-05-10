@@ -1,3 +1,4 @@
+#include <qlabel.h>
 #include <scwx/qt/ui/level2_settings_widget.hpp>
 #include <scwx/qt/ui/flow_layout.hpp>
 #include <scwx/qt/manager/hotkey_manager.hpp>
@@ -29,15 +30,14 @@ public:
    explicit Level2SettingsWidgetImpl(Level2SettingsWidget* self) :
        self_ {self},
        layout_ {new QVBoxLayout(self)},
-       elevationGroupBox_ {},
        elevationButtons_ {},
-       elevationCuts_ {},
-       elevationButtonsChanged_ {false},
-       resizeElevationButtons_ {false},
-       settingsGroupBox_ {},
-       declutterCheckBox_ {}
+       elevationCuts_ {}
    {
+      // NOLINTBEGIN(cppcoreguidelines-owning-memory) Qt takes care of this
       layout_->setContentsMargins(0, 0, 0, 0);
+
+      incomingElevationLabel_ = new QLabel("", self);
+      layout_->addWidget(incomingElevationLabel_);
 
       elevationGroupBox_ = new QGroupBox(tr("Elevation"), self);
       new ui::FlowLayout(elevationGroupBox_);
@@ -51,6 +51,7 @@ public:
       settingsLayout->addWidget(declutterCheckBox_);
 
       settingsGroupBox_->setVisible(false);
+      // NOLINTEND(cppcoreguidelines-owning-memory) Qt takes care of this
 
       QObject::connect(hotkeyManager_.get(),
                        &manager::HotkeyManager::HotkeyPressed,
@@ -66,14 +67,15 @@ public:
    Level2SettingsWidget* self_;
    QLayout*              layout_;
 
-   QGroupBox*              elevationGroupBox_;
+   QGroupBox*              elevationGroupBox_ {};
+   QLabel*                 incomingElevationLabel_ {};
    std::list<QToolButton*> elevationButtons_;
    std::vector<float>      elevationCuts_;
-   bool                    elevationButtonsChanged_;
-   bool                    resizeElevationButtons_;
+   bool                    elevationButtonsChanged_ {};
+   bool                    resizeElevationButtons_ {};
 
-   QGroupBox* settingsGroupBox_;
-   QCheckBox* declutterCheckBox_;
+   QGroupBox* settingsGroupBox_ {};
+   QCheckBox* declutterCheckBox_ {};
 
    float        currentElevation_ {};
    QToolButton* currentElevationButton_ {nullptr};
@@ -240,12 +242,29 @@ void Level2SettingsWidget::UpdateElevationSelection(float elevation)
    p->currentElevationButton_ = newElevationButton;
 }
 
+void Level2SettingsWidget::UpdateIncomingElevation(
+   std::optional<float> incomingElevation)
+{
+   if (incomingElevation.has_value())
+   {
+      p->incomingElevationLabel_->setText(
+         "Incoming Elevation: " + QString::number(*incomingElevation, 'f', 1) +
+         common::Characters::DEGREE);
+   }
+   else
+   {
+      p->incomingElevationLabel_->setText("Incoming Elevation: None");
+   }
+}
+
 void Level2SettingsWidget::UpdateSettings(map::MapWidget* activeMap)
 {
    std::optional<float> currentElevationOption = activeMap->GetElevation();
    const float          currentElevation =
       currentElevationOption.has_value() ? *currentElevationOption : 0.0f;
-   std::vector<float> elevationCuts    = activeMap->GetElevationCuts();
+   const std::vector<float>   elevationCuts = activeMap->GetElevationCuts();
+   const std::optional<float> incomingElevation =
+      activeMap->GetIncomingLevel2Elevation();
 
    if (p->elevationCuts_ != elevationCuts)
    {
@@ -279,6 +298,7 @@ void Level2SettingsWidget::UpdateSettings(map::MapWidget* activeMap)
    }
 
    UpdateElevationSelection(currentElevation);
+   UpdateIncomingElevation(incomingElevation);
 }
 
 } // namespace ui

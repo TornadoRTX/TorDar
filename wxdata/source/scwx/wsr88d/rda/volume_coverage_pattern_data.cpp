@@ -220,7 +220,19 @@ uint16_t VolumeCoveragePatternData::number_of_base_tilts() const
 
 double VolumeCoveragePatternData::elevation_angle(uint16_t e) const
 {
-   return p->elevationCuts_[e].elevationAngle_ * ANGLE_DATA_SCALE;
+
+   double elevationAngleConverted =
+      p->elevationCuts_[e].elevationAngle_ * ANGLE_DATA_SCALE;
+   // Any elevation above 90 degrees should be interpreted as a
+   // negative angle
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+   if (elevationAngleConverted > 90)
+   {
+      elevationAngleConverted -= 360;
+   }
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+
+   return elevationAngleConverted;
 }
 
 uint16_t VolumeCoveragePatternData::elevation_angle_raw(uint16_t e) const

@@ -43,10 +43,11 @@ public:
 
    [[nodiscard]] const std::vector<float>&
    coordinates(common::RadialSize radialSize, bool smoothingEnabled) const;
-   [[nodiscard]] const scwx::util::time_zone*       default_time_zone() const;
-   [[nodiscard]] bool                               is_tdwr() const;
-   [[nodiscard]] float                              gate_size() const;
-   [[nodiscard]] std::string                        radar_id() const;
+   [[nodiscard]] const scwx::util::time_zone* default_time_zone() const;
+   [[nodiscard]] float                        gate_size() const;
+   [[nodiscard]] std::optional<float> incoming_level_2_elevation() const;
+   [[nodiscard]] bool                 is_tdwr() const;
+   [[nodiscard]] std::string          radar_id() const;
    [[nodiscard]] std::shared_ptr<config::RadarSite> radar_site() const;
 
    void Initialize();
@@ -147,7 +148,9 @@ signals:
    void Level3ProductsChanged();
    void NewDataAvailable(common::RadarProductGroup             group,
                          const std::string&                    product,
+                         bool                                  isChunks,
                          std::chrono::system_clock::time_point latestTime);
+   void IncomingLevel2ElevationChanged(std::optional<float> incomingElevation);
 
 private:
    std::unique_ptr<RadarProductManagerImpl> p;

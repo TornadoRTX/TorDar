@@ -5,6 +5,7 @@
 #include <scwx/util/logger.hpp>
 #include <scwx/util/rangebuf.hpp>
 #include <scwx/util/time.hpp>
+#include <scwx/common/geographic.hpp>
 
 #include <fstream>
 #include <sstream>
@@ -137,7 +138,7 @@ Ar2vFile::GetElevationScan(rda::DataBlockType                    dataBlockType,
                            float                                 elevation,
                            std::chrono::system_clock::time_point time) const
 {
-   logger_->debug("GetElevationScan: {} degrees", elevation);
+   logger_->trace("GetElevationScan: {} degrees", elevation);
 
    std::shared_ptr<rda::ElevationScan> elevationScan = nullptr;
    float                               elevationCut  = 0.0f;
@@ -272,7 +273,7 @@ bool Ar2vFile::LoadData(std::istream& is)
 
 std::size_t Ar2vFileImpl::DecompressLDMRecords(std::istream& is)
 {
-   logger_->debug("Decompressing LDM Records");
+   logger_->trace("Decompressing LDM Records");
 
    std::size_t numRecords = 0;
 
@@ -320,14 +321,14 @@ std::size_t Ar2vFileImpl::DecompressLDMRecords(std::istream& is)
       ++numRecords;
    }
 
-   logger_->debug("Decompressed {} LDM Records", numRecords);
+   logger_->trace("Decompressed {} LDM Records", numRecords);
 
    return numRecords;
 }
 
 void Ar2vFileImpl::ParseLDMRecords()
 {
-   logger_->debug("Parsing LDM Records");
+   logger_->trace("Parsing LDM Records");
 
    std::size_t count = 0;
 
@@ -444,13 +445,11 @@ void Ar2vFileImpl::ProcessRadarData(
 
 void Ar2vFileImpl::IndexFile()
 {
-   logger_->debug("Indexing file");
-
-   constexpr float scaleFactor = 8.0f / 0.043945f;
+   logger_->trace("Indexing file");
 
    for (auto& elevationCut : radarData_)
    {
-      std::uint16_t     elevationAngle {};
+      float             elevationAngle {};
       rda::WaveformType waveformType = rda::WaveformType::Unknown;
 
       std::shared_ptr<rda::GenericRadarData>& radial0 =
@@ -466,14 +465,15 @@ void Ar2vFileImpl::IndexFile()
 
       if (vcpData_ != nullptr)
       {
-         elevationAngle = vcpData_->elevation_angle_raw(elevationCut.first);
-         waveformType   = vcpData_->waveform_type(elevationCut.first);
+         elevationAngle =
+            static_cast<float>(vcpData_->elevation_angle(elevationCut.first));
+         waveformType = vcpData_->waveform_type(elevationCut.first);
       }
       else if ((digitalRadarData0 =
                    std::dynamic_pointer_cast<rda::DigitalRadarData>(radial0)) !=
                nullptr)
       {
-         elevationAngle = digitalRadarData0->elevation_angle_raw();
+         elevationAngle = digitalRadarData0->elevation_angle().value();
       }
       else
       {
@@ -501,19 +501,236 @@ void Ar2vFileImpl::IndexFile()
             auto time = util::TimePoint(radial0->modified_julian_date(),
                                         radial0->collection_time());
 
-            // NOLINTNEXTLINE This conversion is accurate
-            float elevationAngleConverted = elevationAngle / scaleFactor;
-            // Any elevation above 90 degrees should be interpreted as a
-            // negative angle
-            // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
-            if (elevationAngleConverted > 90)
-            {
-               elevationAngleConverted -= 360;
-            }
-            // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+            index_[dataBlockType][elevationAngle][time] = elevationCut.second;
+         }
+      }
+   }
+}
 
-            index_[dataBlockType][elevationAngleConverted][time] =
-               elevationCut.second;
+bool Ar2vFile::LoadLDMRecords(std::istream& is)
+{
+   const size_t decompressedRecords = p->DecompressLDMRecords(is);
+   if (decompressedRecords == 0)
+   {
+      p->ParseLDMRecord(is);
+   }
+   else
+   {
+      p->ParseLDMRecords();
+   }
+
+   return true;
+}
+
+bool Ar2vFile::IndexFile()
+{
+   p->IndexFile();
+   return true;
+}
+
+// NOLINTNEXTLINE
+bool IsRadarDataIncomplete(
+   const std::shared_ptr<const rda::ElevationScan>& radarData)
+{
+   // Assume the data is incomplete when the delta between the first and last
+   // angles is greater than 2.5 degrees.
+   constexpr units::degrees<float> kIncompleteDataAngleThreshold_ {2.5};
+
+   const units::degrees<float> firstAngle =
+      radarData->cbegin()->second->azimuth_angle();
+   const units::degrees<float> lastAngle =
+      radarData->crbegin()->second->azimuth_angle();
+   const units::degrees<float> angleDelta =
+      common::GetAngleDelta(firstAngle, lastAngle);
+
+   return angleDelta > kIncompleteDataAngleThreshold_;
+}
+
+Ar2vFile::Ar2vFile(const std::shared_ptr<Ar2vFile>& current,
+                   const std::shared_ptr<Ar2vFile>& last) :
+    Ar2vFile()
+{
+   // This is only used to index right now, so not a huge deal
+   p->vcpData_ = nullptr;
+
+   // Reconstruct index from the other's indexes
+   if (current != nullptr)
+   {
+      for (const auto& type : current->p->index_)
+      {
+         for (const auto& elevation : type.second)
+         {
+            // Get the most recent scan
+            const auto& mostRecent = elevation.second.crbegin();
+            if (mostRecent == elevation.second.crend())
+            {
+               continue;
+            }
+
+            // Add previous scans for stepping back in time
+            for (auto scan = ++(elevation.second.rbegin());
+                 scan != elevation.second.rend();
+                 ++scan)
+            {
+               p->index_[type.first][elevation.first][scan->first] =
+                  scan->second;
+            }
+
+            // Merge this scan with the last one if it is incomplete
+            if (IsRadarDataIncomplete(mostRecent->second))
+            {
+               std::shared_ptr<rda::ElevationScan> secondMostRecent = nullptr;
+
+               // check if this volume scan has an earlier elevation scan
+               auto possibleSecondMostRecent = elevation.second.rbegin();
+               ++possibleSecondMostRecent;
+
+               if (possibleSecondMostRecent == elevation.second.rend())
+               {
+                  if (last == nullptr)
+                  {
+                     // Nothing to merge with
+                     p->index_[type.first][elevation.first][mostRecent->first] =
+                        mostRecent->second;
+                     continue;
+                  }
+
+                  // get the scan from the last scan
+                  auto elevationScan =
+                     std::get<std::shared_ptr<rda::ElevationScan>>(
+                        last->GetElevationScan(
+                           type.first, elevation.first, {}));
+                  if (elevationScan == nullptr)
+                  {
+                     // Nothing to merge with
+                     p->index_[type.first][elevation.first][mostRecent->first] =
+                        mostRecent->second;
+                     continue;
+                  }
+
+                  secondMostRecent = elevationScan;
+               }
+               else
+               {
+                  secondMostRecent = possibleSecondMostRecent->second;
+               }
+
+               // Make the new scan
+               auto newScan = std::make_shared<rda::ElevationScan>();
+
+               // Copy over the new radials
+               for (const auto& radial : *(mostRecent->second))
+               {
+                  (*newScan)[radial.first] = radial.second;
+               }
+
+               /* Correctly order the old radials. The radials need to be in
+                * order for the rendering to work, and the index needs to start
+                * at 0 and increase by one from there. Since the new radial
+                * should have index 0, the old radial needs to be reshaped to
+                * match the new radials indexing.
+                */
+
+               const double lowestAzm =
+                  mostRecent->second->cbegin()->second->azimuth_angle().value();
+               const double heighestAzm = mostRecent->second->crbegin()
+                                             ->second->azimuth_angle()
+                                             .value();
+               std::uint16_t index = mostRecent->second->crbegin()->first + 1;
+
+               // Sort by the azimuth. Makes the rest of this way easier
+               auto secondMostRecentAzmMap =
+                  std::map<float, std::shared_ptr<rda::GenericRadarData>>();
+               for (const auto& radial : *secondMostRecent)
+               {
+                  secondMostRecentAzmMap[radial.second->azimuth_angle()
+                                            .value()] = radial.second;
+               }
+
+               if (lowestAzm <= heighestAzm) // New scan does not contain 0/360
+               {
+                  // Get the radials following the new radials
+                  for (const auto& radial : secondMostRecentAzmMap)
+                  {
+                     if (radial.first > heighestAzm)
+                     {
+                        (*newScan)[index] = radial.second;
+                        ++index;
+                     }
+                  }
+                  // Get the radials before the new radials
+                  for (const auto& radial : secondMostRecentAzmMap)
+                  {
+                     if (radial.first < lowestAzm)
+                     {
+                        (*newScan)[index] = radial.second;
+                        ++index;
+                     }
+                     else
+                     {
+                        break;
+                     }
+                  }
+               }
+               else // New scan includes 0/360
+               {
+                  // The radials will already be in the right order
+                  for (const auto& radial : secondMostRecentAzmMap)
+                  {
+                     if (radial.first > heighestAzm && radial.first < lowestAzm)
+                     {
+                        (*newScan)[index] = radial.second;
+                        ++index;
+                     }
+                  }
+               }
+
+               p->index_[type.first][elevation.first][mostRecent->first] =
+                  newScan;
+            }
+            else
+            {
+               p->index_[type.first][elevation.first][mostRecent->first] =
+                  mostRecent->second;
+            }
+         }
+      }
+   }
+
+   // Go though last, adding other elevations
+   if (last != nullptr)
+   {
+      for (const auto& type : last->p->index_)
+      {
+         // Find the highest elevation this type has for the current scan
+         // Start below any reasonable elevation
+         // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
+         float       highestCurrentElevation = -90;
+         const auto& elevationScans          = p->index_.find(type.first);
+         if (elevationScans != p->index_.cend())
+         {
+            const auto& highestElevation = elevationScans->second.crbegin();
+            if (highestElevation != elevationScans->second.crend())
+            {
+               // Add a slight offset to ensure good floating point compare.
+               // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
+               highestCurrentElevation = highestElevation->first + 0.01f;
+            }
+         }
+
+         for (const auto& elevation : type.second)
+         {
+            // Only add elevations above the current scan's elevation
+            if (elevation.first > highestCurrentElevation)
+            {
+               const auto& mostRecent = elevation.second.crbegin();
+               if (mostRecent == elevation.second.crend())
+               {
+                  continue;
+               }
+               p->index_[type.first][elevation.first][mostRecent->first] =
+                  mostRecent->second;
+            }
          }
       }
    }
