@@ -2,27 +2,25 @@
 
 #include <scwx/qt/map/generic_layer.hpp>
 
-namespace scwx
+namespace scwx::qt::map
 {
-namespace qt
-{
-namespace map
-{
-
-class RadarProductLayerImpl;
 
 class RadarProductLayer : public GenericLayer
 {
+   Q_DISABLE_COPY_MOVE(RadarProductLayer)
+
 public:
-   explicit RadarProductLayer(std::shared_ptr<MapContext> context);
+   explicit RadarProductLayer(std::shared_ptr<gl::GlContext> glContext);
    ~RadarProductLayer();
 
-   void Initialize() override final;
-   void Render(const QMapLibre::CustomLayerRenderParameters&) override final;
-   void Deinitialize() override final;
+   void Initialize(const std::shared_ptr<MapContext>& mapContext) final;
+   void Render(const std::shared_ptr<MapContext>& mapContext,
+               const QMapLibre::CustomLayerRenderParameters&) final;
+   void Deinitialize() final;
 
-   virtual bool
-   RunMousePicking(const QMapLibre::CustomLayerRenderParameters& params,
+   bool
+   RunMousePicking(const std::shared_ptr<MapContext>&            mapContext,
+                   const QMapLibre::CustomLayerRenderParameters& params,
                    const QPointF&                                mouseLocalPos,
                    const QPointF&                                mouseGlobalPos,
                    const glm::vec2&                              mouseCoords,
@@ -30,13 +28,12 @@ public:
                    std::shared_ptr<types::EventHandler>& eventHandler) override;
 
 private:
-   void UpdateColorTable();
-   void UpdateSweep();
+   void UpdateColorTable(const std::shared_ptr<MapContext>& mapContext);
+   void UpdateSweep(const std::shared_ptr<MapContext>& mapContext);
 
 private:
-   std::unique_ptr<RadarProductLayerImpl> p;
+   class Impl;
+   std::unique_ptr<Impl> p;
 };
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

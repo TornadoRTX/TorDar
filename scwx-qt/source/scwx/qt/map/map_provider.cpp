@@ -5,11 +5,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 static const std::unordered_map<MapProvider, std::string> mapProviderName_ {
@@ -243,6 +239,4 @@ const MapProviderInfo& GetMapProviderInfo(MapProvider mapProvider)
    return mapProviderInfo_.at(mapProvider);
 }
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

@@ -1,32 +1,34 @@
 #include <scwx/qt/map/generic_layer.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
-class GenericLayerImpl
+class GenericLayer::Impl
 {
 public:
-   explicit GenericLayerImpl(std::shared_ptr<MapContext> context) :
-       context_ {context}
+   explicit Impl(std::shared_ptr<gl::GlContext> glContext) :
+       glContext_ {std::move(glContext)}
    {
    }
 
-   ~GenericLayerImpl() {}
+   ~Impl() = default;
 
-   std::shared_ptr<MapContext> context_;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
+
+   std::shared_ptr<gl::GlContext> glContext_;
 };
 
-GenericLayer::GenericLayer(std::shared_ptr<MapContext> context) :
-    p(std::make_unique<GenericLayerImpl>(context))
+GenericLayer::GenericLayer(std::shared_ptr<gl::GlContext> glContext) :
+    p(std::make_unique<Impl>(std::move(glContext)))
 {
 }
 GenericLayer::~GenericLayer() = default;
 
 bool GenericLayer::RunMousePicking(
+   const std::shared_ptr<MapContext>& /* mapContext */,
    const QMapLibre::CustomLayerRenderParameters& /* params */,
    const QPointF& /* mouseLocalPos */,
    const QPointF& /* mouseGlobalPos */,
@@ -38,11 +40,9 @@ bool GenericLayer::RunMousePicking(
    return false;
 }
 
-std::shared_ptr<MapContext> GenericLayer::context() const
+std::shared_ptr<gl::GlContext> GenericLayer::gl_context() const
 {
-   return p->context_;
+   return p->glContext_;
 }
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

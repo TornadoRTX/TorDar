@@ -6,14 +6,8 @@
 #include <scwx/qt/types/text_event_key.hpp>
 
 #include <memory>
-#include <string>
-#include <vector>
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 class AlertLayer : public DrawLayer
@@ -22,13 +16,14 @@ class AlertLayer : public DrawLayer
    Q_DISABLE_COPY_MOVE(AlertLayer)
 
 public:
-   explicit AlertLayer(const std::shared_ptr<MapContext>& context,
-                       scwx::awips::Phenomenon            phenomenon);
+   explicit AlertLayer(const std::shared_ptr<gl::GlContext>& glContext,
+                       scwx::awips::Phenomenon               phenomenon);
    ~AlertLayer();
 
-   void Initialize() override final;
-   void Render(const QMapLibre::CustomLayerRenderParameters&) override final;
-   void Deinitialize() override final;
+   void Initialize(const std::shared_ptr<MapContext>& mapContext) final;
+   void Render(const std::shared_ptr<MapContext>& mapContext,
+               const QMapLibre::CustomLayerRenderParameters&) final;
+   void Deinitialize() final;
 
    static void InitializeHandler();
 
@@ -40,6 +35,4 @@ private:
    std::unique_ptr<Impl> p;
 };
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

@@ -1,10 +1,6 @@
 #pragma once
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 struct MapSettings
@@ -22,6 +18,4 @@ struct MapSettings
    bool radarWireframeEnabled_ {false};
 };
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

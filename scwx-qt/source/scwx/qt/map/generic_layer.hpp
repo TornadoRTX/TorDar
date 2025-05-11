@@ -1,5 +1,6 @@
 #pragma once
 
+#include <scwx/qt/gl/gl_context.hpp>
 #include <scwx/qt/map/map_context.hpp>
 #include <scwx/qt/types/event_types.hpp>
 #include <scwx/common/geographic.hpp>
@@ -10,30 +11,27 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <qmaplibre.hpp>
 
-namespace scwx
+namespace scwx::qt::map
 {
-namespace qt
-{
-namespace map
-{
-
-class GenericLayerImpl;
 
 class GenericLayer : public QObject
 {
    Q_OBJECT
+   Q_DISABLE_COPY_MOVE(GenericLayer)
 
 public:
-   explicit GenericLayer(std::shared_ptr<MapContext> context);
+   explicit GenericLayer(std::shared_ptr<gl::GlContext> glContext);
    virtual ~GenericLayer();
 
-   virtual void Initialize()                                          = 0;
-   virtual void Render(const QMapLibre::CustomLayerRenderParameters&) = 0;
-   virtual void Deinitialize()                                        = 0;
+   virtual void Initialize(const std::shared_ptr<MapContext>& mapContext) = 0;
+   virtual void Render(const std::shared_ptr<MapContext>& mapContext,
+                       const QMapLibre::CustomLayerRenderParameters&)     = 0;
+   virtual void Deinitialize()                                            = 0;
 
    /**
     * @brief Run mouse picking on the layer.
     *
+    * @param [in] mapContext Map context
     * @param [in] params Custom layer render parameters
     * @param [in] mouseLocalPos Mouse cursor widget position
     * @param [in] mouseGlobalPos Mouse cursor screen position
@@ -44,7 +42,8 @@ public:
     * @return true if a draw item was picked, otherwise false
     */
    virtual bool
-   RunMousePicking(const QMapLibre::CustomLayerRenderParameters& params,
+   RunMousePicking(const std::shared_ptr<MapContext>&            mapContext,
+                   const QMapLibre::CustomLayerRenderParameters& params,
                    const QPointF&                                mouseLocalPos,
                    const QPointF&                                mouseGlobalPos,
                    const glm::vec2&                              mouseCoords,
@@ -55,12 +54,11 @@ signals:
    void NeedsRendering();
 
 protected:
-   std::shared_ptr<MapContext> context() const;
+   [[nodiscard]] std::shared_ptr<gl::GlContext> gl_context() const;
 
 private:
-   std::unique_ptr<GenericLayerImpl> p;
+   class Impl;
+   std::unique_ptr<Impl> p;
 };
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

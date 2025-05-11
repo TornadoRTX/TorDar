@@ -1,6 +1,5 @@
 #pragma once
 
-#include <scwx/qt/gl/gl_context.hpp>
 #include <scwx/qt/map/map_provider.hpp>
 #include <scwx/common/geographic.hpp>
 #include <scwx/common/products.hpp>
@@ -9,27 +8,25 @@
 #include <qmaplibre.hpp>
 #include <QMargins>
 
-namespace scwx::qt
-{
-namespace view
+namespace scwx::qt::view
 {
 
 class OverlayProductView;
 class RadarProductView;
 
-} // namespace view
+} // namespace scwx::qt::view
 
-namespace map
+namespace scwx::qt::map
 {
 
 struct MapSettings;
 
-class MapContext : public gl::GlContext
+class MapContext
 {
 public:
    explicit MapContext(
       std::shared_ptr<view::RadarProductView> radarProductView = nullptr);
-   ~MapContext() override;
+   ~MapContext();
 
    MapContext(const MapContext&)            = delete;
    MapContext& operator=(const MapContext&) = delete;
@@ -76,5 +73,4 @@ private:
    std::unique_ptr<Impl> p;
 };
 
-} // namespace map
-} // namespace scwx::qt
+} // namespace scwx::qt::map

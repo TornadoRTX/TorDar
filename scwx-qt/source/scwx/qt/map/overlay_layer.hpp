@@ -2,42 +2,37 @@
 
 #include <scwx/qt/map/draw_layer.hpp>
 
-namespace scwx
+namespace scwx::qt::map
 {
-namespace qt
-{
-namespace map
-{
-
-class OverlayLayerImpl;
 
 class OverlayLayer : public DrawLayer
 {
    Q_DISABLE_COPY_MOVE(OverlayLayer)
 
 public:
-   explicit OverlayLayer(std::shared_ptr<MapContext> context);
+   explicit OverlayLayer(const std::shared_ptr<gl::GlContext>& glContext);
    ~OverlayLayer();
 
-   void Initialize() override final;
-   void Render(const QMapLibre::CustomLayerRenderParameters&) override final;
-   void Deinitialize() override final;
+   void Initialize(const std::shared_ptr<MapContext>& mapContext) final;
+   void Render(const std::shared_ptr<MapContext>& mapContext,
+               const QMapLibre::CustomLayerRenderParameters&) final;
+   void Deinitialize() final;
 
-   bool RunMousePicking(
-      const QMapLibre::CustomLayerRenderParameters& params,
-      const QPointF&                                mouseLocalPos,
-      const QPointF&                                mouseGlobalPos,
-      const glm::vec2&                              mouseCoords,
-      const common::Coordinate&                     mouseGeoCoords,
-      std::shared_ptr<types::EventHandler>& eventHandler) override final;
+   bool
+   RunMousePicking(const std::shared_ptr<MapContext>&            mapContext,
+                   const QMapLibre::CustomLayerRenderParameters& params,
+                   const QPointF&                                mouseLocalPos,
+                   const QPointF&                                mouseGlobalPos,
+                   const glm::vec2&                              mouseCoords,
+                   const common::Coordinate&                     mouseGeoCoords,
+                   std::shared_ptr<types::EventHandler>& eventHandler) final;
 
 public slots:
    void UpdateSweepTimeNextFrame();
 
 private:
-   std::unique_ptr<OverlayLayerImpl> p;
+   class Impl;
+   std::unique_ptr<Impl> p;
 };
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

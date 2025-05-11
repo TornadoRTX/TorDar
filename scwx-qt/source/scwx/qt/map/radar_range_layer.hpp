@@ -2,13 +2,7 @@
 
 #include <qmaplibre.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
-{
-namespace RadarRangeLayer
+namespace scwx::qt::map::RadarRangeLayer
 {
 
 void Add(std::shared_ptr<QMapLibre::Map> map,
@@ -19,7 +13,4 @@ void Update(std::shared_ptr<QMapLibre::Map> map,
             float                           range,
             QMapLibre::Coordinate           center);
 
-} // namespace RadarRangeLayer
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map::RadarRangeLayer

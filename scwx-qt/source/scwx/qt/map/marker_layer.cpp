@@ -5,16 +5,12 @@
 #include <scwx/qt/types/marker_types.hpp>
 #include <scwx/qt/ui/edit_marker_dialog.hpp>
 
+#include <string>
+
 #include <QGeoPositionInfo>
 #include <QMouseEvent>
 
-#include <string>
-
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 static const std::string logPrefix_ = "scwx::qt::map::marker_layer";
@@ -23,14 +19,20 @@ static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 class MarkerLayer::Impl
 {
 public:
-   explicit Impl(MarkerLayer* self, std::shared_ptr<MapContext> context) :
+   explicit Impl(MarkerLayer*                          self,
+                 const std::shared_ptr<gl::GlContext>& glContext) :
        self_ {self},
-       geoIcons_ {std::make_shared<gl::draw::GeoIcons>(context)},
+       geoIcons_ {std::make_shared<gl::draw::GeoIcons>(glContext)},
        editMarkerDialog_ {std::make_shared<ui::EditMarkerDialog>()}
    {
       ConnectSignals();
    }
    ~Impl() = default;
+
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    void ReloadMarkers();
    void ConnectSignals();
@@ -42,7 +44,7 @@ public:
 
    MarkerLayer* self_;
 
-   std::shared_ptr<gl::draw::GeoIcons> geoIcons_;
+   std::shared_ptr<gl::draw::GeoIcons>   geoIcons_;
    std::shared_ptr<ui::EditMarkerDialog> editMarkerDialog_;
 };
 
@@ -128,19 +130,19 @@ void MarkerLayer::Impl::ReloadMarkers()
    Q_EMIT self_->NeedsRendering();
 }
 
-MarkerLayer::MarkerLayer(const std::shared_ptr<MapContext>& context) :
-    DrawLayer(context, "MarkerLayer"),
-    p(std::make_unique<MarkerLayer::Impl>(this, context))
+MarkerLayer::MarkerLayer(const std::shared_ptr<gl::GlContext>& glContext) :
+    DrawLayer(glContext, "MarkerLayer"),
+    p(std::make_unique<MarkerLayer::Impl>(this, glContext))
 {
    AddDrawItem(p->geoIcons_);
 }
 
 MarkerLayer::~MarkerLayer() = default;
 
-void MarkerLayer::Initialize()
+void MarkerLayer::Initialize(const std::shared_ptr<MapContext>& mapContext)
 {
    logger_->debug("Initialize()");
-   DrawLayer::Initialize();
+   DrawLayer::Initialize(mapContext);
 
    p->set_icon_sheets();
    p->ReloadMarkers();
@@ -160,11 +162,12 @@ void MarkerLayer::Impl::set_icon_sheets()
    geoIcons_->FinishIconSheets();
 }
 
-void MarkerLayer::Render(const QMapLibre::CustomLayerRenderParameters& params)
+void MarkerLayer::Render(const std::shared_ptr<MapContext>& mapContext,
+                         const QMapLibre::CustomLayerRenderParameters& params)
 {
-   gl::OpenGLFunctions& gl = context()->gl();
+   gl::OpenGLFunctions& gl = gl_context()->gl();
 
-   DrawLayer::Render(params);
+   DrawLayer::Render(mapContext, params);
 
    SCWX_GL_CHECK_ERROR();
 }
@@ -176,6 +179,4 @@ void MarkerLayer::Deinitialize()
    DrawLayer::Deinitialize();
 }
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map

@@ -1,4 +1,3 @@
-#include <ranges>
 #include <scwx/qt/map/map_widget.hpp>
 #include <scwx/qt/gl/gl.hpp>
 #include <scwx/qt/manager/font_manager.hpp>
@@ -32,7 +31,9 @@
 #include <scwx/util/time.hpp>
 
 #include <algorithm>
+#include <ranges>
 #include <set>
+#include <utility>
 
 #include <backends/imgui_impl_opengl3.h>
 #include <backends/imgui_impl_qt.hpp>
@@ -57,11 +58,7 @@
 #include <QString>
 #include <QTextDocument>
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 static const std::string logPrefix_ = "scwx::qt::map::map_widget";
@@ -72,14 +69,15 @@ class MapWidgetImpl : public QObject
    Q_OBJECT
 
 public:
-   explicit MapWidgetImpl(MapWidget*                 widget,
-                          std::size_t                id,
-                          const QMapLibre::Settings& settings) :
+   explicit MapWidgetImpl(MapWidget*                     widget,
+                          std::size_t                    id,
+                          QMapLibre::Settings            settings,
+                          std::shared_ptr<gl::GlContext> glContext) :
        id_ {id},
        uuid_ {boost::uuids::random_generator()()},
-       context_ {std::make_shared<MapContext>()},
+       glContext_ {std::move(glContext)},
        widget_ {widget},
-       settings_(settings),
+       settings_(std::move(settings)),
        map_(),
        layerList_ {},
        imGuiRendererInitialized_ {false},
@@ -158,9 +156,9 @@ public:
    void AddLayer(types::LayerType        type,
                  types::LayerDescription description,
                  const std::string&      before = {});
-   void AddLayer(const std::string&            id,
-                 std::shared_ptr<GenericLayer> layer,
-                 const std::string&            before = {});
+   void AddLayer(const std::string&                   id,
+                 const std::shared_ptr<GenericLayer>& layer,
+                 const std::string&                   before = {});
    void AddLayers();
    void AddPlacefileLayer(const std::string& placefileName,
                           const std::string& before);
@@ -198,7 +196,8 @@ public:
    std::size_t        id_;
    boost::uuids::uuid uuid_;
 
-   std::shared_ptr<MapContext> context_;
+   std::shared_ptr<MapContext>    context_ {std::make_shared<MapContext>()};
+   std::shared_ptr<gl::GlContext> glContext_;
 
    MapWidget*                      widget_;
    QMapLibre::Settings             settings_;
@@ -283,8 +282,10 @@ public slots:
    void Update();
 };
 
-MapWidget::MapWidget(std::size_t id, const QMapLibre::Settings& settings) :
-    p(std::make_unique<MapWidgetImpl>(this, id, settings))
+MapWidget::MapWidget(std::size_t                    id,
+                     const QMapLibre::Settings&     settings,
+                     std::shared_ptr<gl::GlContext> glContext) :
+    p(std::make_unique<MapWidgetImpl>(this, id, settings, std::move(glContext)))
 {
    if (settings::GeneralSettings::Instance().anti_aliasing_enabled().GetValue())
    {
@@ -1243,7 +1244,7 @@ void MapWidgetImpl::AddLayer(types::LayerType        type,
       // If there is a radar product view, create the radar product layer
       if (radarProductView != nullptr)
       {
-         radarProductLayer_ = std::make_shared<RadarProductLayer>(context_);
+         radarProductLayer_ = std::make_shared<RadarProductLayer>(glContext_);
          AddLayer(layerName, radarProductLayer_, before);
       }
    }
@@ -1252,7 +1253,7 @@ void MapWidgetImpl::AddLayer(types::LayerType        type,
       auto phenomenon = std::get<awips::Phenomenon>(description);
 
       std::shared_ptr<AlertLayer> alertLayer =
-         std::make_shared<AlertLayer>(context_, phenomenon);
+         std::make_shared<AlertLayer>(glContext_, phenomenon);
       AddLayer(fmt::format("alert.{}", awips::GetPhenomenonCode(phenomenon)),
                alertLayer,
                before);
@@ -1276,7 +1277,7 @@ void MapWidgetImpl::AddLayer(types::LayerType        type,
       {
       // Create the map overlay layer
       case types::InformationLayer::MapOverlay:
-         overlayLayer_ = std::make_shared<OverlayLayer>(context_);
+         overlayLayer_ = std::make_shared<OverlayLayer>(glContext_);
          AddLayer(layerName, overlayLayer_, before);
          break;
 
@@ -1284,14 +1285,14 @@ void MapWidgetImpl::AddLayer(types::LayerType        type,
       case types::InformationLayer::ColorTable:
          if (radarProductView != nullptr)
          {
-            colorTableLayer_ = std::make_shared<ColorTableLayer>(context_);
+            colorTableLayer_ = std::make_shared<ColorTableLayer>(glContext_);
             AddLayer(layerName, colorTableLayer_, before);
          }
          break;
 
       // Create the radar site layer
       case types::InformationLayer::RadarSite:
-         radarSiteLayer_ = std::make_shared<RadarSiteLayer>(context_);
+         radarSiteLayer_ = std::make_shared<RadarSiteLayer>(glContext_);
          AddLayer(layerName, radarSiteLayer_, before);
          connect(
             radarSiteLayer_.get(),
@@ -1307,7 +1308,7 @@ void MapWidgetImpl::AddLayer(types::LayerType        type,
 
       // Create the location marker layer
       case types::InformationLayer::Markers:
-         markerLayer_ = std::make_shared<MarkerLayer>(context_);
+         markerLayer_ = std::make_shared<MarkerLayer>(glContext_);
          AddLayer(layerName, markerLayer_, before);
          break;
 
@@ -1324,7 +1325,7 @@ void MapWidgetImpl::AddLayer(types::LayerType        type,
          if (radarProductView != nullptr)
          {
             overlayProductLayer_ =
-               std::make_shared<OverlayProductLayer>(context_);
+               std::make_shared<OverlayProductLayer>(glContext_);
             AddLayer(layerName, overlayProductLayer_, before);
          }
          break;
@@ -1354,7 +1355,7 @@ void MapWidgetImpl::AddPlacefileLayer(const std::string& placefileName,
                                       const std::string& before)
 {
    std::shared_ptr<PlacefileLayer> placefileLayer =
-      std::make_shared<PlacefileLayer>(context_, placefileName);
+      std::make_shared<PlacefileLayer>(glContext_, placefileName);
    placefileLayers_.push_back(placefileLayer);
    AddLayer(GetPlacefileLayerName(placefileName), placefileLayer, before);
 
@@ -1371,13 +1372,13 @@ MapWidgetImpl::GetPlacefileLayerName(const std::string& placefileName)
    return types::GetLayerName(types::LayerType::Placefile, placefileName);
 }
 
-void MapWidgetImpl::AddLayer(const std::string&            id,
-                             std::shared_ptr<GenericLayer> layer,
-                             const std::string&            before)
+void MapWidgetImpl::AddLayer(const std::string&                   id,
+                             const std::shared_ptr<GenericLayer>& layer,
+                             const std::string&                   before)
 {
    // QMapLibre::addCustomLayer will take ownership of the std::unique_ptr
    std::unique_ptr<QMapLibre::CustomLayerHostInterface> pHost =
-      std::make_unique<LayerWrapper>(layer);
+      std::make_unique<LayerWrapper>(layer, context_);
 
    try
    {
@@ -1545,7 +1546,8 @@ void MapWidget::initializeGL()
    logger_->debug("initializeGL()");
 
    makeCurrent();
-   p->context_->Initialize();
+
+   p->glContext_->Initialize();
 
    // Lock ImGui font atlas prior to new ImGui frame
    std::shared_lock imguiFontAtlasLock {
@@ -1599,7 +1601,7 @@ void MapWidget::paintGL()
 
    p->frameDraws_++;
 
-   p->context_->StartFrame();
+   p->glContext_->StartFrame();
 
    // Handle hotkey updates
    p->HandleHotkeyUpdates();
@@ -1708,7 +1710,8 @@ void MapWidgetImpl::RunMousePicking()
    for (auto it = genericLayers_.rbegin(); it != genericLayers_.rend(); ++it)
    {
       // Run mouse picking for each layer
-      if ((*it)->RunMousePicking(params,
+      if ((*it)->RunMousePicking(context_,
+                                 params,
                                  lastPos_,
                                  lastGlobalPos_,
                                  mouseScreenCoordinate,
@@ -2251,8 +2254,6 @@ void MapWidgetImpl::CheckLevel3Availability()
    }
 }
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map
 
 #include "map_widget.moc"

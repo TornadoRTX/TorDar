@@ -14,58 +14,52 @@
 #   pragma warning(pop)
 #endif
 
-namespace scwx
-{
-namespace qt
-{
-namespace map
+namespace scwx::qt::map
 {
 
 static const std::string logPrefix_ = "scwx::qt::map::color_table_layer";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 
-class ColorTableLayerImpl
+class ColorTableLayer::Impl
 {
 public:
-   explicit ColorTableLayerImpl() :
-       shaderProgram_(nullptr),
-       uMVPMatrixLocation_(GL_INVALID_INDEX),
-       vbo_ {GL_INVALID_INDEX},
-       vao_ {GL_INVALID_INDEX},
-       texture_ {GL_INVALID_INDEX},
-       colorTable_ {},
-       colorTableNeedsUpdate_ {true}
-   {
-   }
-   ~ColorTableLayerImpl() = default;
+   explicit Impl() = default;
+   ~Impl()         = default;
 
-   std::shared_ptr<gl::ShaderProgram> shaderProgram_;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
-   GLint                 uMVPMatrixLocation_;
-   std::array<GLuint, 2> vbo_;
-   GLuint                vao_;
-   GLuint                texture_;
+   std::shared_ptr<gl::ShaderProgram> shaderProgram_ {nullptr};
 
-   std::vector<boost::gil::rgba8_pixel_t> colorTable_;
+   GLint uMVPMatrixLocation_ {static_cast<GLint>(GL_INVALID_INDEX)};
+   std::array<GLuint, 2> vbo_ {GL_INVALID_INDEX};
+   GLuint                vao_ {GL_INVALID_INDEX};
+   GLuint                texture_ {GL_INVALID_INDEX};
 
-   bool colorTableNeedsUpdate_;
+   std::vector<boost::gil::rgba8_pixel_t> colorTable_ {};
+
+   bool colorTableNeedsUpdate_ {true};
 };
 
-ColorTableLayer::ColorTableLayer(std::shared_ptr<MapContext> context) :
-    GenericLayer(context), p(std::make_unique<ColorTableLayerImpl>())
+ColorTableLayer::ColorTableLayer(std::shared_ptr<gl::GlContext> glContext) :
+    GenericLayer(std::move(glContext)), p(std::make_unique<Impl>())
 {
 }
 ColorTableLayer::~ColorTableLayer() = default;
 
-void ColorTableLayer::Initialize()
+void ColorTableLayer::Initialize(const std::shared_ptr<MapContext>& mapContext)
 {
    logger_->debug("Initialize()");
 
-   gl::OpenGLFunctions& gl = context()->gl();
+   auto glContext = gl_context();
+
+   gl::OpenGLFunctions& gl = glContext->gl();
 
    // Load and configure overlay shader
    p->shaderProgram_ =
-      context()->GetShaderProgram(":/gl/texture1d.vert", ":/gl/texture1d.frag");
+      glContext->GetShaderProgram(":/gl/texture1d.vert", ":/gl/texture1d.frag");
 
    p->uMVPMatrixLocation_ =
       gl.glGetUniformLocation(p->shaderProgram_->id(), "uMVPMatrix");
@@ -109,20 +103,20 @@ void ColorTableLayer::Initialize()
    gl.glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 0, static_cast<void*>(0));
    gl.glEnableVertexAttribArray(1);
 
-   connect(context()->radar_product_view().get(),
+   connect(mapContext->radar_product_view().get(),
            &view::RadarProductView::ColorTableLutUpdated,
            this,
            [this]() { p->colorTableNeedsUpdate_ = true; });
 }
 
 void ColorTableLayer::Render(
+   const std::shared_ptr<MapContext>&            mapContext,
    const QMapLibre::CustomLayerRenderParameters& params)
 {
-   gl::OpenGLFunctions& gl               = context()->gl();
-   auto                 radarProductView = context()->radar_product_view();
+   gl::OpenGLFunctions& gl               = gl_context()->gl();
+   auto                 radarProductView = mapContext->radar_product_view();
 
-   if (context()->radar_product_view() == nullptr ||
-       !context()->radar_product_view()->IsInitialized())
+   if (radarProductView == nullptr || !radarProductView->IsInitialized())
    {
       // Defer rendering until view is initialized
       return;
@@ -182,11 +176,17 @@ void ColorTableLayer::Render(
       gl.glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
       gl.glDrawArrays(GL_TRIANGLES, 0, 6);
 
-      context()->set_color_table_margins(QMargins {0, 0, 0, 10});
+      static constexpr int kLeftMargin_   = 0;
+      static constexpr int kTopMargin_    = 0;
+      static constexpr int kRightMargin_  = 0;
+      static constexpr int kBottomMargin_ = 10;
+
+      mapContext->set_color_table_margins(
+         QMargins {kLeftMargin_, kTopMargin_, kRightMargin_, kBottomMargin_});
    }
    else
    {
-      context()->set_color_table_margins(QMargins {});
+      mapContext->set_color_table_margins(QMargins {});
    }
 
    SCWX_GL_CHECK_ERROR();
@@ -196,7 +196,7 @@ void ColorTableLayer::Deinitialize()
 {
    logger_->debug("Deinitialize()");
 
-   gl::OpenGLFunctions& gl = context()->gl();
+   gl::OpenGLFunctions& gl = gl_context()->gl();
 
    gl.glDeleteVertexArrays(1, &p->vao_);
    gl.glDeleteBuffers(2, p->vbo_.data());
@@ -206,10 +206,6 @@ void ColorTableLayer::Deinitialize()
    p->vao_                = GL_INVALID_INDEX;
    p->vbo_                = {GL_INVALID_INDEX};
    p->texture_            = GL_INVALID_INDEX;
-
-   context()->set_color_table_margins(QMargins {});
 }
 
-} // namespace map
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::map
