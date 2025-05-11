@@ -17,7 +17,7 @@ public:
    explicit RdaAdaptationData();
    ~RdaAdaptationData();
 
-   RdaAdaptationData(const RdaAdaptationData&) = delete;
+   RdaAdaptationData(const RdaAdaptationData&)            = delete;
    RdaAdaptationData& operator=(const RdaAdaptationData&) = delete;
 
    RdaAdaptationData(RdaAdaptationData&&) noexcept;
@@ -121,6 +121,8 @@ public:
    uint32_t    slonmin() const;
    char        slatdir() const;
    char        slondir() const;
+   double      dig_rcvr_clock_freq() const;
+   double      coho_freq() const;
    float       az_correction_factor() const;
    float       el_correction_factor() const;
    std::string site_name() const;
@@ -147,6 +149,11 @@ public:
    float       el_off_neutral_drive() const;
    float       az_intertia() const;
    float       el_inertia() const;
+   float       az_stow_angle() const;
+   float       el_stow_angle() const;
+   float       az_encoder_alignment() const;
+   float       el_encoder_alignment() const;
+   std::string refined_park() const;
    uint32_t    rvp8nv_iwaveguide_length() const;
    float       v_rnscale(unsigned i) const;
    float       vel_data_tover() const;
@@ -166,8 +173,8 @@ public:
    bool        gen_exercise() const;
    float       v_noise_tolerance() const;
    float       min_v_dyn_range() const;
-   float       zdr_bias_dgrad_lim() const;
-   float       baseline_zdr_bias() const;
+   float       zdr_offset_dgrad_lim() const;
+   float       baseline_zdr_offset() const;
    float       v_noise_long() const;
    float       v_noise_short() const;
    float       zdr_data_tover() const;

@@ -63,6 +63,15 @@ public:
       return f;
    }
 
+   static double SwapDouble(double d)
+   {
+      std::uint64_t temp;
+      std::memcpy(&temp, &d, sizeof(std::uint64_t));
+      temp = ntohll(temp);
+      std::memcpy(&d, &temp, sizeof(float));
+      return d;
+   }
+
    template<std::size_t _Size>
    static void SwapArray(std::array<float, _Size>& arr,
                          std::size_t               size = _Size)

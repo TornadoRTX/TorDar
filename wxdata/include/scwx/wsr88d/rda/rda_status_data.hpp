@@ -17,7 +17,7 @@ public:
    explicit RdaStatusData();
    ~RdaStatusData();
 
-   RdaStatusData(const RdaStatusData&) = delete;
+   RdaStatusData(const RdaStatusData&)            = delete;
    RdaStatusData& operator=(const RdaStatusData&) = delete;
 
    RdaStatusData(RdaStatusData&&) noexcept;
@@ -36,7 +36,7 @@ public:
    uint16_t operational_mode() const;
    uint16_t super_resolution_status() const;
    uint16_t clutter_mitigation_decision_status() const;
-   uint16_t avset_ebc_rda_log_data_status() const;
+   uint16_t rda_scan_and_data_flags() const;
    uint16_t rda_alarm_summary() const;
    uint16_t command_acknowledgement() const;
    uint16_t channel_control_status() const;
@@ -51,6 +51,7 @@ public:
    uint16_t performance_check_status() const;
    uint16_t alarm_codes(unsigned i) const;
    uint16_t signal_processing_options() const;
+   uint16_t downloaded_pattern_number() const;
    uint16_t status_version() const;
 
    bool Parse(std::istream& is);

@@ -17,536 +17,277 @@ static const auto logger_ = util::Logger::Create(logPrefix_);
 class PerformanceMaintenanceDataImpl
 {
 public:
-   explicit PerformanceMaintenanceDataImpl() :
-       loopBackSetStatus_ {0},
-       t1OutputFrames_ {0},
-       t1InputFrames_ {0},
-       routerMemoryUsed_ {0},
-       routerMemoryFree_ {0},
-       routerMemoryUtilization_ {0},
-       routeToRpg_ {0},
-       csuLossOfSignal_ {0},
-       csuLossOfFrames_ {0},
-       csuYellowAlarms_ {0},
-       csuBlueAlarms_ {0},
-       csu24HrErroredSeconds_ {0},
-       csu24HrSeverelyErroredSeconds_ {0},
-       csu24HrSeverelyErroredFramingSeconds_ {0},
-       csu24HrUnavailableSeconds_ {0},
-       csu24HrControlledSlipSeconds_ {0},
-       csu24HrPathCodingViolations_ {0},
-       csu24HrLineErroredSeconds_ {0},
-       csu24HrBurstyErroredSeconds_ {0},
-       csu24HrDegradedMinutes_ {0},
-       lanSwitchCpuUtilization_ {0},
-       lanSwitchMemoryUtilization_ {0},
-       ifdrChasisTemperature_ {0},
-       ifdrFpgaTemperature_ {0},
-       gpsSatellites_ {0},
-       ipcStatus_ {0},
-       commandedChannelControl_ {0},
-       polarization_ {0},
-       ameInternalTemperature_ {0.0f},
-       ameReceiverModuleTemperature_ {0.0f},
-       ameBiteCalModuleTemperature_ {0.0f},
-       amePeltierPulseWidthModulation_ {0},
-       amePeltierStatus_ {0},
-       ameADConverterStatus_ {0},
-       ameState_ {0},
-       ame3_3VPsVoltage_ {0.0f},
-       ame5VPsVoltage_ {0.0f},
-       ame6_5VPsVoltage_ {0.0f},
-       ame15VPsVoltage_ {0.0f},
-       ame48VPsVoltage_ {0.0f},
-       ameStaloPower_ {0.0f},
-       peltierCurrent_ {0.0f},
-       adcCalibrationReferenceVoltage_ {0.0f},
-       ameMode_ {0},
-       amePeltierMode_ {0},
-       amePeltierInsideFanCurrent_ {0.0f},
-       amePeltierOutsideFanCurrent_ {0.0f},
-       horizontalTrLimiterVoltage_ {0.0f},
-       verticalTrLimiterVoltage_ {0.0f},
-       adcCalibrationOffsetVoltage_ {0.0f},
-       adcCalibrationGainCorrection_ {0.0f},
-       rcpStatus_ {0},
-       rcpString_ {},
-       spipPowerButtons_ {0},
-       masterPowerAdministratorLoad_ {0.0f},
-       expansionPowerAdministratorLoad_ {0.0f},
-       _5VdcPs_ {0},
-       _15VdcPs_ {0},
-       _28VdcPs_ {0},
-       neg15VdcPs_ {0},
-       _45VdcPs_ {0},
-       filamentPsVoltage_ {0},
-       vacuumPumpPsVoltage_ {0},
-       focusCoilPsVoltage_ {0},
-       filamentPs_ {0},
-       klystronWarmup_ {0},
-       transmitterAvailable_ {0},
-       wgSwitchPosition_ {0},
-       wgPfnTransferInterlock_ {0},
-       maintenanceMode_ {0},
-       maintenanceRequired_ {0},
-       pfnSwitchPosition_ {0},
-       modulatorOverload_ {0},
-       modulatorInvCurrent_ {0},
-       modulatorSwitchFail_ {0},
-       mainPowerVoltage_ {0},
-       chargingSystemFail_ {0},
-       inverseDiodeCurrent_ {0},
-       triggerAmplifier_ {0},
-       circulatorTemperature_ {0},
-       spectrumFilterPressure_ {0},
-       wgArcVswr_ {0},
-       cabinetInterlock_ {0},
-       cabinetAirTemperature_ {0},
-       cabinetAirflow_ {0},
-       klystronCurrent_ {0},
-       klystronFilamentCurrent_ {0},
-       klystronVacionCurrent_ {0},
-       klystronAirTemperature_ {0},
-       klystronAirflow_ {0},
-       modulatorSwitchMaintenance_ {0},
-       postChargeRegulatorMaintenance_ {0},
-       wgPressureHumidity_ {0},
-       transmitterOvervoltage_ {0},
-       transmitterOvercurrent_ {0},
-       focusCoilCurrent_ {0},
-       focusCoilAirflow_ {0},
-       oilTemperature_ {0},
-       prfLimit_ {0},
-       transmitterOilLevel_ {0},
-       transmitterBatteryCharging_ {0},
-       highVoltageStatus_ {0},
-       transmitterRecyclingSummary_ {0},
-       transmitterInoperable_ {0},
-       transmitterAirFilter_ {0},
-       zeroTestBit_ {0},
-       oneTestBit_ {0},
-       xmtrSpipInterface_ {0},
-       transmitterSummaryStatus_ {0},
-       transmitterRfPower_ {0.0f},
-       horizontalXmtrPeakPower_ {0.0f},
-       xmtrPeakPower_ {0.0f},
-       verticalXmtrPeakPower_ {0.0f},
-       xmtrRfAvgPower_ {0.0f},
-       xmtrRecycleCount_ {0},
-       receiverBias_ {0.0f},
-       transmitImbalance_ {0.0f},
-       xmtrPowerMeterZero_ {0.0f},
-       acUnit1CompressorShutOff_ {0},
-       acUnit2CompressorShutOff_ {0},
-       generatorMaintenanceRequired_ {0},
-       generatorBatteryVoltage_ {0},
-       generatorEngine_ {0},
-       generatorVoltFrequency_ {0},
-       powerSource_ {0},
-       transitionalPowerSource_ {0},
-       generatorAutoRunOffSwitch_ {0},
-       aircraftHazardLighting_ {0},
-       equipmentShelterFireDetectionSystem_ {0},
-       equipmentShelterFireSmoke_ {0},
-       generatorShelterFireSmoke_ {0},
-       utilityVoltageFrequency_ {0},
-       siteSecurityAlarm_ {0},
-       securityEquipment_ {0},
-       securitySystem_ {0},
-       receiverConnectedToAntenna_ {0},
-       radomeHatch_ {0},
-       acUnit1FilterDirty_ {0},
-       acUnit2FilterDirty_ {0},
-       equipmentShelterTemperature_ {0.0f},
-       outsideAmbientTemperature_ {0.0f},
-       transmitterLeavingAirTemp_ {0.0f},
-       acUnit1DischargeAirTemp_ {0.0f},
-       generatorShelterTemperature_ {0.0f},
-       radomeAirTemperature_ {0.0f},
-       acUnit2DischargeAirTemp_ {0.0f},
-       spip15VPs_ {0.0f},
-       spipNeg15VPs_ {0.0f},
-       spip28VPsStatus_ {0},
-       spip5VPs_ {0.0f},
-       convertedGeneratorFuelLevel_ {0},
-       elevationPosDeadLimit_ {0},
-       _150VOvervoltage_ {0},
-       _150VUndervoltage_ {0},
-       elevationServoAmpInhibit_ {0},
-       elevationServoAmpShortCircuit_ {0},
-       elevationServoAmpOvertemp_ {0},
-       elevationMotorOvertemp_ {0},
-       elevationStowPin_ {0},
-       elevationHousing5VPs_ {0},
-       elevationNegDeadLimit_ {0},
-       elevationPosNormalLimit_ {0},
-       elevationNegNormalLimit_ {0},
-       elevationEncoderLight_ {0},
-       elevationGearboxOil_ {0},
-       elevationHandwheel_ {0},
-       elevationAmpPs_ {0},
-       azimuthServoAmpInhibit_ {0},
-       azimuthServoAmpShortCircuit_ {0},
-       azimuthServoAmpOvertemp_ {0},
-       azimuthMotorOvertemp_ {0},
-       azimuthStowPin_ {0},
-       azimuthHousing5VPs_ {0},
-       azimuthEncoderLight_ {0},
-       azimuthGearboxOil_ {0},
-       azimuthBullGearOil_ {0},
-       azimuthHandwheel_ {0},
-       azimuthServoAmpPs_ {0},
-       servo_ {0},
-       pedestalInterlockSwitch_ {0},
-       cohoClock_ {0},
-       rfGeneratorFrequencySelectOscillator_ {0},
-       rfGeneratorRfStalo_ {0},
-       rfGeneratorPhaseShiftedCoho_ {0},
-       _9VReceiverPs_ {0},
-       _5VReceiverPs_ {0},
-       _18VReceiverPs_ {0},
-       neg9VReceiverPs_ {0},
-       _5VSingleChannelRdaiuPs_ {0},
-       horizontalShortPulseNoise_ {0.0f},
-       horizontalLongPulseNoise_ {0.0f},
-       horizontalNoiseTemperature_ {0.0f},
-       verticalShortPulseNoise_ {0.0f},
-       verticalLongPulseNoise_ {0.0f},
-       verticalNoiseTemperature_ {0.0f},
-       horizontalLinearity_ {0.0f},
-       horizontalDynamicRange_ {0.0f},
-       horizontalDeltaDbz0_ {0.0f},
-       verticalDeltaDbz0_ {0.0f},
-       kdPeakMeasured_ {0.0f},
-       shortPulseHorizontalDbz0_ {0.0f},
-       longPulseHorizontalDbz0_ {0.0f},
-       velocityProcessed_ {0},
-       widthProcessed_ {0},
-       velocityRfGen_ {0},
-       widthRfGen_ {0},
-       horizontalI0_ {0.0f},
-       verticalI0_ {0.0f},
-       verticalDynamicRange_ {0.0f},
-       shortPulseVerticalDbz0_ {0.0f},
-       longPulseVerticalDbz0_ {0.0f},
-       horizontalPowerSense_ {0.0f},
-       verticalPowerSense_ {0.0f},
-       zdrBias_ {0.0f},
-       clutterSuppressionDelta_ {0.0f},
-       clutterSuppressionUnfilteredPower_ {0.0f},
-       clutterSuppressionFilteredPower_ {0.0f},
-       verticalLinearity_ {0.0f},
-       stateFileReadStatus_ {0},
-       stateFileWriteStatus_ {0},
-       bypassMapFileReadStatus_ {0},
-       bypassMapFileWriteStatus_ {0},
-       currentAdaptationFileReadStatus_ {0},
-       currentAdaptationFileWriteStatus_ {0},
-       censorZoneFileReadStatus_ {0},
-       censorZoneFileWriteStatus_ {0},
-       remoteVcpFileReadStatus_ {0},
-       remoteVcpFileWriteStatus_ {0},
-       baselineAdaptationFileReadStatus_ {0},
-       readStatusOfPrfSets_ {0},
-       clutterFilterMapFileReadStatus_ {0},
-       clutterFilterMapFileWriteStatus_ {0},
-       generatlDiskIoError_ {0},
-       rspStatus_ {0},
-       motherboardTemperature_ {0},
-       cpu1Temperature_ {0},
-       cpu2Temperature_ {0},
-       cpu1FanSpeed_ {0},
-       cpu2FanSpeed_ {0},
-       rspFan1Speed_ {0},
-       rspFan2Speed_ {0},
-       rspFan3Speed_ {0},
-       spipCommStatus_ {0},
-       hciCommStatus_ {0},
-       signalProcessorCommandStatus_ {0},
-       ameCommunicationStatus_ {0},
-       rmsLinkStatus_ {0},
-       rpgLinkStatus_ {0},
-       interpanelLinkStatus_ {0},
-       performanceCheckTime_ {0},
-       version_ {0}
-   {
-   }
-   ~PerformanceMaintenanceDataImpl() = default;
+   explicit PerformanceMaintenanceDataImpl() = default;
+   ~PerformanceMaintenanceDataImpl()         = default;
 
    // Communications
-   uint16_t loopBackSetStatus_;
-   uint32_t t1OutputFrames_;
-   uint32_t t1InputFrames_;
-   uint32_t routerMemoryUsed_;
-   uint32_t routerMemoryFree_;
-   uint16_t routerMemoryUtilization_;
-   uint16_t routeToRpg_;
-   uint32_t csuLossOfSignal_;
-   uint32_t csuLossOfFrames_;
-   uint32_t csuYellowAlarms_;
-   uint32_t csuBlueAlarms_;
-   uint32_t csu24HrErroredSeconds_;
-   uint32_t csu24HrSeverelyErroredSeconds_;
-   uint32_t csu24HrSeverelyErroredFramingSeconds_;
-   uint32_t csu24HrUnavailableSeconds_;
-   uint32_t csu24HrControlledSlipSeconds_;
-   uint32_t csu24HrPathCodingViolations_;
-   uint32_t csu24HrLineErroredSeconds_;
-   uint32_t csu24HrBurstyErroredSeconds_;
-   uint32_t csu24HrDegradedMinutes_;
-   uint32_t lanSwitchCpuUtilization_;
-   uint16_t lanSwitchMemoryUtilization_;
-   uint16_t ifdrChasisTemperature_;
-   uint16_t ifdrFpgaTemperature_;
-   int32_t  gpsSatellites_;
-   uint16_t ipcStatus_;
-   uint16_t commandedChannelControl_;
+   uint16_t loopBackSetStatus_ {0};
+   uint32_t t1OutputFrames_ {0};
+   uint32_t t1InputFrames_ {0};
+   uint32_t routerMemoryUsed_ {0};
+   uint32_t routerMemoryFree_ {0};
+   uint16_t routerMemoryUtilization_ {0};
+   uint16_t routeToRpg_ {0};
+   uint16_t t1PortStatus_ {0};
+   uint16_t routerDedicatedEthernetPortStatus_ {0};
+   uint16_t routerCommercialEthernetPortStatus_ {0};
+   uint32_t csu24HrErroredSeconds_ {0};
+   uint32_t csu24HrSeverelyErroredSeconds_ {0};
+   uint32_t csu24HrSeverelyErroredFramingSeconds_ {0};
+   uint32_t csu24HrUnavailableSeconds_ {0};
+   uint32_t csu24HrControlledSlipSeconds_ {0};
+   uint32_t csu24HrPathCodingViolations_ {0};
+   uint32_t csu24HrLineErroredSeconds_ {0};
+   uint32_t csu24HrBurstyErroredSeconds_ {0};
+   uint32_t csu24HrDegradedMinutes_ {0};
+   uint32_t lanSwitchCpuUtilization_ {0};
+   uint16_t lanSwitchMemoryUtilization_ {0};
+   uint16_t ifdrChasisTemperature_ {0};
+   uint16_t ifdrFpgaTemperature_ {0};
+   uint16_t ntpStatus_ {0};
+   uint16_t ipcStatus_ {0};
+   uint16_t commandedChannelControl_ {0};
 
    // AME
-   uint16_t polarization_;
-   float    ameInternalTemperature_;
-   float    ameReceiverModuleTemperature_;
-   float    ameBiteCalModuleTemperature_;
-   uint16_t amePeltierPulseWidthModulation_;
-   uint16_t amePeltierStatus_;
-   uint16_t ameADConverterStatus_;
-   uint16_t ameState_;
-   float    ame3_3VPsVoltage_;
-   float    ame5VPsVoltage_;
-   float    ame6_5VPsVoltage_;
-   float    ame15VPsVoltage_;
-   float    ame48VPsVoltage_;
-   float    ameStaloPower_;
-   float    peltierCurrent_;
-   float    adcCalibrationReferenceVoltage_;
-   uint16_t ameMode_;
-   uint16_t amePeltierMode_;
-   float    amePeltierInsideFanCurrent_;
-   float    amePeltierOutsideFanCurrent_;
-   float    horizontalTrLimiterVoltage_;
-   float    verticalTrLimiterVoltage_;
-   float    adcCalibrationOffsetVoltage_;
-   float    adcCalibrationGainCorrection_;
+   uint16_t polarization_ {0};
+   float    ameInternalTemperature_ {0.0f};
+   float    ameReceiverModuleTemperature_ {0.0f};
+   float    ameBiteCalModuleTemperature_ {0.0f};
+   uint16_t amePeltierPulseWidthModulation_ {0};
+   uint16_t amePeltierStatus_ {0};
+   uint16_t ameADConverterStatus_ {0};
+   uint16_t ameState_ {0};
+   float    ame3_3VPsVoltage_ {0.0f};
+   float    ame5VPsVoltage_ {0.0f};
+   float    ame6_5VPsVoltage_ {0.0f};
+   float    ame15VPsVoltage_ {0.0f};
+   float    ame48VPsVoltage_ {0.0f};
+   float    ameStaloPower_ {0.0f};
+   float    peltierCurrent_ {0.0f};
+   float    adcCalibrationReferenceVoltage_ {0.0f};
+   uint16_t ameMode_ {0};
+   uint16_t amePeltierMode_ {0};
+   float    amePeltierInsideFanCurrent_ {0.0f};
+   float    amePeltierOutsideFanCurrent_ {0.0f};
+   float    horizontalTrLimiterVoltage_ {0.0f};
+   float    verticalTrLimiterVoltage_ {0.0f};
+   float    adcCalibrationOffsetVoltage_ {0.0f};
+   float    adcCalibrationGainCorrection_ {0.0f};
 
    // RCP/SPIP Power Button Status
-   uint16_t    rcpStatus_;
-   std::string rcpString_;
-   uint16_t    spipPowerButtons_;
+   uint16_t    rcpStatus_ {0};
+   std::string rcpString_ {};
+   uint16_t    spipPowerButtons_ {0};
 
    // Power
-   float masterPowerAdministratorLoad_;
-   float expansionPowerAdministratorLoad_;
+   float masterPowerAdministratorLoad_ {0.0f};
+   float expansionPowerAdministratorLoad_ {0.0f};
 
    // Transmitter
-   uint16_t                _5VdcPs_;
-   uint16_t                _15VdcPs_;
-   uint16_t                _28VdcPs_;
-   uint16_t                neg15VdcPs_;
-   uint16_t                _45VdcPs_;
-   uint16_t                filamentPsVoltage_;
-   uint16_t                vacuumPumpPsVoltage_;
-   uint16_t                focusCoilPsVoltage_;
-   uint16_t                filamentPs_;
-   uint16_t                klystronWarmup_;
-   uint16_t                transmitterAvailable_;
-   uint16_t                wgSwitchPosition_;
-   uint16_t                wgPfnTransferInterlock_;
-   uint16_t                maintenanceMode_;
-   uint16_t                maintenanceRequired_;
-   uint16_t                pfnSwitchPosition_;
-   uint16_t                modulatorOverload_;
-   uint16_t                modulatorInvCurrent_;
-   uint16_t                modulatorSwitchFail_;
-   uint16_t                mainPowerVoltage_;
-   uint16_t                chargingSystemFail_;
-   uint16_t                inverseDiodeCurrent_;
-   uint16_t                triggerAmplifier_;
-   uint16_t                circulatorTemperature_;
-   uint16_t                spectrumFilterPressure_;
-   uint16_t                wgArcVswr_;
-   uint16_t                cabinetInterlock_;
-   uint16_t                cabinetAirTemperature_;
-   uint16_t                cabinetAirflow_;
-   uint16_t                klystronCurrent_;
-   uint16_t                klystronFilamentCurrent_;
-   uint16_t                klystronVacionCurrent_;
-   uint16_t                klystronAirTemperature_;
-   uint16_t                klystronAirflow_;
-   uint16_t                modulatorSwitchMaintenance_;
-   uint16_t                postChargeRegulatorMaintenance_;
-   uint16_t                wgPressureHumidity_;
-   uint16_t                transmitterOvervoltage_;
-   uint16_t                transmitterOvercurrent_;
-   uint16_t                focusCoilCurrent_;
-   uint16_t                focusCoilAirflow_;
-   uint16_t                oilTemperature_;
-   uint16_t                prfLimit_;
-   uint16_t                transmitterOilLevel_;
-   uint16_t                transmitterBatteryCharging_;
-   uint16_t                highVoltageStatus_;
-   uint16_t                transmitterRecyclingSummary_;
-   uint16_t                transmitterInoperable_;
-   uint16_t                transmitterAirFilter_;
-   std::array<uint16_t, 8> zeroTestBit_;
-   std::array<uint16_t, 8> oneTestBit_;
-   uint16_t                xmtrSpipInterface_;
-   uint16_t                transmitterSummaryStatus_;
-   float                   transmitterRfPower_;
-   float                   horizontalXmtrPeakPower_;
-   float                   xmtrPeakPower_;
-   float                   verticalXmtrPeakPower_;
-   float                   xmtrRfAvgPower_;
-   uint32_t                xmtrRecycleCount_;
-   float                   receiverBias_;
-   float                   transmitImbalance_;
-   float                   xmtrPowerMeterZero_;
+   uint16_t                _5VdcPs_ {0};
+   uint16_t                _15VdcPs_ {0};
+   uint16_t                _28VdcPs_ {0};
+   uint16_t                neg15VdcPs_ {0};
+   uint16_t                _45VdcPs_ {0};
+   uint16_t                filamentPsVoltage_ {0};
+   uint16_t                vacuumPumpPsVoltage_ {0};
+   uint16_t                focusCoilPsVoltage_ {0};
+   uint16_t                filamentPs_ {0};
+   uint16_t                klystronWarmup_ {0};
+   uint16_t                transmitterAvailable_ {0};
+   uint16_t                wgSwitchPosition_ {0};
+   uint16_t                wgPfnTransferInterlock_ {0};
+   uint16_t                maintenanceMode_ {0};
+   uint16_t                maintenanceRequired_ {0};
+   uint16_t                pfnSwitchPosition_ {0};
+   uint16_t                modulatorOverload_ {0};
+   uint16_t                modulatorInvCurrent_ {0};
+   uint16_t                modulatorSwitchFail_ {0};
+   uint16_t                mainPowerVoltage_ {0};
+   uint16_t                chargingSystemFail_ {0};
+   uint16_t                inverseDiodeCurrent_ {0};
+   uint16_t                triggerAmplifier_ {0};
+   uint16_t                circulatorTemperature_ {0};
+   uint16_t                spectrumFilterPressure_ {0};
+   uint16_t                wgArcVswr_ {0};
+   uint16_t                cabinetInterlock_ {0};
+   uint16_t                cabinetAirTemperature_ {0};
+   uint16_t                cabinetAirflow_ {0};
+   uint16_t                klystronCurrent_ {0};
+   uint16_t                klystronFilamentCurrent_ {0};
+   uint16_t                klystronVacionCurrent_ {0};
+   uint16_t                klystronAirTemperature_ {0};
+   uint16_t                klystronAirflow_ {0};
+   uint16_t                modulatorSwitchMaintenance_ {0};
+   uint16_t                postChargeRegulatorMaintenance_ {0};
+   uint16_t                wgPressureHumidity_ {0};
+   uint16_t                transmitterOvervoltage_ {0};
+   uint16_t                transmitterOvercurrent_ {0};
+   uint16_t                focusCoilCurrent_ {0};
+   uint16_t                focusCoilAirflow_ {0};
+   uint16_t                oilTemperature_ {0};
+   uint16_t                prfLimit_ {0};
+   uint16_t                transmitterOilLevel_ {0};
+   uint16_t                transmitterBatteryCharging_ {0};
+   uint16_t                highVoltageStatus_ {0};
+   uint16_t                transmitterRecyclingSummary_ {0};
+   uint16_t                transmitterInoperable_ {0};
+   uint16_t                transmitterAirFilter_ {0};
+   std::array<uint16_t, 8> zeroTestBit_ {0};
+   std::array<uint16_t, 8> oneTestBit_ {0};
+   uint16_t                xmtrSpipInterface_ {0};
+   uint16_t                transmitterSummaryStatus_ {0};
+   float                   transmitterRfPower_ {0.0f};
+   float                   horizontalXmtrPeakPower_ {0.0f};
+   float                   xmtrPeakPower_ {0.0f};
+   float                   verticalXmtrPeakPower_ {0.0f};
+   float                   xmtrRfAvgPower_ {0.0f};
+   uint32_t                xmtrRecycleCount_ {0};
+   float                   receiverBias_ {0.0f};
+   float                   transmitImbalance_ {0.0f};
+   float                   xmtrPowerMeterZero_ {0.0f};
 
    // Tower/Utilities
-   uint16_t acUnit1CompressorShutOff_;
-   uint16_t acUnit2CompressorShutOff_;
-   uint16_t generatorMaintenanceRequired_;
-   uint16_t generatorBatteryVoltage_;
-   uint16_t generatorEngine_;
-   uint16_t generatorVoltFrequency_;
-   uint16_t powerSource_;
-   uint16_t transitionalPowerSource_;
-   uint16_t generatorAutoRunOffSwitch_;
-   uint16_t aircraftHazardLighting_;
+   uint16_t acUnit1CompressorShutOff_ {0};
+   uint16_t acUnit2CompressorShutOff_ {0};
+   uint16_t generatorMaintenanceRequired_ {0};
+   uint16_t generatorBatteryVoltage_ {0};
+   uint16_t generatorEngine_ {0};
+   uint16_t generatorVoltFrequency_ {0};
+   uint16_t powerSource_ {0};
+   uint16_t transitionalPowerSource_ {0};
+   uint16_t generatorAutoRunOffSwitch_ {0};
+   uint16_t aircraftHazardLighting_ {0};
 
    // Equipment Shelter
-   uint16_t equipmentShelterFireDetectionSystem_;
-   uint16_t equipmentShelterFireSmoke_;
-   uint16_t generatorShelterFireSmoke_;
-   uint16_t utilityVoltageFrequency_;
-   uint16_t siteSecurityAlarm_;
-   uint16_t securityEquipment_;
-   uint16_t securitySystem_;
-   uint16_t receiverConnectedToAntenna_;
-   uint16_t radomeHatch_;
-   uint16_t acUnit1FilterDirty_;
-   uint16_t acUnit2FilterDirty_;
-   float    equipmentShelterTemperature_;
-   float    outsideAmbientTemperature_;
-   float    transmitterLeavingAirTemp_;
-   float    acUnit1DischargeAirTemp_;
-   float    generatorShelterTemperature_;
-   float    radomeAirTemperature_;
-   float    acUnit2DischargeAirTemp_;
-   float    spip15VPs_;
-   float    spipNeg15VPs_;
-   uint16_t spip28VPsStatus_;
-   float    spip5VPs_;
-   uint16_t convertedGeneratorFuelLevel_;
+   uint16_t equipmentShelterFireDetectionSystem_ {0};
+   uint16_t equipmentShelterFireSmoke_ {0};
+   uint16_t generatorShelterFireSmoke_ {0};
+   uint16_t utilityVoltageFrequency_ {0};
+   uint16_t siteSecurityAlarm_ {0};
+   uint16_t securityEquipment_ {0};
+   uint16_t securitySystem_ {0};
+   uint16_t receiverConnectedToAntenna_ {0};
+   uint16_t radomeHatch_ {0};
+   uint16_t acUnit1FilterDirty_ {0};
+   uint16_t acUnit2FilterDirty_ {0};
+   float    equipmentShelterTemperature_ {0.0f};
+   float    outsideAmbientTemperature_ {0.0f};
+   float    transmitterLeavingAirTemp_ {0.0f};
+   float    acUnit1DischargeAirTemp_ {0.0f};
+   float    generatorShelterTemperature_ {0.0f};
+   float    radomeAirTemperature_ {0.0f};
+   float    acUnit2DischargeAirTemp_ {0.0f};
+   float    spip15VPs_ {0.0f};
+   float    spipNeg15VPs_ {0.0f};
+   uint16_t spip28VPsStatus_ {0};
+   float    spip5VPs_ {0.0f};
+   uint16_t convertedGeneratorFuelLevel_ {0};
 
    // Antenna/Pedestal
-   uint16_t elevationPosDeadLimit_;
-   uint16_t _150VOvervoltage_;
-   uint16_t _150VUndervoltage_;
-   uint16_t elevationServoAmpInhibit_;
-   uint16_t elevationServoAmpShortCircuit_;
-   uint16_t elevationServoAmpOvertemp_;
-   uint16_t elevationMotorOvertemp_;
-   uint16_t elevationStowPin_;
-   uint16_t elevationHousing5VPs_;
-   uint16_t elevationNegDeadLimit_;
-   uint16_t elevationPosNormalLimit_;
-   uint16_t elevationNegNormalLimit_;
-   uint16_t elevationEncoderLight_;
-   uint16_t elevationGearboxOil_;
-   uint16_t elevationHandwheel_;
-   uint16_t elevationAmpPs_;
-   uint16_t azimuthServoAmpInhibit_;
-   uint16_t azimuthServoAmpShortCircuit_;
-   uint16_t azimuthServoAmpOvertemp_;
-   uint16_t azimuthMotorOvertemp_;
-   uint16_t azimuthStowPin_;
-   uint16_t azimuthHousing5VPs_;
-   uint16_t azimuthEncoderLight_;
-   uint16_t azimuthGearboxOil_;
-   uint16_t azimuthBullGearOil_;
-   uint16_t azimuthHandwheel_;
-   uint16_t azimuthServoAmpPs_;
-   uint16_t servo_;
-   uint16_t pedestalInterlockSwitch_;
+   uint16_t elevationPosDeadLimit_ {0};
+   uint16_t _150VOvervoltage_ {0};
+   uint16_t _150VUndervoltage_ {0};
+   uint16_t elevationServoAmpInhibit_ {0};
+   uint16_t elevationServoAmpShortCircuit_ {0};
+   uint16_t elevationServoAmpOvertemp_ {0};
+   uint16_t elevationMotorOvertemp_ {0};
+   uint16_t elevationStowPin_ {0};
+   uint16_t elevationHousing5VPs_ {0};
+   uint16_t elevationNegDeadLimit_ {0};
+   uint16_t elevationPosNormalLimit_ {0};
+   uint16_t elevationNegNormalLimit_ {0};
+   uint16_t elevationEncoderLight_ {0};
+   uint16_t elevationGearboxOil_ {0};
+   uint16_t elevationHandwheel_ {0};
+   uint16_t elevationAmpPs_ {0};
+   uint16_t azimuthServoAmpInhibit_ {0};
+   uint16_t azimuthServoAmpShortCircuit_ {0};
+   uint16_t azimuthServoAmpOvertemp_ {0};
+   uint16_t azimuthMotorOvertemp_ {0};
+   uint16_t azimuthStowPin_ {0};
+   uint16_t azimuthHousing5VPs_ {0};
+   uint16_t azimuthEncoderLight_ {0};
+   uint16_t azimuthGearboxOil_ {0};
+   uint16_t azimuthBullGearOil_ {0};
+   uint16_t azimuthHandwheel_ {0};
+   uint16_t azimuthServoAmpPs_ {0};
+   uint16_t servo_ {0};
+   uint16_t pedestalInterlockSwitch_ {0};
 
    // RF Generator/Receiver
-   uint16_t cohoClock_;
-   uint16_t rfGeneratorFrequencySelectOscillator_;
-   uint16_t rfGeneratorRfStalo_;
-   uint16_t rfGeneratorPhaseShiftedCoho_;
-   uint16_t _9VReceiverPs_;
-   uint16_t _5VReceiverPs_;
-   uint16_t _18VReceiverPs_;
-   uint16_t neg9VReceiverPs_;
-   uint16_t _5VSingleChannelRdaiuPs_;
-   float    horizontalShortPulseNoise_;
-   float    horizontalLongPulseNoise_;
-   float    horizontalNoiseTemperature_;
-   float    verticalShortPulseNoise_;
-   float    verticalLongPulseNoise_;
-   float    verticalNoiseTemperature_;
+   uint16_t cohoClock_ {0};
+   uint16_t rfGeneratorFrequencySelectOscillator_ {0};
+   uint16_t rfGeneratorRfStalo_ {0};
+   uint16_t rfGeneratorPhaseShiftedCoho_ {0};
+   uint16_t _9VReceiverPs_ {0};
+   uint16_t _5VReceiverPs_ {0};
+   uint16_t _18VReceiverPs_ {0};
+   uint16_t neg9VReceiverPs_ {0};
+   uint16_t _5VSingleChannelRdaiuPs_ {0};
+   float    horizontalShortPulseNoise_ {0.0f};
+   float    horizontalLongPulseNoise_ {0.0f};
+   float    horizontalNoiseTemperature_ {0.0f};
+   float    verticalShortPulseNoise_ {0.0f};
+   float    verticalLongPulseNoise_ {0.0f};
+   float    verticalNoiseTemperature_ {0.0f};
 
    // Calibration
-   float    horizontalLinearity_;
-   float    horizontalDynamicRange_;
-   float    horizontalDeltaDbz0_;
-   float    verticalDeltaDbz0_;
-   float    kdPeakMeasured_;
-   float    shortPulseHorizontalDbz0_;
-   float    longPulseHorizontalDbz0_;
-   uint16_t velocityProcessed_;
-   uint16_t widthProcessed_;
-   uint16_t velocityRfGen_;
-   uint16_t widthRfGen_;
-   float    horizontalI0_;
-   float    verticalI0_;
-   float    verticalDynamicRange_;
-   float    shortPulseVerticalDbz0_;
-   float    longPulseVerticalDbz0_;
-   float    horizontalPowerSense_;
-   float    verticalPowerSense_;
-   float    zdrBias_;
-   float    clutterSuppressionDelta_;
-   float    clutterSuppressionUnfilteredPower_;
-   float    clutterSuppressionFilteredPower_;
-   float    verticalLinearity_;
+   float    horizontalLinearity_ {0.0f};
+   float    horizontalDynamicRange_ {0.0f};
+   float    horizontalDeltaDbz0_ {0.0f};
+   float    verticalDeltaDbz0_ {0.0f};
+   float    kdPeakMeasured_ {0.0f};
+   float    shortPulseHorizontalDbz0_ {0.0f};
+   float    longPulseHorizontalDbz0_ {0.0f};
+   uint16_t velocityProcessed_ {0};
+   uint16_t widthProcessed_ {0};
+   uint16_t velocityRfGen_ {0};
+   uint16_t widthRfGen_ {0};
+   float    horizontalI0_ {0.0f};
+   float    verticalI0_ {0.0f};
+   float    verticalDynamicRange_ {0.0f};
+   float    shortPulseVerticalDbz0_ {0.0f};
+   float    longPulseVerticalDbz0_ {0.0f};
+   float    horizontalPowerSense_ {0.0f};
+   float    verticalPowerSense_ {0.0f};
+   float    zdrOffset_ {0.0f};
+   float    clutterSuppressionDelta_ {0.0f};
+   float    clutterSuppressionUnfilteredPower_ {0.0f};
+   float    clutterSuppressionFilteredPower_ {0.0f};
+   float    verticalLinearity_ {0.0f};
 
    // File Status
-   uint16_t stateFileReadStatus_;
-   uint16_t stateFileWriteStatus_;
-   uint16_t bypassMapFileReadStatus_;
-   uint16_t bypassMapFileWriteStatus_;
-   uint16_t currentAdaptationFileReadStatus_;
-   uint16_t currentAdaptationFileWriteStatus_;
-   uint16_t censorZoneFileReadStatus_;
-   uint16_t censorZoneFileWriteStatus_;
-   uint16_t remoteVcpFileReadStatus_;
-   uint16_t remoteVcpFileWriteStatus_;
-   uint16_t baselineAdaptationFileReadStatus_;
-   uint16_t readStatusOfPrfSets_;
-   uint16_t clutterFilterMapFileReadStatus_;
-   uint16_t clutterFilterMapFileWriteStatus_;
-   uint16_t generatlDiskIoError_;
-   uint8_t  rspStatus_;
-   uint8_t  motherboardTemperature_;
-   uint8_t  cpu1Temperature_;
-   uint8_t  cpu2Temperature_;
-   uint16_t cpu1FanSpeed_;
-   uint16_t cpu2FanSpeed_;
-   uint16_t rspFan1Speed_;
-   uint16_t rspFan2Speed_;
-   uint16_t rspFan3Speed_;
+   uint16_t stateFileReadStatus_ {0};
+   uint16_t stateFileWriteStatus_ {0};
+   uint16_t bypassMapFileReadStatus_ {0};
+   uint16_t bypassMapFileWriteStatus_ {0};
+   uint16_t currentAdaptationFileReadStatus_ {0};
+   uint16_t currentAdaptationFileWriteStatus_ {0};
+   uint16_t censorZoneFileReadStatus_ {0};
+   uint16_t censorZoneFileWriteStatus_ {0};
+   uint16_t remoteVcpFileReadStatus_ {0};
+   uint16_t remoteVcpFileWriteStatus_ {0};
+   uint16_t baselineAdaptationFileReadStatus_ {0};
+   uint16_t readStatusOfPrfSets_ {0};
+   uint16_t clutterFilterMapFileReadStatus_ {0};
+   uint16_t clutterFilterMapFileWriteStatus_ {0};
+   uint16_t generalDiskIoError_ {0};
+   uint8_t  rspStatus_ {0};
+   uint8_t  cpu1Temperature_ {0};
+   uint8_t  cpu2Temperature_ {0};
+   uint16_t rspMotherboardPower_ {0};
 
    // Device Status
-   uint16_t spipCommStatus_;
-   uint16_t hciCommStatus_;
-   uint16_t signalProcessorCommandStatus_;
-   uint16_t ameCommunicationStatus_;
-   uint16_t rmsLinkStatus_;
-   uint16_t rpgLinkStatus_;
-   uint16_t interpanelLinkStatus_;
-   uint32_t performanceCheckTime_;
-   uint16_t version_;
+   uint16_t spipCommStatus_ {0};
+   uint16_t hciCommStatus_ {0};
+   uint16_t signalProcessorCommandStatus_ {0};
+   uint16_t ameCommunicationStatus_ {0};
+   uint16_t rmsLinkStatus_ {0};
+   uint16_t rpgLinkStatus_ {0};
+   uint16_t interpanelLinkStatus_ {0};
+   uint32_t performanceCheckTime_ {0};
+   uint16_t version_ {0};
 };
 
 PerformanceMaintenanceData::PerformanceMaintenanceData() :
@@ -556,7 +297,7 @@ PerformanceMaintenanceData::PerformanceMaintenanceData() :
 PerformanceMaintenanceData::~PerformanceMaintenanceData() = default;
 
 PerformanceMaintenanceData::PerformanceMaintenanceData(
-   PerformanceMaintenanceData&&) noexcept                       = default;
+   PerformanceMaintenanceData&&) noexcept = default;
 PerformanceMaintenanceData& PerformanceMaintenanceData::operator=(
    PerformanceMaintenanceData&&) noexcept = default;
 
@@ -595,24 +336,21 @@ uint16_t PerformanceMaintenanceData::route_to_rpg() const
    return p->routeToRpg_;
 }
 
-uint32_t PerformanceMaintenanceData::csu_loss_of_signal() const
+uint16_t PerformanceMaintenanceData::t1_port_status() const
 {
-   return p->csuLossOfSignal_;
+   return p->t1PortStatus_;
 }
 
-uint32_t PerformanceMaintenanceData::csu_loss_of_frames() const
+uint16_t
+PerformanceMaintenanceData::router_dedicated_ethernet_port_status() const
 {
-   return p->csuLossOfFrames_;
+   return p->routerDedicatedEthernetPortStatus_;
 }
 
-uint32_t PerformanceMaintenanceData::csu_yellow_alarms() const
+uint16_t
+PerformanceMaintenanceData::router_commercial_ethernet_port_status() const
 {
-   return p->csuYellowAlarms_;
-}
-
-uint32_t PerformanceMaintenanceData::csu_blue_alarms() const
-{
-   return p->csuBlueAlarms_;
+   return p->routerCommercialEthernetPortStatus_;
 }
 
 uint32_t PerformanceMaintenanceData::csu_24hr_errored_seconds() const
@@ -681,9 +419,9 @@ uint16_t PerformanceMaintenanceData::ifdr_fpga_temperature() const
    return p->ifdrFpgaTemperature_;
 }
 
-int32_t PerformanceMaintenanceData::gps_satellites() const
+uint16_t PerformanceMaintenanceData::ntp_status() const
 {
-   return p->gpsSatellites_;
+   return p->ntpStatus_;
 }
 
 uint16_t PerformanceMaintenanceData::ipc_status() const
@@ -1628,9 +1366,9 @@ float PerformanceMaintenanceData::vertical_power_sense() const
    return p->verticalPowerSense_;
 }
 
-float PerformanceMaintenanceData::zdr_bias() const
+float PerformanceMaintenanceData::zdr_offset() const
 {
-   return p->zdrBias_;
+   return p->zdrOffset_;
 }
 
 float PerformanceMaintenanceData::clutter_suppression_delta() const
@@ -1726,19 +1464,14 @@ PerformanceMaintenanceData::clutter_filter_map_file_write_status() const
    return p->clutterFilterMapFileWriteStatus_;
 }
 
-uint16_t PerformanceMaintenanceData::generatl_disk_io_error() const
+uint16_t PerformanceMaintenanceData::general_disk_io_error() const
 {
-   return p->generatlDiskIoError_;
+   return p->generalDiskIoError_;
 }
 
 uint8_t PerformanceMaintenanceData::rsp_status() const
 {
    return p->rspStatus_;
-}
-
-uint8_t PerformanceMaintenanceData::motherboard_temperature() const
-{
-   return p->motherboardTemperature_;
 }
 
 uint8_t PerformanceMaintenanceData::cpu1_temperature() const
@@ -1751,29 +1484,9 @@ uint8_t PerformanceMaintenanceData::cpu2_temperature() const
    return p->cpu2Temperature_;
 }
 
-uint16_t PerformanceMaintenanceData::cpu1_fan_speed() const
+uint16_t PerformanceMaintenanceData::rsp_motherboard_power() const
 {
-   return p->cpu1FanSpeed_;
-}
-
-uint16_t PerformanceMaintenanceData::cpu2_fan_speed() const
-{
-   return p->cpu2FanSpeed_;
-}
-
-uint16_t PerformanceMaintenanceData::rsp_fan1_speed() const
-{
-   return p->rspFan1Speed_;
-}
-
-uint16_t PerformanceMaintenanceData::rsp_fan2_speed() const
-{
-   return p->rspFan2Speed_;
-}
-
-uint16_t PerformanceMaintenanceData::rsp_fan3_speed() const
-{
-   return p->rspFan3Speed_;
+   return p->rspMotherboardPower_;
 }
 
 uint16_t PerformanceMaintenanceData::spip_comm_status() const
@@ -1839,11 +1552,13 @@ bool PerformanceMaintenanceData::Parse(std::istream& is)
    is.read(reinterpret_cast<char*>(&p->routerMemoryFree_), 4);        // 9-10
    is.read(reinterpret_cast<char*>(&p->routerMemoryUtilization_), 2); // 11
    is.read(reinterpret_cast<char*>(&p->routeToRpg_), 2);              // 12
-   is.read(reinterpret_cast<char*>(&p->csuLossOfSignal_), 4);         // 13-14
-   is.read(reinterpret_cast<char*>(&p->csuLossOfFrames_), 4);         // 15-16
-   is.read(reinterpret_cast<char*>(&p->csuYellowAlarms_), 4);         // 17-18
-   is.read(reinterpret_cast<char*>(&p->csuBlueAlarms_), 4);           // 19-20
-   is.read(reinterpret_cast<char*>(&p->csu24HrErroredSeconds_), 4);   // 21-22
+   is.read(reinterpret_cast<char*>(&p->t1PortStatus_), 2);            // 13
+   is.read(reinterpret_cast<char*>(&p->routerDedicatedEthernetPortStatus_),
+           2); // 14
+   is.read(reinterpret_cast<char*>(&p->routerCommercialEthernetPortStatus_),
+           2);                                                      // 15
+   is.seekg(10, std::ios_base::cur);                                // 16-20
+   is.read(reinterpret_cast<char*>(&p->csu24HrErroredSeconds_), 4); // 21-22
    is.read(reinterpret_cast<char*>(&p->csu24HrSeverelyErroredSeconds_),
            4); // 23-24
    is.read(reinterpret_cast<char*>(&p->csu24HrSeverelyErroredFramingSeconds_),
@@ -1863,9 +1578,8 @@ bool PerformanceMaintenanceData::Parse(std::istream& is)
    is.seekg(2, std::ios_base::cur);                                      // 44
    is.read(reinterpret_cast<char*>(&p->ifdrChasisTemperature_), 2);      // 45
    is.read(reinterpret_cast<char*>(&p->ifdrFpgaTemperature_), 2);        // 46
-   is.seekg(4, std::ios_base::cur);                                   // 47-48
-   is.read(reinterpret_cast<char*>(&p->gpsSatellites_), 4);           // 49-50
-   is.seekg(4, std::ios_base::cur);                                   // 51-52
+   is.read(reinterpret_cast<char*>(&p->ntpStatus_), 2);                  // 47
+   is.seekg(10, std::ios_base::cur);                                  // 48-52
    is.read(reinterpret_cast<char*>(&p->ipcStatus_), 2);               // 53
    is.read(reinterpret_cast<char*>(&p->commandedChannelControl_), 2); // 54
    is.seekg(6, std::ios_base::cur);                                   // 55-57
@@ -2112,7 +1826,7 @@ bool PerformanceMaintenanceData::Parse(std::istream& is)
    is.seekg(8, std::ios_base::cur);                                   // 393-396
    is.read(reinterpret_cast<char*>(&p->horizontalPowerSense_), 4);    // 397-398
    is.read(reinterpret_cast<char*>(&p->verticalPowerSense_), 4);      // 399-400
-   is.read(reinterpret_cast<char*>(&p->zdrBias_), 4);                 // 401-402
+   is.read(reinterpret_cast<char*>(&p->zdrOffset_), 4);               // 401-402
    is.seekg(12, std::ios_base::cur);                                  // 403-408
    is.read(reinterpret_cast<char*>(&p->clutterSuppressionDelta_), 4); // 409-410
    is.read(reinterpret_cast<char*>(&p->clutterSuppressionUnfilteredPower_),
@@ -2143,18 +1857,14 @@ bool PerformanceMaintenanceData::Parse(std::istream& is)
    is.read(reinterpret_cast<char*>(&p->clutterFilterMapFileReadStatus_),
            2); // 445
    is.read(reinterpret_cast<char*>(&p->clutterFilterMapFileWriteStatus_),
-           2);                                                       // 446
-   is.read(reinterpret_cast<char*>(&p->generatlDiskIoError_), 2);    // 447
-   is.read(reinterpret_cast<char*>(&p->rspStatus_), 1);              // 448
-   is.read(reinterpret_cast<char*>(&p->motherboardTemperature_), 1); // 448
-   is.read(reinterpret_cast<char*>(&p->cpu1Temperature_), 1);        // 449
-   is.read(reinterpret_cast<char*>(&p->cpu2Temperature_), 1);        // 449
-   is.read(reinterpret_cast<char*>(&p->cpu1FanSpeed_), 2);           // 450
-   is.read(reinterpret_cast<char*>(&p->cpu2FanSpeed_), 2);           // 451
-   is.read(reinterpret_cast<char*>(&p->rspFan1Speed_), 2);           // 452
-   is.read(reinterpret_cast<char*>(&p->rspFan2Speed_), 2);           // 453
-   is.read(reinterpret_cast<char*>(&p->rspFan3Speed_), 2);           // 454
-   is.seekg(12, std::ios_base::cur);                                 // 455-460
+           2);                                                    // 446
+   is.read(reinterpret_cast<char*>(&p->generalDiskIoError_), 2);  // 447
+   is.read(reinterpret_cast<char*>(&p->rspStatus_), 1);           // 448
+   is.seekg(1, std::ios_base::cur);                               // 448
+   is.read(reinterpret_cast<char*>(&p->cpu1Temperature_), 1);     // 449
+   is.read(reinterpret_cast<char*>(&p->cpu2Temperature_), 1);     // 449
+   is.read(reinterpret_cast<char*>(&p->rspMotherboardPower_), 2); // 450
+   is.seekg(20, std::ios_base::cur);                              // 451-460
 
    // Device Status
    is.read(reinterpret_cast<char*>(&p->spipCommStatus_), 2); // 461
@@ -2173,17 +1883,18 @@ bool PerformanceMaintenanceData::Parse(std::istream& is)
    bytesRead += 960;
 
    // Communications
-   p->loopBackSetStatus_             = ntohs(p->loopBackSetStatus_);
-   p->t1OutputFrames_                = ntohl(p->t1OutputFrames_);
-   p->t1InputFrames_                 = ntohl(p->t1InputFrames_);
-   p->routerMemoryUsed_              = ntohl(p->routerMemoryUsed_);
-   p->routerMemoryFree_              = ntohl(p->routerMemoryFree_);
-   p->routerMemoryUtilization_       = ntohs(p->routerMemoryUtilization_);
-   p->routeToRpg_                    = ntohs(p->routeToRpg_);
-   p->csuLossOfSignal_               = ntohl(p->csuLossOfSignal_);
-   p->csuLossOfFrames_               = ntohl(p->csuLossOfFrames_);
-   p->csuYellowAlarms_               = ntohl(p->csuYellowAlarms_);
-   p->csuBlueAlarms_                 = ntohl(p->csuBlueAlarms_);
+   p->loopBackSetStatus_       = ntohs(p->loopBackSetStatus_);
+   p->t1OutputFrames_          = ntohl(p->t1OutputFrames_);
+   p->t1InputFrames_           = ntohl(p->t1InputFrames_);
+   p->routerMemoryUsed_        = ntohl(p->routerMemoryUsed_);
+   p->routerMemoryFree_        = ntohl(p->routerMemoryFree_);
+   p->routerMemoryUtilization_ = ntohs(p->routerMemoryUtilization_);
+   p->routeToRpg_              = ntohs(p->routeToRpg_);
+   p->t1PortStatus_            = ntohs(p->t1PortStatus_);
+   p->routerDedicatedEthernetPortStatus_ =
+      ntohs(p->routerDedicatedEthernetPortStatus_);
+   p->routerCommercialEthernetPortStatus_ =
+      ntohs(p->routerCommercialEthernetPortStatus_);
    p->csu24HrErroredSeconds_         = ntohl(p->csu24HrErroredSeconds_);
    p->csu24HrSeverelyErroredSeconds_ = ntohl(p->csu24HrSeverelyErroredSeconds_);
    p->csu24HrSeverelyErroredFramingSeconds_ =
@@ -2198,7 +1909,7 @@ bool PerformanceMaintenanceData::Parse(std::istream& is)
    p->lanSwitchMemoryUtilization_   = ntohs(p->lanSwitchMemoryUtilization_);
    p->ifdrChasisTemperature_        = ntohs(p->ifdrChasisTemperature_);
    p->ifdrFpgaTemperature_          = ntohs(p->ifdrFpgaTemperature_);
-   p->gpsSatellites_                = ntohl(p->gpsSatellites_);
+   p->ntpStatus_                    = ntohs(p->ntpStatus_);
    p->ipcStatus_                    = ntohs(p->ipcStatus_);
    p->commandedChannelControl_      = ntohs(p->commandedChannelControl_);
 
@@ -2413,7 +2124,7 @@ bool PerformanceMaintenanceData::Parse(std::istream& is)
    p->longPulseVerticalDbz0_    = SwapFloat(p->longPulseVerticalDbz0_);
    p->horizontalPowerSense_     = SwapFloat(p->horizontalPowerSense_);
    p->verticalPowerSense_       = SwapFloat(p->verticalPowerSense_);
-   p->zdrBias_                  = SwapFloat(p->zdrBias_);
+   p->zdrOffset_                = SwapFloat(p->zdrOffset_);
    p->clutterSuppressionDelta_  = SwapFloat(p->clutterSuppressionDelta_);
    p->clutterSuppressionUnfilteredPower_ =
       SwapFloat(p->clutterSuppressionUnfilteredPower_);
@@ -2441,12 +2152,8 @@ bool PerformanceMaintenanceData::Parse(std::istream& is)
       ntohs(p->clutterFilterMapFileReadStatus_);
    p->clutterFilterMapFileWriteStatus_ =
       ntohs(p->clutterFilterMapFileWriteStatus_);
-   p->generatlDiskIoError_ = ntohs(p->generatlDiskIoError_);
-   p->cpu1FanSpeed_        = ntohs(p->cpu1FanSpeed_);
-   p->cpu2FanSpeed_        = ntohs(p->cpu2FanSpeed_);
-   p->rspFan1Speed_        = ntohs(p->rspFan1Speed_);
-   p->rspFan2Speed_        = ntohs(p->rspFan2Speed_);
-   p->rspFan3Speed_        = ntohs(p->rspFan3Speed_);
+   p->generalDiskIoError_  = ntohs(p->generalDiskIoError_);
+   p->rspMotherboardPower_ = ntohs(p->rspMotherboardPower_);
 
    // Device Status
    p->spipCommStatus_               = ntohs(p->spipCommStatus_);

@@ -247,6 +247,7 @@ public:
    float         initialSystemDifferentialPhase_ {0.0f};
    std::uint16_t volumeCoveragePatternNumber_ {0};
    std::uint16_t processingStatus_ {0};
+   std::uint16_t zdrBiasEstimateWeightedMean_ {0};
 };
 
 DigitalRadarDataGeneric::VolumeDataBlock::VolumeDataBlock(
@@ -331,6 +332,18 @@ bool DigitalRadarDataGeneric::VolumeDataBlock::Parse(std::istream& is)
       awips::Message::SwapFloat(p->initialSystemDifferentialPhase_);
    p->volumeCoveragePatternNumber_ = ntohs(p->volumeCoveragePatternNumber_);
    p->processingStatus_            = ntohs(p->processingStatus_);
+
+   if (p->lrtup_ >= 46)
+   {
+      is.read(reinterpret_cast<char*>(&p->zdrBiasEstimateWeightedMean_),
+              2); // 44-45
+      p->zdrBiasEstimateWeightedMean_ = ntohs(p->zdrBiasEstimateWeightedMean_);
+   }
+
+   if (p->lrtup_ >= 52)
+   {
+      is.seekg(6, std::ios_base::cur); // 46-51
+   }
 
    return dataBlockValid;
 }
