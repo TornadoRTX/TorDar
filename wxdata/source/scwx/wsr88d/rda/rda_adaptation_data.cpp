@@ -1,11 +1,7 @@
 #include <scwx/wsr88d/rda/rda_adaptation_data.hpp>
 #include <scwx/util/logger.hpp>
 
-namespace scwx
-{
-namespace wsr88d
-{
-namespace rda
+namespace scwx::wsr88d::rda
 {
 
 static const std::string logPrefix_ = "scwx::wsr88d::rda::rda_adaptation_data";
@@ -13,30 +9,26 @@ static const auto        logger_    = util::Logger::Create(logPrefix_);
 
 struct AntManualSetup
 {
-   int32_t  ielmin_;
-   int32_t  ielmax_;
-   uint32_t fazvelmax_;
-   uint32_t felvelmax_;
-   int32_t  igndHgt_;
-   uint32_t iradHgt_;
-
-   AntManualSetup() :
-       ielmin_ {0},
-       ielmax_ {0},
-       fazvelmax_ {0},
-       felvelmax_ {0},
-       igndHgt_ {0},
-       iradHgt_ {0}
-   {
-   }
+   std::int32_t  ielmin_ {0};
+   std::int32_t  ielmax_ {0};
+   std::uint32_t fazvelmax_ {0};
+   std::uint32_t felvelmax_ {0};
+   std::int32_t  igndHgt_ {0};
+   std::uint32_t iradHgt_ {0};
 };
 
-class RdaAdaptationDataImpl
+class RdaAdaptationData::Impl
 {
 public:
-   explicit RdaAdaptationDataImpl() = default;
-   ~RdaAdaptationDataImpl()         = default;
+   explicit Impl() = default;
+   ~Impl()         = default;
 
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
+
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
    std::string               adapFileName_ {};
    std::string               adapFormat_ {};
    std::string               adapRevision_ {};
@@ -65,27 +57,27 @@ public:
    bool                      specFilterInstalled_ {false};
    bool                      tpsInstalled_ {false};
    bool                      rmsInstalled_ {false};
-   uint32_t                  aHvdlTstInt_ {0};
-   uint32_t                  aRpgLtInt_ {0};
-   uint32_t                  aMinStabUtilPwrTime_ {0};
-   uint32_t                  aGenAutoExerInterval_ {0};
-   uint32_t                  aUtilPwrSwReqInterval_ {0};
+   std::uint32_t             aHvdlTstInt_ {0};
+   std::uint32_t             aRpgLtInt_ {0};
+   std::uint32_t             aMinStabUtilPwrTime_ {0};
+   std::uint32_t             aGenAutoExerInterval_ {0};
+   std::uint32_t             aUtilPwrSwReqInterval_ {0};
    float                     aLowFuelLevel_ {0.0f};
-   uint32_t                  configChanNumber_ {0};
-   uint32_t                  redundantChanConfig_ {0};
+   std::uint32_t             configChanNumber_ {0};
+   std::uint32_t             redundantChanConfig_ {0};
    std::array<float, 104>    attenTable_ {0.0f};
    std::map<unsigned, float> pathLosses_ {};
    float                     vTsCw_ {0.0f};
    std::array<float, 13>     hRnscale_ {0.0f};
    std::array<float, 13>     atmos_ {0.0f};
    std::array<float, 12>     elIndex_ {0.0f};
-   uint32_t                  tfreqMhz_ {0};
+   std::uint32_t             tfreqMhz_ {0};
    float                     baseDataTcn_ {0.0f};
    float                     reflDataTover_ {0.0f};
    float                     tarHDbz0Lp_ {0.0f};
    float                     tarVDbz0Lp_ {0.0f};
-   uint32_t                  initPhiDp_ {0};
-   uint32_t                  normInitPhiDp_ {0};
+   std::uint32_t             initPhiDp_ {0};
+   std::uint32_t             normInitPhiDp_ {0};
    float                     lxLp_ {0.0f};
    float                     lxSp_ {0.0f};
    float                     meteorParam_ {0.0f};
@@ -93,9 +85,9 @@ public:
    float                     velDegradLimit_ {0.0f};
    float                     wthDegradLimit_ {0.0f};
    float                     hNoisetempDgradLimit_ {0.0f};
-   uint32_t                  hMinNoisetemp_ {0};
+   std::uint32_t             hMinNoisetemp_ {0};
    float                     vNoisetempDgradLimit_ {0.0f};
-   uint32_t                  vMinNoisetemp_ {0};
+   std::uint32_t             vMinNoisetemp_ {0};
    float                     klyDegradeLimit_ {0.0f};
    float                     tsCoho_ {0.0f};
    float                     hTsCw_ {0.0f};
@@ -112,19 +104,19 @@ public:
    float                     vDbz0DeltaLimit_ {0.0f};
    float                     tarHDbz0Sp_ {0.0f};
    float                     tarVDbz0Sp_ {0.0f};
-   uint32_t                  deltaprf_ {0};
-   uint32_t                  tauSp_ {0};
-   uint32_t                  tauLp_ {0};
-   uint32_t                  ncDeadValue_ {0};
-   uint32_t                  tauRfSp_ {0};
-   uint32_t                  tauRfLp_ {0};
+   std::uint32_t             deltaprf_ {0};
+   std::uint32_t             tauSp_ {0};
+   std::uint32_t             tauLp_ {0};
+   std::uint32_t             ncDeadValue_ {0};
+   std::uint32_t             tauRfSp_ {0};
+   std::uint32_t             tauRfLp_ {0};
    float                     seg1Lim_ {0.0f};
    float                     slatsec_ {0.0f};
    float                     slonsec_ {0.0f};
-   uint32_t                  slatdeg_ {0};
-   uint32_t                  slatmin_ {0};
-   uint32_t                  slondeg_ {0};
-   uint32_t                  slonmin_ {0};
+   std::uint32_t             slatdeg_ {0};
+   std::uint32_t             slatmin_ {0};
+   std::uint32_t             slondeg_ {0};
+   std::uint32_t             slonmin_ {0};
    char                      slatdir_ {0};
    char                      slondir_ {0};
    double                    digRcvrClockFreq_ {0.0};
@@ -155,16 +147,16 @@ public:
    float                     azEncoderAlignment_ {0.0f};
    float                     elEncoderAlignment_ {0.0f};
    std::string               refinedPark_ {};
-   uint32_t                  rvp8nvIwaveguideLength_ {0};
+   std::uint32_t             rvp8nvIwaveguideLength_ {0};
    std::array<float, 13>     vRnscale_ {0.0f};
    float                     velDataTover_ {0.0f};
    float                     widthDataTover_ {0.0f};
    float                     dopplerRangeStart_ {0.0f};
-   uint32_t                  maxElIndex_ {0};
+   std::uint32_t             maxElIndex_ {0};
    float                     seg2Lim_ {0.0f};
    float                     seg3Lim_ {0.0f};
    float                     seg4Lim_ {0.0f};
-   uint32_t                  nbrElSegments_ {0};
+   std::uint32_t             nbrElSegments_ {0};
    float                     hNoiseLong_ {0.0f};
    float                     antNoiseTemp_ {0.0f};
    float                     hNoiseShort_ {0.0f};
@@ -196,22 +188,23 @@ public:
    float                     rcvrModMinTemp_ {0.0f};
    float                     biteModMaxTemp_ {0.0f};
    float                     biteModMinTemp_ {0.0f};
-   uint32_t                  defaultPolarization_ {0};
+   std::uint32_t             defaultPolarization_ {0};
    float                     trLimitDgradLimit_ {0.0f};
    float                     trLimitFailLimit_ {0.0f};
    bool                      rfpStepperEnabled_ {false};
    float                     ameCurrentTolerance_ {0.0f};
-   uint32_t                  hOnlyPolarization_ {0};
-   uint32_t                  vOnlyPolarization_ {0};
+   std::uint32_t             hOnlyPolarization_ {0};
+   std::uint32_t             vOnlyPolarization_ {0};
    float                     sunBias_ {0.0f};
    float                     aMinShelterTempWarn_ {0.0f};
    float                     powerMeterZero_ {0.0f};
    float                     txbBaseline_ {0.0f};
    float                     txbAlarmThresh_ {0.0f};
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 };
 
 RdaAdaptationData::RdaAdaptationData() :
-    Level2Message(), p(std::make_unique<RdaAdaptationDataImpl>())
+    Level2Message(), p(std::make_unique<Impl>())
 {
 }
 RdaAdaptationData::~RdaAdaptationData() = default;
@@ -277,7 +270,7 @@ float RdaAdaptationData::parkel() const
 
 float RdaAdaptationData::a_fuel_conv(unsigned i) const
 {
-   return p->aFuelConv_[i];
+   return p->aFuelConv_.at(i);
 }
 
 float RdaAdaptationData::a_min_shelter_temp() const
@@ -360,27 +353,27 @@ bool RdaAdaptationData::rms_installed() const
    return p->rmsInstalled_;
 }
 
-uint32_t RdaAdaptationData::a_hvdl_tst_int() const
+std::uint32_t RdaAdaptationData::a_hvdl_tst_int() const
 {
    return p->aHvdlTstInt_;
 }
 
-uint32_t RdaAdaptationData::a_rpg_lt_int() const
+std::uint32_t RdaAdaptationData::a_rpg_lt_int() const
 {
    return p->aRpgLtInt_;
 }
 
-uint32_t RdaAdaptationData::a_min_stab_util_pwr_time() const
+std::uint32_t RdaAdaptationData::a_min_stab_util_pwr_time() const
 {
    return p->aMinStabUtilPwrTime_;
 }
 
-uint32_t RdaAdaptationData::a_gen_auto_exer_interval() const
+std::uint32_t RdaAdaptationData::a_gen_auto_exer_interval() const
 {
    return p->aGenAutoExerInterval_;
 }
 
-uint32_t RdaAdaptationData::a_util_pwr_sw_req_interval() const
+std::uint32_t RdaAdaptationData::a_util_pwr_sw_req_interval() const
 {
    return p->aUtilPwrSwReqInterval_;
 }
@@ -390,19 +383,19 @@ float RdaAdaptationData::a_low_fuel_level() const
    return p->aLowFuelLevel_;
 }
 
-uint32_t RdaAdaptationData::config_chan_number() const
+std::uint32_t RdaAdaptationData::config_chan_number() const
 {
    return p->configChanNumber_;
 }
 
-uint32_t RdaAdaptationData::redundant_chan_config() const
+std::uint32_t RdaAdaptationData::redundant_chan_config() const
 {
    return p->redundantChanConfig_;
 }
 
 float RdaAdaptationData::atten_table(unsigned i) const
 {
-   return p->attenTable_[i];
+   return p->attenTable_.at(i);
 }
 
 float RdaAdaptationData::path_losses(unsigned i) const
@@ -412,41 +405,49 @@ float RdaAdaptationData::path_losses(unsigned i) const
 
 float RdaAdaptationData::h_coupler_xmt_loss() const
 {
+   // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
    return path_losses(29);
 }
 
 float RdaAdaptationData::h_coupler_cw_loss() const
 {
+   // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
    return path_losses(48);
 }
 
 float RdaAdaptationData::v_coupler_xmt_loss() const
 {
+   // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
    return path_losses(49);
 }
 
 float RdaAdaptationData::ame_ts_bias() const
 {
+   // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
    return path_losses(51);
 }
 
 float RdaAdaptationData::v_coupler_cw_loss() const
 {
+   // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
    return path_losses(53);
 }
 
 float RdaAdaptationData::pwr_sense_bias() const
 {
+   // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
    return path_losses(56);
 }
 
 float RdaAdaptationData::ame_v_noise_enr() const
 {
+   // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
    return path_losses(57);
 }
 
 float RdaAdaptationData::chan_cal_diff() const
 {
+   // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
    return path_losses(70);
 }
 
@@ -457,20 +458,20 @@ float RdaAdaptationData::v_ts_cw() const
 
 float RdaAdaptationData::h_rnscale(unsigned i) const
 {
-   return p->hRnscale_[i];
+   return p->hRnscale_.at(i);
 }
 
 float RdaAdaptationData::atmos(unsigned i) const
 {
-   return p->atmos_[i];
+   return p->atmos_.at(i);
 }
 
 float RdaAdaptationData::el_index(unsigned i) const
 {
-   return p->elIndex_[i];
+   return p->elIndex_.at(i);
 }
 
-uint32_t RdaAdaptationData::tfreq_mhz() const
+std::uint32_t RdaAdaptationData::tfreq_mhz() const
 {
    return p->tfreqMhz_;
 }
@@ -495,12 +496,12 @@ float RdaAdaptationData::tar_v_dbz0_lp() const
    return p->tarVDbz0Lp_;
 }
 
-uint32_t RdaAdaptationData::init_phi_dp() const
+std::uint32_t RdaAdaptationData::init_phi_dp() const
 {
    return p->initPhiDp_;
 }
 
-uint32_t RdaAdaptationData::norm_init_phi_dp() const
+std::uint32_t RdaAdaptationData::norm_init_phi_dp() const
 {
    return p->normInitPhiDp_;
 }
@@ -540,7 +541,7 @@ float RdaAdaptationData::h_noisetemp_dgrad_limit() const
    return p->hNoisetempDgradLimit_;
 }
 
-uint32_t RdaAdaptationData::h_min_noisetemp() const
+std::uint32_t RdaAdaptationData::h_min_noisetemp() const
 {
    return p->hMinNoisetemp_;
 }
@@ -550,7 +551,7 @@ float RdaAdaptationData::v_noisetemp_dgrad_limit() const
    return p->vNoisetempDgradLimit_;
 }
 
-uint32_t RdaAdaptationData::v_min_noisetemp() const
+std::uint32_t RdaAdaptationData::v_min_noisetemp() const
 {
    return p->vMinNoisetemp_;
 }
@@ -635,32 +636,32 @@ float RdaAdaptationData::tar_v_dbz0_sp() const
    return p->tarVDbz0Sp_;
 }
 
-uint32_t RdaAdaptationData::deltaprf() const
+std::uint32_t RdaAdaptationData::deltaprf() const
 {
    return p->deltaprf_;
 }
 
-uint32_t RdaAdaptationData::tau_sp() const
+std::uint32_t RdaAdaptationData::tau_sp() const
 {
    return p->tauSp_;
 }
 
-uint32_t RdaAdaptationData::tau_lp() const
+std::uint32_t RdaAdaptationData::tau_lp() const
 {
    return p->tauLp_;
 }
 
-uint32_t RdaAdaptationData::nc_dead_value() const
+std::uint32_t RdaAdaptationData::nc_dead_value() const
 {
    return p->ncDeadValue_;
 }
 
-uint32_t RdaAdaptationData::tau_rf_sp() const
+std::uint32_t RdaAdaptationData::tau_rf_sp() const
 {
    return p->tauRfSp_;
 }
 
-uint32_t RdaAdaptationData::tau_rf_lp() const
+std::uint32_t RdaAdaptationData::tau_rf_lp() const
 {
    return p->tauRfLp_;
 }
@@ -680,22 +681,22 @@ float RdaAdaptationData::slonsec() const
    return p->slonsec_;
 }
 
-uint32_t RdaAdaptationData::slatdeg() const
+std::uint32_t RdaAdaptationData::slatdeg() const
 {
    return p->slatdeg_;
 }
 
-uint32_t RdaAdaptationData::slatmin() const
+std::uint32_t RdaAdaptationData::slatmin() const
 {
    return p->slatmin_;
 }
 
-uint32_t RdaAdaptationData::slondeg() const
+std::uint32_t RdaAdaptationData::slondeg() const
 {
    return p->slondeg_;
 }
 
-uint32_t RdaAdaptationData::slonmin() const
+std::uint32_t RdaAdaptationData::slonmin() const
 {
    return p->slonmin_;
 }
@@ -738,31 +739,31 @@ std::string RdaAdaptationData::site_name() const
 float RdaAdaptationData::ant_manual_setup_ielmin() const
 {
    constexpr float SCALE = 360.0f / 65536.0f;
-   return p->antManualSetup_.ielmin_ * SCALE;
+   return static_cast<float>(p->antManualSetup_.ielmin_) * SCALE;
 }
 
 float RdaAdaptationData::ant_manual_setup_ielmax() const
 {
    constexpr float SCALE = 360.0f / 65536.0f;
-   return p->antManualSetup_.ielmax_ * SCALE;
+   return static_cast<float>(p->antManualSetup_.ielmax_) * SCALE;
 }
 
-uint32_t RdaAdaptationData::ant_manual_setup_fazvelmax() const
+std::uint32_t RdaAdaptationData::ant_manual_setup_fazvelmax() const
 {
    return p->antManualSetup_.fazvelmax_;
 }
 
-uint32_t RdaAdaptationData::ant_manual_setup_felvelmax() const
+std::uint32_t RdaAdaptationData::ant_manual_setup_felvelmax() const
 {
    return p->antManualSetup_.felvelmax_;
 }
 
-int32_t RdaAdaptationData::ant_manual_setup_ignd_hgt() const
+std::int32_t RdaAdaptationData::ant_manual_setup_ignd_hgt() const
 {
    return p->antManualSetup_.igndHgt_;
 }
 
-uint32_t RdaAdaptationData::ant_manual_setup_irad_hgt() const
+std::uint32_t RdaAdaptationData::ant_manual_setup_irad_hgt() const
 {
    return p->antManualSetup_.iradHgt_;
 }
@@ -877,14 +878,14 @@ std::string RdaAdaptationData::refined_park() const
    return p->refinedPark_;
 }
 
-uint32_t RdaAdaptationData::rvp8nv_iwaveguide_length() const
+std::uint32_t RdaAdaptationData::rvp8nv_iwaveguide_length() const
 {
    return p->rvp8nvIwaveguideLength_;
 }
 
 float RdaAdaptationData::v_rnscale(unsigned i) const
 {
-   return p->vRnscale_[i];
+   return p->vRnscale_.at(i);
 }
 
 float RdaAdaptationData::vel_data_tover() const
@@ -902,7 +903,7 @@ float RdaAdaptationData::doppler_range_start() const
    return p->dopplerRangeStart_;
 }
 
-uint32_t RdaAdaptationData::max_el_index() const
+std::uint32_t RdaAdaptationData::max_el_index() const
 {
    return p->maxElIndex_;
 }
@@ -922,7 +923,7 @@ float RdaAdaptationData::seg4_lim() const
    return p->seg4Lim_;
 }
 
-uint32_t RdaAdaptationData::nbr_el_segments() const
+std::uint32_t RdaAdaptationData::nbr_el_segments() const
 {
    return p->nbrElSegments_;
 }
@@ -1082,7 +1083,7 @@ float RdaAdaptationData::bite_mod_min_temp() const
    return p->biteModMinTemp_;
 }
 
-uint32_t RdaAdaptationData::default_polarization() const
+std::uint32_t RdaAdaptationData::default_polarization() const
 {
    return p->defaultPolarization_;
 }
@@ -1107,12 +1108,12 @@ float RdaAdaptationData::ame_current_tolerance() const
    return p->ameCurrentTolerance_;
 }
 
-uint32_t RdaAdaptationData::h_only_polarization() const
+std::uint32_t RdaAdaptationData::h_only_polarization() const
 {
    return p->hOnlyPolarization_;
 }
 
-uint32_t RdaAdaptationData::v_only_polarization() const
+std::uint32_t RdaAdaptationData::v_only_polarization() const
 {
    return p->vOnlyPolarization_;
 }
@@ -1146,9 +1147,10 @@ bool RdaAdaptationData::Parse(std::istream& is)
 {
    logger_->trace("Parsing RDA Adaptation Data (Message Type 18)");
 
-   bool   messageValid = true;
-   size_t bytesRead    = 0;
+   bool        messageValid = true;
+   std::size_t bytesRead    = 0;
 
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers): Readability
    p->adapFileName_.resize(12);
    p->adapFormat_.resize(4);
    p->adapRevision_.resize(4);
@@ -1171,7 +1173,7 @@ bool RdaAdaptationData::Parse(std::istream& is)
    is.read(reinterpret_cast<char*>(&p->parkel_), 4);        // 64-67
 
    is.read(reinterpret_cast<char*>(&p->aFuelConv_[0]),
-           p->aFuelConv_.size() * 4); // 68-111
+           static_cast<std::streamsize>(p->aFuelConv_.size() * 4)); // 68-111
 
    is.read(reinterpret_cast<char*>(&p->aMinShelterTemp_), 4);       // 112-115
    is.read(reinterpret_cast<char*>(&p->aMaxShelterTemp_), 4);       // 116-119
@@ -1209,7 +1211,7 @@ bool RdaAdaptationData::Parse(std::istream& is)
    is.read(reinterpret_cast<char*>(&p->redundantChanConfig_), 4); // 224-227
 
    is.read(reinterpret_cast<char*>(&p->attenTable_[0]),
-           p->attenTable_.size() * 4); // 228-643
+           static_cast<std::streamsize>(p->attenTable_.size() * 4)); // 228-643
 
    is.seekg(24, std::ios_base::cur);                         // 644-667
    is.read(reinterpret_cast<char*>(&p->pathLosses_[7]), 4);  // 668-671
@@ -1262,13 +1264,13 @@ bool RdaAdaptationData::Parse(std::istream& is)
    is.read(reinterpret_cast<char*>(&p->vTsCw_), 4); // 936-939
 
    is.read(reinterpret_cast<char*>(&p->hRnscale_[0]),
-           p->hRnscale_.size() * 4); // 940-991
+           static_cast<std::streamsize>(p->hRnscale_.size() * 4)); // 940-991
 
    is.read(reinterpret_cast<char*>(&p->atmos_[0]),
-           p->atmos_.size() * 4); // 992-1043
+           static_cast<std::streamsize>(p->atmos_.size() * 4)); // 992-1043
 
    is.read(reinterpret_cast<char*>(&p->elIndex_[0]),
-           p->elIndex_.size() * 4); // 1044-1091
+           static_cast<std::streamsize>(p->elIndex_.size() * 4)); // 1044-1091
 
    is.read(reinterpret_cast<char*>(&p->tfreqMhz_), 4);      // 1092-1095
    is.read(reinterpret_cast<char*>(&p->baseDataTcn_), 4);   // 1096-1099
@@ -1394,11 +1396,12 @@ bool RdaAdaptationData::Parse(std::istream& is)
            4); // 8696-8699
 
    is.read(reinterpret_cast<char*>(&p->vRnscale_[0]),
-           11 * 4); // 8700-8743
+           static_cast<std::streamsize>(11 * 4)); // 8700-8743
 
-   is.read(reinterpret_cast<char*>(&p->velDataTover_), 4);     // 8744-8747
-   is.read(reinterpret_cast<char*>(&p->widthDataTover_), 4);   // 8748-8751
-   is.read(reinterpret_cast<char*>(&p->vRnscale_[11]), 2 * 4); // 8752-8759
+   is.read(reinterpret_cast<char*>(&p->velDataTover_), 4);   // 8744-8747
+   is.read(reinterpret_cast<char*>(&p->widthDataTover_), 4); // 8748-8751
+   is.read(reinterpret_cast<char*>(&p->vRnscale_[11]),
+           static_cast<std::streamsize>(2 * 4)); // 8752-8759
 
    is.seekg(4, std::ios_base::cur); // 8760-8763
 
@@ -1468,6 +1471,8 @@ bool RdaAdaptationData::Parse(std::istream& is)
 
    bytesRead += 9468;
 
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+
    p->lowerPreLimit_ = SwapFloat(p->lowerPreLimit_);
    p->azLat_         = SwapFloat(p->azLat_);
    p->upperPreLimit_ = SwapFloat(p->upperPreLimit_);
@@ -1507,84 +1512,87 @@ bool RdaAdaptationData::Parse(std::istream& is)
    SwapArray(p->atmos_);
    SwapArray(p->elIndex_);
 
-   p->tfreqMhz_                  = ntohl(p->tfreqMhz_);
-   p->baseDataTcn_               = SwapFloat(p->baseDataTcn_);
-   p->reflDataTover_             = SwapFloat(p->reflDataTover_);
-   p->tarHDbz0Lp_                = SwapFloat(p->tarHDbz0Lp_);
-   p->tarVDbz0Lp_                = SwapFloat(p->tarVDbz0Lp_);
-   p->initPhiDp_                 = ntohl(p->initPhiDp_);
-   p->normInitPhiDp_             = ntohl(p->normInitPhiDp_);
-   p->lxLp_                      = SwapFloat(p->lxLp_);
-   p->lxSp_                      = SwapFloat(p->lxSp_);
-   p->meteorParam_               = SwapFloat(p->meteorParam_);
-   p->antennaGain_               = SwapFloat(p->antennaGain_);
-   p->velDegradLimit_            = SwapFloat(p->velDegradLimit_);
-   p->wthDegradLimit_            = SwapFloat(p->wthDegradLimit_);
-   p->hNoisetempDgradLimit_      = SwapFloat(p->hNoisetempDgradLimit_);
-   p->hMinNoisetemp_             = ntohl(p->hMinNoisetemp_);
-   p->vNoisetempDgradLimit_      = SwapFloat(p->vNoisetempDgradLimit_);
-   p->vMinNoisetemp_             = ntohl(p->vMinNoisetemp_);
-   p->klyDegradeLimit_           = SwapFloat(p->klyDegradeLimit_);
-   p->tsCoho_                    = SwapFloat(p->tsCoho_);
-   p->hTsCw_                     = SwapFloat(p->hTsCw_);
-   p->tsStalo_                   = SwapFloat(p->tsStalo_);
-   p->ameHNoiseEnr_              = SwapFloat(p->ameHNoiseEnr_);
-   p->xmtrPeakPwrHighLimit_      = SwapFloat(p->xmtrPeakPwrHighLimit_);
-   p->xmtrPeakPwrLowLimit_       = SwapFloat(p->xmtrPeakPwrLowLimit_);
-   p->hDbz0DeltaLimit_           = SwapFloat(p->hDbz0DeltaLimit_);
-   p->threshold1_                = SwapFloat(p->threshold1_);
-   p->threshold2_                = SwapFloat(p->threshold2_);
-   p->clutSuppDgradLim_          = SwapFloat(p->clutSuppDgradLim_);
-   p->range0Value_               = SwapFloat(p->range0Value_);
-   p->xmtrPwrMtrScale_           = SwapFloat(p->xmtrPwrMtrScale_);
-   p->vDbz0DeltaLimit_           = SwapFloat(p->vDbz0DeltaLimit_);
-   p->tarHDbz0Sp_                = SwapFloat(p->tarHDbz0Sp_);
-   p->tarVDbz0Sp_                = SwapFloat(p->tarVDbz0Sp_);
-   p->deltaprf_                  = ntohl(p->deltaprf_);
-   p->tauSp_                     = ntohl(p->tauSp_);
-   p->tauLp_                     = ntohl(p->tauLp_);
-   p->ncDeadValue_               = ntohl(p->ncDeadValue_);
-   p->tauRfSp_                   = ntohl(p->tauRfSp_);
-   p->tauRfLp_                   = ntohl(p->tauRfLp_);
-   p->seg1Lim_                   = SwapFloat(p->seg1Lim_);
-   p->slatsec_                   = SwapFloat(p->slatsec_);
-   p->slonsec_                   = SwapFloat(p->slonsec_);
-   p->slatdeg_                   = ntohl(p->slatdeg_);
-   p->slatmin_                   = ntohl(p->slatmin_);
-   p->slondeg_                   = ntohl(p->slondeg_);
-   p->slonmin_                   = ntohl(p->slonmin_);
-   p->digRcvrClockFreq_          = SwapDouble(p->digRcvrClockFreq_);
-   p->cohoFreq_                  = SwapDouble(p->cohoFreq_);
-   p->azCorrectionFactor_        = SwapFloat(p->azCorrectionFactor_);
-   p->elCorrectionFactor_        = SwapFloat(p->elCorrectionFactor_);
-   p->antManualSetup_.ielmin_    = ntohl(p->antManualSetup_.ielmin_);
-   p->antManualSetup_.ielmax_    = ntohl(p->antManualSetup_.ielmax_);
+   p->tfreqMhz_             = ntohl(p->tfreqMhz_);
+   p->baseDataTcn_          = SwapFloat(p->baseDataTcn_);
+   p->reflDataTover_        = SwapFloat(p->reflDataTover_);
+   p->tarHDbz0Lp_           = SwapFloat(p->tarHDbz0Lp_);
+   p->tarVDbz0Lp_           = SwapFloat(p->tarVDbz0Lp_);
+   p->initPhiDp_            = ntohl(p->initPhiDp_);
+   p->normInitPhiDp_        = ntohl(p->normInitPhiDp_);
+   p->lxLp_                 = SwapFloat(p->lxLp_);
+   p->lxSp_                 = SwapFloat(p->lxSp_);
+   p->meteorParam_          = SwapFloat(p->meteorParam_);
+   p->antennaGain_          = SwapFloat(p->antennaGain_);
+   p->velDegradLimit_       = SwapFloat(p->velDegradLimit_);
+   p->wthDegradLimit_       = SwapFloat(p->wthDegradLimit_);
+   p->hNoisetempDgradLimit_ = SwapFloat(p->hNoisetempDgradLimit_);
+   p->hMinNoisetemp_        = ntohl(p->hMinNoisetemp_);
+   p->vNoisetempDgradLimit_ = SwapFloat(p->vNoisetempDgradLimit_);
+   p->vMinNoisetemp_        = ntohl(p->vMinNoisetemp_);
+   p->klyDegradeLimit_      = SwapFloat(p->klyDegradeLimit_);
+   p->tsCoho_               = SwapFloat(p->tsCoho_);
+   p->hTsCw_                = SwapFloat(p->hTsCw_);
+   p->tsStalo_              = SwapFloat(p->tsStalo_);
+   p->ameHNoiseEnr_         = SwapFloat(p->ameHNoiseEnr_);
+   p->xmtrPeakPwrHighLimit_ = SwapFloat(p->xmtrPeakPwrHighLimit_);
+   p->xmtrPeakPwrLowLimit_  = SwapFloat(p->xmtrPeakPwrLowLimit_);
+   p->hDbz0DeltaLimit_      = SwapFloat(p->hDbz0DeltaLimit_);
+   p->threshold1_           = SwapFloat(p->threshold1_);
+   p->threshold2_           = SwapFloat(p->threshold2_);
+   p->clutSuppDgradLim_     = SwapFloat(p->clutSuppDgradLim_);
+   p->range0Value_          = SwapFloat(p->range0Value_);
+   p->xmtrPwrMtrScale_      = SwapFloat(p->xmtrPwrMtrScale_);
+   p->vDbz0DeltaLimit_      = SwapFloat(p->vDbz0DeltaLimit_);
+   p->tarHDbz0Sp_           = SwapFloat(p->tarHDbz0Sp_);
+   p->tarVDbz0Sp_           = SwapFloat(p->tarVDbz0Sp_);
+   p->deltaprf_             = ntohl(p->deltaprf_);
+   p->tauSp_                = ntohl(p->tauSp_);
+   p->tauLp_                = ntohl(p->tauLp_);
+   p->ncDeadValue_          = ntohl(p->ncDeadValue_);
+   p->tauRfSp_              = ntohl(p->tauRfSp_);
+   p->tauRfLp_              = ntohl(p->tauRfLp_);
+   p->seg1Lim_              = SwapFloat(p->seg1Lim_);
+   p->slatsec_              = SwapFloat(p->slatsec_);
+   p->slonsec_              = SwapFloat(p->slonsec_);
+   p->slatdeg_              = ntohl(p->slatdeg_);
+   p->slatmin_              = ntohl(p->slatmin_);
+   p->slondeg_              = ntohl(p->slondeg_);
+   p->slonmin_              = ntohl(p->slonmin_);
+   p->digRcvrClockFreq_     = SwapDouble(p->digRcvrClockFreq_);
+   p->cohoFreq_             = SwapDouble(p->cohoFreq_);
+   p->azCorrectionFactor_   = SwapFloat(p->azCorrectionFactor_);
+   p->elCorrectionFactor_   = SwapFloat(p->elCorrectionFactor_);
+   p->antManualSetup_.ielmin_ =
+      static_cast<std::int32_t>(ntohl(p->antManualSetup_.ielmin_));
+   p->antManualSetup_.ielmax_ =
+      static_cast<std::int32_t>(ntohl(p->antManualSetup_.ielmax_));
    p->antManualSetup_.fazvelmax_ = ntohl(p->antManualSetup_.fazvelmax_);
    p->antManualSetup_.felvelmax_ = ntohl(p->antManualSetup_.felvelmax_);
-   p->antManualSetup_.igndHgt_   = ntohl(p->antManualSetup_.igndHgt_);
-   p->antManualSetup_.iradHgt_   = ntohl(p->antManualSetup_.iradHgt_);
-   p->azPosSustainDrive_         = SwapFloat(p->azPosSustainDrive_);
-   p->azNegSustainDrive_         = SwapFloat(p->azNegSustainDrive_);
-   p->azNomPosDriveSlope_        = SwapFloat(p->azNomPosDriveSlope_);
-   p->azNomNegDriveSlope_        = SwapFloat(p->azNomNegDriveSlope_);
-   p->azFeedbackSlope_           = SwapFloat(p->azFeedbackSlope_);
-   p->elPosSustainDrive_         = SwapFloat(p->elPosSustainDrive_);
-   p->elNegSustainDrive_         = SwapFloat(p->elNegSustainDrive_);
-   p->elNomPosDriveSlope_        = SwapFloat(p->elNomPosDriveSlope_);
-   p->elNomNegDriveSlope_        = SwapFloat(p->elNomNegDriveSlope_);
-   p->elFeedbackSlope_           = SwapFloat(p->elFeedbackSlope_);
-   p->elFirstSlope_              = SwapFloat(p->elFirstSlope_);
-   p->elSecondSlope_             = SwapFloat(p->elSecondSlope_);
-   p->elThirdSlope_              = SwapFloat(p->elThirdSlope_);
-   p->elDroopPos_                = SwapFloat(p->elDroopPos_);
-   p->elOffNeutralDrive_         = SwapFloat(p->elOffNeutralDrive_);
-   p->azIntertia_                = SwapFloat(p->azIntertia_);
-   p->elInertia_                 = SwapFloat(p->elInertia_);
-   p->azStowAngle_               = SwapFloat(p->azStowAngle_);
-   p->elStowAngle_               = SwapFloat(p->elStowAngle_);
-   p->azEncoderAlignment_        = SwapFloat(p->azEncoderAlignment_);
-   p->elEncoderAlignment_        = SwapFloat(p->elEncoderAlignment_);
-   p->rvp8nvIwaveguideLength_    = ntohl(p->rvp8nvIwaveguideLength_);
+   p->antManualSetup_.igndHgt_ =
+      static_cast<std::int32_t>(ntohl(p->antManualSetup_.igndHgt_));
+   p->antManualSetup_.iradHgt_ = ntohl(p->antManualSetup_.iradHgt_);
+   p->azPosSustainDrive_       = SwapFloat(p->azPosSustainDrive_);
+   p->azNegSustainDrive_       = SwapFloat(p->azNegSustainDrive_);
+   p->azNomPosDriveSlope_      = SwapFloat(p->azNomPosDriveSlope_);
+   p->azNomNegDriveSlope_      = SwapFloat(p->azNomNegDriveSlope_);
+   p->azFeedbackSlope_         = SwapFloat(p->azFeedbackSlope_);
+   p->elPosSustainDrive_       = SwapFloat(p->elPosSustainDrive_);
+   p->elNegSustainDrive_       = SwapFloat(p->elNegSustainDrive_);
+   p->elNomPosDriveSlope_      = SwapFloat(p->elNomPosDriveSlope_);
+   p->elNomNegDriveSlope_      = SwapFloat(p->elNomNegDriveSlope_);
+   p->elFeedbackSlope_         = SwapFloat(p->elFeedbackSlope_);
+   p->elFirstSlope_            = SwapFloat(p->elFirstSlope_);
+   p->elSecondSlope_           = SwapFloat(p->elSecondSlope_);
+   p->elThirdSlope_            = SwapFloat(p->elThirdSlope_);
+   p->elDroopPos_              = SwapFloat(p->elDroopPos_);
+   p->elOffNeutralDrive_       = SwapFloat(p->elOffNeutralDrive_);
+   p->azIntertia_              = SwapFloat(p->azIntertia_);
+   p->elInertia_               = SwapFloat(p->elInertia_);
+   p->azStowAngle_             = SwapFloat(p->azStowAngle_);
+   p->elStowAngle_             = SwapFloat(p->elStowAngle_);
+   p->azEncoderAlignment_      = SwapFloat(p->azEncoderAlignment_);
+   p->elEncoderAlignment_      = SwapFloat(p->elEncoderAlignment_);
+   p->rvp8nvIwaveguideLength_  = ntohl(p->rvp8nvIwaveguideLength_);
 
    SwapArray(p->vRnscale_);
 
@@ -1660,6 +1668,4 @@ RdaAdaptationData::Create(Level2MessageHeader&& header, std::istream& is)
    return message;
 }
 
-} // namespace rda
-} // namespace wsr88d
-} // namespace scwx
+} // namespace scwx::wsr88d::rda

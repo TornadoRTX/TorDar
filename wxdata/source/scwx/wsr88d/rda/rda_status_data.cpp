@@ -1,209 +1,214 @@
 #include <scwx/wsr88d/rda/rda_status_data.hpp>
 #include <scwx/util/logger.hpp>
 
-namespace scwx
-{
-namespace wsr88d
-{
-namespace rda
+namespace scwx::wsr88d::rda
 {
 
 static const std::string logPrefix_ = "scwx::wsr88d::rda::rda_status_data";
 static const auto        logger_    = util::Logger::Create(logPrefix_);
 
-class RdaStatusDataImpl
+class RdaStatusData::Impl
 {
 public:
-   explicit RdaStatusDataImpl() = default;
-   ~RdaStatusDataImpl()         = default;
+   explicit Impl() = default;
+   ~Impl()         = default;
 
-   uint16_t                 rdaStatus_ {0};
-   uint16_t                 operabilityStatus_ {0};
-   uint16_t                 controlStatus_ {0};
-   uint16_t                 auxiliaryPowerGeneratorState_ {0};
-   uint16_t                 averageTransmitterPower_ {0};
-   int16_t                  horizontalReflectivityCalibrationCorrection_ {0};
-   uint16_t                 dataTransmissionEnabled_ {0};
-   uint16_t                 volumeCoveragePatternNumber_ {0};
-   uint16_t                 rdaControlAuthorization_ {0};
-   uint16_t                 rdaBuildNumber_ {0};
-   uint16_t                 operationalMode_ {0};
-   uint16_t                 superResolutionStatus_ {0};
-   uint16_t                 clutterMitigationDecisionStatus_ {0};
-   uint16_t                 rdaScanAndDataFlags_ {0};
-   uint16_t                 rdaAlarmSummary_ {0};
-   uint16_t                 commandAcknowledgement_ {0};
-   uint16_t                 channelControlStatus_ {0};
-   uint16_t                 spotBlankingStatus_ {0};
-   uint16_t                 bypassMapGenerationDate_ {0};
-   uint16_t                 bypassMapGenerationTime_ {0};
-   uint16_t                 clutterFilterMapGenerationDate_ {0};
-   uint16_t                 clutterFilterMapGenerationTime_ {0};
-   int16_t                  verticalReflectivityCalibrationCorrection_ {0};
-   uint16_t                 transitionPowerSourceStatus_ {0};
-   uint16_t                 rmsControlStatus_ {0};
-   uint16_t                 performanceCheckStatus_ {0};
-   std::array<uint16_t, 14> alarmCodes_ {0};
-   uint16_t                 signalProcessingOptions_ {0};
-   uint16_t                 downloadedPatternNumber_ {0};
-   uint16_t                 statusVersion_ {0};
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
+
+   std::uint16_t rdaStatus_ {0};
+   std::uint16_t operabilityStatus_ {0};
+   std::uint16_t controlStatus_ {0};
+   std::uint16_t auxiliaryPowerGeneratorState_ {0};
+   std::uint16_t averageTransmitterPower_ {0};
+   std::int16_t  horizontalReflectivityCalibrationCorrection_ {0};
+   std::uint16_t dataTransmissionEnabled_ {0};
+   std::uint16_t volumeCoveragePatternNumber_ {0};
+   std::uint16_t rdaControlAuthorization_ {0};
+   std::uint16_t rdaBuildNumber_ {0};
+   std::uint16_t operationalMode_ {0};
+   std::uint16_t superResolutionStatus_ {0};
+   std::uint16_t clutterMitigationDecisionStatus_ {0};
+   std::uint16_t rdaScanAndDataFlags_ {0};
+   std::uint16_t rdaAlarmSummary_ {0};
+   std::uint16_t commandAcknowledgement_ {0};
+   std::uint16_t channelControlStatus_ {0};
+   std::uint16_t spotBlankingStatus_ {0};
+   std::uint16_t bypassMapGenerationDate_ {0};
+   std::uint16_t bypassMapGenerationTime_ {0};
+   std::uint16_t clutterFilterMapGenerationDate_ {0};
+   std::uint16_t clutterFilterMapGenerationTime_ {0};
+   std::int16_t  verticalReflectivityCalibrationCorrection_ {0};
+   std::uint16_t transitionPowerSourceStatus_ {0};
+   std::uint16_t rmsControlStatus_ {0};
+   std::uint16_t performanceCheckStatus_ {0};
+
+   // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
+   std::array<std::uint16_t, 14> alarmCodes_ {0};
+
+   std::uint16_t signalProcessingOptions_ {0};
+   std::uint16_t downloadedPatternNumber_ {0};
+   std::uint16_t statusVersion_ {0};
 };
 
-RdaStatusData::RdaStatusData() :
-    Level2Message(), p(std::make_unique<RdaStatusDataImpl>())
-{
-}
+RdaStatusData::RdaStatusData() : Level2Message(), p(std::make_unique<Impl>()) {}
 RdaStatusData::~RdaStatusData() = default;
 
 RdaStatusData::RdaStatusData(RdaStatusData&&) noexcept            = default;
 RdaStatusData& RdaStatusData::operator=(RdaStatusData&&) noexcept = default;
 
-uint16_t RdaStatusData::rda_status() const
+std::uint16_t RdaStatusData::rda_status() const
 {
    return p->rdaStatus_;
 }
 
-uint16_t RdaStatusData::operability_status() const
+std::uint16_t RdaStatusData::operability_status() const
 {
    return p->operabilityStatus_;
 }
 
-uint16_t RdaStatusData::control_status() const
+std::uint16_t RdaStatusData::control_status() const
 {
    return p->controlStatus_;
 }
 
-uint16_t RdaStatusData::auxiliary_power_generator_state() const
+std::uint16_t RdaStatusData::auxiliary_power_generator_state() const
 {
    return p->auxiliaryPowerGeneratorState_;
 }
 
-uint16_t RdaStatusData::average_transmitter_power() const
+std::uint16_t RdaStatusData::average_transmitter_power() const
 {
    return p->averageTransmitterPower_;
 }
 
 float RdaStatusData::horizontal_reflectivity_calibration_correction() const
 {
-   return p->horizontalReflectivityCalibrationCorrection_ * 0.01f;
+   constexpr float kScale_ = 0.01f;
+   return static_cast<float>(p->horizontalReflectivityCalibrationCorrection_) *
+          kScale_;
 }
 
-uint16_t RdaStatusData::data_transmission_enabled() const
+std::uint16_t RdaStatusData::data_transmission_enabled() const
 {
    return p->dataTransmissionEnabled_;
 }
 
-uint16_t RdaStatusData::volume_coverage_pattern_number() const
+std::uint16_t RdaStatusData::volume_coverage_pattern_number() const
 {
    return p->volumeCoveragePatternNumber_;
 }
 
-uint16_t RdaStatusData::rda_control_authorization() const
+std::uint16_t RdaStatusData::rda_control_authorization() const
 {
    return p->rdaControlAuthorization_;
 }
 
-uint16_t RdaStatusData::rda_build_number() const
+std::uint16_t RdaStatusData::rda_build_number() const
 {
    return p->rdaBuildNumber_;
 }
 
-uint16_t RdaStatusData::operational_mode() const
+std::uint16_t RdaStatusData::operational_mode() const
 {
    return p->operationalMode_;
 }
 
-uint16_t RdaStatusData::super_resolution_status() const
+std::uint16_t RdaStatusData::super_resolution_status() const
 {
    return p->superResolutionStatus_;
 }
 
-uint16_t RdaStatusData::clutter_mitigation_decision_status() const
+std::uint16_t RdaStatusData::clutter_mitigation_decision_status() const
 {
    return p->clutterMitigationDecisionStatus_;
 }
 
-uint16_t RdaStatusData::rda_scan_and_data_flags() const
+std::uint16_t RdaStatusData::rda_scan_and_data_flags() const
 {
    return p->rdaScanAndDataFlags_;
 }
 
-uint16_t RdaStatusData::rda_alarm_summary() const
+std::uint16_t RdaStatusData::rda_alarm_summary() const
 {
    return p->rdaAlarmSummary_;
 }
 
-uint16_t RdaStatusData::command_acknowledgement() const
+std::uint16_t RdaStatusData::command_acknowledgement() const
 {
    return p->commandAcknowledgement_;
 }
 
-uint16_t RdaStatusData::channel_control_status() const
+std::uint16_t RdaStatusData::channel_control_status() const
 {
    return p->channelControlStatus_;
 }
 
-uint16_t RdaStatusData::spot_blanking_status() const
+std::uint16_t RdaStatusData::spot_blanking_status() const
 {
    return p->spotBlankingStatus_;
 }
 
-uint16_t RdaStatusData::bypass_map_generation_date() const
+std::uint16_t RdaStatusData::bypass_map_generation_date() const
 {
    return p->bypassMapGenerationDate_;
 }
 
-uint16_t RdaStatusData::bypass_map_generation_time() const
+std::uint16_t RdaStatusData::bypass_map_generation_time() const
 {
    return p->bypassMapGenerationTime_;
 }
 
-uint16_t RdaStatusData::clutter_filter_map_generation_date() const
+std::uint16_t RdaStatusData::clutter_filter_map_generation_date() const
 {
    return p->clutterFilterMapGenerationDate_;
 }
 
-uint16_t RdaStatusData::clutter_filter_map_generation_time() const
+std::uint16_t RdaStatusData::clutter_filter_map_generation_time() const
 {
    return p->clutterFilterMapGenerationTime_;
 }
 
 float RdaStatusData::vertical_reflectivity_calibration_correction() const
 {
-   return p->verticalReflectivityCalibrationCorrection_ * 0.01f;
+   constexpr float kScale_ = 0.01f;
+   return static_cast<float>(p->verticalReflectivityCalibrationCorrection_) *
+          kScale_;
 }
 
-uint16_t RdaStatusData::transition_power_source_status() const
+std::uint16_t RdaStatusData::transition_power_source_status() const
 {
    return p->transitionPowerSourceStatus_;
 }
 
-uint16_t RdaStatusData::rms_control_status() const
+std::uint16_t RdaStatusData::rms_control_status() const
 {
    return p->rmsControlStatus_;
 }
 
-uint16_t RdaStatusData::performance_check_status() const
+std::uint16_t RdaStatusData::performance_check_status() const
 {
    return p->performanceCheckStatus_;
 }
 
-uint16_t RdaStatusData::alarm_codes(unsigned i) const
+std::uint16_t RdaStatusData::alarm_codes(unsigned i) const
 {
-   return p->alarmCodes_[i];
+   return p->alarmCodes_.at(i);
 }
 
-uint16_t RdaStatusData::signal_processing_options() const
+std::uint16_t RdaStatusData::signal_processing_options() const
 {
    return p->signalProcessingOptions_;
 }
 
-uint16_t RdaStatusData::downloaded_pattern_number() const
+std::uint16_t RdaStatusData::downloaded_pattern_number() const
 {
    return p->downloadedPatternNumber_;
 }
 
-uint16_t RdaStatusData::status_version() const
+std::uint16_t RdaStatusData::status_version() const
 {
    return p->statusVersion_;
 }
@@ -215,6 +220,7 @@ bool RdaStatusData::Parse(std::istream& is)
    bool   messageValid = true;
    size_t bytesRead    = 0;
 
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers): Readability
    is.read(reinterpret_cast<char*>(&p->rdaStatus_), 2);                    // 1
    is.read(reinterpret_cast<char*>(&p->operabilityStatus_), 2);            // 2
    is.read(reinterpret_cast<char*>(&p->controlStatus_), 2);                // 3
@@ -249,7 +255,7 @@ bool RdaStatusData::Parse(std::istream& is)
    is.read(reinterpret_cast<char*>(&p->rmsControlStatus_), 2);            // 25
    is.read(reinterpret_cast<char*>(&p->performanceCheckStatus_), 2);      // 26
    is.read(reinterpret_cast<char*>(&p->alarmCodes_),
-           p->alarmCodes_.size() * 2); // 27-40
+           static_cast<std::streamsize>(p->alarmCodes_.size() * 2)); // 27-40
    bytesRead += 80;
 
    p->rdaStatus_                    = ntohs(p->rdaStatus_);
@@ -257,8 +263,8 @@ bool RdaStatusData::Parse(std::istream& is)
    p->controlStatus_                = ntohs(p->controlStatus_);
    p->auxiliaryPowerGeneratorState_ = ntohs(p->auxiliaryPowerGeneratorState_);
    p->averageTransmitterPower_      = ntohs(p->averageTransmitterPower_);
-   p->horizontalReflectivityCalibrationCorrection_ =
-      ntohs(p->horizontalReflectivityCalibrationCorrection_);
+   p->horizontalReflectivityCalibrationCorrection_ = static_cast<std::int16_t>(
+      ntohs(p->horizontalReflectivityCalibrationCorrection_));
    p->dataTransmissionEnabled_     = ntohs(p->dataTransmissionEnabled_);
    p->volumeCoveragePatternNumber_ = ntohs(p->volumeCoveragePatternNumber_);
    p->rdaControlAuthorization_     = ntohs(p->rdaControlAuthorization_);
@@ -278,15 +284,16 @@ bool RdaStatusData::Parse(std::istream& is)
       ntohs(p->clutterFilterMapGenerationDate_);
    p->clutterFilterMapGenerationTime_ =
       ntohs(p->clutterFilterMapGenerationTime_);
-   p->verticalReflectivityCalibrationCorrection_ =
-      ntohs(p->verticalReflectivityCalibrationCorrection_);
+   p->verticalReflectivityCalibrationCorrection_ = static_cast<std::int16_t>(
+      ntohs(p->verticalReflectivityCalibrationCorrection_));
    p->transitionPowerSourceStatus_ = ntohs(p->transitionPowerSourceStatus_);
    p->rmsControlStatus_            = ntohs(p->rmsControlStatus_);
    p->performanceCheckStatus_      = ntohs(p->performanceCheckStatus_);
    SwapArray(p->alarmCodes_);
 
    // RDA Build 18.0 increased the size of the message from 80 to 120 bytes
-   if (header().message_size() * 2 > Level2MessageHeader::SIZE + 80)
+   if (static_cast<std::size_t>(header().message_size()) * 2 >
+       Level2MessageHeader::SIZE + 80)
    {
       is.read(reinterpret_cast<char*>(&p->signalProcessingOptions_), 2); // 41
       is.seekg(34, std::ios_base::cur); // 42-58
@@ -297,6 +304,8 @@ bool RdaStatusData::Parse(std::istream& is)
       p->signalProcessingOptions_ = ntohs(p->signalProcessingOptions_);
       p->statusVersion_           = ntohs(p->statusVersion_);
    }
+   
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
    if (!ValidateMessage(is, bytesRead))
    {
@@ -320,6 +329,4 @@ RdaStatusData::Create(Level2MessageHeader&& header, std::istream& is)
    return message;
 }
 
-} // namespace rda
-} // namespace wsr88d
-} // namespace scwx
+} // namespace scwx::wsr88d::rda

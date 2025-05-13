@@ -3,295 +3,300 @@
 
 #include <array>
 
-namespace scwx
-{
-namespace wsr88d
-{
-namespace rda
+namespace scwx::wsr88d::rda
 {
 
 static const std::string logPrefix_ =
    "scwx::wsr88d::rda::performance_maintenance_data";
 static const auto logger_ = util::Logger::Create(logPrefix_);
 
-class PerformanceMaintenanceDataImpl
+class PerformanceMaintenanceData::Impl
 {
 public:
-   explicit PerformanceMaintenanceDataImpl() = default;
-   ~PerformanceMaintenanceDataImpl()         = default;
+   explicit Impl() = default;
+   ~Impl()         = default;
+
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    // Communications
-   uint16_t loopBackSetStatus_ {0};
-   uint32_t t1OutputFrames_ {0};
-   uint32_t t1InputFrames_ {0};
-   uint32_t routerMemoryUsed_ {0};
-   uint32_t routerMemoryFree_ {0};
-   uint16_t routerMemoryUtilization_ {0};
-   uint16_t routeToRpg_ {0};
-   uint16_t t1PortStatus_ {0};
-   uint16_t routerDedicatedEthernetPortStatus_ {0};
-   uint16_t routerCommercialEthernetPortStatus_ {0};
-   uint32_t csu24HrErroredSeconds_ {0};
-   uint32_t csu24HrSeverelyErroredSeconds_ {0};
-   uint32_t csu24HrSeverelyErroredFramingSeconds_ {0};
-   uint32_t csu24HrUnavailableSeconds_ {0};
-   uint32_t csu24HrControlledSlipSeconds_ {0};
-   uint32_t csu24HrPathCodingViolations_ {0};
-   uint32_t csu24HrLineErroredSeconds_ {0};
-   uint32_t csu24HrBurstyErroredSeconds_ {0};
-   uint32_t csu24HrDegradedMinutes_ {0};
-   uint32_t lanSwitchCpuUtilization_ {0};
-   uint16_t lanSwitchMemoryUtilization_ {0};
-   uint16_t ifdrChasisTemperature_ {0};
-   uint16_t ifdrFpgaTemperature_ {0};
-   uint16_t ntpStatus_ {0};
-   uint16_t ipcStatus_ {0};
-   uint16_t commandedChannelControl_ {0};
+   std::uint16_t loopBackSetStatus_ {0};
+   std::uint32_t t1OutputFrames_ {0};
+   std::uint32_t t1InputFrames_ {0};
+   std::uint32_t routerMemoryUsed_ {0};
+   std::uint32_t routerMemoryFree_ {0};
+   std::uint16_t routerMemoryUtilization_ {0};
+   std::uint16_t routeToRpg_ {0};
+   std::uint16_t t1PortStatus_ {0};
+   std::uint16_t routerDedicatedEthernetPortStatus_ {0};
+   std::uint16_t routerCommercialEthernetPortStatus_ {0};
+   std::uint32_t csu24HrErroredSeconds_ {0};
+   std::uint32_t csu24HrSeverelyErroredSeconds_ {0};
+   std::uint32_t csu24HrSeverelyErroredFramingSeconds_ {0};
+   std::uint32_t csu24HrUnavailableSeconds_ {0};
+   std::uint32_t csu24HrControlledSlipSeconds_ {0};
+   std::uint32_t csu24HrPathCodingViolations_ {0};
+   std::uint32_t csu24HrLineErroredSeconds_ {0};
+   std::uint32_t csu24HrBurstyErroredSeconds_ {0};
+   std::uint32_t csu24HrDegradedMinutes_ {0};
+   std::uint32_t lanSwitchCpuUtilization_ {0};
+   std::uint16_t lanSwitchMemoryUtilization_ {0};
+   std::uint16_t ifdrChasisTemperature_ {0};
+   std::uint16_t ifdrFpgaTemperature_ {0};
+   std::uint16_t ntpStatus_ {0};
+   std::uint16_t ipcStatus_ {0};
+   std::uint16_t commandedChannelControl_ {0};
 
    // AME
-   uint16_t polarization_ {0};
-   float    ameInternalTemperature_ {0.0f};
-   float    ameReceiverModuleTemperature_ {0.0f};
-   float    ameBiteCalModuleTemperature_ {0.0f};
-   uint16_t amePeltierPulseWidthModulation_ {0};
-   uint16_t amePeltierStatus_ {0};
-   uint16_t ameADConverterStatus_ {0};
-   uint16_t ameState_ {0};
-   float    ame3_3VPsVoltage_ {0.0f};
-   float    ame5VPsVoltage_ {0.0f};
-   float    ame6_5VPsVoltage_ {0.0f};
-   float    ame15VPsVoltage_ {0.0f};
-   float    ame48VPsVoltage_ {0.0f};
-   float    ameStaloPower_ {0.0f};
-   float    peltierCurrent_ {0.0f};
-   float    adcCalibrationReferenceVoltage_ {0.0f};
-   uint16_t ameMode_ {0};
-   uint16_t amePeltierMode_ {0};
-   float    amePeltierInsideFanCurrent_ {0.0f};
-   float    amePeltierOutsideFanCurrent_ {0.0f};
-   float    horizontalTrLimiterVoltage_ {0.0f};
-   float    verticalTrLimiterVoltage_ {0.0f};
-   float    adcCalibrationOffsetVoltage_ {0.0f};
-   float    adcCalibrationGainCorrection_ {0.0f};
+   std::uint16_t polarization_ {0};
+   float         ameInternalTemperature_ {0.0f};
+   float         ameReceiverModuleTemperature_ {0.0f};
+   float         ameBiteCalModuleTemperature_ {0.0f};
+   std::uint16_t amePeltierPulseWidthModulation_ {0};
+   std::uint16_t amePeltierStatus_ {0};
+   std::uint16_t ameADConverterStatus_ {0};
+   std::uint16_t ameState_ {0};
+   float         ame3_3VPsVoltage_ {0.0f};
+   float         ame5VPsVoltage_ {0.0f};
+   float         ame6_5VPsVoltage_ {0.0f};
+   float         ame15VPsVoltage_ {0.0f};
+   float         ame48VPsVoltage_ {0.0f};
+   float         ameStaloPower_ {0.0f};
+   float         peltierCurrent_ {0.0f};
+   float         adcCalibrationReferenceVoltage_ {0.0f};
+   std::uint16_t ameMode_ {0};
+   std::uint16_t amePeltierMode_ {0};
+   float         amePeltierInsideFanCurrent_ {0.0f};
+   float         amePeltierOutsideFanCurrent_ {0.0f};
+   float         horizontalTrLimiterVoltage_ {0.0f};
+   float         verticalTrLimiterVoltage_ {0.0f};
+   float         adcCalibrationOffsetVoltage_ {0.0f};
+   float         adcCalibrationGainCorrection_ {0.0f};
 
    // RCP/SPIP Power Button Status
-   uint16_t    rcpStatus_ {0};
-   std::string rcpString_ {};
-   uint16_t    spipPowerButtons_ {0};
+   std::uint16_t rcpStatus_ {0};
+   std::string   rcpString_ {};
+   std::uint16_t spipPowerButtons_ {0};
 
    // Power
    float masterPowerAdministratorLoad_ {0.0f};
    float expansionPowerAdministratorLoad_ {0.0f};
 
    // Transmitter
-   uint16_t                _5VdcPs_ {0};
-   uint16_t                _15VdcPs_ {0};
-   uint16_t                _28VdcPs_ {0};
-   uint16_t                neg15VdcPs_ {0};
-   uint16_t                _45VdcPs_ {0};
-   uint16_t                filamentPsVoltage_ {0};
-   uint16_t                vacuumPumpPsVoltage_ {0};
-   uint16_t                focusCoilPsVoltage_ {0};
-   uint16_t                filamentPs_ {0};
-   uint16_t                klystronWarmup_ {0};
-   uint16_t                transmitterAvailable_ {0};
-   uint16_t                wgSwitchPosition_ {0};
-   uint16_t                wgPfnTransferInterlock_ {0};
-   uint16_t                maintenanceMode_ {0};
-   uint16_t                maintenanceRequired_ {0};
-   uint16_t                pfnSwitchPosition_ {0};
-   uint16_t                modulatorOverload_ {0};
-   uint16_t                modulatorInvCurrent_ {0};
-   uint16_t                modulatorSwitchFail_ {0};
-   uint16_t                mainPowerVoltage_ {0};
-   uint16_t                chargingSystemFail_ {0};
-   uint16_t                inverseDiodeCurrent_ {0};
-   uint16_t                triggerAmplifier_ {0};
-   uint16_t                circulatorTemperature_ {0};
-   uint16_t                spectrumFilterPressure_ {0};
-   uint16_t                wgArcVswr_ {0};
-   uint16_t                cabinetInterlock_ {0};
-   uint16_t                cabinetAirTemperature_ {0};
-   uint16_t                cabinetAirflow_ {0};
-   uint16_t                klystronCurrent_ {0};
-   uint16_t                klystronFilamentCurrent_ {0};
-   uint16_t                klystronVacionCurrent_ {0};
-   uint16_t                klystronAirTemperature_ {0};
-   uint16_t                klystronAirflow_ {0};
-   uint16_t                modulatorSwitchMaintenance_ {0};
-   uint16_t                postChargeRegulatorMaintenance_ {0};
-   uint16_t                wgPressureHumidity_ {0};
-   uint16_t                transmitterOvervoltage_ {0};
-   uint16_t                transmitterOvercurrent_ {0};
-   uint16_t                focusCoilCurrent_ {0};
-   uint16_t                focusCoilAirflow_ {0};
-   uint16_t                oilTemperature_ {0};
-   uint16_t                prfLimit_ {0};
-   uint16_t                transmitterOilLevel_ {0};
-   uint16_t                transmitterBatteryCharging_ {0};
-   uint16_t                highVoltageStatus_ {0};
-   uint16_t                transmitterRecyclingSummary_ {0};
-   uint16_t                transmitterInoperable_ {0};
-   uint16_t                transmitterAirFilter_ {0};
-   std::array<uint16_t, 8> zeroTestBit_ {0};
-   std::array<uint16_t, 8> oneTestBit_ {0};
-   uint16_t                xmtrSpipInterface_ {0};
-   uint16_t                transmitterSummaryStatus_ {0};
-   float                   transmitterRfPower_ {0.0f};
-   float                   horizontalXmtrPeakPower_ {0.0f};
-   float                   xmtrPeakPower_ {0.0f};
-   float                   verticalXmtrPeakPower_ {0.0f};
-   float                   xmtrRfAvgPower_ {0.0f};
-   uint32_t                xmtrRecycleCount_ {0};
-   float                   receiverBias_ {0.0f};
-   float                   transmitImbalance_ {0.0f};
-   float                   xmtrPowerMeterZero_ {0.0f};
+   std::uint16_t _5VdcPs_ {0};
+   std::uint16_t _15VdcPs_ {0};
+   std::uint16_t _28VdcPs_ {0};
+   std::uint16_t neg15VdcPs_ {0};
+   std::uint16_t _45VdcPs_ {0};
+   std::uint16_t filamentPsVoltage_ {0};
+   std::uint16_t vacuumPumpPsVoltage_ {0};
+   std::uint16_t focusCoilPsVoltage_ {0};
+   std::uint16_t filamentPs_ {0};
+   std::uint16_t klystronWarmup_ {0};
+   std::uint16_t transmitterAvailable_ {0};
+   std::uint16_t wgSwitchPosition_ {0};
+   std::uint16_t wgPfnTransferInterlock_ {0};
+   std::uint16_t maintenanceMode_ {0};
+   std::uint16_t maintenanceRequired_ {0};
+   std::uint16_t pfnSwitchPosition_ {0};
+   std::uint16_t modulatorOverload_ {0};
+   std::uint16_t modulatorInvCurrent_ {0};
+   std::uint16_t modulatorSwitchFail_ {0};
+   std::uint16_t mainPowerVoltage_ {0};
+   std::uint16_t chargingSystemFail_ {0};
+   std::uint16_t inverseDiodeCurrent_ {0};
+   std::uint16_t triggerAmplifier_ {0};
+   std::uint16_t circulatorTemperature_ {0};
+   std::uint16_t spectrumFilterPressure_ {0};
+   std::uint16_t wgArcVswr_ {0};
+   std::uint16_t cabinetInterlock_ {0};
+   std::uint16_t cabinetAirTemperature_ {0};
+   std::uint16_t cabinetAirflow_ {0};
+   std::uint16_t klystronCurrent_ {0};
+   std::uint16_t klystronFilamentCurrent_ {0};
+   std::uint16_t klystronVacionCurrent_ {0};
+   std::uint16_t klystronAirTemperature_ {0};
+   std::uint16_t klystronAirflow_ {0};
+   std::uint16_t modulatorSwitchMaintenance_ {0};
+   std::uint16_t postChargeRegulatorMaintenance_ {0};
+   std::uint16_t wgPressureHumidity_ {0};
+   std::uint16_t transmitterOvervoltage_ {0};
+   std::uint16_t transmitterOvercurrent_ {0};
+   std::uint16_t focusCoilCurrent_ {0};
+   std::uint16_t focusCoilAirflow_ {0};
+   std::uint16_t oilTemperature_ {0};
+   std::uint16_t prfLimit_ {0};
+   std::uint16_t transmitterOilLevel_ {0};
+   std::uint16_t transmitterBatteryCharging_ {0};
+   std::uint16_t highVoltageStatus_ {0};
+   std::uint16_t transmitterRecyclingSummary_ {0};
+   std::uint16_t transmitterInoperable_ {0};
+   std::uint16_t transmitterAirFilter_ {0};
+
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+   std::array<std::uint16_t, 8> zeroTestBit_ {0};
+   std::array<std::uint16_t, 8> oneTestBit_ {0};
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+
+   std::uint16_t xmtrSpipInterface_ {0};
+   std::uint16_t transmitterSummaryStatus_ {0};
+   float         transmitterRfPower_ {0.0f};
+   float         horizontalXmtrPeakPower_ {0.0f};
+   float         xmtrPeakPower_ {0.0f};
+   float         verticalXmtrPeakPower_ {0.0f};
+   float         xmtrRfAvgPower_ {0.0f};
+   std::uint32_t xmtrRecycleCount_ {0};
+   float         receiverBias_ {0.0f};
+   float         transmitImbalance_ {0.0f};
+   float         xmtrPowerMeterZero_ {0.0f};
 
    // Tower/Utilities
-   uint16_t acUnit1CompressorShutOff_ {0};
-   uint16_t acUnit2CompressorShutOff_ {0};
-   uint16_t generatorMaintenanceRequired_ {0};
-   uint16_t generatorBatteryVoltage_ {0};
-   uint16_t generatorEngine_ {0};
-   uint16_t generatorVoltFrequency_ {0};
-   uint16_t powerSource_ {0};
-   uint16_t transitionalPowerSource_ {0};
-   uint16_t generatorAutoRunOffSwitch_ {0};
-   uint16_t aircraftHazardLighting_ {0};
+   std::uint16_t acUnit1CompressorShutOff_ {0};
+   std::uint16_t acUnit2CompressorShutOff_ {0};
+   std::uint16_t generatorMaintenanceRequired_ {0};
+   std::uint16_t generatorBatteryVoltage_ {0};
+   std::uint16_t generatorEngine_ {0};
+   std::uint16_t generatorVoltFrequency_ {0};
+   std::uint16_t powerSource_ {0};
+   std::uint16_t transitionalPowerSource_ {0};
+   std::uint16_t generatorAutoRunOffSwitch_ {0};
+   std::uint16_t aircraftHazardLighting_ {0};
 
    // Equipment Shelter
-   uint16_t equipmentShelterFireDetectionSystem_ {0};
-   uint16_t equipmentShelterFireSmoke_ {0};
-   uint16_t generatorShelterFireSmoke_ {0};
-   uint16_t utilityVoltageFrequency_ {0};
-   uint16_t siteSecurityAlarm_ {0};
-   uint16_t securityEquipment_ {0};
-   uint16_t securitySystem_ {0};
-   uint16_t receiverConnectedToAntenna_ {0};
-   uint16_t radomeHatch_ {0};
-   uint16_t acUnit1FilterDirty_ {0};
-   uint16_t acUnit2FilterDirty_ {0};
-   float    equipmentShelterTemperature_ {0.0f};
-   float    outsideAmbientTemperature_ {0.0f};
-   float    transmitterLeavingAirTemp_ {0.0f};
-   float    acUnit1DischargeAirTemp_ {0.0f};
-   float    generatorShelterTemperature_ {0.0f};
-   float    radomeAirTemperature_ {0.0f};
-   float    acUnit2DischargeAirTemp_ {0.0f};
-   float    spip15VPs_ {0.0f};
-   float    spipNeg15VPs_ {0.0f};
-   uint16_t spip28VPsStatus_ {0};
-   float    spip5VPs_ {0.0f};
-   uint16_t convertedGeneratorFuelLevel_ {0};
+   std::uint16_t equipmentShelterFireDetectionSystem_ {0};
+   std::uint16_t equipmentShelterFireSmoke_ {0};
+   std::uint16_t generatorShelterFireSmoke_ {0};
+   std::uint16_t utilityVoltageFrequency_ {0};
+   std::uint16_t siteSecurityAlarm_ {0};
+   std::uint16_t securityEquipment_ {0};
+   std::uint16_t securitySystem_ {0};
+   std::uint16_t receiverConnectedToAntenna_ {0};
+   std::uint16_t radomeHatch_ {0};
+   std::uint16_t acUnit1FilterDirty_ {0};
+   std::uint16_t acUnit2FilterDirty_ {0};
+   float         equipmentShelterTemperature_ {0.0f};
+   float         outsideAmbientTemperature_ {0.0f};
+   float         transmitterLeavingAirTemp_ {0.0f};
+   float         acUnit1DischargeAirTemp_ {0.0f};
+   float         generatorShelterTemperature_ {0.0f};
+   float         radomeAirTemperature_ {0.0f};
+   float         acUnit2DischargeAirTemp_ {0.0f};
+   float         spip15VPs_ {0.0f};
+   float         spipNeg15VPs_ {0.0f};
+   std::uint16_t spip28VPsStatus_ {0};
+   float         spip5VPs_ {0.0f};
+   std::uint16_t convertedGeneratorFuelLevel_ {0};
 
    // Antenna/Pedestal
-   uint16_t elevationPosDeadLimit_ {0};
-   uint16_t _150VOvervoltage_ {0};
-   uint16_t _150VUndervoltage_ {0};
-   uint16_t elevationServoAmpInhibit_ {0};
-   uint16_t elevationServoAmpShortCircuit_ {0};
-   uint16_t elevationServoAmpOvertemp_ {0};
-   uint16_t elevationMotorOvertemp_ {0};
-   uint16_t elevationStowPin_ {0};
-   uint16_t elevationHousing5VPs_ {0};
-   uint16_t elevationNegDeadLimit_ {0};
-   uint16_t elevationPosNormalLimit_ {0};
-   uint16_t elevationNegNormalLimit_ {0};
-   uint16_t elevationEncoderLight_ {0};
-   uint16_t elevationGearboxOil_ {0};
-   uint16_t elevationHandwheel_ {0};
-   uint16_t elevationAmpPs_ {0};
-   uint16_t azimuthServoAmpInhibit_ {0};
-   uint16_t azimuthServoAmpShortCircuit_ {0};
-   uint16_t azimuthServoAmpOvertemp_ {0};
-   uint16_t azimuthMotorOvertemp_ {0};
-   uint16_t azimuthStowPin_ {0};
-   uint16_t azimuthHousing5VPs_ {0};
-   uint16_t azimuthEncoderLight_ {0};
-   uint16_t azimuthGearboxOil_ {0};
-   uint16_t azimuthBullGearOil_ {0};
-   uint16_t azimuthHandwheel_ {0};
-   uint16_t azimuthServoAmpPs_ {0};
-   uint16_t servo_ {0};
-   uint16_t pedestalInterlockSwitch_ {0};
+   std::uint16_t elevationPosDeadLimit_ {0};
+   std::uint16_t _150VOvervoltage_ {0};
+   std::uint16_t _150VUndervoltage_ {0};
+   std::uint16_t elevationServoAmpInhibit_ {0};
+   std::uint16_t elevationServoAmpShortCircuit_ {0};
+   std::uint16_t elevationServoAmpOvertemp_ {0};
+   std::uint16_t elevationMotorOvertemp_ {0};
+   std::uint16_t elevationStowPin_ {0};
+   std::uint16_t elevationHousing5VPs_ {0};
+   std::uint16_t elevationNegDeadLimit_ {0};
+   std::uint16_t elevationPosNormalLimit_ {0};
+   std::uint16_t elevationNegNormalLimit_ {0};
+   std::uint16_t elevationEncoderLight_ {0};
+   std::uint16_t elevationGearboxOil_ {0};
+   std::uint16_t elevationHandwheel_ {0};
+   std::uint16_t elevationAmpPs_ {0};
+   std::uint16_t azimuthServoAmpInhibit_ {0};
+   std::uint16_t azimuthServoAmpShortCircuit_ {0};
+   std::uint16_t azimuthServoAmpOvertemp_ {0};
+   std::uint16_t azimuthMotorOvertemp_ {0};
+   std::uint16_t azimuthStowPin_ {0};
+   std::uint16_t azimuthHousing5VPs_ {0};
+   std::uint16_t azimuthEncoderLight_ {0};
+   std::uint16_t azimuthGearboxOil_ {0};
+   std::uint16_t azimuthBullGearOil_ {0};
+   std::uint16_t azimuthHandwheel_ {0};
+   std::uint16_t azimuthServoAmpPs_ {0};
+   std::uint16_t servo_ {0};
+   std::uint16_t pedestalInterlockSwitch_ {0};
 
    // RF Generator/Receiver
-   uint16_t cohoClock_ {0};
-   uint16_t rfGeneratorFrequencySelectOscillator_ {0};
-   uint16_t rfGeneratorRfStalo_ {0};
-   uint16_t rfGeneratorPhaseShiftedCoho_ {0};
-   uint16_t _9VReceiverPs_ {0};
-   uint16_t _5VReceiverPs_ {0};
-   uint16_t _18VReceiverPs_ {0};
-   uint16_t neg9VReceiverPs_ {0};
-   uint16_t _5VSingleChannelRdaiuPs_ {0};
-   float    horizontalShortPulseNoise_ {0.0f};
-   float    horizontalLongPulseNoise_ {0.0f};
-   float    horizontalNoiseTemperature_ {0.0f};
-   float    verticalShortPulseNoise_ {0.0f};
-   float    verticalLongPulseNoise_ {0.0f};
-   float    verticalNoiseTemperature_ {0.0f};
+   std::uint16_t cohoClock_ {0};
+   std::uint16_t rfGeneratorFrequencySelectOscillator_ {0};
+   std::uint16_t rfGeneratorRfStalo_ {0};
+   std::uint16_t rfGeneratorPhaseShiftedCoho_ {0};
+   std::uint16_t _9VReceiverPs_ {0};
+   std::uint16_t _5VReceiverPs_ {0};
+   std::uint16_t _18VReceiverPs_ {0};
+   std::uint16_t neg9VReceiverPs_ {0};
+   std::uint16_t _5VSingleChannelRdaiuPs_ {0};
+   float         horizontalShortPulseNoise_ {0.0f};
+   float         horizontalLongPulseNoise_ {0.0f};
+   float         horizontalNoiseTemperature_ {0.0f};
+   float         verticalShortPulseNoise_ {0.0f};
+   float         verticalLongPulseNoise_ {0.0f};
+   float         verticalNoiseTemperature_ {0.0f};
 
    // Calibration
-   float    horizontalLinearity_ {0.0f};
-   float    horizontalDynamicRange_ {0.0f};
-   float    horizontalDeltaDbz0_ {0.0f};
-   float    verticalDeltaDbz0_ {0.0f};
-   float    kdPeakMeasured_ {0.0f};
-   float    shortPulseHorizontalDbz0_ {0.0f};
-   float    longPulseHorizontalDbz0_ {0.0f};
-   uint16_t velocityProcessed_ {0};
-   uint16_t widthProcessed_ {0};
-   uint16_t velocityRfGen_ {0};
-   uint16_t widthRfGen_ {0};
-   float    horizontalI0_ {0.0f};
-   float    verticalI0_ {0.0f};
-   float    verticalDynamicRange_ {0.0f};
-   float    shortPulseVerticalDbz0_ {0.0f};
-   float    longPulseVerticalDbz0_ {0.0f};
-   float    horizontalPowerSense_ {0.0f};
-   float    verticalPowerSense_ {0.0f};
-   float    zdrOffset_ {0.0f};
-   float    clutterSuppressionDelta_ {0.0f};
-   float    clutterSuppressionUnfilteredPower_ {0.0f};
-   float    clutterSuppressionFilteredPower_ {0.0f};
-   float    verticalLinearity_ {0.0f};
+   float         horizontalLinearity_ {0.0f};
+   float         horizontalDynamicRange_ {0.0f};
+   float         horizontalDeltaDbz0_ {0.0f};
+   float         verticalDeltaDbz0_ {0.0f};
+   float         kdPeakMeasured_ {0.0f};
+   float         shortPulseHorizontalDbz0_ {0.0f};
+   float         longPulseHorizontalDbz0_ {0.0f};
+   std::uint16_t velocityProcessed_ {0};
+   std::uint16_t widthProcessed_ {0};
+   std::uint16_t velocityRfGen_ {0};
+   std::uint16_t widthRfGen_ {0};
+   float         horizontalI0_ {0.0f};
+   float         verticalI0_ {0.0f};
+   float         verticalDynamicRange_ {0.0f};
+   float         shortPulseVerticalDbz0_ {0.0f};
+   float         longPulseVerticalDbz0_ {0.0f};
+   float         horizontalPowerSense_ {0.0f};
+   float         verticalPowerSense_ {0.0f};
+   float         zdrOffset_ {0.0f};
+   float         clutterSuppressionDelta_ {0.0f};
+   float         clutterSuppressionUnfilteredPower_ {0.0f};
+   float         clutterSuppressionFilteredPower_ {0.0f};
+   float         verticalLinearity_ {0.0f};
 
    // File Status
-   uint16_t stateFileReadStatus_ {0};
-   uint16_t stateFileWriteStatus_ {0};
-   uint16_t bypassMapFileReadStatus_ {0};
-   uint16_t bypassMapFileWriteStatus_ {0};
-   uint16_t currentAdaptationFileReadStatus_ {0};
-   uint16_t currentAdaptationFileWriteStatus_ {0};
-   uint16_t censorZoneFileReadStatus_ {0};
-   uint16_t censorZoneFileWriteStatus_ {0};
-   uint16_t remoteVcpFileReadStatus_ {0};
-   uint16_t remoteVcpFileWriteStatus_ {0};
-   uint16_t baselineAdaptationFileReadStatus_ {0};
-   uint16_t readStatusOfPrfSets_ {0};
-   uint16_t clutterFilterMapFileReadStatus_ {0};
-   uint16_t clutterFilterMapFileWriteStatus_ {0};
-   uint16_t generalDiskIoError_ {0};
-   uint8_t  rspStatus_ {0};
-   uint8_t  cpu1Temperature_ {0};
-   uint8_t  cpu2Temperature_ {0};
-   uint16_t rspMotherboardPower_ {0};
+   std::uint16_t stateFileReadStatus_ {0};
+   std::uint16_t stateFileWriteStatus_ {0};
+   std::uint16_t bypassMapFileReadStatus_ {0};
+   std::uint16_t bypassMapFileWriteStatus_ {0};
+   std::uint16_t currentAdaptationFileReadStatus_ {0};
+   std::uint16_t currentAdaptationFileWriteStatus_ {0};
+   std::uint16_t censorZoneFileReadStatus_ {0};
+   std::uint16_t censorZoneFileWriteStatus_ {0};
+   std::uint16_t remoteVcpFileReadStatus_ {0};
+   std::uint16_t remoteVcpFileWriteStatus_ {0};
+   std::uint16_t baselineAdaptationFileReadStatus_ {0};
+   std::uint16_t readStatusOfPrfSets_ {0};
+   std::uint16_t clutterFilterMapFileReadStatus_ {0};
+   std::uint16_t clutterFilterMapFileWriteStatus_ {0};
+   std::uint16_t generalDiskIoError_ {0};
+   std::uint8_t  rspStatus_ {0};
+   std::uint8_t  cpu1Temperature_ {0};
+   std::uint8_t  cpu2Temperature_ {0};
+   std::uint16_t rspMotherboardPower_ {0};
 
    // Device Status
-   uint16_t spipCommStatus_ {0};
-   uint16_t hciCommStatus_ {0};
-   uint16_t signalProcessorCommandStatus_ {0};
-   uint16_t ameCommunicationStatus_ {0};
-   uint16_t rmsLinkStatus_ {0};
-   uint16_t rpgLinkStatus_ {0};
-   uint16_t interpanelLinkStatus_ {0};
-   uint32_t performanceCheckTime_ {0};
-   uint16_t version_ {0};
+   std::uint16_t spipCommStatus_ {0};
+   std::uint16_t hciCommStatus_ {0};
+   std::uint16_t signalProcessorCommandStatus_ {0};
+   std::uint16_t ameCommunicationStatus_ {0};
+   std::uint16_t rmsLinkStatus_ {0};
+   std::uint16_t rpgLinkStatus_ {0};
+   std::uint16_t interpanelLinkStatus_ {0};
+   std::uint32_t performanceCheckTime_ {0};
+   std::uint16_t version_ {0};
 };
 
 PerformanceMaintenanceData::PerformanceMaintenanceData() :
-    Level2Message(), p(std::make_unique<PerformanceMaintenanceDataImpl>())
+    Level2Message(), p(std::make_unique<Impl>())
 {
 }
 PerformanceMaintenanceData::~PerformanceMaintenanceData() = default;
@@ -301,140 +306,144 @@ PerformanceMaintenanceData::PerformanceMaintenanceData(
 PerformanceMaintenanceData& PerformanceMaintenanceData::operator=(
    PerformanceMaintenanceData&&) noexcept = default;
 
-uint16_t PerformanceMaintenanceData::loop_back_set_status() const
+std::uint16_t PerformanceMaintenanceData::loop_back_set_status() const
 {
    return p->loopBackSetStatus_;
 }
 
-uint32_t PerformanceMaintenanceData::t1_output_frames() const
+std::uint32_t PerformanceMaintenanceData::t1_output_frames() const
 {
    return p->t1OutputFrames_;
 }
 
-uint32_t PerformanceMaintenanceData::t1_input_frames() const
+std::uint32_t PerformanceMaintenanceData::t1_input_frames() const
 {
    return p->t1InputFrames_;
 }
 
-uint32_t PerformanceMaintenanceData::router_memory_used() const
+std::uint32_t PerformanceMaintenanceData::router_memory_used() const
 {
    return p->routerMemoryUsed_;
 }
 
-uint32_t PerformanceMaintenanceData::router_memory_free() const
+std::uint32_t PerformanceMaintenanceData::router_memory_free() const
 {
    return p->routerMemoryFree_;
 }
 
-uint16_t PerformanceMaintenanceData::router_memory_utilization() const
+std::uint16_t PerformanceMaintenanceData::router_memory_utilization() const
 {
    return p->routerMemoryUtilization_;
 }
 
-uint16_t PerformanceMaintenanceData::route_to_rpg() const
+std::uint16_t PerformanceMaintenanceData::route_to_rpg() const
 {
    return p->routeToRpg_;
 }
 
-uint16_t PerformanceMaintenanceData::t1_port_status() const
+std::uint16_t PerformanceMaintenanceData::t1_port_status() const
 {
    return p->t1PortStatus_;
 }
 
-uint16_t
+std::uint16_t
 PerformanceMaintenanceData::router_dedicated_ethernet_port_status() const
 {
    return p->routerDedicatedEthernetPortStatus_;
 }
 
-uint16_t
+std::uint16_t
 PerformanceMaintenanceData::router_commercial_ethernet_port_status() const
 {
    return p->routerCommercialEthernetPortStatus_;
 }
 
-uint32_t PerformanceMaintenanceData::csu_24hr_errored_seconds() const
+std::uint32_t PerformanceMaintenanceData::csu_24hr_errored_seconds() const
 {
    return p->csu24HrErroredSeconds_;
 }
 
-uint32_t PerformanceMaintenanceData::csu_24hr_severely_errored_seconds() const
+std::uint32_t
+PerformanceMaintenanceData::csu_24hr_severely_errored_seconds() const
 {
    return p->csu24HrSeverelyErroredSeconds_;
 }
 
-uint32_t
+std::uint32_t
 PerformanceMaintenanceData::csu_24hr_severely_errored_framing_seconds() const
 {
    return p->csu24HrSeverelyErroredFramingSeconds_;
 }
 
-uint32_t PerformanceMaintenanceData::csu_24hr_unavailable_seconds() const
+std::uint32_t PerformanceMaintenanceData::csu_24hr_unavailable_seconds() const
 {
    return p->csu24HrUnavailableSeconds_;
 }
 
-uint32_t PerformanceMaintenanceData::csu_24hr_controlled_slip_seconds() const
+std::uint32_t
+PerformanceMaintenanceData::csu_24hr_controlled_slip_seconds() const
 {
    return p->csu24HrControlledSlipSeconds_;
 }
 
-uint32_t PerformanceMaintenanceData::csu_24hr_path_coding_violations() const
+std::uint32_t
+PerformanceMaintenanceData::csu_24hr_path_coding_violations() const
 {
    return p->csu24HrPathCodingViolations_;
 }
 
-uint32_t PerformanceMaintenanceData::csu_24hr_line_errored_seconds() const
+std::uint32_t PerformanceMaintenanceData::csu_24hr_line_errored_seconds() const
 {
    return p->csu24HrLineErroredSeconds_;
 }
 
-uint32_t PerformanceMaintenanceData::csu_24hr_bursty_errored_seconds() const
+std::uint32_t
+PerformanceMaintenanceData::csu_24hr_bursty_errored_seconds() const
 {
    return p->csu24HrBurstyErroredSeconds_;
 }
 
-uint32_t PerformanceMaintenanceData::csu_24hr_degraded_minutes() const
+std::uint32_t PerformanceMaintenanceData::csu_24hr_degraded_minutes() const
 {
    return p->csu24HrDegradedMinutes_;
 }
 
-uint32_t PerformanceMaintenanceData::lan_switch_cpu_utilization() const
+std::uint32_t PerformanceMaintenanceData::lan_switch_cpu_utilization() const
 {
    return p->lanSwitchCpuUtilization_;
 }
 
-uint16_t PerformanceMaintenanceData::lan_switch_memory_utilization() const
+std::uint16_t PerformanceMaintenanceData::lan_switch_memory_utilization() const
 {
    return p->lanSwitchMemoryUtilization_;
 }
 
-uint16_t PerformanceMaintenanceData::ifdr_chasis_temperature() const
+std::uint16_t PerformanceMaintenanceData::ifdr_chasis_temperature() const
 {
    return p->ifdrChasisTemperature_;
 }
 
-uint16_t PerformanceMaintenanceData::ifdr_fpga_temperature() const
+std::uint16_t PerformanceMaintenanceData::ifdr_fpga_temperature() const
 {
    return p->ifdrFpgaTemperature_;
 }
 
-uint16_t PerformanceMaintenanceData::ntp_status() const
+std::uint16_t PerformanceMaintenanceData::ntp_status() const
 {
    return p->ntpStatus_;
 }
 
-uint16_t PerformanceMaintenanceData::ipc_status() const
+std::uint16_t PerformanceMaintenanceData::ipc_status() const
 {
    return p->ipcStatus_;
 }
 
-uint16_t PerformanceMaintenanceData::commanded_channel_control() const
+std::uint16_t PerformanceMaintenanceData::commanded_channel_control() const
 {
    return p->commandedChannelControl_;
 }
 
-uint16_t PerformanceMaintenanceData::polarization() const
+std::uint16_t PerformanceMaintenanceData::polarization() const
 {
    return p->polarization_;
 }
@@ -454,22 +463,23 @@ float PerformanceMaintenanceData::ame_bite_cal_module_temperature() const
    return p->ameBiteCalModuleTemperature_;
 }
 
-uint16_t PerformanceMaintenanceData::ame_peltier_pulse_width_modulation() const
+std::uint16_t
+PerformanceMaintenanceData::ame_peltier_pulse_width_modulation() const
 {
    return p->amePeltierPulseWidthModulation_;
 }
 
-uint16_t PerformanceMaintenanceData::ame_peltier_status() const
+std::uint16_t PerformanceMaintenanceData::ame_peltier_status() const
 {
    return p->amePeltierStatus_;
 }
 
-uint16_t PerformanceMaintenanceData::ame_a_d_converter_status() const
+std::uint16_t PerformanceMaintenanceData::ame_a_d_converter_status() const
 {
    return p->ameADConverterStatus_;
 }
 
-uint16_t PerformanceMaintenanceData::ame_state() const
+std::uint16_t PerformanceMaintenanceData::ame_state() const
 {
    return p->ameState_;
 }
@@ -514,12 +524,12 @@ float PerformanceMaintenanceData::adc_calibration_reference_voltage() const
    return p->adcCalibrationReferenceVoltage_;
 }
 
-uint16_t PerformanceMaintenanceData::ame_mode() const
+std::uint16_t PerformanceMaintenanceData::ame_mode() const
 {
    return p->ameMode_;
 }
 
-uint16_t PerformanceMaintenanceData::ame_peltier_mode() const
+std::uint16_t PerformanceMaintenanceData::ame_peltier_mode() const
 {
    return p->amePeltierMode_;
 }
@@ -554,7 +564,7 @@ float PerformanceMaintenanceData::adc_calibration_gain_correction() const
    return p->adcCalibrationGainCorrection_;
 }
 
-uint16_t PerformanceMaintenanceData::rcp_status() const
+std::uint16_t PerformanceMaintenanceData::rcp_status() const
 {
    return p->rcpStatus_;
 }
@@ -564,7 +574,7 @@ std::string PerformanceMaintenanceData::rcp_string() const
    return p->rcpString_;
 }
 
-uint16_t PerformanceMaintenanceData::spip_power_buttons() const
+std::uint16_t PerformanceMaintenanceData::spip_power_buttons() const
 {
    return p->spipPowerButtons_;
 }
@@ -579,267 +589,268 @@ float PerformanceMaintenanceData::expansion_power_administrator_load() const
    return p->expansionPowerAdministratorLoad_;
 }
 
-uint16_t PerformanceMaintenanceData::_5vdc_ps() const
+std::uint16_t PerformanceMaintenanceData::_5vdc_ps() const
 {
    return p->_5VdcPs_;
 }
 
-uint16_t PerformanceMaintenanceData::_15vdc_ps() const
+std::uint16_t PerformanceMaintenanceData::_15vdc_ps() const
 {
    return p->_15VdcPs_;
 }
 
-uint16_t PerformanceMaintenanceData::_28vdc_ps() const
+std::uint16_t PerformanceMaintenanceData::_28vdc_ps() const
 {
    return p->_28VdcPs_;
 }
 
-uint16_t PerformanceMaintenanceData::neg_15vdc_ps() const
+std::uint16_t PerformanceMaintenanceData::neg_15vdc_ps() const
 {
    return p->neg15VdcPs_;
 }
 
-uint16_t PerformanceMaintenanceData::_45vdc_ps() const
+std::uint16_t PerformanceMaintenanceData::_45vdc_ps() const
 {
    return p->_45VdcPs_;
 }
 
-uint16_t PerformanceMaintenanceData::filament_ps_voltage() const
+std::uint16_t PerformanceMaintenanceData::filament_ps_voltage() const
 {
    return p->filamentPsVoltage_;
 }
 
-uint16_t PerformanceMaintenanceData::vacuum_pump_ps_voltage() const
+std::uint16_t PerformanceMaintenanceData::vacuum_pump_ps_voltage() const
 {
    return p->vacuumPumpPsVoltage_;
 }
 
-uint16_t PerformanceMaintenanceData::focus_coil_ps_voltage() const
+std::uint16_t PerformanceMaintenanceData::focus_coil_ps_voltage() const
 {
    return p->focusCoilPsVoltage_;
 }
 
-uint16_t PerformanceMaintenanceData::filament_ps() const
+std::uint16_t PerformanceMaintenanceData::filament_ps() const
 {
    return p->filamentPs_;
 }
 
-uint16_t PerformanceMaintenanceData::klystron_warmup() const
+std::uint16_t PerformanceMaintenanceData::klystron_warmup() const
 {
    return p->klystronWarmup_;
 }
 
-uint16_t PerformanceMaintenanceData::transmitter_available() const
+std::uint16_t PerformanceMaintenanceData::transmitter_available() const
 {
    return p->transmitterAvailable_;
 }
 
-uint16_t PerformanceMaintenanceData::wg_switch_position() const
+std::uint16_t PerformanceMaintenanceData::wg_switch_position() const
 {
    return p->wgSwitchPosition_;
 }
 
-uint16_t PerformanceMaintenanceData::wg_pfn_transfer_interlock() const
+std::uint16_t PerformanceMaintenanceData::wg_pfn_transfer_interlock() const
 {
    return p->wgPfnTransferInterlock_;
 }
 
-uint16_t PerformanceMaintenanceData::maintenance_mode() const
+std::uint16_t PerformanceMaintenanceData::maintenance_mode() const
 {
    return p->maintenanceMode_;
 }
 
-uint16_t PerformanceMaintenanceData::maintenance_required() const
+std::uint16_t PerformanceMaintenanceData::maintenance_required() const
 {
    return p->maintenanceRequired_;
 }
 
-uint16_t PerformanceMaintenanceData::pfn_switch_position() const
+std::uint16_t PerformanceMaintenanceData::pfn_switch_position() const
 {
    return p->pfnSwitchPosition_;
 }
 
-uint16_t PerformanceMaintenanceData::modulator_overload() const
+std::uint16_t PerformanceMaintenanceData::modulator_overload() const
 {
    return p->modulatorOverload_;
 }
 
-uint16_t PerformanceMaintenanceData::modulator_inv_current() const
+std::uint16_t PerformanceMaintenanceData::modulator_inv_current() const
 {
    return p->modulatorInvCurrent_;
 }
 
-uint16_t PerformanceMaintenanceData::modulator_switch_fail() const
+std::uint16_t PerformanceMaintenanceData::modulator_switch_fail() const
 {
    return p->modulatorSwitchFail_;
 }
 
-uint16_t PerformanceMaintenanceData::main_power_voltage() const
+std::uint16_t PerformanceMaintenanceData::main_power_voltage() const
 {
    return p->mainPowerVoltage_;
 }
 
-uint16_t PerformanceMaintenanceData::charging_system_fail() const
+std::uint16_t PerformanceMaintenanceData::charging_system_fail() const
 {
    return p->chargingSystemFail_;
 }
 
-uint16_t PerformanceMaintenanceData::inverse_diode_current() const
+std::uint16_t PerformanceMaintenanceData::inverse_diode_current() const
 {
    return p->inverseDiodeCurrent_;
 }
 
-uint16_t PerformanceMaintenanceData::trigger_amplifier() const
+std::uint16_t PerformanceMaintenanceData::trigger_amplifier() const
 {
    return p->triggerAmplifier_;
 }
 
-uint16_t PerformanceMaintenanceData::circulator_temperature() const
+std::uint16_t PerformanceMaintenanceData::circulator_temperature() const
 {
    return p->circulatorTemperature_;
 }
 
-uint16_t PerformanceMaintenanceData::spectrum_filter_pressure() const
+std::uint16_t PerformanceMaintenanceData::spectrum_filter_pressure() const
 {
    return p->spectrumFilterPressure_;
 }
 
-uint16_t PerformanceMaintenanceData::wg_arc_vswr() const
+std::uint16_t PerformanceMaintenanceData::wg_arc_vswr() const
 {
    return p->wgArcVswr_;
 }
 
-uint16_t PerformanceMaintenanceData::cabinet_interlock() const
+std::uint16_t PerformanceMaintenanceData::cabinet_interlock() const
 {
    return p->cabinetInterlock_;
 }
 
-uint16_t PerformanceMaintenanceData::cabinet_air_temperature() const
+std::uint16_t PerformanceMaintenanceData::cabinet_air_temperature() const
 {
    return p->cabinetAirTemperature_;
 }
 
-uint16_t PerformanceMaintenanceData::cabinet_airflow() const
+std::uint16_t PerformanceMaintenanceData::cabinet_airflow() const
 {
    return p->cabinetAirflow_;
 }
 
-uint16_t PerformanceMaintenanceData::klystron_current() const
+std::uint16_t PerformanceMaintenanceData::klystron_current() const
 {
    return p->klystronCurrent_;
 }
 
-uint16_t PerformanceMaintenanceData::klystron_filament_current() const
+std::uint16_t PerformanceMaintenanceData::klystron_filament_current() const
 {
    return p->klystronFilamentCurrent_;
 }
 
-uint16_t PerformanceMaintenanceData::klystron_vacion_current() const
+std::uint16_t PerformanceMaintenanceData::klystron_vacion_current() const
 {
    return p->klystronVacionCurrent_;
 }
 
-uint16_t PerformanceMaintenanceData::klystron_air_temperature() const
+std::uint16_t PerformanceMaintenanceData::klystron_air_temperature() const
 {
    return p->klystronAirTemperature_;
 }
 
-uint16_t PerformanceMaintenanceData::klystron_airflow() const
+std::uint16_t PerformanceMaintenanceData::klystron_airflow() const
 {
    return p->klystronAirflow_;
 }
 
-uint16_t PerformanceMaintenanceData::modulator_switch_maintenance() const
+std::uint16_t PerformanceMaintenanceData::modulator_switch_maintenance() const
 {
    return p->modulatorSwitchMaintenance_;
 }
 
-uint16_t PerformanceMaintenanceData::post_charge_regulator_maintenance() const
+std::uint16_t
+PerformanceMaintenanceData::post_charge_regulator_maintenance() const
 {
    return p->postChargeRegulatorMaintenance_;
 }
 
-uint16_t PerformanceMaintenanceData::wg_pressure_humidity() const
+std::uint16_t PerformanceMaintenanceData::wg_pressure_humidity() const
 {
    return p->wgPressureHumidity_;
 }
 
-uint16_t PerformanceMaintenanceData::transmitter_overvoltage() const
+std::uint16_t PerformanceMaintenanceData::transmitter_overvoltage() const
 {
    return p->transmitterOvervoltage_;
 }
 
-uint16_t PerformanceMaintenanceData::transmitter_overcurrent() const
+std::uint16_t PerformanceMaintenanceData::transmitter_overcurrent() const
 {
    return p->transmitterOvercurrent_;
 }
 
-uint16_t PerformanceMaintenanceData::focus_coil_current() const
+std::uint16_t PerformanceMaintenanceData::focus_coil_current() const
 {
    return p->focusCoilCurrent_;
 }
 
-uint16_t PerformanceMaintenanceData::focus_coil_airflow() const
+std::uint16_t PerformanceMaintenanceData::focus_coil_airflow() const
 {
    return p->focusCoilAirflow_;
 }
 
-uint16_t PerformanceMaintenanceData::oil_temperature() const
+std::uint16_t PerformanceMaintenanceData::oil_temperature() const
 {
    return p->oilTemperature_;
 }
 
-uint16_t PerformanceMaintenanceData::prf_limit() const
+std::uint16_t PerformanceMaintenanceData::prf_limit() const
 {
    return p->prfLimit_;
 }
 
-uint16_t PerformanceMaintenanceData::transmitter_oil_level() const
+std::uint16_t PerformanceMaintenanceData::transmitter_oil_level() const
 {
    return p->transmitterOilLevel_;
 }
 
-uint16_t PerformanceMaintenanceData::transmitter_battery_charging() const
+std::uint16_t PerformanceMaintenanceData::transmitter_battery_charging() const
 {
    return p->transmitterBatteryCharging_;
 }
 
-uint16_t PerformanceMaintenanceData::high_voltage_status() const
+std::uint16_t PerformanceMaintenanceData::high_voltage_status() const
 {
    return p->highVoltageStatus_;
 }
 
-uint16_t PerformanceMaintenanceData::transmitter_recycling_summary() const
+std::uint16_t PerformanceMaintenanceData::transmitter_recycling_summary() const
 {
    return p->transmitterRecyclingSummary_;
 }
 
-uint16_t PerformanceMaintenanceData::transmitter_inoperable() const
+std::uint16_t PerformanceMaintenanceData::transmitter_inoperable() const
 {
    return p->transmitterInoperable_;
 }
 
-uint16_t PerformanceMaintenanceData::transmitter_air_filter() const
+std::uint16_t PerformanceMaintenanceData::transmitter_air_filter() const
 {
    return p->transmitterAirFilter_;
 }
 
-uint16_t PerformanceMaintenanceData::zero_test_bit(unsigned i) const
+std::uint16_t PerformanceMaintenanceData::zero_test_bit(unsigned i) const
 {
-   return p->zeroTestBit_[i];
+   return p->zeroTestBit_.at(i);
 }
 
-uint16_t PerformanceMaintenanceData::one_test_bit(unsigned i) const
+std::uint16_t PerformanceMaintenanceData::one_test_bit(unsigned i) const
 {
-   return p->oneTestBit_[i];
+   return p->oneTestBit_.at(i);
 }
 
-uint16_t PerformanceMaintenanceData::xmtr_spip_interface() const
+std::uint16_t PerformanceMaintenanceData::xmtr_spip_interface() const
 {
    return p->xmtrSpipInterface_;
 }
 
-uint16_t PerformanceMaintenanceData::transmitter_summary_status() const
+std::uint16_t PerformanceMaintenanceData::transmitter_summary_status() const
 {
    return p->transmitterSummaryStatus_;
 }
@@ -869,7 +880,7 @@ float PerformanceMaintenanceData::xmtr_rf_avg_power() const
    return p->xmtrRfAvgPower_;
 }
 
-uint32_t PerformanceMaintenanceData::xmtr_recycle_count() const
+std::uint32_t PerformanceMaintenanceData::xmtr_recycle_count() const
 {
    return p->xmtrRecycleCount_;
 }
@@ -889,108 +900,108 @@ float PerformanceMaintenanceData::xmtr_power_meter_zero() const
    return p->xmtrPowerMeterZero_;
 }
 
-uint16_t PerformanceMaintenanceData::ac_unit1_compressor_shut_off() const
+std::uint16_t PerformanceMaintenanceData::ac_unit1_compressor_shut_off() const
 {
    return p->acUnit1CompressorShutOff_;
 }
 
-uint16_t PerformanceMaintenanceData::ac_unit2_compressor_shut_off() const
+std::uint16_t PerformanceMaintenanceData::ac_unit2_compressor_shut_off() const
 {
    return p->acUnit2CompressorShutOff_;
 }
 
-uint16_t PerformanceMaintenanceData::generator_maintenance_required() const
+std::uint16_t PerformanceMaintenanceData::generator_maintenance_required() const
 {
    return p->generatorMaintenanceRequired_;
 }
 
-uint16_t PerformanceMaintenanceData::generator_battery_voltage() const
+std::uint16_t PerformanceMaintenanceData::generator_battery_voltage() const
 {
    return p->generatorBatteryVoltage_;
 }
 
-uint16_t PerformanceMaintenanceData::generator_engine() const
+std::uint16_t PerformanceMaintenanceData::generator_engine() const
 {
    return p->generatorEngine_;
 }
 
-uint16_t PerformanceMaintenanceData::generator_volt_frequency() const
+std::uint16_t PerformanceMaintenanceData::generator_volt_frequency() const
 {
    return p->generatorVoltFrequency_;
 }
 
-uint16_t PerformanceMaintenanceData::power_source() const
+std::uint16_t PerformanceMaintenanceData::power_source() const
 {
    return p->powerSource_;
 }
 
-uint16_t PerformanceMaintenanceData::transitional_power_source() const
+std::uint16_t PerformanceMaintenanceData::transitional_power_source() const
 {
    return p->transitionalPowerSource_;
 }
 
-uint16_t PerformanceMaintenanceData::generator_auto_run_off_switch() const
+std::uint16_t PerformanceMaintenanceData::generator_auto_run_off_switch() const
 {
    return p->generatorAutoRunOffSwitch_;
 }
 
-uint16_t PerformanceMaintenanceData::aircraft_hazard_lighting() const
+std::uint16_t PerformanceMaintenanceData::aircraft_hazard_lighting() const
 {
    return p->aircraftHazardLighting_;
 }
 
-uint16_t
+std::uint16_t
 PerformanceMaintenanceData::equipment_shelter_fire_detection_system() const
 {
    return p->equipmentShelterFireDetectionSystem_;
 }
 
-uint16_t PerformanceMaintenanceData::equipment_shelter_fire_smoke() const
+std::uint16_t PerformanceMaintenanceData::equipment_shelter_fire_smoke() const
 {
    return p->equipmentShelterFireSmoke_;
 }
 
-uint16_t PerformanceMaintenanceData::generator_shelter_fire_smoke() const
+std::uint16_t PerformanceMaintenanceData::generator_shelter_fire_smoke() const
 {
    return p->generatorShelterFireSmoke_;
 }
 
-uint16_t PerformanceMaintenanceData::utility_voltage_frequency() const
+std::uint16_t PerformanceMaintenanceData::utility_voltage_frequency() const
 {
    return p->utilityVoltageFrequency_;
 }
 
-uint16_t PerformanceMaintenanceData::site_security_alarm() const
+std::uint16_t PerformanceMaintenanceData::site_security_alarm() const
 {
    return p->siteSecurityAlarm_;
 }
 
-uint16_t PerformanceMaintenanceData::security_equipment() const
+std::uint16_t PerformanceMaintenanceData::security_equipment() const
 {
    return p->securityEquipment_;
 }
 
-uint16_t PerformanceMaintenanceData::security_system() const
+std::uint16_t PerformanceMaintenanceData::security_system() const
 {
    return p->securitySystem_;
 }
 
-uint16_t PerformanceMaintenanceData::receiver_connected_to_antenna() const
+std::uint16_t PerformanceMaintenanceData::receiver_connected_to_antenna() const
 {
    return p->receiverConnectedToAntenna_;
 }
 
-uint16_t PerformanceMaintenanceData::radome_hatch() const
+std::uint16_t PerformanceMaintenanceData::radome_hatch() const
 {
    return p->radomeHatch_;
 }
 
-uint16_t PerformanceMaintenanceData::ac_unit1_filter_dirty() const
+std::uint16_t PerformanceMaintenanceData::ac_unit1_filter_dirty() const
 {
    return p->acUnit1FilterDirty_;
 }
 
-uint16_t PerformanceMaintenanceData::ac_unit2_filter_dirty() const
+std::uint16_t PerformanceMaintenanceData::ac_unit2_filter_dirty() const
 {
    return p->acUnit2FilterDirty_;
 }
@@ -1040,7 +1051,7 @@ float PerformanceMaintenanceData::spip_neg_15v_ps() const
    return p->spipNeg15VPs_;
 }
 
-uint16_t PerformanceMaintenanceData::spip_28v_ps_status() const
+std::uint16_t PerformanceMaintenanceData::spip_28v_ps_status() const
 {
    return p->spip28VPsStatus_;
 }
@@ -1050,198 +1061,201 @@ float PerformanceMaintenanceData::spip_5v_ps() const
    return p->spip5VPs_;
 }
 
-uint16_t PerformanceMaintenanceData::converted_generator_fuel_level() const
+std::uint16_t PerformanceMaintenanceData::converted_generator_fuel_level() const
 {
    return p->convertedGeneratorFuelLevel_;
 }
 
-uint16_t PerformanceMaintenanceData::elevation_pos_dead_limit() const
+std::uint16_t PerformanceMaintenanceData::elevation_pos_dead_limit() const
 {
    return p->elevationPosDeadLimit_;
 }
 
-uint16_t PerformanceMaintenanceData::_150v_overvoltage() const
+std::uint16_t PerformanceMaintenanceData::_150v_overvoltage() const
 {
    return p->_150VOvervoltage_;
 }
 
-uint16_t PerformanceMaintenanceData::_150v_undervoltage() const
+std::uint16_t PerformanceMaintenanceData::_150v_undervoltage() const
 {
    return p->_150VUndervoltage_;
 }
 
-uint16_t PerformanceMaintenanceData::elevation_servo_amp_inhibit() const
+std::uint16_t PerformanceMaintenanceData::elevation_servo_amp_inhibit() const
 {
    return p->elevationServoAmpInhibit_;
 }
 
-uint16_t PerformanceMaintenanceData::elevation_servo_amp_short_circuit() const
+std::uint16_t
+PerformanceMaintenanceData::elevation_servo_amp_short_circuit() const
 {
    return p->elevationServoAmpShortCircuit_;
 }
 
-uint16_t PerformanceMaintenanceData::elevation_servo_amp_overtemp() const
+std::uint16_t PerformanceMaintenanceData::elevation_servo_amp_overtemp() const
 {
    return p->elevationServoAmpOvertemp_;
 }
 
-uint16_t PerformanceMaintenanceData::elevation_motor_overtemp() const
+std::uint16_t PerformanceMaintenanceData::elevation_motor_overtemp() const
 {
    return p->elevationMotorOvertemp_;
 }
 
-uint16_t PerformanceMaintenanceData::elevation_stow_pin() const
+std::uint16_t PerformanceMaintenanceData::elevation_stow_pin() const
 {
    return p->elevationStowPin_;
 }
 
-uint16_t PerformanceMaintenanceData::elevation_housing_5v_ps() const
+std::uint16_t PerformanceMaintenanceData::elevation_housing_5v_ps() const
 {
    return p->elevationHousing5VPs_;
 }
 
-uint16_t PerformanceMaintenanceData::elevation_neg_dead_limit() const
+std::uint16_t PerformanceMaintenanceData::elevation_neg_dead_limit() const
 {
    return p->elevationNegDeadLimit_;
 }
 
-uint16_t PerformanceMaintenanceData::elevation_pos_normal_limit() const
+std::uint16_t PerformanceMaintenanceData::elevation_pos_normal_limit() const
 {
    return p->elevationPosNormalLimit_;
 }
 
-uint16_t PerformanceMaintenanceData::elevation_neg_normal_limit() const
+std::uint16_t PerformanceMaintenanceData::elevation_neg_normal_limit() const
 {
    return p->elevationNegNormalLimit_;
 }
 
-uint16_t PerformanceMaintenanceData::elevation_encoder_light() const
+std::uint16_t PerformanceMaintenanceData::elevation_encoder_light() const
 {
    return p->elevationEncoderLight_;
 }
 
-uint16_t PerformanceMaintenanceData::elevation_gearbox_oil() const
+std::uint16_t PerformanceMaintenanceData::elevation_gearbox_oil() const
 {
    return p->elevationGearboxOil_;
 }
 
-uint16_t PerformanceMaintenanceData::elevation_handwheel() const
+std::uint16_t PerformanceMaintenanceData::elevation_handwheel() const
 {
    return p->elevationHandwheel_;
 }
 
-uint16_t PerformanceMaintenanceData::elevation_amp_ps() const
+std::uint16_t PerformanceMaintenanceData::elevation_amp_ps() const
 {
    return p->elevationAmpPs_;
 }
 
-uint16_t PerformanceMaintenanceData::azimuth_servo_amp_inhibit() const
+std::uint16_t PerformanceMaintenanceData::azimuth_servo_amp_inhibit() const
 {
    return p->azimuthServoAmpInhibit_;
 }
 
-uint16_t PerformanceMaintenanceData::azimuth_servo_amp_short_circuit() const
+std::uint16_t
+PerformanceMaintenanceData::azimuth_servo_amp_short_circuit() const
 {
    return p->azimuthServoAmpShortCircuit_;
 }
 
-uint16_t PerformanceMaintenanceData::azimuth_servo_amp_overtemp() const
+std::uint16_t PerformanceMaintenanceData::azimuth_servo_amp_overtemp() const
 {
    return p->azimuthServoAmpOvertemp_;
 }
 
-uint16_t PerformanceMaintenanceData::azimuth_motor_overtemp() const
+std::uint16_t PerformanceMaintenanceData::azimuth_motor_overtemp() const
 {
    return p->azimuthMotorOvertemp_;
 }
 
-uint16_t PerformanceMaintenanceData::azimuth_stow_pin() const
+std::uint16_t PerformanceMaintenanceData::azimuth_stow_pin() const
 {
    return p->azimuthStowPin_;
 }
 
-uint16_t PerformanceMaintenanceData::azimuth_housing_5v_ps() const
+std::uint16_t PerformanceMaintenanceData::azimuth_housing_5v_ps() const
 {
    return p->azimuthHousing5VPs_;
 }
 
-uint16_t PerformanceMaintenanceData::azimuth_encoder_light() const
+std::uint16_t PerformanceMaintenanceData::azimuth_encoder_light() const
 {
    return p->azimuthEncoderLight_;
 }
 
-uint16_t PerformanceMaintenanceData::azimuth_gearbox_oil() const
+std::uint16_t PerformanceMaintenanceData::azimuth_gearbox_oil() const
 {
    return p->azimuthGearboxOil_;
 }
 
-uint16_t PerformanceMaintenanceData::azimuth_bull_gear_oil() const
+std::uint16_t PerformanceMaintenanceData::azimuth_bull_gear_oil() const
 {
    return p->azimuthBullGearOil_;
 }
 
-uint16_t PerformanceMaintenanceData::azimuth_handwheel() const
+std::uint16_t PerformanceMaintenanceData::azimuth_handwheel() const
 {
    return p->azimuthHandwheel_;
 }
 
-uint16_t PerformanceMaintenanceData::azimuth_servo_amp_ps() const
+std::uint16_t PerformanceMaintenanceData::azimuth_servo_amp_ps() const
 {
    return p->azimuthServoAmpPs_;
 }
 
-uint16_t PerformanceMaintenanceData::servo() const
+std::uint16_t PerformanceMaintenanceData::servo() const
 {
    return p->servo_;
 }
 
-uint16_t PerformanceMaintenanceData::pedestal_interlock_switch() const
+std::uint16_t PerformanceMaintenanceData::pedestal_interlock_switch() const
 {
    return p->pedestalInterlockSwitch_;
 }
 
-uint16_t PerformanceMaintenanceData::coho_clock() const
+std::uint16_t PerformanceMaintenanceData::coho_clock() const
 {
    return p->cohoClock_;
 }
 
-uint16_t
+std::uint16_t
 PerformanceMaintenanceData::rf_generator_frequency_select_oscillator() const
 {
    return p->rfGeneratorFrequencySelectOscillator_;
 }
 
-uint16_t PerformanceMaintenanceData::rf_generator_rf_stalo() const
+std::uint16_t PerformanceMaintenanceData::rf_generator_rf_stalo() const
 {
    return p->rfGeneratorRfStalo_;
 }
 
-uint16_t PerformanceMaintenanceData::rf_generator_phase_shifted_coho() const
+std::uint16_t
+PerformanceMaintenanceData::rf_generator_phase_shifted_coho() const
 {
    return p->rfGeneratorPhaseShiftedCoho_;
 }
 
-uint16_t PerformanceMaintenanceData::_9v_receiver_ps() const
+std::uint16_t PerformanceMaintenanceData::_9v_receiver_ps() const
 {
    return p->_9VReceiverPs_;
 }
 
-uint16_t PerformanceMaintenanceData::_5v_receiver_ps() const
+std::uint16_t PerformanceMaintenanceData::_5v_receiver_ps() const
 {
    return p->_5VReceiverPs_;
 }
 
-uint16_t PerformanceMaintenanceData::_18v_receiver_ps() const
+std::uint16_t PerformanceMaintenanceData::_18v_receiver_ps() const
 {
    return p->_18VReceiverPs_;
 }
 
-uint16_t PerformanceMaintenanceData::neg_9v_receiver_ps() const
+std::uint16_t PerformanceMaintenanceData::neg_9v_receiver_ps() const
 {
    return p->neg9VReceiverPs_;
 }
 
-uint16_t PerformanceMaintenanceData::_5v_single_channel_rdaiu_ps() const
+std::uint16_t PerformanceMaintenanceData::_5v_single_channel_rdaiu_ps() const
 {
    return p->_5VSingleChannelRdaiuPs_;
 }
@@ -1311,22 +1325,22 @@ float PerformanceMaintenanceData::long_pulse_horizontal_dbz0() const
    return p->longPulseHorizontalDbz0_;
 }
 
-uint16_t PerformanceMaintenanceData::velocity_processed() const
+std::uint16_t PerformanceMaintenanceData::velocity_processed() const
 {
    return p->velocityProcessed_;
 }
 
-uint16_t PerformanceMaintenanceData::width_processed() const
+std::uint16_t PerformanceMaintenanceData::width_processed() const
 {
    return p->widthProcessed_;
 }
 
-uint16_t PerformanceMaintenanceData::velocity_rf_gen() const
+std::uint16_t PerformanceMaintenanceData::velocity_rf_gen() const
 {
    return p->velocityRfGen_;
 }
 
-uint16_t PerformanceMaintenanceData::width_rf_gen() const
+std::uint16_t PerformanceMaintenanceData::width_rf_gen() const
 {
    return p->widthRfGen_;
 }
@@ -1391,145 +1405,148 @@ float PerformanceMaintenanceData::vertical_linearity() const
    return p->verticalLinearity_;
 }
 
-uint16_t PerformanceMaintenanceData::state_file_read_status() const
+std::uint16_t PerformanceMaintenanceData::state_file_read_status() const
 {
    return p->stateFileReadStatus_;
 }
 
-uint16_t PerformanceMaintenanceData::state_file_write_status() const
+std::uint16_t PerformanceMaintenanceData::state_file_write_status() const
 {
    return p->stateFileWriteStatus_;
 }
 
-uint16_t PerformanceMaintenanceData::bypass_map_file_read_status() const
+std::uint16_t PerformanceMaintenanceData::bypass_map_file_read_status() const
 {
    return p->bypassMapFileReadStatus_;
 }
 
-uint16_t PerformanceMaintenanceData::bypass_map_file_write_status() const
+std::uint16_t PerformanceMaintenanceData::bypass_map_file_write_status() const
 {
    return p->bypassMapFileWriteStatus_;
 }
 
-uint16_t PerformanceMaintenanceData::current_adaptation_file_read_status() const
+std::uint16_t
+PerformanceMaintenanceData::current_adaptation_file_read_status() const
 {
    return p->currentAdaptationFileReadStatus_;
 }
 
-uint16_t
+std::uint16_t
 PerformanceMaintenanceData::current_adaptation_file_write_status() const
 {
    return p->currentAdaptationFileWriteStatus_;
 }
 
-uint16_t PerformanceMaintenanceData::censor_zone_file_read_status() const
+std::uint16_t PerformanceMaintenanceData::censor_zone_file_read_status() const
 {
    return p->censorZoneFileReadStatus_;
 }
 
-uint16_t PerformanceMaintenanceData::censor_zone_file_write_status() const
+std::uint16_t PerformanceMaintenanceData::censor_zone_file_write_status() const
 {
    return p->censorZoneFileWriteStatus_;
 }
 
-uint16_t PerformanceMaintenanceData::remote_vcp_file_read_status() const
+std::uint16_t PerformanceMaintenanceData::remote_vcp_file_read_status() const
 {
    return p->remoteVcpFileReadStatus_;
 }
 
-uint16_t PerformanceMaintenanceData::remote_vcp_file_write_status() const
+std::uint16_t PerformanceMaintenanceData::remote_vcp_file_write_status() const
 {
    return p->remoteVcpFileWriteStatus_;
 }
 
-uint16_t
+std::uint16_t
 PerformanceMaintenanceData::baseline_adaptation_file_read_status() const
 {
    return p->baselineAdaptationFileReadStatus_;
 }
 
-uint16_t PerformanceMaintenanceData::read_status_of_prf_sets() const
+std::uint16_t PerformanceMaintenanceData::read_status_of_prf_sets() const
 {
    return p->readStatusOfPrfSets_;
 }
 
-uint16_t PerformanceMaintenanceData::clutter_filter_map_file_read_status() const
+std::uint16_t
+PerformanceMaintenanceData::clutter_filter_map_file_read_status() const
 {
    return p->clutterFilterMapFileReadStatus_;
 }
 
-uint16_t
+std::uint16_t
 PerformanceMaintenanceData::clutter_filter_map_file_write_status() const
 {
    return p->clutterFilterMapFileWriteStatus_;
 }
 
-uint16_t PerformanceMaintenanceData::general_disk_io_error() const
+std::uint16_t PerformanceMaintenanceData::general_disk_io_error() const
 {
    return p->generalDiskIoError_;
 }
 
-uint8_t PerformanceMaintenanceData::rsp_status() const
+std::uint8_t PerformanceMaintenanceData::rsp_status() const
 {
    return p->rspStatus_;
 }
 
-uint8_t PerformanceMaintenanceData::cpu1_temperature() const
+std::uint8_t PerformanceMaintenanceData::cpu1_temperature() const
 {
    return p->cpu1Temperature_;
 }
 
-uint8_t PerformanceMaintenanceData::cpu2_temperature() const
+std::uint8_t PerformanceMaintenanceData::cpu2_temperature() const
 {
    return p->cpu2Temperature_;
 }
 
-uint16_t PerformanceMaintenanceData::rsp_motherboard_power() const
+std::uint16_t PerformanceMaintenanceData::rsp_motherboard_power() const
 {
    return p->rspMotherboardPower_;
 }
 
-uint16_t PerformanceMaintenanceData::spip_comm_status() const
+std::uint16_t PerformanceMaintenanceData::spip_comm_status() const
 {
    return p->spipCommStatus_;
 }
 
-uint16_t PerformanceMaintenanceData::hci_comm_status() const
+std::uint16_t PerformanceMaintenanceData::hci_comm_status() const
 {
    return p->hciCommStatus_;
 }
 
-uint16_t PerformanceMaintenanceData::signal_processor_command_status() const
+std::uint16_t
+PerformanceMaintenanceData::signal_processor_command_status() const
 {
    return p->signalProcessorCommandStatus_;
 }
 
-uint16_t PerformanceMaintenanceData::ame_communication_status() const
+std::uint16_t PerformanceMaintenanceData::ame_communication_status() const
 {
    return p->ameCommunicationStatus_;
 }
 
-uint16_t PerformanceMaintenanceData::rms_link_status() const
+std::uint16_t PerformanceMaintenanceData::rms_link_status() const
 {
    return p->rmsLinkStatus_;
 }
 
-uint16_t PerformanceMaintenanceData::rpg_link_status() const
+std::uint16_t PerformanceMaintenanceData::rpg_link_status() const
 {
    return p->rpgLinkStatus_;
 }
 
-uint16_t PerformanceMaintenanceData::interpanel_link_status() const
+std::uint16_t PerformanceMaintenanceData::interpanel_link_status() const
 {
    return p->interpanelLinkStatus_;
 }
 
-uint32_t PerformanceMaintenanceData::performance_check_time() const
+std::uint32_t PerformanceMaintenanceData::performance_check_time() const
 {
    return p->performanceCheckTime_;
 }
 
-uint16_t PerformanceMaintenanceData::version() const
+std::uint16_t PerformanceMaintenanceData::version() const
 {
    return p->version_;
 }
@@ -1538,9 +1555,10 @@ bool PerformanceMaintenanceData::Parse(std::istream& is)
 {
    logger_->trace("Parsing Performance/Maintenance Data (Message Type 3)");
 
-   bool   messageValid = true;
-   size_t bytesRead    = 0;
+   bool        messageValid = true;
+   std::size_t bytesRead    = 0;
 
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers): Readability
    p->rcpString_.resize(16);
 
    // Communications
@@ -1684,10 +1702,10 @@ bool PerformanceMaintenanceData::Parse(std::istream& is)
    is.read(reinterpret_cast<char*>(&p->transmitterInoperable_), 2);       // 184
    is.read(reinterpret_cast<char*>(&p->transmitterAirFilter_), 2);        // 185
    is.read(reinterpret_cast<char*>(&p->zeroTestBit_[0]),
-           p->zeroTestBit_.size() * 2); // 186-193
+           static_cast<std::streamsize>(p->zeroTestBit_.size() * 2)); // 186-193
    is.read(reinterpret_cast<char*>(&p->oneTestBit_[0]),
-           p->oneTestBit_.size() * 2);                          // 194-201
-   is.read(reinterpret_cast<char*>(&p->xmtrSpipInterface_), 2); // 202
+           static_cast<std::streamsize>(p->oneTestBit_.size() * 2)); // 194-201
+   is.read(reinterpret_cast<char*>(&p->xmtrSpipInterface_), 2);      // 202
    is.read(reinterpret_cast<char*>(&p->transmitterSummaryStatus_), 2); // 203
    is.seekg(2, std::ios_base::cur);                                    // 204
    is.read(reinterpret_cast<char*>(&p->transmitterRfPower_), 4);      // 205-206
@@ -1881,6 +1899,8 @@ bool PerformanceMaintenanceData::Parse(std::istream& is)
    is.read(reinterpret_cast<char*>(&p->version_), 2);                // 480
 
    bytesRead += 960;
+
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
    // Communications
    p->loopBackSetStatus_       = ntohs(p->loopBackSetStatus_);
@@ -2190,6 +2210,4 @@ PerformanceMaintenanceData::Create(Level2MessageHeader&& header,
    return message;
 }
 
-} // namespace rda
-} // namespace wsr88d
-} // namespace scwx
+} // namespace scwx::wsr88d::rda

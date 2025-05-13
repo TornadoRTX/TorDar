@@ -13,12 +13,8 @@
 #   include <arpa/inet.h>
 #endif
 
-namespace scwx
+namespace scwx::awips
 {
-namespace awips
-{
-
-class MessageImpl;
 
 class Message
 {
@@ -135,8 +131,8 @@ public:
    }
 
 private:
-   std::unique_ptr<MessageImpl> p;
+   class Impl;
+   std::unique_ptr<Impl> p;
 };
 
-} // namespace awips
-} // namespace scwx
+} // namespace scwx::awips

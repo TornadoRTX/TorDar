@@ -1,11 +1,7 @@
 #include <scwx/wsr88d/rda/digital_radar_data_generic.hpp>
 #include <scwx/util/logger.hpp>
 
-namespace scwx
-{
-namespace wsr88d
-{
-namespace rda
+namespace scwx::wsr88d::rda
 {
 
 static const std::string logPrefix_ =
@@ -27,9 +23,9 @@ static const std::unordered_map<std::string, DataBlockType> strToDataBlock_ {
 class DigitalRadarDataGeneric::DataBlock::Impl
 {
 public:
-   explicit Impl(const std::string& dataBlockType,
-                 const std::string& dataName) :
-       dataBlockType_ {dataBlockType}, dataName_ {dataName}
+   explicit Impl(std::string dataBlockType, std::string dataName) :
+       dataBlockType_ {std::move(dataBlockType)},
+       dataName_ {std::move(dataName)}
    {
    }
 
@@ -51,7 +47,13 @@ DigitalRadarDataGeneric::DataBlock::operator=(DataBlock&&) noexcept = default;
 class DigitalRadarDataGeneric::MomentDataBlock::Impl
 {
 public:
-   explicit Impl() {}
+   explicit Impl() = default;
+   ~Impl()         = default;
+
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    std::uint16_t numberOfDataMomentGates_ {0};
    std::int16_t  dataMomentRange_ {0};
@@ -89,7 +91,9 @@ DigitalRadarDataGeneric::MomentDataBlock::number_of_data_moment_gates() const
 units::kilometers<float>
 DigitalRadarDataGeneric::MomentDataBlock::data_moment_range() const
 {
-   return units::kilometers<float> {p->dataMomentRange_ * 0.001f};
+   static constexpr float kScale_ = 0.001f;
+   return units::kilometers<float> {static_cast<float>(p->dataMomentRange_) *
+                                    kScale_};
 }
 
 std::int16_t
@@ -102,7 +106,9 @@ units::kilometers<float>
 DigitalRadarDataGeneric::MomentDataBlock::data_moment_range_sample_interval()
    const
 {
-   return units::kilometers<float> {p->dataMomentRangeSampleInterval_ * 0.001f};
+   static constexpr float kScale_ = 0.001f;
+   return units::kilometers<float> {
+      static_cast<float>(p->dataMomentRangeSampleInterval_) * kScale_};
 }
 
 std::uint16_t DigitalRadarDataGeneric::MomentDataBlock::
@@ -113,7 +119,8 @@ std::uint16_t DigitalRadarDataGeneric::MomentDataBlock::
 
 float DigitalRadarDataGeneric::MomentDataBlock::snr_threshold() const
 {
-   return p->snrThreshold_ * 0.1f;
+   static constexpr float kScale_ = 0.1f;
+   return static_cast<float>(p->snrThreshold_) * kScale_;
 }
 
 std::int16_t DigitalRadarDataGeneric::MomentDataBlock::snr_threshold_raw() const
@@ -138,14 +145,14 @@ float DigitalRadarDataGeneric::MomentDataBlock::offset() const
 
 const void* DigitalRadarDataGeneric::MomentDataBlock::data_moments() const
 {
-   const void* dataMoments;
+   const void* dataMoments = nullptr;
 
    switch (p->dataWordSize_)
    {
-   case 8:
+   case 8: // NOLINT(cppcoreguidelines-avoid-magic-numbers)
       dataMoments = p->momentGates8_.data();
       break;
-   case 16:
+   case 16: // NOLINT(cppcoreguidelines-avoid-magic-numbers)
       dataMoments = p->momentGates16_.data();
       break;
    default:
@@ -189,13 +196,15 @@ bool DigitalRadarDataGeneric::MomentDataBlock::Parse(std::istream& is)
    is.read(reinterpret_cast<char*>(&p->scale_), 4);        // 20-23
    is.read(reinterpret_cast<char*>(&p->offset_), 4);       // 24-27
 
-   p->numberOfDataMomentGates_       = ntohs(p->numberOfDataMomentGates_);
-   p->dataMomentRange_               = ntohs(p->dataMomentRange_);
+   p->numberOfDataMomentGates_ = ntohs(p->numberOfDataMomentGates_);
+   p->dataMomentRange_ = static_cast<std::int16_t>(ntohs(p->dataMomentRange_));
    p->dataMomentRangeSampleInterval_ = ntohs(p->dataMomentRangeSampleInterval_);
    p->tover_                         = ntohs(p->tover_);
-   p->snrThreshold_                  = ntohs(p->snrThreshold_);
-   p->scale_                         = awips::Message::SwapFloat(p->scale_);
-   p->offset_                        = awips::Message::SwapFloat(p->offset_);
+   p->snrThreshold_ = static_cast<std::int16_t>(ntohs(p->snrThreshold_));
+   p->scale_        = awips::Message::SwapFloat(p->scale_);
+   p->offset_       = awips::Message::SwapFloat(p->offset_);
+
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
 
    if (p->numberOfDataMomentGates_ <= 1840)
    {
@@ -209,7 +218,7 @@ bool DigitalRadarDataGeneric::MomentDataBlock::Parse(std::istream& is)
       {
          p->momentGates16_.resize(p->numberOfDataMomentGates_);
          is.read(reinterpret_cast<char*>(p->momentGates16_.data()),
-                 p->numberOfDataMomentGates_ * 2);
+                 static_cast<std::streamsize>(p->numberOfDataMomentGates_) * 2);
          awips::Message::SwapVector(p->momentGates16_);
       }
       else
@@ -225,13 +234,21 @@ bool DigitalRadarDataGeneric::MomentDataBlock::Parse(std::istream& is)
       dataBlockValid = false;
    }
 
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+
    return dataBlockValid;
 }
 
 class DigitalRadarDataGeneric::VolumeDataBlock::Impl
 {
 public:
-   explicit Impl() {}
+   explicit Impl() = default;
+   ~Impl()         = default;
+
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    std::uint16_t lrtup_ {0};
    std::uint8_t  versionNumberMajor_ {0};
@@ -321,7 +338,7 @@ bool DigitalRadarDataGeneric::VolumeDataBlock::Parse(std::istream& is)
    p->lrtup_               = ntohs(p->lrtup_);
    p->latitude_            = awips::Message::SwapFloat(p->latitude_);
    p->longitude_           = awips::Message::SwapFloat(p->longitude_);
-   p->siteHeight_          = ntohs(p->siteHeight_);
+   p->siteHeight_          = static_cast<std::int16_t>(ntohs(p->siteHeight_));
    p->feedhornHeight_      = ntohs(p->feedhornHeight_);
    p->calibrationConstant_ = awips::Message::SwapFloat(p->calibrationConstant_);
    p->horizontaShvTxPower_ = awips::Message::SwapFloat(p->horizontaShvTxPower_);
@@ -332,6 +349,8 @@ bool DigitalRadarDataGeneric::VolumeDataBlock::Parse(std::istream& is)
       awips::Message::SwapFloat(p->initialSystemDifferentialPhase_);
    p->volumeCoveragePatternNumber_ = ntohs(p->volumeCoveragePatternNumber_);
    p->processingStatus_            = ntohs(p->processingStatus_);
+
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
 
    if (p->lrtup_ >= 46)
    {
@@ -345,13 +364,21 @@ bool DigitalRadarDataGeneric::VolumeDataBlock::Parse(std::istream& is)
       is.seekg(6, std::ios_base::cur); // 46-51
    }
 
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+
    return dataBlockValid;
 }
 
 class DigitalRadarDataGeneric::ElevationDataBlock::Impl
 {
 public:
-   explicit Impl() {}
+   explicit Impl() = default;
+   ~Impl()         = default;
+
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    std::uint16_t lrtup_ {0};
    std::int16_t  atmos_ {0};
@@ -397,7 +424,7 @@ bool DigitalRadarDataGeneric::ElevationDataBlock::Parse(std::istream& is)
    is.read(reinterpret_cast<char*>(&p->calibrationConstant_), 4); // 8-11
 
    p->lrtup_               = ntohs(p->lrtup_);
-   p->atmos_               = ntohs(p->atmos_);
+   p->atmos_               = static_cast<std::int16_t>(ntohs(p->atmos_));
    p->calibrationConstant_ = awips::Message::SwapFloat(p->calibrationConstant_);
 
    return dataBlockValid;
@@ -406,7 +433,13 @@ bool DigitalRadarDataGeneric::ElevationDataBlock::Parse(std::istream& is)
 class DigitalRadarDataGeneric::RadialDataBlock::Impl
 {
 public:
-   explicit Impl() {}
+   explicit Impl() = default;
+   ~Impl()         = default;
+
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    std::uint16_t lrtup_ {0};
    std::uint16_t unambigiousRange_ {0};
@@ -433,7 +466,8 @@ DigitalRadarDataGeneric::RadialDataBlock::operator=(
 
 float DigitalRadarDataGeneric::RadialDataBlock::unambiguous_range() const
 {
-   return p->unambigiousRange_ / 10.0f;
+   static constexpr float kScale_ = 0.1f;
+   return static_cast<float>(p->unambigiousRange_) * kScale_;
 }
 
 std::shared_ptr<DigitalRadarDataGeneric::RadialDataBlock>
@@ -486,24 +520,31 @@ bool DigitalRadarDataGeneric::RadialDataBlock::Parse(std::istream& is)
 class DigitalRadarDataGeneric::Impl
 {
 public:
-   explicit Impl() {};
-   ~Impl() = default;
+   explicit Impl() = default;
+   ~Impl()         = default;
 
-   std::string                   radarIdentifier_ {};
-   std::uint32_t                 collectionTime_ {0};
-   std::uint16_t                 modifiedJulianDate_ {0};
-   std::uint16_t                 azimuthNumber_ {0};
-   float                         azimuthAngle_ {0.0f};
-   std::uint8_t                  compressionIndicator_ {0};
-   std::uint16_t                 radialLength_ {0};
-   std::uint8_t                  azimuthResolutionSpacing_ {0};
-   std::uint8_t                  radialStatus_ {0};
-   std::uint8_t                  elevationNumber_ {0};
-   std::uint8_t                  cutSectorNumber_ {0};
-   float                         elevationAngle_ {0.0f};
-   std::uint8_t                  radialSpotBlankingStatus_ {0};
-   std::uint8_t                  azimuthIndexingMode_ {0};
-   std::uint16_t                 dataBlockCount_ {0};
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
+
+   std::string   radarIdentifier_ {};
+   std::uint32_t collectionTime_ {0};
+   std::uint16_t modifiedJulianDate_ {0};
+   std::uint16_t azimuthNumber_ {0};
+   float         azimuthAngle_ {0.0f};
+   std::uint8_t  compressionIndicator_ {0};
+   std::uint16_t radialLength_ {0};
+   std::uint8_t  azimuthResolutionSpacing_ {0};
+   std::uint8_t  radialStatus_ {0};
+   std::uint8_t  elevationNumber_ {0};
+   std::uint8_t  cutSectorNumber_ {0};
+   float         elevationAngle_ {0.0f};
+   std::uint8_t  radialSpotBlankingStatus_ {0};
+   std::uint8_t  azimuthIndexingMode_ {0};
+   std::uint16_t dataBlockCount_ {0};
+
+   // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
    std::array<std::uint32_t, 10> dataBlockPointer_ {0};
 
    std::shared_ptr<VolumeDataBlock>    volumeDataBlock_ {nullptr};
@@ -679,6 +720,8 @@ bool DigitalRadarDataGeneric::Parse(std::istream& is)
    p->elevationAngle_     = SwapFloat(p->elevationAngle_);
    p->dataBlockCount_     = ntohs(p->dataBlockCount_);
 
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+
    if (p->azimuthNumber_ < 1 || p->azimuthNumber_ > 720)
    {
       logger_->warn("Invalid azimuth number: {}", p->azimuthNumber_);
@@ -700,18 +743,22 @@ bool DigitalRadarDataGeneric::Parse(std::istream& is)
       messageValid = false;
    }
 
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+
    if (!messageValid)
    {
       p->dataBlockCount_ = 0;
    }
 
    is.read(reinterpret_cast<char*>(&p->dataBlockPointer_),
-           p->dataBlockCount_ * 4);
+           static_cast<std::streamsize>(p->dataBlockCount_) * 4);
 
    SwapArray(p->dataBlockPointer_, p->dataBlockCount_);
 
    for (uint16_t b = 0; b < p->dataBlockCount_; ++b)
    {
+      // Index already has bounds check
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
       is.seekg(isBegin + std::streamoff(p->dataBlockPointer_[b]),
                std::ios_base::beg);
 
@@ -784,6 +831,4 @@ DigitalRadarDataGeneric::Create(Level2MessageHeader&& header, std::istream& is)
    return message;
 }
 
-} // namespace rda
-} // namespace wsr88d
-} // namespace scwx
+} // namespace scwx::wsr88d::rda
