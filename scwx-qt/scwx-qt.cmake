@@ -34,6 +34,7 @@ find_package(QT NAMES Qt6
                         Svg
                         Widgets
                         Sql
+                        WaylandClient
              REQUIRED)
 
 find_package(Qt${QT_VERSION_MAJOR}
@@ -48,6 +49,7 @@ find_package(Qt${QT_VERSION_MAJOR}
                         Svg
                         Widgets
                         Sql
+                        WaylandClient
              REQUIRED)
 
 set(SRC_EXE_MAIN source/scwx/qt/main/main.cpp)
@@ -696,6 +698,7 @@ target_link_libraries(scwx-qt PUBLIC Qt${QT_VERSION_MAJOR}::Widgets
                                      Qt${QT_VERSION_MAJOR}::Positioning
                                      Qt${QT_VERSION_MAJOR}::SerialPort
                                      Qt${QT_VERSION_MAJOR}::Svg
+                                     Qt${QT_VERSION_MAJOR}::WaylandClient
                                      Boost::json
                                      Boost::timer
                                      Boost::atomic
