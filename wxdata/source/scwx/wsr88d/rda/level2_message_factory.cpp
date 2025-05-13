@@ -8,6 +8,7 @@
 #include <scwx/wsr88d/rda/digital_radar_data_generic.hpp>
 #include <scwx/wsr88d/rda/performance_maintenance_data.hpp>
 #include <scwx/wsr88d/rda/rda_adaptation_data.hpp>
+#include <scwx/wsr88d/rda/rda_prf_data.hpp>
 #include <scwx/wsr88d/rda/rda_status_data.hpp>
 #include <scwx/wsr88d/rda/volume_coverage_pattern_data.hpp>
 
@@ -37,7 +38,8 @@ static const std::unordered_map<unsigned int, CreateLevel2MessageFunction>
             {13, ClutterFilterBypassMap::Create},
             {15, ClutterFilterMap::Create},
             {18, RdaAdaptationData::Create},
-            {31, DigitalRadarDataGeneric::Create}};
+            {31, DigitalRadarDataGeneric::Create},
+            {32, RdaPrfData::Create}};
 
 struct Level2MessageFactory::Context
 {

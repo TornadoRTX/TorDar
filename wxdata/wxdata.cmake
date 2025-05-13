@@ -125,6 +125,7 @@ set(HDR_WSR88D_RDA include/scwx/wsr88d/rda/clutter_filter_bypass_map.hpp
                    include/scwx/wsr88d/rda/level2_message_header.hpp
                    include/scwx/wsr88d/rda/performance_maintenance_data.hpp
                    include/scwx/wsr88d/rda/rda_adaptation_data.hpp
+                   include/scwx/wsr88d/rda/rda_prf_data.hpp
                    include/scwx/wsr88d/rda/rda_status_data.hpp
                    include/scwx/wsr88d/rda/rda_types.hpp
                    include/scwx/wsr88d/rda/volume_coverage_pattern_data.hpp)
@@ -138,6 +139,7 @@ set(SRC_WSR88D_RDA source/scwx/wsr88d/rda/clutter_filter_bypass_map.cpp
                    source/scwx/wsr88d/rda/level2_message_header.cpp
                    source/scwx/wsr88d/rda/performance_maintenance_data.cpp
                    source/scwx/wsr88d/rda/rda_adaptation_data.cpp
+                   source/scwx/wsr88d/rda/rda_prf_data.cpp
                    source/scwx/wsr88d/rda/rda_status_data.cpp
                    source/scwx/wsr88d/rda/volume_coverage_pattern_data.cpp)
 set(HDR_WSR88D_RPG include/scwx/wsr88d/rpg/ccb_header.hpp

@@ -121,13 +121,44 @@ public:
                     [](auto& p) { p.second = SwapFloat(p.second); });
    }
 
-   static void SwapVector(std::vector<std::uint16_t>& v)
+   template<typename T>
+   static void SwapVector(std::vector<T>& v)
    {
       std::transform(std::execution::par_unseq,
                      v.begin(),
                      v.end(),
                      v.begin(),
-                     [](std::uint16_t u) { return ntohs(u); });
+                     [](T u)
+                     {
+                        if constexpr (std::is_same_v<T, std::uint16_t> ||
+                                      std::is_same_v<T, std::int16_t>)
+                        {
+                           return static_cast<T>(ntohs(u));
+                        }
+                        else if constexpr (std::is_same_v<T, std::uint32_t> ||
+                                           std::is_same_v<T, std::int32_t>)
+                        {
+                           return static_cast<T>(ntohl(u));
+                        }
+                        else if constexpr (std::is_same_v<T, std::uint64_t> ||
+                                           std::is_same_v<T, std::int64_t>)
+                        {
+                           return static_cast<T>(ntohll(u));
+                        }
+                        else if constexpr (std::is_same_v<T, float>)
+                        {
+                           return SwapFloat(u);
+                        }
+                        else if constexpr (std::is_same_v<T, double>)
+                        {
+                           return SwapDouble(u);
+                        }
+                        else
+                        {
+                           static_assert(std::is_same_v<T, void>,
+                                         "Unsupported type for SwapVector");
+                        }
+                     });
    }
 
 private:
