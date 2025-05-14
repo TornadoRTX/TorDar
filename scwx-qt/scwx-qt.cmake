@@ -688,6 +688,16 @@ if (MSVC)
 else()
     target_compile_options(scwx-qt PRIVATE "$<$<CONFIG:Release>:-g>")
     target_compile_options(supercell-wx PRIVATE "$<$<CONFIG:Release>:-g>")
+
+    # Add wayland client packages
+    find_package(QT NAMES Qt6
+                 COMPONENTS WaylandClient
+                 REQUIRED)
+
+    find_package(Qt${QT_VERSION_MAJOR}
+                 COMPONENTS WaylandClient
+                 REQUIRED)
+    target_link_libraries(scwx-qt PUBLIC Qt${QT_VERSION_MAJOR}::WaylandClient)
 endif()
 
 target_link_libraries(scwx-qt PUBLIC Qt${QT_VERSION_MAJOR}::Widgets
