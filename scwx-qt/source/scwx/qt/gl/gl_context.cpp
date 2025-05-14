@@ -45,7 +45,7 @@ public:
 };
 
 GlContext::GlContext() : p(std::make_unique<Impl>()) {}
-GlContext::~GlContext() {};
+GlContext::~GlContext() = default;
 
 GlContext::GlContext(GlContext&&) noexcept            = default;
 GlContext& GlContext::operator=(GlContext&&) noexcept = default;
