@@ -1460,7 +1460,7 @@ RadarProductManagerImpl::StoreRadarProductRecord(
 
          if (storedRecord != nullptr)
          {
-            logger_->error(
+            logger_->debug(
                "Level 2 product previously loaded, loading from cache");
          }
       }
