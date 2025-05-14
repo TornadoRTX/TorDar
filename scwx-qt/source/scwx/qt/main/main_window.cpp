@@ -190,6 +190,8 @@ public:
    map::MapProvider    mapProvider_;
    map::MapWidget*     activeMap_;
 
+   std::shared_ptr<gl::GlContext> glContext_ {nullptr};
+
    ui::CollapsibleGroup*     mapSettingsGroup_;
    ui::CollapsibleGroup*     level2ProductsGroup_;
    ui::CollapsibleGroup*     level2SettingsGroup_;
@@ -777,7 +779,7 @@ void MainWindowImpl::ConfigureMapLayout()
       }
    };
 
-   auto glContext = std::make_shared<gl::GlContext>();
+   glContext_ = std::make_shared<gl::GlContext>();
 
    for (int64_t y = 0; y < gridHeight; y++)
    {
@@ -790,7 +792,7 @@ void MainWindowImpl::ConfigureMapLayout()
          {
             // NOLINTNEXTLINE(cppcoreguidelines-owning-memory): Owned by parent
             maps_[mapIndex] =
-               new map::MapWidget(mapIndex, settings_, glContext);
+               new map::MapWidget(mapIndex, settings_, glContext_);
          }
 
          hs->addWidget(maps_[mapIndex]);
