@@ -16,32 +16,30 @@ static const std::string logPrefix_ = "scwx::qt::gl::gl_context";
 class GlContext::Impl
 {
 public:
-   explicit Impl() :
-       gl_ {},
-       shaderProgramMap_ {},
-       shaderProgramMutex_ {},
-       textureAtlas_ {GL_INVALID_INDEX},
-       textureMutex_ {}
-   {
-   }
-   ~Impl() {}
+   explicit Impl() = default;
+   ~Impl()         = default;
+
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    void InitializeGL();
 
    static std::size_t
    GetShaderKey(std::initializer_list<std::pair<GLenum, std::string>> shaders);
 
-   gl::OpenGLFunctions  gl_;
-   QOpenGLFunctions_3_0 gl30_;
+   gl::OpenGLFunctions*  gl_ {nullptr};
+   QOpenGLFunctions_3_0* gl30_ {nullptr};
 
    bool glInitialized_ {false};
 
    std::unordered_map<std::size_t, std::shared_ptr<gl::ShaderProgram>>
-              shaderProgramMap_;
-   std::mutex shaderProgramMutex_;
+              shaderProgramMap_ {};
+   std::mutex shaderProgramMutex_ {};
 
-   GLuint     textureAtlas_;
-   std::mutex textureMutex_;
+   GLuint     textureAtlas_ {GL_INVALID_INDEX};
+   std::mutex textureMutex_ {};
 
    std::uint64_t textureBufferCount_ {};
 };
@@ -54,12 +52,12 @@ GlContext& GlContext::operator=(GlContext&&) noexcept = default;
 
 gl::OpenGLFunctions& GlContext::gl()
 {
-   return p->gl_;
+   return *p->gl_;
 }
 
 QOpenGLFunctions_3_0& GlContext::gl30()
 {
-   return p->gl30_;
+   return *p->gl30_;
 }
 
 std::uint64_t GlContext::texture_buffer_count() const
@@ -74,10 +72,19 @@ void GlContext::Impl::InitializeGL()
       return;
    }
 
-   gl_.initializeOpenGLFunctions();
-   gl30_.initializeOpenGLFunctions();
+   // QOpenGLFunctions objects will not be freed. Since "destruction" takes
+   // place at the end of program execution, it is OK to intentionally leak
+   // these.
 
-   gl_.glGenTextures(1, &textureAtlas_);
+   // NOLINTBEGIN(cppcoreguidelines-owning-memory)
+   gl_   = new gl::OpenGLFunctions();
+   gl30_ = new QOpenGLFunctions_3_0();
+   // NOLINTEND(cppcoreguidelines-owning-memory)
+
+   gl_->initializeOpenGLFunctions();
+   gl30_->initializeOpenGLFunctions();
+
+   gl_->glGenTextures(1, &textureAtlas_);
 
    glInitialized_ = true;
 }
@@ -102,7 +109,7 @@ std::shared_ptr<gl::ShaderProgram> GlContext::GetShaderProgram(
 
    if (it == p->shaderProgramMap_.end())
    {
-      shaderProgram = std::make_shared<gl::ShaderProgram>(p->gl_);
+      shaderProgram = std::make_shared<gl::ShaderProgram>(*p->gl_);
       shaderProgram->Load(shaders);
       p->shaderProgramMap_[key] = shaderProgram;
    }
@@ -125,7 +132,7 @@ GLuint GlContext::GetTextureAtlas()
    if (p->textureBufferCount_ != textureAtlas.BuildCount())
    {
       p->textureBufferCount_ = textureAtlas.BuildCount();
-      textureAtlas.BufferAtlas(p->gl_, p->textureAtlas_);
+      textureAtlas.BufferAtlas(*p->gl_, p->textureAtlas_);
    }
 
    return p->textureAtlas_;
@@ -140,8 +147,8 @@ void GlContext::StartFrame()
 {
    auto& gl = p->gl_;
 
-   gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-   gl.glClear(GL_COLOR_BUFFER_BIT);
+   gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+   gl->glClear(GL_COLOR_BUFFER_BIT);
 }
 
 std::size_t GlContext::Impl::GetShaderKey(
