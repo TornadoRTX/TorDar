@@ -65,6 +65,9 @@ jobs:
         sudo apt-get install doxygen \
                              libfuse2 \
                              ninja-build \
+                             wayland-protocols \
+                             libwayland-dev \
+                             libwayland-egl-backend-dev \
                              ${{ matrix.compiler_packages }}
 
     - name: Setup Python Environment
