@@ -126,6 +126,9 @@ jobs:
         sudo apt-get install doxygen \
                              libfuse2 \
                              ninja-build \
+                             wayland-protocols \
+                             libwayland-dev \
+                             libwayland-egl-backend-dev \
                              ${{ matrix.compiler_packages }}
 
     - name: Setup Python Environment
@@ -205,6 +208,8 @@ jobs:
         cd plugins/
         mkdir -p sqldrivers/
         cp "${RUNNER_WORKSPACE}/Qt/${{ matrix.qt_version }}/${{ matrix.qt_arch_dir }}/plugins/sqldrivers/libqsqlite.so" sqldrivers/
+        mkdir -p platforms/
+        cp ${RUNNER_WORKSPACE}/Qt/${{ matrix.qt_version }}/${{ matrix.qt_arch_dir }}/plugins/platforms/libqwayland* platforms/
         cd ..
         popd
         tar -czf supercell-wx-${{ matrix.artifact_suffix }}.tar.gz supercell-wx/
