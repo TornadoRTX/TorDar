@@ -101,6 +101,11 @@ DigitalRasterDataArrayPacket::level(std::uint16_t r) const
    return p->row_[r].level_;
 }
 
+size_t DigitalRasterDataArrayPacket::data_size() const
+{
+   return p->dataSize_;
+}
+
 bool DigitalRasterDataArrayPacket::Parse(std::istream& is)
 {
    bool        blockValid = true;
