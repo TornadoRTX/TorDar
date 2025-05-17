@@ -12,7 +12,7 @@ class DigitalRasterDataArrayPacket : public Packet
 {
 public:
    explicit DigitalRasterDataArrayPacket();
-   ~DigitalRasterDataArrayPacket();
+   ~DigitalRasterDataArrayPacket() override;
 
    DigitalRasterDataArrayPacket(const DigitalRasterDataArrayPacket&) = delete;
    DigitalRasterDataArrayPacket&

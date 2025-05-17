@@ -185,7 +185,7 @@ bool DigitalRasterDataArrayPacket::Parse(std::istream& is)
          }
 
          // Read raster bins
-         std::size_t dataSize = p->numberOfCells_;
+         const std::size_t dataSize = p->numberOfCells_;
          row.level_.resize(dataSize);
          is.read(reinterpret_cast<char*>(row.level_.data()),
                  static_cast<std::streamsize>(dataSize));

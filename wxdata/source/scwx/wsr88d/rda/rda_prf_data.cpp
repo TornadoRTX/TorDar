@@ -42,7 +42,7 @@ bool RdaPrfData::Parse(std::istream& is)
    bool        messageValid = true;
    std::size_t bytesRead    = 0;
 
-   std::streampos isBegin = is.tellg();
+   const std::streampos isBegin = is.tellg();
 
    is.read(reinterpret_cast<char*>(&p->numberOfWaveforms_), 2); // 1
    is.seekg(2, std::ios_base::cur);                             // 2

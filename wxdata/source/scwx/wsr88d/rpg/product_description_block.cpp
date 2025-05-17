@@ -1073,11 +1073,11 @@ ProductDescriptionBlock::data_level_code(std::uint8_t level) const
    if (number_of_levels() <= 16 && level < 16 &&
        !uncodedDataLevelProducts_.contains(p->productCode_))
    {
-      std::uint16_t th = data_level_threshold(level);
+      const std::uint16_t th = data_level_threshold(level);
       if ((th & 0x8000u))
       {
          // If bit 0 is one, then the LSB is coded
-         std::uint16_t lsb = th & 0x00ffu;
+         const std::uint16_t lsb = th & 0x00ffu;
 
          switch (lsb)
          {

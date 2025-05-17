@@ -142,9 +142,9 @@ Level2MessageInfo Level2MessageFactory::Create(std::istream&             is,
 
                // Estimate remaining size
                static const std::uint16_t kMinRemainingSegments_ = 100u;
-               std::uint16_t remainingSegments = std::max<std::uint16_t>(
+               const std::uint16_t remainingSegments = std::max<std::uint16_t>(
                   totalSegments - segment + 1, kMinRemainingSegments_);
-               std::size_t remainingSize = remainingSegments * dataSize;
+               const std::size_t remainingSize = remainingSegments * dataSize;
 
                ctx->messageData_.resize(ctx->bufferedSize_ + remainingSize);
             }

@@ -9,7 +9,7 @@ class RdaPrfData : public Level2Message
 {
 public:
    explicit RdaPrfData();
-   ~RdaPrfData();
+   ~RdaPrfData() override;
 
    RdaPrfData(const RdaPrfData&)            = delete;
    RdaPrfData& operator=(const RdaPrfData&) = delete;
