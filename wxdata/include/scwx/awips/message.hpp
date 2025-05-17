@@ -84,8 +84,9 @@ public:
       if constexpr (std::endian::native == std::endian::little)
       {
          // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
-         std::uint32_t high = ntohl(static_cast<std::uint32_t>(value >> 32));
-         std::uint32_t low =
+         const std::uint32_t high =
+            ntohl(static_cast<std::uint32_t>(value >> 32));
+         const std::uint32_t low =
             ntohl(static_cast<std::uint32_t>(value & 0xFFFFFFFFULL));
          return (static_cast<std::uint64_t>(low) << 32) | high;
          // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
