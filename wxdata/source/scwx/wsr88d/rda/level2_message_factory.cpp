@@ -8,26 +8,23 @@
 #include <scwx/wsr88d/rda/digital_radar_data_generic.hpp>
 #include <scwx/wsr88d/rda/performance_maintenance_data.hpp>
 #include <scwx/wsr88d/rda/rda_adaptation_data.hpp>
+#include <scwx/wsr88d/rda/rda_prf_data.hpp>
 #include <scwx/wsr88d/rda/rda_status_data.hpp>
 #include <scwx/wsr88d/rda/volume_coverage_pattern_data.hpp>
 
 #include <unordered_map>
 #include <vector>
 
-namespace scwx
-{
-namespace wsr88d
-{
-namespace rda
+namespace scwx::wsr88d::rda
 {
 
 static const std::string logPrefix_ =
    "scwx::wsr88d::rda::level2_message_factory";
 static const auto logger_ = util::Logger::Create(logPrefix_);
 
-typedef std::function<std::shared_ptr<Level2Message>(Level2MessageHeader&&,
-                                                     std::istream&)>
-   CreateLevel2MessageFunction;
+using CreateLevel2MessageFunction =
+   std::function<std::shared_ptr<Level2Message>(Level2MessageHeader&&,
+                                                std::istream&)>;
 
 static const std::unordered_map<unsigned int, CreateLevel2MessageFunction>
    create_ {{1, DigitalRadarData::Create},
@@ -37,20 +34,18 @@ static const std::unordered_map<unsigned int, CreateLevel2MessageFunction>
             {13, ClutterFilterBypassMap::Create},
             {15, ClutterFilterMap::Create},
             {18, RdaAdaptationData::Create},
-            {31, DigitalRadarDataGeneric::Create}};
+            {31, DigitalRadarDataGeneric::Create},
+            {32, RdaPrfData::Create}};
 
 struct Level2MessageFactory::Context
 {
    Context() :
-       messageData_ {},
-       bufferedSize_ {},
-       messageBuffer_ {messageData_},
-       messageBufferStream_ {&messageBuffer_}
+       messageBuffer_ {messageData_}, messageBufferStream_ {&messageBuffer_}
    {
    }
 
-   std::vector<char> messageData_;
-   size_t            bufferedSize_;
+   std::vector<char> messageData_ {};
+   std::size_t       bufferedSize_ {};
    util::vectorbuf   messageBuffer_;
    std::istream      messageBufferStream_;
    bool              bufferingData_ {false};
@@ -76,13 +71,16 @@ Level2MessageInfo Level2MessageFactory::Create(std::istream&             is,
 
    if (info.headerValid)
    {
-      if (header.message_size() == 65535)
+      if (header.message_size() == std::numeric_limits<std::uint16_t>::max())
       {
+         // A message size of 65535 indicates a message with a single segment.
+         // The size is specified in the bytes normally reserved for the segment
+         // number and total number of segments.
          segment       = 1;
          totalSegments = 1;
          dataSize =
             (static_cast<std::size_t>(header.number_of_message_segments())
-             << 16) +
+             << 16) + // NOLINT(cppcoreguidelines-avoid-magic-numbers)
             header.message_segment_number();
       }
       else
@@ -143,14 +141,16 @@ Level2MessageInfo Level2MessageFactory::Create(std::istream&             is,
                logger_->debug("Bad size estimate, increasing size");
 
                // Estimate remaining size
-               uint16_t remainingSegments =
-                  std::max<uint16_t>(totalSegments - segment + 1, 100u);
-               size_t remainingSize = remainingSegments * dataSize;
+               static const std::uint16_t kMinRemainingSegments_ = 100u;
+               const std::uint16_t remainingSegments = std::max<std::uint16_t>(
+                  totalSegments - segment + 1, kMinRemainingSegments_);
+               const std::size_t remainingSize = remainingSegments * dataSize;
 
                ctx->messageData_.resize(ctx->bufferedSize_ + remainingSize);
             }
 
-            is.read(ctx->messageData_.data() + ctx->bufferedSize_, dataSize);
+            is.read(&ctx->messageData_[ctx->bufferedSize_],
+                    static_cast<std::streamsize>(dataSize));
             ctx->bufferedSize_ += dataSize;
 
             if (is.eof())
@@ -164,7 +164,7 @@ Level2MessageInfo Level2MessageFactory::Create(std::istream&             is,
             else if (segment == totalSegments)
             {
                ctx->messageBuffer_.update_read_pointers(ctx->bufferedSize_);
-               header.set_message_size(static_cast<uint16_t>(
+               header.set_message_size(static_cast<std::uint16_t>(
                   ctx->bufferedSize_ / 2 + Level2MessageHeader::SIZE));
 
                messageStream = &ctx->messageBufferStream_;
@@ -186,7 +186,7 @@ Level2MessageInfo Level2MessageFactory::Create(std::istream&             is,
    else if (info.headerValid)
    {
       // Seek to the end of the current message
-      is.seekg(dataSize, std::ios_base::cur);
+      is.seekg(static_cast<std::streamoff>(dataSize), std::ios_base::cur);
    }
 
    if (info.message == nullptr)
@@ -197,6 +197,4 @@ Level2MessageInfo Level2MessageFactory::Create(std::istream&             is,
    return info;
 }
 
-} // namespace rda
-} // namespace wsr88d
-} // namespace scwx
+} // namespace scwx::wsr88d::rda

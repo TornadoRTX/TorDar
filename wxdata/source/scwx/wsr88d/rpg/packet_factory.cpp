@@ -5,6 +5,7 @@
 #include <scwx/wsr88d/rpg/cell_trend_volume_scan_times.hpp>
 #include <scwx/wsr88d/rpg/digital_precipitation_data_array_packet.hpp>
 #include <scwx/wsr88d/rpg/digital_radial_data_array_packet.hpp>
+#include <scwx/wsr88d/rpg/digital_raster_data_array_packet.hpp>
 #include <scwx/wsr88d/rpg/generic_data_packet.hpp>
 #include <scwx/wsr88d/rpg/hda_hail_symbol_packet.hpp>
 #include <scwx/wsr88d/rpg/linked_contour_vector_packet.hpp>
@@ -27,18 +28,14 @@
 
 #include <unordered_map>
 
-namespace scwx
-{
-namespace wsr88d
-{
-namespace rpg
+namespace scwx::wsr88d::rpg
 {
 
 static const std::string logPrefix_ = "scwx::wsr88d::rpg::packet_factory";
 static const auto        logger_    = util::Logger::Create(logPrefix_);
 
-typedef std::function<std::shared_ptr<Packet>(std::istream&)>
-   CreateMessageFunction;
+using CreateMessageFunction =
+   std::function<std::shared_ptr<Packet>(std::istream&)>;
 
 static const std::unordered_map<unsigned int, CreateMessageFunction> create_ {
    {1, TextAndSpecialSymbolPacket::Create},
@@ -69,6 +66,7 @@ static const std::unordered_map<unsigned int, CreateMessageFunction> create_ {
    {26, PointGraphicSymbolPacket::Create},
    {28, GenericDataPacket::Create},
    {29, GenericDataPacket::Create},
+   {33, DigitalRasterDataArrayPacket::Create},
    {0x0802, SetColorLevelPacket::Create},
    {0x0E03, LinkedContourVectorPacket::Create},
    {0x3501, UnlinkedContourVectorPacket::Create},
@@ -81,7 +79,7 @@ std::shared_ptr<Packet> PacketFactory::Create(std::istream& is)
    std::shared_ptr<Packet> packet      = nullptr;
    bool                    packetValid = true;
 
-   uint16_t packetCode;
+   std::uint16_t packetCode {0};
 
    is.read(reinterpret_cast<char*>(&packetCode), 2);
    packetCode = ntohs(packetCode);
@@ -108,6 +106,4 @@ std::shared_ptr<Packet> PacketFactory::Create(std::istream& is)
    return packet;
 }
 
-} // namespace rpg
-} // namespace wsr88d
-} // namespace scwx
+} // namespace scwx::wsr88d::rpg

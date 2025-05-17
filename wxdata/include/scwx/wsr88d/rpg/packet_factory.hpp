@@ -2,29 +2,22 @@
 
 #include <scwx/wsr88d/rpg/packet.hpp>
 
-namespace scwx
-{
-namespace wsr88d
-{
-namespace rpg
+namespace scwx::wsr88d::rpg
 {
 
 class PacketFactory
 {
-private:
+public:
    explicit PacketFactory() = delete;
    ~PacketFactory()         = delete;
 
-   PacketFactory(const PacketFactory&) = delete;
+   PacketFactory(const PacketFactory&)            = delete;
    PacketFactory& operator=(const PacketFactory&) = delete;
 
-   PacketFactory(PacketFactory&&) noexcept = delete;
+   PacketFactory(PacketFactory&&) noexcept            = delete;
    PacketFactory& operator=(PacketFactory&&) noexcept = delete;
 
-public:
    static std::shared_ptr<Packet> Create(std::istream& is);
 };
 
-} // namespace rpg
-} // namespace wsr88d
-} // namespace scwx
+} // namespace scwx::wsr88d::rpg

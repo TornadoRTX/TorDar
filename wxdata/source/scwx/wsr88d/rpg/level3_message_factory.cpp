@@ -9,22 +9,17 @@
 #include <scwx/wsr88d/rpg/tabular_product_message.hpp>
 
 #include <unordered_map>
-#include <vector>
 
-namespace scwx
-{
-namespace wsr88d
-{
-namespace rpg
+namespace scwx::wsr88d::rpg
 {
 
 static const std::string logPrefix_ =
    "scwx::wsr88d::rpg::level3_message_factory";
 static const auto logger_ = util::Logger::Create(logPrefix_);
 
-typedef std::function<std::shared_ptr<Level3Message>(Level3MessageHeader&&,
-                                                     std::istream&)>
-   CreateLevel3MessageFunction;
+using CreateLevel3MessageFunction =
+   std::function<std::shared_ptr<Level3Message>(Level3MessageHeader&&,
+                                                std::istream&)>;
 
 static const std::unordered_map<int, CreateLevel3MessageFunction> //
    create_ {{2, GeneralStatusMessage::Create},
@@ -119,9 +114,14 @@ static const std::unordered_map<int, CreateLevel3MessageFunction> //
             {182, GraphicProductMessage::Create},
             {184, GraphicProductMessage::Create},
             {186, GraphicProductMessage::Create},
+            {189, GraphicProductMessage::Create},
+            {190, GraphicProductMessage::Create},
+            {191, GraphicProductMessage::Create},
+            {192, GraphicProductMessage::Create},
             {193, GraphicProductMessage::Create},
             {195, GraphicProductMessage::Create},
             {196, GraphicProductMessage::Create},
+            {197, GraphicProductMessage::Create},
             {202, GraphicProductMessage::Create}};
 
 std::shared_ptr<Level3Message> Level3MessageFactory::Create(std::istream& is)
@@ -149,13 +149,12 @@ std::shared_ptr<Level3Message> Level3MessageFactory::Create(std::istream& is)
    else if (headerValid)
    {
       // Seek to the end of the current message
-      is.seekg(header.length_of_message() - Level3MessageHeader::SIZE,
+      is.seekg(static_cast<std::streamoff>(header.length_of_message()) -
+                  static_cast<std::streamoff>(Level3MessageHeader::SIZE),
                std::ios_base::cur);
    }
 
    return message;
 }
 
-} // namespace rpg
-} // namespace wsr88d
-} // namespace scwx
+} // namespace scwx::wsr88d::rpg

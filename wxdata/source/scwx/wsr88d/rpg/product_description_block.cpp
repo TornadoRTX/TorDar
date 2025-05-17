@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <scwx/wsr88d/rpg/product_description_block.hpp>
 #include <scwx/util/float.hpp>
 #include <scwx/util/logger.hpp>
@@ -21,28 +22,13 @@ static const std::string logPrefix_ =
 static const auto logger_ = util::Logger::Create(logPrefix_);
 
 static const std::set<int> compressedProducts_ = {
-   32,  94,  99,  134, 135, 138, 149, 152, 153, 154, 155,
-   159, 161, 163, 165, 167, 168, 170, 172, 173, 174, 175,
-   176, 177, 178, 179, 180, 182, 186, 193, 195, 202};
+   32,  94,  99,  113, 134, 135, 138, 149, 152, 153, 154, 155, 159,
+   161, 163, 165, 167, 168, 170, 172, 173, 174, 175, 176, 177, 178,
+   179, 180, 182, 186, 189, 190, 191, 192, 193, 195, 197, 202};
 
-static const std::set<int> uncodedDataLevelProducts_ = {32,
-                                                        34,
-                                                        81,
-                                                        93,
-                                                        94,
-                                                        99,
-                                                        134,
-                                                        135,
-                                                        138,
-                                                        153,
-                                                        154,
-                                                        155,
-                                                        159,
-                                                        161,
-                                                        163,
-                                                        177,
-                                                        193,
-                                                        195};
+static const std::set<int> uncodedDataLevelProducts_ = {
+   32,  34,  81,  93,  94,  99,  134, 135, 138, 153, 154, 155,
+   159, 161, 163, 177, 189, 190, 191, 192, 193, 195, 197};
 
 static const std::unordered_map<int, unsigned int> rangeMap_ {
    {19, 230},  {20, 460},  {27, 230},  {30, 230},  {31, 230},  {32, 230},
@@ -57,7 +43,8 @@ static const std::unordered_map<int, unsigned int> rangeMap_ {
    {163, 300}, {165, 300}, {166, 230}, {167, 300}, {168, 300}, {169, 230},
    {170, 230}, {171, 230}, {172, 230}, {173, 230}, {174, 230}, {175, 230},
    {176, 230}, {177, 230}, {178, 300}, {179, 300}, {180, 89},  {181, 89},
-   {182, 89},  {184, 89},  {186, 417}, {193, 460}, {195, 460}, {196, 50}};
+   {182, 89},  {184, 89},  {186, 417}, {193, 460}, {195, 460}, {196, 50},
+   {197, 230}};
 
 static const std::unordered_map<int, unsigned int> xResolutionMap_ {
    {19, 1000},  {20, 2000},  {27, 1000},  {30, 1000},  {31, 2000},  {32, 1000},
@@ -71,7 +58,7 @@ static const std::unordered_map<int, unsigned int> xResolutionMap_ {
    {166, 250},  {167, 250},  {168, 250},  {169, 2000}, {170, 250},  {171, 2000},
    {172, 250},  {173, 250},  {174, 250},  {175, 250},  {176, 250},  {177, 250},
    {178, 1000}, {179, 1000}, {180, 150},  {181, 150},  {182, 150},  {184, 150},
-   {186, 300},  {193, 250},  {195, 1000}};
+   {186, 300},  {193, 250},  {195, 1000}, {197, 250}};
 
 static const std::unordered_map<int, unsigned int> yResolutionMap_ {{37, 1000},
                                                                     {38, 4000},
@@ -86,7 +73,11 @@ static const std::unordered_map<int, unsigned int> yResolutionMap_ {{37, 1000},
                                                                     {90, 4000},
                                                                     {97, 1000},
                                                                     {98, 4000},
-                                                                    {166, 250}};
+                                                                    {166, 250},
+                                                                    {189, 20},
+                                                                    {190, 20},
+                                                                    {191, 20},
+                                                                    {192, 20}};
 
 // GR uses different internal units than defined units in level 3 products
 static const std::unordered_map<std::int16_t, float> grScale_ {
@@ -105,73 +96,57 @@ static const std::unordered_map<std::int16_t, float> grScale_ {
    {174, ((units::inches<float> {1} * 0.01f) / units::millimeters<float> {1})},
    {175, ((units::inches<float> {1} * 0.01f) / units::millimeters<float> {1})}};
 
-class ProductDescriptionBlockImpl
+class ProductDescriptionBlock::Impl
 {
 public:
-   explicit ProductDescriptionBlockImpl() :
-       blockDivider_ {0},
-       latitudeOfRadar_ {0},
-       longitudeOfRadar_ {0},
-       heightOfRadar_ {0},
-       productCode_ {0},
-       operationalMode_ {0},
-       volumeCoveragePattern_ {0},
-       sequenceNumber_ {0},
-       volumeScanNumber_ {0},
-       volumeScanDate_ {0},
-       volumeScanStartTime_ {0},
-       generationDateOfProduct_ {0},
-       generationTimeOfProduct_ {0},
-       elevationNumber_ {0},
-       version_ {0},
-       spotBlank_ {0},
-       offsetToSymbology_ {0},
-       offsetToGraphic_ {0},
-       offsetToTabular_ {0},
-       parameters_ {0},
-       halfwords_ {0}
-   {
-   }
-   ~ProductDescriptionBlockImpl() = default;
+   explicit Impl() = default;
+   ~Impl()         = default;
 
-   uint16_t halfword(size_t i);
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
-   int16_t  blockDivider_;
-   int32_t  latitudeOfRadar_;
-   int32_t  longitudeOfRadar_;
-   int16_t  heightOfRadar_;
-   int16_t  productCode_;
-   uint16_t operationalMode_;
-   uint16_t volumeCoveragePattern_;
-   int16_t  sequenceNumber_;
-   uint16_t volumeScanNumber_;
-   uint16_t volumeScanDate_;
-   uint32_t volumeScanStartTime_;
-   uint16_t generationDateOfProduct_;
-   uint32_t generationTimeOfProduct_;
+   std::uint16_t halfword(std::size_t i);
+
+   std::int16_t  blockDivider_ {0};
+   std::int32_t  latitudeOfRadar_ {0};
+   std::int32_t  longitudeOfRadar_ {0};
+   std::int16_t  heightOfRadar_ {0};
+   std::int16_t  productCode_ {0};
+   std::uint16_t operationalMode_ {0};
+   std::uint16_t volumeCoveragePattern_ {0};
+   std::int16_t  sequenceNumber_ {0};
+   std::uint16_t volumeScanNumber_ {0};
+   std::uint16_t volumeScanDate_ {0};
+   std::uint32_t volumeScanStartTime_ {0};
+   std::uint16_t generationDateOfProduct_ {0};
+   std::uint32_t generationTimeOfProduct_ {0};
    // 27-28: Product dependent parameters 1 and 2 (Table V)
-   uint16_t elevationNumber_;
+   std::uint16_t elevationNumber_ {0};
    // 30:    Product dependent parameter 3 (Table V)
    // 31-46: Product dependent (Note 1)
    // 47-53: Product dependent parameters 4-10 (Table V, Note 3)
-   uint8_t  version_;
-   uint8_t  spotBlank_;
-   uint32_t offsetToSymbology_;
-   uint32_t offsetToGraphic_;
-   uint32_t offsetToTabular_;
+   std::uint8_t  version_ {0};
+   std::uint8_t  spotBlank_ {0};
+   std::uint32_t offsetToSymbology_ {0};
+   std::uint32_t offsetToGraphic_ {0};
+   std::uint32_t offsetToTabular_ {0};
 
-   std::array<uint16_t, 10> parameters_;
-   std::array<uint16_t, 16> halfwords_;
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+   std::array<std::uint16_t, 10> parameters_ {0};
+   std::array<std::uint16_t, 16> halfwords_ {0};
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 };
 
-uint16_t ProductDescriptionBlockImpl::halfword(size_t i)
+std::uint16_t ProductDescriptionBlock::Impl::halfword(std::size_t i)
 {
    // Halfwords start at halfword 31
-   return halfwords_[i - 31];
+   // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
+   return halfwords_.at(i - 31);
 }
 
-ProductDescriptionBlock::ProductDescriptionBlock() :
-    p(std::make_unique<ProductDescriptionBlockImpl>())
+ProductDescriptionBlock::ProductDescriptionBlock() : p(std::make_unique<Impl>())
 {
 }
 ProductDescriptionBlock::~ProductDescriptionBlock() = default;
@@ -181,102 +156,104 @@ ProductDescriptionBlock::ProductDescriptionBlock(
 ProductDescriptionBlock& ProductDescriptionBlock::operator=(
    ProductDescriptionBlock&&) noexcept = default;
 
-int16_t ProductDescriptionBlock::block_divider() const
+std::int16_t ProductDescriptionBlock::block_divider() const
 {
    return p->blockDivider_;
 }
 
 float ProductDescriptionBlock::latitude_of_radar() const
 {
-   return p->latitudeOfRadar_ * 0.001f;
+   static constexpr float kScale = 0.001f;
+   return static_cast<float>(p->latitudeOfRadar_) * kScale;
 }
 
 float ProductDescriptionBlock::longitude_of_radar() const
 {
-   return p->longitudeOfRadar_ * 0.001f;
+   static constexpr float kScale = 0.001f;
+   return static_cast<float>(p->longitudeOfRadar_) * kScale;
 }
 
-int16_t ProductDescriptionBlock::height_of_radar() const
+std::int16_t ProductDescriptionBlock::height_of_radar() const
 {
    return p->heightOfRadar_;
 }
 
-int16_t ProductDescriptionBlock::product_code() const
+std::int16_t ProductDescriptionBlock::product_code() const
 {
    return p->productCode_;
 }
 
-uint16_t ProductDescriptionBlock::operational_mode() const
+std::uint16_t ProductDescriptionBlock::operational_mode() const
 {
    return p->operationalMode_;
 }
 
-uint16_t ProductDescriptionBlock::volume_coverage_pattern() const
+std::uint16_t ProductDescriptionBlock::volume_coverage_pattern() const
 {
    return p->volumeCoveragePattern_;
 }
 
-int16_t ProductDescriptionBlock::sequence_number() const
+std::int16_t ProductDescriptionBlock::sequence_number() const
 {
    return p->sequenceNumber_;
 }
 
-uint16_t ProductDescriptionBlock::volume_scan_number() const
+std::uint16_t ProductDescriptionBlock::volume_scan_number() const
 {
    return p->volumeScanNumber_;
 }
 
-uint16_t ProductDescriptionBlock::volume_scan_date() const
+std::uint16_t ProductDescriptionBlock::volume_scan_date() const
 {
    return p->volumeScanDate_;
 }
 
-uint32_t ProductDescriptionBlock::volume_scan_start_time() const
+std::uint32_t ProductDescriptionBlock::volume_scan_start_time() const
 {
    return p->volumeScanStartTime_;
 }
 
-uint16_t ProductDescriptionBlock::generation_date_of_product() const
+std::uint16_t ProductDescriptionBlock::generation_date_of_product() const
 {
    return p->generationDateOfProduct_;
 }
 
-uint32_t ProductDescriptionBlock::generation_time_of_product() const
+std::uint32_t ProductDescriptionBlock::generation_time_of_product() const
 {
    return p->generationTimeOfProduct_;
 }
 
-uint16_t ProductDescriptionBlock::elevation_number() const
+std::uint16_t ProductDescriptionBlock::elevation_number() const
 {
    return p->elevationNumber_;
 }
 
-uint16_t ProductDescriptionBlock::data_level_threshold(size_t i) const
+std::uint16_t ProductDescriptionBlock::data_level_threshold(std::size_t i) const
 {
-   return p->halfwords_[i];
+   return p->halfwords_.at(i);
 }
 
-uint8_t ProductDescriptionBlock::version() const
+std::uint8_t ProductDescriptionBlock::version() const
 {
    return p->version_;
 }
 
-uint8_t ProductDescriptionBlock::spot_blank() const
+std::uint8_t ProductDescriptionBlock::spot_blank() const
 {
    return p->spotBlank_;
 }
 
-uint32_t ProductDescriptionBlock::offset_to_symbology() const
+std::uint32_t ProductDescriptionBlock::offset_to_symbology() const
 {
    return p->offsetToSymbology_;
 }
 
-uint32_t ProductDescriptionBlock::offset_to_graphic() const
+std::uint32_t ProductDescriptionBlock::offset_to_graphic() const
 {
    return p->offsetToGraphic_;
 }
 
-uint32_t ProductDescriptionBlock::offset_to_tabular() const
+std::uint32_t ProductDescriptionBlock::offset_to_tabular() const
 {
    return p->offsetToTabular_;
 }
@@ -286,14 +263,14 @@ float ProductDescriptionBlock::range() const
    return range_raw();
 }
 
-uint16_t ProductDescriptionBlock::range_raw() const
+std::uint16_t ProductDescriptionBlock::range_raw() const
 {
-   uint16_t range = 0;
+   std::uint16_t range = 0;
 
    auto it = rangeMap_.find(p->productCode_);
    if (it != rangeMap_.cend())
    {
-      range = static_cast<uint16_t>(it->second);
+      range = static_cast<std::uint16_t>(it->second);
    }
 
    return range;
@@ -301,17 +278,18 @@ uint16_t ProductDescriptionBlock::range_raw() const
 
 float ProductDescriptionBlock::x_resolution() const
 {
-   return x_resolution_raw() * 0.001f;
+   static constexpr float kScale = 0.001f;
+   return static_cast<float>(x_resolution_raw()) * kScale;
 }
 
-uint16_t ProductDescriptionBlock::x_resolution_raw() const
+std::uint16_t ProductDescriptionBlock::x_resolution_raw() const
 {
-   uint16_t xResolution = 0;
+   std::uint16_t xResolution = 0;
 
    auto it = xResolutionMap_.find(p->productCode_);
    if (it != xResolutionMap_.cend())
    {
-      xResolution = static_cast<uint16_t>(it->second);
+      xResolution = static_cast<std::uint16_t>(it->second);
    }
 
    return xResolution;
@@ -319,25 +297,28 @@ uint16_t ProductDescriptionBlock::x_resolution_raw() const
 
 float ProductDescriptionBlock::y_resolution() const
 {
-   return y_resolution_raw() * 0.001f;
+   static constexpr float kScale = 0.001f;
+   return static_cast<float>(y_resolution_raw()) * kScale;
 }
 
-uint16_t ProductDescriptionBlock::y_resolution_raw() const
+std::uint16_t ProductDescriptionBlock::y_resolution_raw() const
 {
-   uint16_t yResolution = 0;
+   std::uint16_t yResolution = 0;
 
    auto it = yResolutionMap_.find(p->productCode_);
    if (it != yResolutionMap_.cend())
    {
-      yResolution = static_cast<uint16_t>(it->second);
+      yResolution = static_cast<std::uint16_t>(it->second);
    }
 
    return yResolution;
 }
 
-uint16_t ProductDescriptionBlock::threshold() const
+std::uint16_t ProductDescriptionBlock::threshold() const
 {
-   uint16_t threshold = 1;
+   std::uint16_t threshold = 1;
+
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
 
    switch (p->productCode_)
    {
@@ -394,12 +375,16 @@ uint16_t ProductDescriptionBlock::threshold() const
       break;
    }
 
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+
    return threshold;
 }
 
 float ProductDescriptionBlock::offset() const
 {
    float offset = 0.0f;
+
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
 
    switch (p->productCode_)
    {
@@ -416,7 +401,8 @@ float ProductDescriptionBlock::offset() const
    case 186:
    case 193:
    case 195:
-      offset = static_cast<int16_t>(p->halfword(31)) * 0.1f;
+      offset =
+         static_cast<float>(static_cast<std::int16_t>(p->halfword(31))) * 0.1f;
       break;
 
    case 134:
@@ -424,7 +410,7 @@ float ProductDescriptionBlock::offset() const
       break;
 
    case 135:
-      offset = static_cast<int16_t>(p->halfword(33));
+      offset = static_cast<std::int16_t>(p->halfword(33));
       break;
 
    case 159:
@@ -445,12 +431,16 @@ float ProductDescriptionBlock::offset() const
       break;
    }
 
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+
    return offset;
 }
 
 float ProductDescriptionBlock::scale() const
 {
    float scale = 1.0f;
+
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
 
    switch (p->productCode_)
    {
@@ -466,11 +456,11 @@ float ProductDescriptionBlock::scale() const
    case 186:
    case 193:
    case 195:
-      scale = p->halfword(32) * 0.1f;
+      scale = static_cast<float>(p->halfword(32)) * 0.1f;
       break;
 
    case 81:
-      scale = p->halfword(32) * 0.001f;
+      scale = static_cast<float>(p->halfword(32)) * 0.001f;
       break;
 
    case 134:
@@ -482,7 +472,7 @@ float ProductDescriptionBlock::scale() const
       break;
 
    case 138:
-      scale = p->halfword(32) * 0.01f;
+      scale = static_cast<float>(p->halfword(32)) * 0.01f;
       break;
 
    case 159:
@@ -503,12 +493,16 @@ float ProductDescriptionBlock::scale() const
       break;
    }
 
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+
    return scale;
 }
 
-uint16_t ProductDescriptionBlock::number_of_levels() const
+std::uint16_t ProductDescriptionBlock::number_of_levels() const
 {
-   uint16_t numberOfLevels = 16u;
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+
+   std::uint16_t numberOfLevels = 16u;
 
    switch (p->productCode_)
    {
@@ -580,6 +574,10 @@ uint16_t ProductDescriptionBlock::number_of_levels() const
       break;
 
    case 134:
+   case 189:
+   case 190:
+   case 191:
+   case 192:
       numberOfLevels = 256;
       break;
 
@@ -619,12 +617,16 @@ uint16_t ProductDescriptionBlock::number_of_levels() const
       break;
    }
 
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+
    return numberOfLevels;
 }
 
 std::uint16_t ProductDescriptionBlock::log_start() const
 {
    std::uint16_t logStart = std::numeric_limits<std::uint16_t>::max();
+
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
 
    switch (p->productCode_)
    {
@@ -636,12 +638,16 @@ std::uint16_t ProductDescriptionBlock::log_start() const
       break;
    }
 
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+
    return logStart;
 }
 
 float ProductDescriptionBlock::log_offset() const
 {
    float logOffset = 0.0f;
+
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
 
    switch (p->productCode_)
    {
@@ -653,12 +659,16 @@ float ProductDescriptionBlock::log_offset() const
       break;
    }
 
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+
    return logOffset;
 }
 
 float ProductDescriptionBlock::log_scale() const
 {
    float logScale = 1.0f;
+
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
 
    switch (p->productCode_)
    {
@@ -669,6 +679,8 @@ float ProductDescriptionBlock::log_scale() const
    default:
       break;
    }
+
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
    return logScale;
 }
@@ -688,6 +700,8 @@ float ProductDescriptionBlock::gr_scale() const
 
 std::uint8_t ProductDescriptionBlock::data_mask() const
 {
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+
    std::uint8_t dataMask = 0xff;
 
    switch (p->productCode_)
@@ -700,12 +714,16 @@ std::uint8_t ProductDescriptionBlock::data_mask() const
       break;
    }
 
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+
    return dataMask;
 }
 
 std::uint8_t ProductDescriptionBlock::topped_mask() const
 {
    std::uint8_t toppedMask = 0x00;
+
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
 
    switch (p->productCode_)
    {
@@ -716,6 +734,8 @@ std::uint8_t ProductDescriptionBlock::topped_mask() const
    default:
       break;
    }
+
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
    return toppedMask;
 }
@@ -728,7 +748,7 @@ units::angle::degrees<double> ProductDescriptionBlock::elevation() const
    {
       // Elevation is given in tenths of a degree
       // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
-      elevation = static_cast<int16_t>(p->parameters_[2]) * 0.1;
+      elevation = static_cast<std::int16_t>(p->parameters_[2]) * 0.1;
    }
 
    return units::angle::degrees<double> {elevation};
@@ -743,10 +763,14 @@ bool ProductDescriptionBlock::IsCompressionEnabled() const
 {
    bool isCompressed = false;
 
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+
    if (compressedProducts_.contains(p->productCode_))
    {
       isCompressed = (p->parameters_[7] == 1u);
    }
+
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
    return isCompressed;
 }
@@ -756,7 +780,7 @@ bool ProductDescriptionBlock::IsDataLevelCoded() const
    return !uncodedDataLevelProducts_.contains(p->productCode_);
 }
 
-size_t ProductDescriptionBlock::data_size() const
+std::size_t ProductDescriptionBlock::data_size() const
 {
    return SIZE;
 }
@@ -766,6 +790,8 @@ bool ProductDescriptionBlock::Parse(std::istream& is)
    bool blockValid = true;
 
    const std::streampos blockStart = is.tellg();
+
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
 
    is.read(reinterpret_cast<char*>(&p->blockDivider_), 2);            // 10
    is.read(reinterpret_cast<char*>(&p->latitudeOfRadar_), 4);         // 11-12
@@ -780,27 +806,31 @@ bool ProductDescriptionBlock::Parse(std::istream& is)
    is.read(reinterpret_cast<char*>(&p->volumeScanStartTime_), 4);     // 22-23
    is.read(reinterpret_cast<char*>(&p->generationDateOfProduct_), 2); // 24
    is.read(reinterpret_cast<char*>(&p->generationTimeOfProduct_), 4); // 25-26
-   is.read(reinterpret_cast<char*>(&p->parameters_[0]), 2 * 2);       // 27-28
-   is.read(reinterpret_cast<char*>(&p->elevationNumber_), 2);         // 29
-   is.read(reinterpret_cast<char*>(&p->parameters_[2]), 2);           // 30
-   is.read(reinterpret_cast<char*>(&p->halfwords_[0]), 16 * 2);       // 31-46
-   is.read(reinterpret_cast<char*>(&p->parameters_[3]), 7 * 2);       // 47-53
-   is.read(reinterpret_cast<char*>(&p->version_), 1);                 // 54
-   is.read(reinterpret_cast<char*>(&p->spotBlank_), 1);               // 54
-   is.read(reinterpret_cast<char*>(&p->offsetToSymbology_), 4);       // 55-56
-   is.read(reinterpret_cast<char*>(&p->offsetToGraphic_), 4);         // 57-58
-   is.read(reinterpret_cast<char*>(&p->offsetToTabular_), 4);         // 59-60
+   is.read(reinterpret_cast<char*>(&p->parameters_[0]),
+           static_cast<std::streamsize>(2 * 2));              // 27-28
+   is.read(reinterpret_cast<char*>(&p->elevationNumber_), 2); // 29
+   is.read(reinterpret_cast<char*>(&p->parameters_[2]), 2);   // 30
+   is.read(reinterpret_cast<char*>(&p->halfwords_[0]),
+           static_cast<std::streamsize>(16 * 2)); // 31-46
+   is.read(reinterpret_cast<char*>(&p->parameters_[3]),
+           static_cast<std::streamsize>(7 * 2));                // 47-53
+   is.read(reinterpret_cast<char*>(&p->version_), 1);           // 54
+   is.read(reinterpret_cast<char*>(&p->spotBlank_), 1);         // 54
+   is.read(reinterpret_cast<char*>(&p->offsetToSymbology_), 4); // 55-56
+   is.read(reinterpret_cast<char*>(&p->offsetToGraphic_), 4);   // 57-58
+   is.read(reinterpret_cast<char*>(&p->offsetToTabular_), 4);   // 59-60
 
-   p->blockDivider_            = ntohs(p->blockDivider_);
-   p->latitudeOfRadar_         = ntohl(p->latitudeOfRadar_);
-   p->longitudeOfRadar_        = ntohl(p->longitudeOfRadar_);
-   p->heightOfRadar_           = ntohs(p->heightOfRadar_);
-   p->productCode_             = ntohs(p->productCode_);
-   p->operationalMode_         = ntohs(p->operationalMode_);
-   p->volumeCoveragePattern_   = ntohs(p->volumeCoveragePattern_);
-   p->sequenceNumber_          = ntohs(p->sequenceNumber_);
-   p->volumeScanNumber_        = ntohs(p->volumeScanNumber_);
-   p->volumeScanDate_          = ntohs(p->volumeScanDate_);
+   p->blockDivider_    = static_cast<std::int16_t>(ntohs(p->blockDivider_));
+   p->latitudeOfRadar_ = static_cast<std::int32_t>(ntohl(p->latitudeOfRadar_));
+   p->longitudeOfRadar_ =
+      static_cast<std::int32_t>(ntohl(p->longitudeOfRadar_));
+   p->heightOfRadar_   = static_cast<std::int16_t>(ntohs(p->heightOfRadar_));
+   p->productCode_     = static_cast<std::int16_t>(ntohs(p->productCode_));
+   p->operationalMode_ = ntohs(p->operationalMode_);
+   p->volumeCoveragePattern_ = ntohs(p->volumeCoveragePattern_);
+   p->sequenceNumber_   = static_cast<std::int16_t>(ntohs(p->sequenceNumber_));
+   p->volumeScanNumber_ = ntohs(p->volumeScanNumber_);
+   p->volumeScanDate_   = ntohs(p->volumeScanDate_);
    p->volumeScanStartTime_     = ntohl(p->volumeScanStartTime_);
    p->generationDateOfProduct_ = ntohs(p->generationDateOfProduct_);
    p->generationTimeOfProduct_ = ntohl(p->generationTimeOfProduct_);
@@ -833,6 +863,8 @@ bool ProductDescriptionBlock::Parse(std::istream& is)
       }
    }
 
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+
    if (blockValid)
    {
       logger_->trace("Product code: {}", p->productCode_);
@@ -850,6 +882,8 @@ bool ProductDescriptionBlock::Parse(std::istream& is)
 std::optional<DataLevelCode>
 ProductDescriptionBlock::data_level_code(std::uint8_t level) const
 {
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+
    switch (p->productCode_)
    {
    case 32:
@@ -864,6 +898,10 @@ ProductDescriptionBlock::data_level_code(std::uint8_t level) const
    case 163:
    case 167:
    case 168:
+   case 189:
+   case 190:
+   case 191:
+   case 192:
    case 195:
       switch (level)
       {
@@ -1035,11 +1073,11 @@ ProductDescriptionBlock::data_level_code(std::uint8_t level) const
    if (number_of_levels() <= 16 && level < 16 &&
        !uncodedDataLevelProducts_.contains(p->productCode_))
    {
-      uint16_t th = data_level_threshold(level);
+      const std::uint16_t th = data_level_threshold(level);
       if ((th & 0x8000u))
       {
          // If bit 0 is one, then the LSB is coded
-         uint16_t lsb = th & 0x00ffu;
+         const std::uint16_t lsb = th & 0x00ffu;
 
          switch (lsb)
          {
@@ -1083,6 +1121,8 @@ ProductDescriptionBlock::data_level_code(std::uint8_t level) const
       }
    }
 
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+
    return std::nullopt;
 }
 
@@ -1101,6 +1141,8 @@ ProductDescriptionBlock::data_value(std::uint8_t level) const
 
    std::optional<float> f = std::nullopt;
 
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+
    // Different products use different scale/offset formulas
    if (numberOfLevels > 16 ||
        uncodedDataLevelProducts_.contains(p->productCode_))
@@ -1118,17 +1160,17 @@ ProductDescriptionBlock::data_value(std::uint8_t level) const
       case 174:
       case 175:
       case 176:
-         f = (level - dataOffset) / dataScale;
+         f = (static_cast<float>(level) - dataOffset) / dataScale;
          break;
 
       case 134:
          if (level < log_start())
          {
-            f = (level - dataOffset) / dataScale;
+            f = (static_cast<float>(level) - dataOffset) / dataScale;
          }
          else
          {
-            f = expf((level - log_offset()) / log_scale());
+            f = expf((static_cast<float>(level) - log_offset()) / log_scale());
          }
          break;
 
@@ -1137,7 +1179,7 @@ ProductDescriptionBlock::data_value(std::uint8_t level) const
          [[fallthrough]];
 
       default:
-         f = level * dataScale + dataOffset;
+         f = static_cast<float>(level) * dataScale + dataOffset;
          break;
       }
    }
@@ -1176,6 +1218,8 @@ ProductDescriptionBlock::data_value(std::uint8_t level) const
          f = static_cast<float>(lsb);
       }
    }
+
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
    // Scale for GR compatibility
    if (f.has_value())

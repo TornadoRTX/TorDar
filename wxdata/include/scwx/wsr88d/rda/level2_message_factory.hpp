@@ -2,28 +2,19 @@
 
 #include <scwx/wsr88d/rda/level2_message.hpp>
 
-namespace scwx
-{
-namespace wsr88d
-{
-namespace rda
+namespace scwx::wsr88d::rda
 {
 
 struct Level2MessageInfo
 {
-   std::shared_ptr<Level2Message> message;
-   bool                           headerValid;
-   bool                           messageValid;
-
-   Level2MessageInfo() :
-       message(nullptr), headerValid(false), messageValid(false)
-   {
-   }
+   std::shared_ptr<Level2Message> message {nullptr};
+   bool                           headerValid {false};
+   bool                           messageValid {false};
 };
 
 class Level2MessageFactory
 {
-private:
+public:
    explicit Level2MessageFactory() = delete;
    ~Level2MessageFactory()         = delete;
 
@@ -33,7 +24,6 @@ private:
    Level2MessageFactory(Level2MessageFactory&&) noexcept            = delete;
    Level2MessageFactory& operator=(Level2MessageFactory&&) noexcept = delete;
 
-public:
    struct Context;
 
    static std::shared_ptr<Context> CreateContext();
@@ -41,6 +31,4 @@ public:
                                           std::shared_ptr<Context>& ctx);
 };
 
-} // namespace rda
-} // namespace wsr88d
-} // namespace scwx
+} // namespace scwx::wsr88d::rda

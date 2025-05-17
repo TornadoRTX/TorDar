@@ -9,17 +9,22 @@ namespace awips
 static const std::string logPrefix_ = "scwx::awips::message";
 static const auto        logger_    = util::Logger::Create(logPrefix_);
 
-class MessageImpl
+class Message::Impl
 {
 public:
-   explicit MessageImpl() {};
-   ~MessageImpl() = default;
+   explicit Impl() = default;
+   ~Impl()         = default;
+
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 };
 
-Message::Message() : p(std::make_unique<MessageImpl>()) {}
+Message::Message() : p(std::make_unique<Impl>()) {}
 Message::~Message() = default;
 
-Message::Message(Message&&) noexcept = default;
+Message::Message(Message&&) noexcept            = default;
 Message& Message::operator=(Message&&) noexcept = default;
 
 bool Message::ValidateMessage(std::istream& is, size_t bytesRead) const
