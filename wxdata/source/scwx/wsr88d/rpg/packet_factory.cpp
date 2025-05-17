@@ -28,18 +28,14 @@
 
 #include <unordered_map>
 
-namespace scwx
-{
-namespace wsr88d
-{
-namespace rpg
+namespace scwx::wsr88d::rpg
 {
 
 static const std::string logPrefix_ = "scwx::wsr88d::rpg::packet_factory";
 static const auto        logger_    = util::Logger::Create(logPrefix_);
 
-typedef std::function<std::shared_ptr<Packet>(std::istream&)>
-   CreateMessageFunction;
+using CreateMessageFunction =
+   std::function<std::shared_ptr<Packet>(std::istream&)>;
 
 static const std::unordered_map<unsigned int, CreateMessageFunction> create_ {
    {1, TextAndSpecialSymbolPacket::Create},
@@ -83,7 +79,7 @@ std::shared_ptr<Packet> PacketFactory::Create(std::istream& is)
    std::shared_ptr<Packet> packet      = nullptr;
    bool                    packetValid = true;
 
-   uint16_t packetCode;
+   std::uint16_t packetCode {0};
 
    is.read(reinterpret_cast<char*>(&packetCode), 2);
    packetCode = ntohs(packetCode);
@@ -110,6 +106,4 @@ std::shared_ptr<Packet> PacketFactory::Create(std::istream& is)
    return packet;
 }
 
-} // namespace rpg
-} // namespace wsr88d
-} // namespace scwx
+} // namespace scwx::wsr88d::rpg
