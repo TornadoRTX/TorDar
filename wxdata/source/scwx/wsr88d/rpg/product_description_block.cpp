@@ -21,28 +21,13 @@ static const std::string logPrefix_ =
 static const auto logger_ = util::Logger::Create(logPrefix_);
 
 static const std::set<int> compressedProducts_ = {
-   32,  94,  99,  134, 135, 138, 149, 152, 153, 154, 155,
-   159, 161, 163, 165, 167, 168, 170, 172, 173, 174, 175,
-   176, 177, 178, 179, 180, 182, 186, 193, 195, 202};
+   32,  94,  99,  113, 134, 135, 138, 149, 152, 153, 154, 155, 159,
+   161, 163, 165, 167, 168, 170, 172, 173, 174, 175, 176, 177, 178,
+   179, 180, 182, 186, 189, 190, 191, 192, 193, 195, 197, 202};
 
-static const std::set<int> uncodedDataLevelProducts_ = {32,
-                                                        34,
-                                                        81,
-                                                        93,
-                                                        94,
-                                                        99,
-                                                        134,
-                                                        135,
-                                                        138,
-                                                        153,
-                                                        154,
-                                                        155,
-                                                        159,
-                                                        161,
-                                                        163,
-                                                        177,
-                                                        193,
-                                                        195};
+static const std::set<int> uncodedDataLevelProducts_ = {
+   32,  34,  81,  93,  94,  99,  134, 135, 138, 153, 154, 155,
+   159, 161, 163, 177, 189, 190, 191, 192, 193, 195, 197};
 
 static const std::unordered_map<int, unsigned int> rangeMap_ {
    {19, 230},  {20, 460},  {27, 230},  {30, 230},  {31, 230},  {32, 230},
@@ -57,7 +42,8 @@ static const std::unordered_map<int, unsigned int> rangeMap_ {
    {163, 300}, {165, 300}, {166, 230}, {167, 300}, {168, 300}, {169, 230},
    {170, 230}, {171, 230}, {172, 230}, {173, 230}, {174, 230}, {175, 230},
    {176, 230}, {177, 230}, {178, 300}, {179, 300}, {180, 89},  {181, 89},
-   {182, 89},  {184, 89},  {186, 417}, {193, 460}, {195, 460}, {196, 50}};
+   {182, 89},  {184, 89},  {186, 417}, {193, 460}, {195, 460}, {196, 50},
+   {197, 230}};
 
 static const std::unordered_map<int, unsigned int> xResolutionMap_ {
    {19, 1000},  {20, 2000},  {27, 1000},  {30, 1000},  {31, 2000},  {32, 1000},
@@ -71,7 +57,7 @@ static const std::unordered_map<int, unsigned int> xResolutionMap_ {
    {166, 250},  {167, 250},  {168, 250},  {169, 2000}, {170, 250},  {171, 2000},
    {172, 250},  {173, 250},  {174, 250},  {175, 250},  {176, 250},  {177, 250},
    {178, 1000}, {179, 1000}, {180, 150},  {181, 150},  {182, 150},  {184, 150},
-   {186, 300},  {193, 250},  {195, 1000}};
+   {186, 300},  {193, 250},  {195, 1000}, {197, 250}};
 
 static const std::unordered_map<int, unsigned int> yResolutionMap_ {{37, 1000},
                                                                     {38, 4000},
@@ -86,7 +72,11 @@ static const std::unordered_map<int, unsigned int> yResolutionMap_ {{37, 1000},
                                                                     {90, 4000},
                                                                     {97, 1000},
                                                                     {98, 4000},
-                                                                    {166, 250}};
+                                                                    {166, 250},
+                                                                    {189, 20},
+                                                                    {190, 20},
+                                                                    {191, 20},
+                                                                    {192, 20}};
 
 // GR uses different internal units than defined units in level 3 products
 static const std::unordered_map<std::int16_t, float> grScale_ {
@@ -580,6 +570,10 @@ uint16_t ProductDescriptionBlock::number_of_levels() const
       break;
 
    case 134:
+   case 189:
+   case 190:
+   case 191:
+   case 192:
       numberOfLevels = 256;
       break;
 
@@ -864,6 +858,10 @@ ProductDescriptionBlock::data_level_code(std::uint8_t level) const
    case 163:
    case 167:
    case 168:
+   case 189:
+   case 190:
+   case 191:
+   case 192:
    case 195:
       switch (level)
       {

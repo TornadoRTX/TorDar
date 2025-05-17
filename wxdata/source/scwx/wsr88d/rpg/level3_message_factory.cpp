@@ -119,9 +119,14 @@ static const std::unordered_map<int, CreateLevel3MessageFunction> //
             {182, GraphicProductMessage::Create},
             {184, GraphicProductMessage::Create},
             {186, GraphicProductMessage::Create},
+            {189, GraphicProductMessage::Create},
+            {190, GraphicProductMessage::Create},
+            {191, GraphicProductMessage::Create},
+            {192, GraphicProductMessage::Create},
             {193, GraphicProductMessage::Create},
             {195, GraphicProductMessage::Create},
             {196, GraphicProductMessage::Create},
+            {197, GraphicProductMessage::Create},
             {202, GraphicProductMessage::Create}};
 
 std::shared_ptr<Level3Message> Level3MessageFactory::Create(std::istream& is)

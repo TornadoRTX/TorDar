@@ -147,6 +147,7 @@ set(HDR_WSR88D_RPG include/scwx/wsr88d/rpg/ccb_header.hpp
                    include/scwx/wsr88d/rpg/cell_trend_volume_scan_times.hpp
                    include/scwx/wsr88d/rpg/digital_precipitation_data_array_packet.hpp
                    include/scwx/wsr88d/rpg/digital_radial_data_array_packet.hpp
+                   include/scwx/wsr88d/rpg/digital_raster_data_array_packet.hpp
                    include/scwx/wsr88d/rpg/general_status_message.hpp
                    include/scwx/wsr88d/rpg/generic_data_packet.hpp
                    include/scwx/wsr88d/rpg/generic_radial_data_packet.hpp
@@ -188,6 +189,7 @@ set(SRC_WSR88D_RPG source/scwx/wsr88d/rpg/ccb_header.cpp
                    source/scwx/wsr88d/rpg/cell_trend_volume_scan_times.cpp
                    source/scwx/wsr88d/rpg/digital_precipitation_data_array_packet.cpp
                    source/scwx/wsr88d/rpg/digital_radial_data_array_packet.cpp
+                   source/scwx/wsr88d/rpg/digital_raster_data_array_packet.cpp
                    source/scwx/wsr88d/rpg/general_status_message.cpp
                    source/scwx/wsr88d/rpg/generic_data_packet.cpp
                    source/scwx/wsr88d/rpg/generic_radial_data_packet.cpp

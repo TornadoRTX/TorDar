@@ -5,6 +5,7 @@
 #include <scwx/wsr88d/rpg/cell_trend_volume_scan_times.hpp>
 #include <scwx/wsr88d/rpg/digital_precipitation_data_array_packet.hpp>
 #include <scwx/wsr88d/rpg/digital_radial_data_array_packet.hpp>
+#include <scwx/wsr88d/rpg/digital_raster_data_array_packet.hpp>
 #include <scwx/wsr88d/rpg/generic_data_packet.hpp>
 #include <scwx/wsr88d/rpg/hda_hail_symbol_packet.hpp>
 #include <scwx/wsr88d/rpg/linked_contour_vector_packet.hpp>
@@ -69,6 +70,7 @@ static const std::unordered_map<unsigned int, CreateMessageFunction> create_ {
    {26, PointGraphicSymbolPacket::Create},
    {28, GenericDataPacket::Create},
    {29, GenericDataPacket::Create},
+   {33, DigitalRasterDataArrayPacket::Create},
    {0x0802, SetColorLevelPacket::Create},
    {0x0E03, LinkedContourVectorPacket::Create},
    {0x3501, UnlinkedContourVectorPacket::Create},
