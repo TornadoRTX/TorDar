@@ -304,7 +304,7 @@ bool RdaStatusData::Parse(std::istream& is)
       p->signalProcessingOptions_ = ntohs(p->signalProcessingOptions_);
       p->statusVersion_           = ntohs(p->statusVersion_);
    }
-   
+
    // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
    if (!ValidateMessage(is, bytesRead))

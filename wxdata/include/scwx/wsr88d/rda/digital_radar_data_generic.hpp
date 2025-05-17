@@ -118,17 +118,19 @@ public:
    MomentDataBlock(MomentDataBlock&&) noexcept;
    MomentDataBlock& operator=(MomentDataBlock&&) noexcept;
 
-   [[nodiscard]] std::uint16_t            number_of_data_moment_gates() const override;
+   [[nodiscard]] std::uint16_t number_of_data_moment_gates() const override;
    [[nodiscard]] units::kilometers<float> data_moment_range() const override;
-   [[nodiscard]] std::int16_t             data_moment_range_raw() const override;
-   [[nodiscard]] units::kilometers<float> data_moment_range_sample_interval() const override;
-   [[nodiscard]] std::uint16_t            data_moment_range_sample_interval_raw() const override;
-   [[nodiscard]] float                    snr_threshold() const;
-   [[nodiscard]] std::int16_t             snr_threshold_raw() const override;
-   [[nodiscard]] std::uint8_t             data_word_size() const override;
-   [[nodiscard]] float                    scale() const override;
-   [[nodiscard]] float                    offset() const override;
-   [[nodiscard]] const void*              data_moments() const override;
+   [[nodiscard]] std::int16_t data_moment_range_raw() const override;
+   [[nodiscard]] units::kilometers<float>
+   data_moment_range_sample_interval() const override;
+   [[nodiscard]] std::uint16_t
+                       data_moment_range_sample_interval_raw() const override;
+   [[nodiscard]] float snr_threshold() const;
+   [[nodiscard]] std::int16_t snr_threshold_raw() const override;
+   [[nodiscard]] std::uint8_t data_word_size() const override;
+   [[nodiscard]] float        scale() const override;
+   [[nodiscard]] float        offset() const override;
+   [[nodiscard]] const void*  data_moments() const override;
 
    static std::shared_ptr<MomentDataBlock>
    Create(const std::string& dataBlockType,
