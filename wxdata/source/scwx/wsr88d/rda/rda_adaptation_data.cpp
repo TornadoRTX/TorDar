@@ -1339,7 +1339,7 @@ bool RdaAdaptationData::Parse(std::istream& is)
    ReadChar(is, p->slatdir_);                         // 1316-1319
    ReadChar(is, p->slondir_);                         // 1320-1323
 
-   is.seekg(3824, std::ios_base::cur); // 1324-2499
+   is.seekg(1176, std::ios_base::cur); // 1324-2499
 
    is.read(reinterpret_cast<char*>(&p->digRcvrClockFreq_), 8); // 2500-2507
    is.read(reinterpret_cast<char*>(&p->cohoFreq_), 8);         // 2508-2515
