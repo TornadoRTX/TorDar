@@ -342,6 +342,10 @@ set(UI_UI  source/scwx/qt/ui/about_dialog.ui
            source/scwx/qt/ui/serial_port_dialog.ui
            source/scwx/qt/ui/update_dialog.ui
            source/scwx/qt/ui/wfo_dialog.ui)
+set(HDR_UI_MODIFIED_WIDGETS
+    source/scwx/qt/ui/modified_widgets/focused_combo_box.hpp
+    source/scwx/qt/ui/modified_widgets/focused_double_spin_box.hpp
+    source/scwx/qt/ui/modified_widgets/focused_spin_box.hpp)
 set(HDR_UI_SETTINGS source/scwx/qt/ui/settings/alert_palette_settings_widget.hpp
                     source/scwx/qt/ui/settings/hotkey_settings_widget.hpp
                     source/scwx/qt/ui/settings/settings_page_widget.hpp
@@ -469,6 +473,7 @@ set(PROJECT_SOURCES ${HDR_MAIN}
                     ${HDR_UI}
                     ${SRC_UI}
                     ${UI_UI}
+                    ${HDR_UI_MODIFIED_WIDGETS}
                     ${HDR_UI_SETTINGS}
                     ${SRC_UI_SETTINGS}
                     ${HDR_UI_SETUP}
@@ -508,6 +513,7 @@ source_group("Header Files\\types"        FILES ${HDR_TYPES})
 source_group("Source Files\\types"        FILES ${SRC_TYPES})
 source_group("Header Files\\ui"           FILES ${HDR_UI})
 source_group("Source Files\\ui"           FILES ${SRC_UI})
+source_group("Header Files\\ui\\modified_widgets" FILES ${HDR_UI_MODIFIED_WIDGETS})
 source_group("Header Files\\ui\\settings" FILES ${HDR_UI_SETTINGS})
 source_group("Source Files\\ui\\settings" FILES ${SRC_UI_SETTINGS})
 source_group("Header Files\\ui\\setup"    FILES ${HDR_UI_SETUP})

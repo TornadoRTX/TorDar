@@ -2,21 +2,17 @@
 #include <scwx/qt/settings/settings_interface.hpp>
 #include <scwx/qt/settings/unit_settings.hpp>
 #include <scwx/qt/types/unit_types.hpp>
+#include <scwx/qt/ui/modified_widgets/focused_combo_box.hpp>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/unordered/unordered_flat_map.hpp>
 #include <QGridLayout>
 #include <QLabel>
-#include <QComboBox>
 #include <QScrollArea>
 #include <QToolButton>
 #include <QVBoxLayout>
 
-namespace scwx
-{
-namespace qt
-{
-namespace ui
+namespace scwx::qt::ui
 {
 
 static const std::string logPrefix_ =
@@ -51,7 +47,7 @@ public:
          [&row, &self, this](
             settings::SettingsInterface<std::string>& settingsInterface,
             const std::string&                        labelName,
-            QComboBox*                                comboBox)
+            QFocusedComboBox*                         comboBox)
       {
          QLabel*      label = new QLabel(QObject::tr(labelName.c_str()), self);
          QToolButton* resetButton = new QToolButton(self);
@@ -72,9 +68,12 @@ public:
          ++row;
       };
 
-      QComboBox* accumulationComboBox = new QComboBox(self);
+      // Qt manages the memory for these widgets
+      // NOLINTBEGIN(cppcoreguidelines-owning-memory)
+      auto* accumulationComboBox = new QFocusedComboBox(self);
       accumulationComboBox->setSizePolicy(QSizePolicy::Expanding,
                                           QSizePolicy::Preferred);
+      accumulationComboBox->setFocusPolicy(Qt::StrongFocus);
       accumulationUnits_.SetSettingsVariable(unitSettings.accumulation_units());
       SCWX_SETTINGS_COMBO_BOX(accumulationUnits_,
                               accumulationComboBox,
@@ -82,9 +81,10 @@ public:
                               types::GetAccumulationUnitsName);
       AddRow(accumulationUnits_, "Accumulation", accumulationComboBox);
 
-      QComboBox* echoTopsComboBox = new QComboBox(self);
+      auto* echoTopsComboBox = new QFocusedComboBox(self);
       echoTopsComboBox->setSizePolicy(QSizePolicy::Expanding,
                                       QSizePolicy::Preferred);
+      echoTopsComboBox->setFocusPolicy(Qt::StrongFocus);
       echoTopsUnits_.SetSettingsVariable(unitSettings.echo_tops_units());
       SCWX_SETTINGS_COMBO_BOX(echoTopsUnits_,
                               echoTopsComboBox,
@@ -92,9 +92,10 @@ public:
                               types::GetEchoTopsUnitsName);
       AddRow(echoTopsUnits_, "Echo Tops", echoTopsComboBox);
 
-      QComboBox* speedComboBox = new QComboBox(self);
+      auto* speedComboBox = new QFocusedComboBox(self);
       speedComboBox->setSizePolicy(QSizePolicy::Expanding,
                                    QSizePolicy::Preferred);
+      speedComboBox->setFocusPolicy(Qt::StrongFocus);
       speedUnits_.SetSettingsVariable(unitSettings.speed_units());
       SCWX_SETTINGS_COMBO_BOX(speedUnits_,
                               speedComboBox,
@@ -102,9 +103,10 @@ public:
                               types::GetSpeedUnitsName);
       AddRow(speedUnits_, "Speed", speedComboBox);
 
-      QComboBox* distanceComboBox = new QComboBox(self);
+      auto* distanceComboBox = new QFocusedComboBox(self);
       distanceComboBox->setSizePolicy(QSizePolicy::Expanding,
-                                   QSizePolicy::Preferred);
+                                      QSizePolicy::Preferred);
+      distanceComboBox->setFocusPolicy(Qt::StrongFocus);
       distanceUnits_.SetSettingsVariable(unitSettings.distance_units());
       SCWX_SETTINGS_COMBO_BOX(distanceUnits_,
                               distanceComboBox,
@@ -112,9 +114,10 @@ public:
                               types::GetDistanceUnitsName);
       AddRow(distanceUnits_, "Distance", distanceComboBox);
 
-      QComboBox* otherComboBox = new QComboBox(self);
+      auto* otherComboBox = new QFocusedComboBox(self);
       otherComboBox->setSizePolicy(QSizePolicy::Expanding,
                                    QSizePolicy::Preferred);
+      otherComboBox->setFocusPolicy(Qt::StrongFocus);
       otherUnits_.SetSettingsVariable(unitSettings.other_units());
       SCWX_SETTINGS_COMBO_BOX(otherUnits_,
                               otherComboBox,
@@ -122,11 +125,18 @@ public:
                               types::GetOtherUnitsName);
       AddRow(otherUnits_, "Other", otherComboBox);
 
-      QSpacerItem* spacer =
+      auto* spacer =
          new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
       gridLayout_->addItem(spacer, row, 0);
+
+      // NOLINTEND(cppcoreguidelines-owning-memory)
    }
    ~Impl() = default;
+
+   Impl(const Impl&)            = delete;
+   Impl(Impl&&)                 = delete;
+   Impl& operator=(const Impl&) = delete;
+   Impl& operator=(Impl&&)      = delete;
 
    QWidget*     contents_;
    QLayout*     layout_;
@@ -147,6 +157,4 @@ UnitSettingsWidget::UnitSettingsWidget(QWidget* parent) :
 
 UnitSettingsWidget::~UnitSettingsWidget() = default;
 
-} // namespace ui
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::ui
