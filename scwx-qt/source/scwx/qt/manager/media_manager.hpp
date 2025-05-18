@@ -4,23 +4,20 @@
 
 #include <memory>
 
-#include <QObject>
-
-namespace scwx
-{
-namespace qt
-{
-namespace manager
+namespace scwx::qt::manager
 {
 
-class MediaManager : public QObject
+class MediaManager
 {
-   Q_OBJECT
-   Q_DISABLE_COPY_MOVE(MediaManager)
-
 public:
    explicit MediaManager();
    ~MediaManager();
+
+   MediaManager(const MediaManager&)            = delete;
+   MediaManager& operator=(const MediaManager&) = delete;
+
+   MediaManager(MediaManager&&) noexcept;
+   MediaManager& operator=(MediaManager&&) noexcept;
 
    void Play(types::AudioFile media);
    void Play(const std::string& mediaPath);
@@ -33,6 +30,4 @@ private:
    std::unique_ptr<Impl> p;
 };
 
-} // namespace manager
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::manager
