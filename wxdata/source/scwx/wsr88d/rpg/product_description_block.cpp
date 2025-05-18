@@ -1176,7 +1176,8 @@ ProductDescriptionBlock::data_value(std::uint8_t level) const
 
       case 135:
          level = level & data_mask();
-         [[fallthrough]];
+         f     = static_cast<float>(level) / dataScale - dataOffset;
+         break;
 
       default:
          f = static_cast<float>(level) * dataScale + dataOffset;
