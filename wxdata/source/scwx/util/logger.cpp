@@ -20,6 +20,12 @@ static std::vector<std::shared_ptr<spdlog::sinks::sink>> extraSinks_ {};
 void Initialize()
 {
    spdlog::set_pattern(logPattern_);
+
+   // Periodically flush every 3 seconds
+   spdlog::flush_every(std::chrono::seconds(3));
+
+   // Flush whenever logging info or higher
+   spdlog::flush_on(spdlog::level::level_enum::info);
 }
 
 void AddFileSink(const std::string& baseFilename)

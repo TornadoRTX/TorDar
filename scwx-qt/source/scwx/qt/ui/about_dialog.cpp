@@ -45,7 +45,9 @@ AboutDialog::AboutDialog(QWidget* parent) :
    }
 
    ui->versionLabel->setText(
-      tr("Version %1").arg(QString::fromStdString(main::kVersionString_)));
+      tr("Version %1 (Build %2)")
+         .arg(QString::fromStdString(main::kVersionString_))
+         .arg(main::kBuildNumber_));
    ui->revisionLabel->setText(
       tr("Git Revision <a href=\"%1\">%2</a>")
          .arg(repositoryUrl)

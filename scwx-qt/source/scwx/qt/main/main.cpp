@@ -55,8 +55,9 @@ int main(int argc, char* argv[])
    auto& logManager = scwx::qt::manager::LogManager::Instance();
    logManager.Initialize();
 
-   logger_->info("Supercell Wx v{} ({})",
+   logger_->info("Supercell Wx v{}.{} ({})",
                  scwx::qt::main::kVersionString_,
+                 scwx::qt::main::kBuildNumber_,
                  scwx::qt::main::kCommitString_);
 
    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts, true);
