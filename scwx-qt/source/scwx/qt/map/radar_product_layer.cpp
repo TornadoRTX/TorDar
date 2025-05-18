@@ -58,6 +58,9 @@ public:
 
    bool cfpEnabled_ {false};
 
+   std::uint16_t rangeMin_ {0};
+   float         scale_ {1.0f};
+
    bool colorTableNeedsUpdate_ {false};
    bool sweepNeedsUpdate_ {false};
 };
@@ -297,6 +300,9 @@ void RadarProductLayer::Render(
       p->uMVPMatrixLocation_, 1, GL_FALSE, glm::value_ptr(uMVPMatrix));
 
    gl.glUniform1i(p->uCFPEnabledLocation_, p->cfpEnabled_ ? 1 : 0);
+
+   gl.glUniform1ui(p->uDataMomentOffsetLocation_, p->rangeMin_);
+   gl.glUniform1f(p->uDataMomentScaleLocation_, p->scale_);
 
    gl.glActiveTexture(GL_TEXTURE0);
    gl.glBindTexture(GL_TEXTURE_1D, p->texture_);
@@ -553,8 +559,8 @@ void RadarProductLayer::UpdateColorTable(
                    colorTable.data());
    gl.glGenerateMipmap(GL_TEXTURE_1D);
 
-   gl.glUniform1ui(p->uDataMomentOffsetLocation_, rangeMin);
-   gl.glUniform1f(p->uDataMomentScaleLocation_, scale);
+   p->rangeMin_ = rangeMin;
+   p->scale_    = scale;
 }
 
 } // namespace scwx::qt::map
