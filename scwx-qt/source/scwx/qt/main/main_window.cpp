@@ -1549,8 +1549,9 @@ void MainWindowImpl::UpdateRadarProductSettings()
 {
    if (activeMap_->GetRadarProductGroup() == common::RadarProductGroup::Level2)
    {
-      level2SettingsWidget_->UpdateSettings(activeMap_);
       level2SettingsGroup_->setVisible(true);
+      // This should be done after setting visible for correct sizing
+      level2SettingsWidget_->UpdateSettings(activeMap_);
    }
    else
    {
