@@ -26,6 +26,7 @@ Supercell Wx supports the following 64-bit operating systems:
   - Fedora Linux 34+
   - openSUSE Tumbleweed
   - Ubuntu 22.04+
+  - NixOS 25.05+
   - Most distributions supporting the GCC Standard C++ Library 11+
  
 ## Linux Dependencies
