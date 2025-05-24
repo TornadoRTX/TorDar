@@ -2,7 +2,7 @@
 #include <scwx/qt/settings/settings_interface.hpp>
 #include <scwx/qt/settings/unit_settings.hpp>
 #include <scwx/qt/types/unit_types.hpp>
-#include <scwx/qt/ui/modified_widgets/focused_combo_box.hpp>
+#include <scwx/qt/ui/widgets/focused_combo_box.hpp>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/unordered/unordered_flat_map.hpp>

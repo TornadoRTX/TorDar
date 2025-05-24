@@ -1517,17 +1517,17 @@
   <customwidget>
    <class>QFocusedDoubleSpinBox</class>
    <extends>QDoubleSpinBox</extends>
-   <header>scwx/qt/ui/modified_widgets/focused_double_spin_box.hpp</header>
+   <header>scwx/qt/ui/widgets/focused_double_spin_box.hpp</header>
   </customwidget>
   <customwidget>
    <class>QFocusedSpinBox</class>
    <extends>QSpinBox</extends>
-   <header>scwx/qt/ui/modified_widgets/focused_spin_box.hpp</header>
+   <header>scwx/qt/ui/widgets/focused_spin_box.hpp</header>
   </customwidget>
   <customwidget>
    <class>QFocusedComboBox</class>
    <extends>QComboBox</extends>
-   <header>scwx/qt/ui/modified_widgets/focused_combo_box.hpp</header>
+   <header>scwx/qt/ui/widgets/focused_combo_box.hpp</header>
   </customwidget>
  </customwidgets>
  <resources>

@@ -342,10 +342,6 @@ set(UI_UI  source/scwx/qt/ui/about_dialog.ui
            source/scwx/qt/ui/serial_port_dialog.ui
            source/scwx/qt/ui/update_dialog.ui
            source/scwx/qt/ui/wfo_dialog.ui)
-set(HDR_UI_MODIFIED_WIDGETS
-    source/scwx/qt/ui/modified_widgets/focused_combo_box.hpp
-    source/scwx/qt/ui/modified_widgets/focused_double_spin_box.hpp
-    source/scwx/qt/ui/modified_widgets/focused_spin_box.hpp)
 set(HDR_UI_SETTINGS source/scwx/qt/ui/settings/alert_palette_settings_widget.hpp
                     source/scwx/qt/ui/settings/hotkey_settings_widget.hpp
                     source/scwx/qt/ui/settings/settings_page_widget.hpp
@@ -366,6 +362,9 @@ set(SRC_UI_SETUP source/scwx/qt/ui/setup/audio_codec_page.cpp
                  source/scwx/qt/ui/setup/map_provider_page.cpp
                  source/scwx/qt/ui/setup/setup_wizard.cpp
                  source/scwx/qt/ui/setup/welcome_page.cpp)
+set(HDR_UI_WIDGETS source/scwx/qt/ui/widgets/focused_combo_box.hpp
+                   source/scwx/qt/ui/widgets/focused_double_spin_box.hpp
+                   source/scwx/qt/ui/widgets/focused_spin_box.hpp)
 set(HDR_UTIL source/scwx/qt/util/color.hpp
              source/scwx/qt/util/file.hpp
              source/scwx/qt/util/geographic_lib.hpp
@@ -473,11 +472,11 @@ set(PROJECT_SOURCES ${HDR_MAIN}
                     ${HDR_UI}
                     ${SRC_UI}
                     ${UI_UI}
-                    ${HDR_UI_MODIFIED_WIDGETS}
                     ${HDR_UI_SETTINGS}
                     ${SRC_UI_SETTINGS}
                     ${HDR_UI_SETUP}
                     ${SRC_UI_SETUP}
+                    ${HDR_UI_WIDGETS}
                     ${HDR_UTIL}
                     ${SRC_UTIL}
                     ${HDR_VIEW}
@@ -513,11 +512,11 @@ source_group("Header Files\\types"        FILES ${HDR_TYPES})
 source_group("Source Files\\types"        FILES ${SRC_TYPES})
 source_group("Header Files\\ui"           FILES ${HDR_UI})
 source_group("Source Files\\ui"           FILES ${SRC_UI})
-source_group("Header Files\\ui\\modified_widgets" FILES ${HDR_UI_MODIFIED_WIDGETS})
 source_group("Header Files\\ui\\settings" FILES ${HDR_UI_SETTINGS})
 source_group("Source Files\\ui\\settings" FILES ${SRC_UI_SETTINGS})
 source_group("Header Files\\ui\\setup"    FILES ${HDR_UI_SETUP})
 source_group("Source Files\\ui\\setup"    FILES ${SRC_UI_SETUP})
+source_group("Header Files\\ui\\widgets"  FILES ${HDR_UI_WIDGETS})
 source_group("UI Files\\ui"               FILES ${UI_UI})
 source_group("Header Files\\util"         FILES ${HDR_UTIL})
 source_group("Source Files\\util"         FILES ${SRC_UTIL})
