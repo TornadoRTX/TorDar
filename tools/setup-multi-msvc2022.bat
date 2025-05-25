@@ -10,6 +10,6 @@
 @if not "%~1"=="" set build_dir=%~1
 
 :: Perform common setup
-@call lib\setup-common.bat
+@call %script_dir%\lib\setup-common.bat
 
 @pause
