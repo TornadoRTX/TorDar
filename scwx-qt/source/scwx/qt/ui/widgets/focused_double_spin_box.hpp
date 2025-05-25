@@ -1,3 +1,5 @@
+#pragma once
+
 #include <QDoubleSpinBox>
 #include <QWheelEvent>
 
