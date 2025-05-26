@@ -11,7 +11,7 @@
 :: Conan profiles
 @set profile_count=1
 @set /a last_profile=profile_count - 1
-@set conan_profile[0]=scwx-win64_msvc2022
+@set conan_profile[0]=scwx-windows_msvc2022_x64
 
 :: Install Conan profiles
 @for /L %%i in (0,1,!last_profile!) do @(

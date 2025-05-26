@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: win64_msvc2022
+          - name: windows_msvc2022_x64
             os: windows-2022
             build_type: Release
             env_cc: ''
@@ -34,7 +34,7 @@ jobs:
             qt_modules: qtimageformats qtmultimedia qtpositioning qtserialport
             qt_tools: ''
             conan_package_manager: ''
-            conan_profile: scwx-win64_msvc2022
+            conan_profile: scwx-windows_msvc2022_x64
             appimage_arch: ''
             artifact_suffix: windows-x64
           - name: linux_gcc_x64
