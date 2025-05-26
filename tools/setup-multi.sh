@@ -1,9 +1,11 @@
 #!/bin/bash
-export build_dir=${1:-build-release}
+script_dir="$(dirname "$(readlink -f "$0")")"
+
+export build_dir="${1:-${script_dir}/../build}"
 export conan_profile=${2:-scwx-linux_gcc-11}
-export generator=Ninja
+export generator="Ninja Multi-Config"
 export qt_base=/opt/Qt
 export qt_arch=gcc_64
 
 # Perform common setup
-./lib/setup-common.sh
+${script_dir}/lib/setup-common.sh

@@ -17,6 +17,12 @@ if [[ -n "${build_type}" ]]; then
         -DCMAKE_CONFIGURATION_TYPES="${build_type}"
         -DCMAKE_INSTALL_PREFIX="${build_dir}/${build_type}/supercell-wx"
     )
+else
+    # CMAKE_BUILD_TYPE isn't used to build, but is required by the Conan CMakeDeps generator
+    cmake_args+=(
+        -DCMAKE_BUILD_TYPE="Release"
+        -DCMAKE_CONFIGURATION_TYPES="Debug;Release"
+    )
 fi
 
 mkdir -p "${build_dir}"

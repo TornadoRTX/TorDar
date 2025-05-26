@@ -2,7 +2,7 @@
 
 @set build_dir=%script_dir%\..\build-ninja
 @set conan_profile=scwx-win64_msvc2022
-@set generator=Ninja
+@set generator=Ninja Multi-Config
 @set qt_base=C:/Qt
 @set qt_arch=msvc2022_64
 
