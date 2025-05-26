@@ -135,7 +135,7 @@
               <property name="geometry">
                <rect>
                 <x>0</x>
-                <y>-412</y>
+                <y>0</y>
                 <width>511</width>
                 <height>873</height>
                </rect>
@@ -160,13 +160,25 @@
                    <number>0</number>
                   </property>
                   <item row="1" column="2">
-                   <widget class="QComboBox" name="clockFormatComboBox"/>
+                   <widget class="QFocusedComboBox" name="clockFormatComboBox">
+                    <property name="focusPolicy">
+                     <enum>Qt::FocusPolicy::StrongFocus</enum>
+                    </property>
+                   </widget>
                   </item>
                   <item row="8" column="2">
-                   <widget class="QComboBox" name="positioningPluginComboBox"/>
+                   <widget class="QFocusedComboBox" name="positioningPluginComboBox">
+                    <property name="focusPolicy">
+                     <enum>Qt::FocusPolicy::StrongFocus</enum>
+                    </property>
+                   </widget>
                   </item>
                   <item row="6" column="2">
-                   <widget class="QSpinBox" name="gridHeightSpinBox"/>
+                   <widget class="QFocusedSpinBox" name="gridHeightSpinBox">
+                    <property name="focusPolicy">
+                     <enum>Qt::FocusPolicy::StrongFocus</enum>
+                    </property>
+                   </widget>
                   </item>
                   <item row="23" column="0">
                    <widget class="QLabel" name="label_31">
@@ -265,7 +277,11 @@
                    </widget>
                   </item>
                   <item row="2" column="2">
-                   <widget class="QComboBox" name="defaultAlertActionComboBox"/>
+                   <widget class="QFocusedComboBox" name="defaultAlertActionComboBox">
+                    <property name="focusPolicy">
+                     <enum>Qt::FocusPolicy::StrongFocus</enum>
+                    </property>
+                   </widget>
                   </item>
                   <item row="12" column="0">
                    <widget class="QLabel" name="label_4">
@@ -293,10 +309,18 @@
                    </widget>
                   </item>
                   <item row="5" column="2">
-                   <widget class="QSpinBox" name="gridWidthSpinBox"/>
+                   <widget class="QFocusedSpinBox" name="gridWidthSpinBox">
+                    <property name="focusPolicy">
+                     <enum>Qt::FocusPolicy::StrongFocus</enum>
+                    </property>
+                   </widget>
                   </item>
                   <item row="4" column="2">
-                   <widget class="QComboBox" name="defaultTimeZoneComboBox"/>
+                   <widget class="QFocusedComboBox" name="defaultTimeZoneComboBox">
+                    <property name="focusPolicy">
+                     <enum>Qt::FocusPolicy::StrongFocus</enum>
+                    </property>
+                   </widget>
                   </item>
                   <item row="2" column="4">
                    <widget class="QToolButton" name="resetDefaultAlertActionButton">
@@ -321,7 +345,10 @@
                    </widget>
                   </item>
                   <item row="10" column="2">
-                   <widget class="QSpinBox" name="nmeaBaudRateSpinBox">
+                   <widget class="QFocusedSpinBox" name="nmeaBaudRateSpinBox">
+                    <property name="focusPolicy">
+                     <enum>Qt::FocusPolicy::StrongFocus</enum>
+                    </property>
                     <property name="minimum">
                      <number>1</number>
                     </property>
@@ -413,13 +440,21 @@
                    </widget>
                   </item>
                   <item row="11" column="2">
-                   <widget class="QComboBox" name="mapProviderComboBox"/>
+                   <widget class="QFocusedComboBox" name="mapProviderComboBox">
+                    <property name="focusPolicy">
+                     <enum>Qt::FocusPolicy::StrongFocus</enum>
+                    </property>
+                   </widget>
                   </item>
                   <item row="9" column="2">
                    <widget class="QLineEdit" name="nmeaSourceLineEdit"/>
                   </item>
                   <item row="3" column="2">
-                   <widget class="QComboBox" name="radarSiteComboBox"/>
+                   <widget class="QFocusedComboBox" name="radarSiteComboBox">
+                    <property name="focusPolicy">
+                     <enum>Qt::FocusPolicy::StrongFocus</enum>
+                    </property>
+                   </widget>
                   </item>
                   <item row="19" column="3">
                    <widget class="QToolButton" name="themeFileSelectButton">
@@ -443,7 +478,11 @@
                    </widget>
                   </item>
                   <item row="18" column="2">
-                   <widget class="QComboBox" name="themeComboBox"/>
+                   <widget class="QFocusedComboBox" name="themeComboBox">
+                    <property name="focusPolicy">
+                     <enum>Qt::FocusPolicy::StrongFocus</enum>
+                    </property>
+                   </widget>
                   </item>
                   <item row="18" column="0">
                    <widget class="QLabel" name="label_5">
@@ -466,12 +505,15 @@
                    </widget>
                   </item>
                   <item row="23" column="2">
-                   <widget class="QDoubleSpinBox" name="radarSiteThresholdSpinBox">
+                   <widget class="QFocusedDoubleSpinBox" name="radarSiteThresholdSpinBox">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
+                    </property>
+                    <property name="focusPolicy">
+                     <enum>Qt::FocusPolicy::StrongFocus</enum>
                     </property>
                     <property name="toolTip">
                      <string>Set to 0 to disable</string>
@@ -623,7 +665,10 @@
                    </widget>
                   </item>
                   <item row="24" column="2">
-                   <widget class="QDoubleSpinBox" name="cursorIconScaleSpinBox">
+                   <widget class="QFocusedDoubleSpinBox" name="cursorIconScaleSpinBox">
+                    <property name="focusPolicy">
+                     <enum>Qt::FocusPolicy::StrongFocus</enum>
+                    </property>
                     <property name="decimals">
                      <number>1</number>
                     </property>
@@ -765,8 +810,8 @@
                    <rect>
                     <x>0</x>
                     <y>0</y>
-                    <width>80</width>
-                    <height>18</height>
+                    <width>503</width>
+                    <height>380</height>
                    </rect>
                   </property>
                   <layout class="QGridLayout" name="gridLayout_3">
@@ -875,7 +920,10 @@
                </widget>
               </item>
               <item row="2" column="1" colspan="2">
-               <widget class="QDoubleSpinBox" name="alertAudioLatitudeSpinBox">
+               <widget class="QFocusedDoubleSpinBox" name="alertAudioLatitudeSpinBox">
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::StrongFocus</enum>
+                </property>
                 <property name="decimals">
                  <number>4</number>
                 </property>
@@ -891,7 +939,10 @@
                </widget>
               </item>
               <item row="5" column="1" colspan="2">
-               <widget class="QDoubleSpinBox" name="alertAudioRadiusSpinBox">
+               <widget class="QFocusedDoubleSpinBox" name="alertAudioRadiusSpinBox">
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::StrongFocus</enum>
+                </property>
                 <property name="toolTip">
                  <string>Set to 0 to disable</string>
                 </property>
@@ -943,7 +994,10 @@
                </widget>
               </item>
               <item row="3" column="1" colspan="2">
-               <widget class="QDoubleSpinBox" name="alertAudioLongitudeSpinBox">
+               <widget class="QFocusedDoubleSpinBox" name="alertAudioLongitudeSpinBox">
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::StrongFocus</enum>
+                </property>
                 <property name="decimals">
                  <number>4</number>
                 </property>
@@ -1040,15 +1094,22 @@
                </widget>
               </item>
               <item row="4" column="1" colspan="2">
-               <widget class="QComboBox" name="alertAudioRadarSiteComboBox"/>
+               <widget class="QFocusedComboBox" name="alertAudioRadarSiteComboBox">
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::StrongFocus</enum>
+                </property>
+               </widget>
               </item>
               <item row="1" column="1" colspan="2">
-               <widget class="QComboBox" name="alertAudioLocationMethodComboBox">
+               <widget class="QFocusedComboBox" name="alertAudioLocationMethodComboBox">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::StrongFocus</enum>
                 </property>
                </widget>
               </item>
@@ -1360,7 +1421,10 @@
                </widget>
               </item>
               <item row="1" column="1">
-               <widget class="QSpinBox" name="hoverTextWrapSpinBox">
+               <widget class="QFocusedSpinBox" name="hoverTextWrapSpinBox">
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::StrongFocus</enum>
+                </property>
                 <property name="maximum">
                  <number>999</number>
                 </property>
@@ -1385,7 +1449,11 @@
                </widget>
               </item>
               <item row="0" column="1">
-               <widget class="QComboBox" name="tooltipMethodComboBox"/>
+               <widget class="QFocusedComboBox" name="tooltipMethodComboBox">
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::StrongFocus</enum>
+                </property>
+               </widget>
               </item>
               <item row="2" column="0">
                <widget class="QCheckBox" name="placefileTextDropShadowCheckBox">
@@ -1445,6 +1513,21 @@
    <class>scwx::qt::ui::QApiKeyEdit</class>
    <extends>QLineEdit</extends>
    <header>scwx/qt/ui/api_key_edit_widget.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>QFocusedDoubleSpinBox</class>
+   <extends>QDoubleSpinBox</extends>
+   <header>scwx/qt/ui/widgets/focused_double_spin_box.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>QFocusedSpinBox</class>
+   <extends>QSpinBox</extends>
+   <header>scwx/qt/ui/widgets/focused_spin_box.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>QFocusedComboBox</class>
+   <extends>QComboBox</extends>
+   <header>scwx/qt/ui/widgets/focused_combo_box.hpp</header>
   </customwidget>
  </customwidgets>
  <resources>
