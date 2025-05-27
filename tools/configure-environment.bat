@@ -16,7 +16,7 @@
 :: Install Conan profiles
 @for /L %%i in (0,1,!last_profile!) do @(
     set "profile_name=!conan_profile[%%i]!"
-    conan config install "%script_dir%\conan\profiles\%profile_name%" -tf profiles
+    conan config install "%script_dir%\conan\profiles\!profile_name!" -tf profiles
 )
 
 @pause
