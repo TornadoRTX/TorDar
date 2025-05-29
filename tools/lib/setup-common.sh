@@ -4,6 +4,13 @@ script_dir="$(dirname "$(readlink -f "$0")")"
 # Import common paths
 source ${script_dir}/common-paths.sh
 
+# Activate Python Virtual Environment
+if [ -n "${venv_path:-}" ]; then
+    python -m venv "${venv_path}"
+    source "${venv_path}/bin/activate"
+fi
+
+# Detect if a Python Virtual Environment was specified above, or elsewhere
 IN_VENV=$(python -c 'import sys; print(sys.prefix != getattr(sys, "base_prefix", sys.prefix))')
 
 if [ "${IN_VENV}" = "True" ]; then
@@ -15,6 +22,7 @@ else
 fi
 
 # Install Python packages
+python -m pip install ${PIP_FLAGS} pip
 pip install ${PIP_FLAGS} -r ${script_dir}/../../requirements.txt
 
 if [[ -n "${build_type}" ]]; then
@@ -35,3 +43,8 @@ fi
 
 # Run CMake Configure
 ${script_dir}/run-cmake-configure.sh
+
+# Deactivate Python Virtual Environment
+if [ -n "${venv_path:-}" ]; then
+    deactivate
+fi

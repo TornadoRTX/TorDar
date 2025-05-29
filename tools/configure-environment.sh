@@ -1,6 +1,16 @@
 #!/bin/bash
 script_dir="$(dirname "$(readlink -f "$0")")"
 
+# Assign user-specified Python Virtual Environment
+[ "${1:-}" = "none" ] && unset venv_path || export venv_path="$(readlink -f "${1:-${script_dir}/../.venv}")"
+
+# Activate Python Virtual Environment
+if [ -n "${venv_path:-}" ]; then
+    python -m venv "${venv_path}"
+    source "${venv_path}/bin/activate"
+fi
+
+# Detect if a Python Virtual Environment was specified above, or elsewhere
 IN_VENV=$(python -c 'import sys; print(sys.prefix != getattr(sys, "base_prefix", sys.prefix))')
 
 if [ "${IN_VENV}" = "True" ]; then
@@ -12,6 +22,7 @@ else
 fi
 
 # Install Python packages
+python -m pip install ${PIP_FLAGS} --upgrade pip
 pip install ${PIP_FLAGS} -r "${script_dir}/../requirements.txt"
 
 # Configure default Conan profile
@@ -37,3 +48,8 @@ conan_profiles=(
 for profile_name in "${conan_profiles[@]}"; do
     conan config install "${script_dir}/conan/profiles/${profile_name}" -tf profiles
 done
+
+# Deactivate Python Virtual Environment
+if [ -n "${venv_path:-}" ]; then
+    deactivate
+fi

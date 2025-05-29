@@ -1,11 +1,14 @@
 #!/bin/bash
 script_dir="$(dirname "$(readlink -f "$0")")"
 
-export build_dir="${1:-${script_dir}/../build}"
+export build_dir="$(readlink -f "${1:-${script_dir}/../build-debug}")"
 export conan_profile=${2:-scwx-linux_gcc-11}
 export generator="Ninja Multi-Config"
 export qt_base=/opt/Qt
 export qt_arch=gcc_64
+
+# Assign user-specified Python Virtual Environment
+[ "${3:-}" = "none" ] && unset venv_path || export venv_path="$(readlink -f "${3:-${script_dir}/../.venv}")"
 
 # FIXME: aws-sdk-cpp fails to configure using Ninja Multi-Config
 echo "Ninja Multi-Config is not supported in Linux"
