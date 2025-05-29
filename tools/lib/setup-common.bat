@@ -3,7 +3,15 @@
 :: Import common paths
 @call %script_dir%\common-paths.bat
 
+:: Activate Python Virtual Environment
+@if defined venv_path (
+    echo Activating Python Virtual Environment: %venv_path%
+    python -m venv %venv_path%
+    call %venv_path%\Scripts\activate.bat
+)
+
 :: Install Python packages
+python -m pip install --upgrade pip
 pip install --upgrade -r "%script_dir%\..\..\requirements.txt"
 
 @if defined build_type (
@@ -24,3 +32,6 @@ pip install --upgrade -r "%script_dir%\..\..\requirements.txt"
 
 :: Run CMake Configure
 @call %script_dir%\run-cmake-configure.bat
+
+:: Deactivate Python Virtual Environment
+@call %venv_path%\Scripts\deactivate.bat

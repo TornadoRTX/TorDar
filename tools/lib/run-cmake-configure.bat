@@ -5,7 +5,8 @@
     -DCMAKE_PREFIX_PATH="%qt_base%/%qt_version%/%qt_arch%" ^
     -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="%script_dir%\..\..\external\cmake-conan\conan_provider.cmake" ^
     -DCONAN_HOST_PROFILE=%conan_profile% ^
-    -DCONAN_BUILD_PROFILE=%conan_profile%
+    -DCONAN_BUILD_PROFILE=%conan_profile% ^
+    -DSCWX_VENV_PATH=%venv_path%
 
 @if defined build_type (
     set cmake_args=%cmake_args% ^

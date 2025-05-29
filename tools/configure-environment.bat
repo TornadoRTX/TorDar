@@ -1,9 +1,18 @@
 @setlocal enabledelayedexpansion
 
 @set script_dir=%~dp0
+@set venv_path=%script_dir%\..\.venv
+
+:: Assign user-specified Python Virtual Environment
+@if not "%~1"=="" set venv_path=%~f1
+
+:: Activate Python Virtual Environment
+python -m venv %venv_path%
+@call %venv_path%\Scripts\activate.bat
 
 :: Install Python packages
-@pip install --upgrade -r "%script_dir%\..\requirements.txt"
+python -m pip install --upgrade pip
+pip install --upgrade -r "%script_dir%\..\requirements.txt"
 
 :: Configure default Conan profile
 @conan profile detect -e
@@ -18,5 +27,8 @@
     set "profile_name=!conan_profile[%%i]!"
     conan config install "%script_dir%\conan\profiles\!profile_name!" -tf profiles
 )
+
+:: Deactivate Python Virtual Environment
+@call %venv_path%\Scripts\deactivate.bat
 
 @pause
