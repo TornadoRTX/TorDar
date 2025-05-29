@@ -19,6 +19,7 @@
             "name": "windows-base",
             "inherits": "base",
             "hidden": true,
+            "generator": "Visual Studio 17 2022",
             "condition": {
                 "type": "equals",
                 "lhs": "${hostSystemName}",
@@ -26,7 +27,6 @@
             },
             "vendor": {
                 "microsoft.com/VisualStudioSettings/CMake/1.0": {
-                    "enableClangTidyCodeAnalysis": true,
                     "hostOS": [
                         "Windows"
                     ]
@@ -59,6 +59,17 @@
             }
         },
         {
+            "name": "windows-msvc2022-x64-ninja-base",
+            "inherits": "windows-msvc2022-x64-base",
+            "hidden": true,
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_PREFIX_PATH": "C:/Qt/6.8.3/msvc2022_64",
+                "CONAN_HOST_PROFILE": "scwx-windows_msvc2022_x64",
+                "CONAN_BUILD_PROFILE": "scwx-windows_msvc2022_x64"
+            }
+        },
+        {
             "name": "linux-gcc-base",
             "inherits": "linux-base",
             "hidden": true,
@@ -76,6 +87,10 @@
             "name": "windows-msvc2022-x64-debug",
             "inherits": "windows-msvc2022-x64-base",
             "displayName": "Windows MSVC 2022 x64 Debug",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug"
             }
@@ -84,6 +99,26 @@
             "name": "windows-msvc2022-x64-release",
             "inherits": "windows-msvc2022-x64-base",
             "displayName": "Windows MSVC 2022 x64 Release",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "windows-msvc2022-x64-ninja-debug",
+            "inherits": "windows-msvc2022-x64-ninja-base",
+            "displayName": "Windows MSVC 2022 x64 Ninja Debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "windows-msvc2022-x64-ninja-release",
+            "inherits": "windows-msvc2022-x64-ninja-base",
+            "displayName": "Windows MSVC 2022 x64 Ninja Release",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
             }
