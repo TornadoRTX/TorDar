@@ -12,7 +12,8 @@
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
-                "CMAKE_PROJECT_TOP_LEVEL_INCLUDES": "${sourceDir}/external/cmake-conan/conan_provider.cmake"
+                "CMAKE_PROJECT_TOP_LEVEL_INCLUDES": "${sourceDir}/external/cmake-conan/conan_provider.cmake",
+                "SCWX_VIRTUAL_ENV": "${sourceDir}/.venv"
             }
         },
         {
