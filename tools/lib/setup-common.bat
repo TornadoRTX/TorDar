@@ -34,4 +34,6 @@ pip install --upgrade -r "%script_dir%\..\..\requirements.txt"
 @call %script_dir%\run-cmake-configure.bat
 
 :: Deactivate Python Virtual Environment
-@call %venv_path%\Scripts\deactivate.bat
+@if defined venv_path (
+    call %venv_path%\Scripts\deactivate.bat
+)
