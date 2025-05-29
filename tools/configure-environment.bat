@@ -4,11 +4,20 @@
 @set venv_path=%script_dir%\..\.venv
 
 :: Assign user-specified Python Virtual Environment
-@if not "%~1"=="" set venv_path=%~f1
+@if not "%~1"=="" (
+    if /i "%~1"=="none" (
+        set venv_path=
+    ) else (
+        set venv_path=%~f1
+    )
+)
 
 :: Activate Python Virtual Environment
-python -m venv %venv_path%
-@call %venv_path%\Scripts\activate.bat
+@if defined venv_path (
+    echo Activating Python Virtual Environment: %venv_path%
+    python -m venv %venv_path%
+    call %venv_path%\Scripts\activate.bat
+)
 
 :: Install Python packages
 python -m pip install --upgrade pip
@@ -29,6 +38,8 @@ pip install --upgrade -r "%script_dir%\..\requirements.txt"
 )
 
 :: Deactivate Python Virtual Environment
-@call %venv_path%\Scripts\deactivate.bat
+@if defined venv_path (
+    call %venv_path%\Scripts\deactivate.bat
+)
 
 @pause
