@@ -143,6 +143,32 @@
             }
         },
         {
+            "name": "linux-gcc-debug-asan",
+            "inherits": "linux-gcc-base",
+            "displayName": "Linux GCC Debug Address Sanitizer",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/Debug/supercell-wx",
+                "SCWX_ADDRESS_SANITIZER": {
+                    "type": "BOOL",
+                    "value": "ON"
+                }
+            }
+        },
+        {
+            "name": "linux-gcc-release-asan",
+            "inherits": "linux-gcc-base",
+            "displayName": "Linux GCC Release Address Sanitizer",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/Release/supercell-wx",
+                "SCWX_ADDRESS_SANITIZER": {
+                    "type": "BOOL",
+                    "value": "ON"
+                }
+            }
+        },
+        {
             "name": "ci-linux-gcc14",
             "inherits": "linux-gcc-base",
             "displayName": "CI Linux GCC 14",
