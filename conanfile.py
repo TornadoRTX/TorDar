@@ -37,6 +37,8 @@ class SupercellWxConan(ConanFile):
             self.options["libcurl"].ca_path   = "none"
 
     def requirements(self):
+        self.requires("abseil/20250127.0", override=True)
+
         if self.settings.os == "Linux":
             self.requires("onetbb/2022.0.0")
 
