@@ -12,6 +12,7 @@
 #   pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
+#include <boost/type_traits/add_const.hpp>
 #include <boost/range/any_range.hpp>
 
 #if defined(__clang__)
