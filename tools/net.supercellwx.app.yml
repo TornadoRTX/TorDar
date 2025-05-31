@@ -1,0 +1,37 @@
+id: net.supercellwx.app
+version: '0.4.9'
+runtime: "org.freedesktop.Platform"
+runtime-version: "23.08"
+sdk: "org.freedesktop.Sdk"
+command: supercell-wx
+modules:
+  - name: supercell-wx
+    buildsystem: simple
+    build-commands:
+      - install -Dm644 net.supercellwx.app.desktop /app/share/applications/${FLATPAK_ID}.desktop
+      - install -Dm644 scwx-256.png /app/share/icons/hicolor/256x256/apps/net.supercellwx.app.png
+      - install -Dm644 scwx-64.png /app/share/icons/hicolor/64x64/apps/net.supercellwx.app.png
+      - rm net.supercellwx.app.desktop scwx-256.png scwx-64.png
+      - cp -r * /app/
+    sources:
+      - type: dir
+        path: ../../supercell-wx-flatpak
+      - type: file
+        path: ../scwx-qt/res/linux/net.supercellwx.app.desktop
+      - type: file
+        path: ../scwx-qt/res/icons/scwx-256.png
+      - type: file
+        path: ../scwx-qt/res/icons/scwx-64.png
+
+finish-args:
+  # X11 + XShm access
+  - --share=ipc
+  - --socket=fallback-x11
+  # Wayland access
+  - --socket=wayland
+  # GPU acceleration if needed
+  - --device=dri
+  # Needs to talk to the network:
+  - --share=network
+  # Needs to save files locally
+  - --filesystem=xdg-documents

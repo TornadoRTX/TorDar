@@ -129,6 +129,8 @@ jobs:
                              wayland-protocols \
                              libwayland-dev \
                              libwayland-egl-backend-dev \
+                             flatpak \
+                             flatpak-builder \
                              ${{ matrix.compiler_packages }}
 
     - name: Setup Python Environment
@@ -261,7 +263,8 @@ jobs:
     - name: Build AppImage (Linux)
       if: ${{ startsWith(matrix.os, 'ubuntu') }}
       env:
-        APPIMAGE_DIR: ${{ github.workspace }}/supercell-wx/
+        INSTALL_DIR: ${{ github.workspace }}/supercell-wx/
+        APPIMAGE_DIR: ${{ github.workspace }}/supercell-wx-appimage/
         LDAI_UPDATE_INFORMATION: gh-releases-zsync|dpaulat|supercell-wx|latest|*${{ matrix.appimage_arch }}.AppImage.zsync
         LDAI_OUTPUT: supercell-wx-${{ env.SCWX_VERSION }}-${{ matrix.appimage_arch }}.AppImage
         LINUXDEPLOY_OUTPUT_APP_NAME: supercell-wx
@@ -272,6 +275,7 @@ jobs:
         chmod +x linuxdeploy-${{ matrix.appimage_arch }}.AppImage
         cp "${{ github.workspace }}/source/scwx-qt/res/icons/scwx-256.png" supercell-wx.png
         cp "${{ github.workspace }}/source/scwx-qt/res/linux/supercell-wx.desktop" .
+        cp -r "${{ env.INSTALL_DIR }}" "${{ env.APPIMAGE_DIR }}"
         pushd "${{ env.APPIMAGE_DIR }}"
         mkdir -p usr/
         mv bin/ usr/
@@ -288,6 +292,38 @@ jobs:
       with:
         name: supercell-wx-appimage-${{ matrix.artifact_suffix }}
         path: ${{ github.workspace }}/*-${{ matrix.appimage_arch }}.AppImage*
+
+    - name: Build FlatPak (Linux)
+      if: ${{ startsWith(matrix.os, 'ubuntu') }}
+      env:
+        INSTALL_DIR: ${{ github.workspace }}/supercell-wx/
+        FLATPAK_DIR: ${{ github.workspace }}/supercell-wx-flatpak/
+      shell: bash
+      run: |
+        cp -r ${{ env.INSTALL_DIR }} ${{ env.FLATPAK_DIR }}
+        # Copy krb5 libraries to flatpak
+        cp /usr/lib/*/libkrb5.so* \
+           /usr/lib/*/libkrb5support.so* \
+           /usr/lib/*/libgssapi_krb5.so* \
+           /usr/lib/*/libk5crypto.so* \
+           /usr/lib/*/libkeyutils.so* \
+           ${{ env.FLATPAK_DIR }}/lib
+
+        flatpak remote-add --if-not-exists --user flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+        flatpak-builder --force-clean \
+            --user \
+            --install-deps-from=flathub \
+            --repo=flatpak-repo \
+            --install flatpak-build \
+            ${{ github.workspace }}/source/tools/net.supercellwx.app.yml
+        flatpak build-bundle flatpak-repo supercell-wx.flatpak net.supercellwx.app
+
+    - name: Upload FlatPak (Linux)
+      if: ${{ startsWith(matrix.os, 'ubuntu') }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: supercell-wx-flatpak-${{ matrix.artifact_suffix }}
+        path: ${{ github.workspace }}/supercell-wx.flatpak
 
     - name: Test Supercell Wx
       working-directory: ${{ github.workspace }}/build
