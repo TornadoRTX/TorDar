@@ -1,7 +1,7 @@
 #!/bin/bash
 script_dir="$(dirname "$(readlink -f "$0")")"
 
-export build_dir="$(readlink -f "${1:-${script_dir}/../build-debug}")"
+export build_dir="$(readlink -f "${1:-${script_dir}/../build-release}")"
 export build_type=Release
 export conan_profile=${2:-scwx-linux_gcc-11}
 export generator=Ninja
