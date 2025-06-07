@@ -1,0 +1,16 @@
+#!/bin/bash
+script_dir="$(dirname "$(readlink -f "$0")")"
+
+# Configure default Conan profile
+conan profile detect -e
+
+# Install selected Conan profile
+conan config install "${script_dir}/../conan/profiles/${conan_profile}" -tf profiles
+
+# Install Conan packages
+conan install "${script_dir}/../.." \
+    --remote conancenter \
+    --build missing \
+    --profile:all ${conan_profile} \
+    --settings:all build_type=${build_type} \
+    --output-folder "${build_dir}/conan"

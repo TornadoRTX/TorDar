@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.24)
 set(PROJECT_NAME supercell-wx)
+
+include(tools/scwx_config.cmake)
+
+scwx_python_setup()
+
 project(${PROJECT_NAME}
         VERSION      0.4.9
         DESCRIPTION  "Supercell Wx is a free, open source advanced weather radar viewer."
@@ -10,8 +15,6 @@ set(CMAKE_POLICY_DEFAULT_CMP0054 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0079 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0148 OLD) # aws-sdk-cpp uses FindPythonInterp
-
-include(tools/scwx_config.cmake)
 
 scwx_output_dirs_setup()
 

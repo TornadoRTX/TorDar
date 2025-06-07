@@ -1,0 +1,267 @@
+{
+  "version": 5,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 24,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_PROJECT_TOP_LEVEL_INCLUDES": "${sourceDir}/external/cmake-conan/conan_provider.cmake",
+        "SCWX_VIRTUAL_ENV": "${sourceDir}/.venv"
+      }
+    },
+    {
+      "name": "windows-base",
+      "inherits": "base",
+      "hidden": true,
+      "generator": "Visual Studio 17 2022",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "vendor": {
+        "microsoft.com/VisualStudioSettings/CMake/1.0": {
+          "hostOS": [
+            "Windows"
+          ]
+        }
+      }
+    },
+    {
+      "name": "windows-x64-base",
+      "inherits": "windows-base",
+      "hidden": true
+    },
+    {
+      "name": "linux-base",
+      "inherits": "base",
+      "hidden": true,
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "windows-msvc2022-x64-base",
+      "inherits": "windows-x64-base",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_PREFIX_PATH": "C:/Qt/6.8.3/msvc2022_64",
+        "CONAN_HOST_PROFILE": "scwx-windows_msvc2022_x64",
+        "CONAN_BUILD_PROFILE": "scwx-windows_msvc2022_x64"
+      }
+    },
+    {
+      "name": "windows-msvc2022-x64-ninja-base",
+      "inherits": "windows-msvc2022-x64-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_PREFIX_PATH": "C:/Qt/6.8.3/msvc2022_64",
+        "CONAN_HOST_PROFILE": "scwx-windows_msvc2022_x64",
+        "CONAN_BUILD_PROFILE": "scwx-windows_msvc2022_x64"
+      }
+    },
+    {
+      "name": "linux-gcc-base",
+      "inherits": "linux-base",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_PREFIX_PATH": "/opt/Qt/6.8.3/gcc_64",
+        "CONAN_HOST_PROFILE": "scwx-linux_gcc-11",
+        "CONAN_BUILD_PROFILE": "scwx-linux_gcc-11"
+      },
+      "environment": {
+        "CC": "gcc-11",
+        "CXX": "g++-11"
+      }
+    },
+    {
+      "name": "windows-msvc2022-x64-debug",
+      "inherits": "windows-msvc2022-x64-base",
+      "displayName": "Windows MSVC 2022 x64 Debug",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "windows-msvc2022-x64-release",
+      "inherits": "windows-msvc2022-x64-base",
+      "displayName": "Windows MSVC 2022 x64 Release",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "windows-msvc2022-x64-ninja-debug",
+      "inherits": "windows-msvc2022-x64-ninja-base",
+      "displayName": "Windows MSVC 2022 x64 Ninja Debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "windows-msvc2022-x64-ninja-release",
+      "inherits": "windows-msvc2022-x64-ninja-base",
+      "displayName": "Windows MSVC 2022 x64 Ninja Release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "linux-gcc-debug",
+      "inherits": "linux-gcc-base",
+      "displayName": "Linux GCC Debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/Debug/supercell-wx"
+      }
+    },
+    {
+      "name": "linux-gcc-release",
+      "inherits": "linux-gcc-base",
+      "displayName": "Linux GCC Release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/Release/supercell-wx"
+      }
+    },
+    {
+      "name": "linux-gcc-debug-asan",
+      "inherits": "linux-gcc-base",
+      "displayName": "Linux GCC Debug Address Sanitizer",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/Debug/supercell-wx",
+        "SCWX_ADDRESS_SANITIZER": {
+          "type": "BOOL",
+          "value": "ON"
+        }
+      }
+    },
+    {
+      "name": "linux-gcc-release-asan",
+      "inherits": "linux-gcc-base",
+      "displayName": "Linux GCC Release Address Sanitizer",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/Release/supercell-wx",
+        "SCWX_ADDRESS_SANITIZER": {
+          "type": "BOOL",
+          "value": "ON"
+        }
+      }
+    },
+    {
+      "name": "ci-linux-gcc14",
+      "inherits": "linux-gcc-base",
+      "displayName": "CI Linux GCC 14",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CONAN_HOST_PROFILE": "scwx-linux_gcc-14",
+        "CONAN_BUILD_PROFILE": "scwx-linux_gcc-14"
+      },
+      "environment": {
+        "CC": "gcc-14",
+        "CXX": "g++-14"
+      }
+    },
+    {
+      "name": "ci-linux-clang17",
+      "inherits": "linux-gcc-base",
+      "displayName": "CI Linux Clang 17",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CONAN_HOST_PROFILE": "scwx-linux_clang-17",
+        "CONAN_BUILD_PROFILE": "scwx-linux_clang-17"
+      },
+      "environment": {
+        "CC": "clang-17",
+        "CXX": "clang++-17"
+      }
+    },
+    {
+      "name": "ci-linux-gcc-arm64",
+      "inherits": "linux-gcc-base",
+      "displayName": "CI Linux GCC ARM64",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CONAN_HOST_PROFILE": "scwx-linux_gcc-11_armv8",
+        "CONAN_BUILD_PROFILE": "scwx-linux_gcc-11_armv8",
+        "CMAKE_PREFIX_PATH": "/opt/Qt/6.8.3/gcc_arm64"
+      },
+      "environment": {
+        "CC": "gcc-11",
+        "CXX": "g++-11"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "windows-msvc2022-x64-debug",
+      "configurePreset": "windows-msvc2022-x64-debug",
+      "displayName": "Windows MSVC 2022 x64 Debug",
+      "configuration": "Debug"
+    },
+    {
+      "name": "windows-msvc2022-x64-release",
+      "configurePreset": "windows-msvc2022-x64-release",
+      "displayName": "Windows MSVC 2022 x64 Release",
+      "configuration": "Release"
+    },
+    {
+      "name": "linux-gcc-debug",
+      "configurePreset": "linux-gcc-debug",
+      "displayName": "Linux GCC Debug",
+      "configuration": "Debug"
+    },
+    {
+      "name": "linux-gcc-release",
+      "configurePreset": "linux-gcc-release",
+      "displayName": "Linux GCC Release",
+      "configuration": "Release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "windows-msvc2022-x64-debug",
+      "configurePreset": "windows-msvc2022-x64-debug",
+      "displayName": "Windows MSVC 2022 x64 Debug",
+      "configuration": "Debug"
+    },
+    {
+      "name": "windows-msvc2022-x64-release",
+      "configurePreset": "windows-msvc2022-x64-release",
+      "displayName": "Windows MSVC 2022 x64 Release",
+      "configuration": "Release"
+    },
+    {
+      "name": "linux-gcc-debug",
+      "configurePreset": "linux-gcc-debug",
+      "displayName": "Linux GCC Debug",
+      "configuration": "Debug"
+    },
+    {
+      "name": "linux-gcc-release",
+      "configurePreset": "linux-gcc-release",
+      "displayName": "Linux GCC Release",
+      "configuration": "Release"
+    }
+  ]
+}

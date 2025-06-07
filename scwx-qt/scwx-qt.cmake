@@ -6,7 +6,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTORCC OFF)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -483,10 +483,11 @@ set(PROJECT_SOURCES ${HDR_MAIN}
                     ${SRC_VIEW}
                     ${SHADER_FILES}
                     ${JSON_FILES}
-                    ${RESOURCE_FILES}
                     ${TS_FILES}
                     ${CMAKE_FILES})
 set(EXECUTABLE_SOURCES ${SRC_EXE_MAIN})
+
+qt_add_resources(PROJECT_SOURCES ${RESOURCE_FILES})
 
 source_group("Header Files\\main"         FILES ${HDR_MAIN})
 source_group("Source Files\\main"         FILES ${SRC_MAIN})

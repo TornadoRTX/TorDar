@@ -46,7 +46,7 @@ target_compile_definitions(qt6ct-common PRIVATE QT6CT_LIBRARY)
 
 add_library(qt6ct-widgets STATIC ${qt6ct-widgets-source})
 set_target_properties(qt6ct-widgets PROPERTIES VERSION ${QT6CT_VERSION})
-target_link_libraries(qt6ct-widgets PRIVATE Qt6::Widgets Qt6::WidgetsPrivate qt6ct-common)
+target_link_libraries(qt6ct-widgets PRIVATE Qt6::Widgets qt6ct-common)
 target_compile_definitions(qt6ct-widgets PRIVATE QT6CT_LIBRARY)
 
 if (MSVC)
