@@ -1,6 +1,8 @@
 #include <scwx/qt/manager/log_manager.hpp>
 #include <scwx/util/logger.hpp>
 
+#include <cstdlib>
+#include <ctime>
 #include <filesystem>
 #include <map>
 #include <ranges>
@@ -57,6 +59,14 @@ void LogManager::InitializeLogFile()
       QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)
          .toStdString();
    p->pid_     = boost::this_process::get_id();
+   if (p->pid_ == 2)
+   {
+      // The pid == 2 means that this is likely a flatpak. We assign a random
+      // number in this case to avoid overlap, scince it is always 2 in a
+      // flatpak
+      std::srand(std::time({}));
+      p->pid_ = std::rand();
+   }
    p->logFile_ = fmt::format("{}/supercell-wx.{}.log", p->logPath_, p->pid_);
 
    // Create log directory if it doesn't exist
