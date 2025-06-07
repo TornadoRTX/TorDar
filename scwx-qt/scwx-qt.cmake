@@ -694,7 +694,9 @@ if (MSVC)
 else()
     target_compile_options(scwx-qt PRIVATE "$<$<CONFIG:Release>:-g>")
     target_compile_options(supercell-wx PRIVATE "$<$<CONFIG:Release>:-g>")
+endif()
 
+if (LINUX)
     # Add wayland client packages
     find_package(QT NAMES Qt6
                  COMPONENTS WaylandClient
@@ -746,6 +748,10 @@ install(TARGETS supercell-wx
         RUNTIME
           COMPONENT supercell-wx
         LIBRARY
+          COMPONENT supercell-wx
+          OPTIONAL
+        FRAMEWORK
+          DESTINATION Frameworks
           COMPONENT supercell-wx
           OPTIONAL)
 

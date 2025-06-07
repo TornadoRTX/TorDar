@@ -35,9 +35,15 @@ class SupercellWxConan(ConanFile):
             self.options["openssl"].shared    = True
             self.options["libcurl"].ca_bundle = "none"
             self.options["libcurl"].ca_path   = "none"
+        elif self.settings.os == "Macos":
+            self.options["openssl"].shared    = True
+            self.options["libcurl"].ca_bundle = "none"
+            self.options["libcurl"].ca_path   = "none"
 
     def requirements(self):
         if self.settings.os == "Linux":
+            self.requires("onetbb/2022.0.0")
+        elif self.settings.os == "Macos":
             self.requires("onetbb/2022.0.0")
 
     def generate(self):
