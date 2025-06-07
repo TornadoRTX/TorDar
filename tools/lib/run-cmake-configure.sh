@@ -10,7 +10,7 @@ cmake_args=(
     -DCONAN_HOST_PROFILE="${conan_profile}"
     -DCONAN_BUILD_PROFILE="${conan_profile}"
     -DSCWX_VIRTUAL_ENV="${venv_path}"
-    -DCMAKE_EXPORT_COMPILE_COMMANDS=on
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 )
 
 if [[ -n "${build_type}" ]]; then
@@ -24,6 +24,17 @@ else
     cmake_args+=(
         -DCMAKE_BUILD_TYPE="Release"
         -DCMAKE_CONFIGURATION_TYPES="Debug;Release"
+    )
+fi
+
+# Toggle address sanitizer based on argument
+if [ "${address_sanitizer}" != "disabled" ]; then
+    cmake_args+=(
+        -DSCWX_ADDRESS_SANITIZER=ON
+    )
+else
+    cmake_args+=(
+        -DSCWX_ADDRESS_SANITIZER=OFF
     )
 fi
 
