@@ -4,6 +4,11 @@ script_dir="$(dirname "$(readlink -f "$0")")"
 # Assign user-specified Python Virtual Environment
 [ "${1:-}" = "none" ] && unset venv_path || export venv_path="$(readlink -f "${1:-${script_dir}/../.venv}")"
 
+# Load custom build settings
+if [ -f "${script_dir}/lib/user-setup.sh" ]; then
+    source "${script_dir}/lib/user-setup.sh"
+fi
+
 # Activate Python Virtual Environment
 if [ -n "${venv_path:-}" ]; then
     python -m venv "${venv_path}"
