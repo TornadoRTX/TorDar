@@ -135,6 +135,9 @@ public:
 
    ~MapWidgetImpl()
    {
+      // Disconnect signals
+      colorPaletteConnection_.disconnect();
+
       DeinitializeCustomStyles();
 
       // Set ImGui Context
@@ -182,6 +185,7 @@ public:
                                std::optional<std::string> type);
    void SetRadarSite(const std::string& radarSite,
                      bool               checkProductAvailability = false);
+   void UpdateColorTable(const std::string& colorPalette);
    void UpdateLoadedStyle();
    bool UpdateStoredMapParameters();
    void CheckLevel3Availability();
@@ -213,6 +217,8 @@ public:
 
    boost::uuids::uuid customStyleUrlChangedCallbackId_ {};
    boost::uuids::uuid customStyleDrawBelowChangedCallbackId_ {};
+
+   boost::signals2::scoped_connection colorPaletteConnection_ {};
 
    ImGuiContext* imGuiContext_;
    std::string   imGuiContextName_;
@@ -901,6 +907,13 @@ void MapWidget::SelectRadarProduct(common::RadarProductGroup group,
             (group == common::RadarProductGroup::Level2) ?
                common::GetLevel2Palette(common::GetLevel2Product(productName)) :
                common::GetLevel3Palette(productCode);
+
+         auto& paletteSetting =
+            settings::PaletteSettings::Instance().palette(palette);
+
+         p->colorPaletteConnection_ = paletteSetting.changed_signal().connect(
+            [this, palette]() { p->UpdateColorTable(palette); });
+
          p->InitializeNewRadarProductView(palette);
       }
       else if (update)
@@ -1953,49 +1966,19 @@ void MapWidgetImpl::RadarProductManagerDisconnect()
 void MapWidgetImpl::InitializeNewRadarProductView(
    const std::string& colorPalette)
 {
-   boost::asio::post(
-      threadPool_,
-      [colorPalette, this]()
-      {
-         try
-         {
-            auto radarProductView = context_->radar_product_view();
-
-            auto& paletteSetting =
-               settings::PaletteSettings::Instance().palette(colorPalette);
-
-            std::string colorTableFile = paletteSetting.GetValue();
-            if (colorTableFile.empty())
-            {
-               colorTableFile = paletteSetting.GetDefault();
-            }
-
-            std::unique_ptr<std::istream> colorTableStream =
-               util::OpenFile(colorTableFile);
-            if (colorTableStream->fail())
-            {
-               logger_->warn("Could not open color table {}", colorTableFile);
-               colorTableStream = util::OpenFile(paletteSetting.GetDefault());
-            }
-
-            std::shared_ptr<common::ColorTable> colorTable =
-               common::ColorTable::Load(*colorTableStream);
-            if (!colorTable->IsValid())
-            {
-               logger_->warn("Could not load color table {}", colorTableFile);
-               colorTableStream = util::OpenFile(paletteSetting.GetDefault());
-               colorTable       = common::ColorTable::Load(*colorTableStream);
-            }
-
-            radarProductView->LoadColorTable(colorTable);
-
-            radarProductView->Initialize();
-         }
-         catch (const std::exception& ex)
-         {
-            logger_->error(ex.what());
-         }
-      });
+   boost::asio::post(threadPool_,
+                     [colorPalette, this]()
+                     {
+                        try
+                        {
+                           UpdateColorTable(colorPalette);
+                           context_->radar_product_view()->Initialize();
+                        }
+                        catch (const std::exception& ex)
+                        {
+                           logger_->error(ex.what());
+                        }
+                     });
 
    if (map_ != nullptr)
    {
@@ -2114,6 +2097,37 @@ void MapWidgetImpl::Update()
       Q_EMIT widget_->MapParametersChanged(
          prevLatitude_, prevLongitude_, prevZoom_, prevBearing_, prevPitch_);
    }
+}
+
+void MapWidgetImpl::UpdateColorTable(const std::string& colorPalette)
+{
+   auto& paletteSetting =
+      settings::PaletteSettings::Instance().palette(colorPalette);
+
+   std::string colorTableFile = paletteSetting.GetValue();
+   if (colorTableFile.empty())
+   {
+      colorTableFile = paletteSetting.GetDefault();
+   }
+
+   std::unique_ptr<std::istream> colorTableStream =
+      util::OpenFile(colorTableFile);
+   if (colorTableStream->fail())
+   {
+      logger_->warn("Could not open color table {}", colorTableFile);
+      colorTableStream = util::OpenFile(paletteSetting.GetDefault());
+   }
+
+   std::shared_ptr<common::ColorTable> colorTable =
+      common::ColorTable::Load(*colorTableStream);
+   if (!colorTable->IsValid())
+   {
+      logger_->warn("Could not load color table {}", colorTableFile);
+      colorTableStream = util::OpenFile(paletteSetting.GetDefault());
+      colorTable       = common::ColorTable::Load(*colorTableStream);
+   }
+
+   context_->radar_product_view()->LoadColorTable(colorTable);
 }
 
 bool MapWidgetImpl::UpdateStoredMapParameters()
