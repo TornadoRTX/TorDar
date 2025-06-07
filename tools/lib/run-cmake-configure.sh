@@ -10,6 +10,7 @@ cmake_args=(
     -DCONAN_HOST_PROFILE="${conan_profile}"
     -DCONAN_BUILD_PROFILE="${conan_profile}"
     -DSCWX_VIRTUAL_ENV="${venv_path}"
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=on
 )
 
 if [[ -n "${build_type}" ]]; then
