@@ -19,3 +19,6 @@ _deps
 
 # Python Virtual Environment
 .venv/
+
+# Specific excludes for Supercell Wx
+tools/lib/user-setup.sh

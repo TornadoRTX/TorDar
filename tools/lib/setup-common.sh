@@ -4,6 +4,11 @@ script_dir="$(dirname "$(readlink -f "$0")")"
 # Import common paths
 source "${script_dir}/common-paths.sh"
 
+# Load custom build settings
+if [ -f "${script_dir}/user-setup.sh" ]; then
+    source "${script_dir}/user-setup.sh"
+fi
+
 # Activate Python Virtual Environment
 if [ -n "${venv_path:-}" ]; then
     python -m venv "${venv_path}"
