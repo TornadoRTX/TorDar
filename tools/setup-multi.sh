@@ -15,4 +15,4 @@ echo "Ninja Multi-Config is not supported in Linux"
 read -p "Press Enter to continue..."
 
 # Perform common setup
-# ${script_dir}/lib/setup-common.sh
+# "${script_dir}/lib/setup-common.sh"

@@ -12,4 +12,4 @@ export qt_arch=gcc_64
 [ "${3:-}" = "none" ] && unset venv_path || export venv_path="$(readlink -f "${3:-${script_dir}/../.venv}")"
 
 # Perform common setup
-${script_dir}/lib/setup-common.sh
+"${script_dir}/lib/setup-common.sh"
