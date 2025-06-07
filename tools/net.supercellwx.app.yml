@@ -30,9 +30,7 @@ finish-args:
   # Wayland access
   - --socket=wayland
   # GPU acceleration if needed
-  - --device=dri
-  # Needs access to serial port devices
-  - --device=serial
+  - --device=all
   # Needs to talk to the network:
   - --share=network
   # Needs to save files locally
