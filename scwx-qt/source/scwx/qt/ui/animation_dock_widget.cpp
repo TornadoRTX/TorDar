@@ -123,11 +123,11 @@ AnimationDockWidget::~AnimationDockWidget()
 void AnimationDockWidgetImpl::UpdateTimeZoneLabel(const zoned_time_ zonedTime)
 {
 #if (__cpp_lib_chrono >= 201907L)
-   namespace df                                            = std;
-   static constexpr std::string_view kFormatStringTimezone = "{:%Z}";
+   namespace df                                        = std;
+   static const std::string_view kFormatStringTimezone = "{:%Z}";
 #else
-   namespace df                                       = date;
-   static constexpr std::string kFormatStringTimezone = "%Z";
+   namespace df                                   = date;
+   static const std::string kFormatStringTimezone = "%Z";
 #endif
    const std::string timeZoneStr = df::format(kFormatStringTimezone, zonedTime);
    self_->ui->timeZoneLabel->setText(timeZoneStr.c_str());
