@@ -821,6 +821,11 @@ void MapWidget::SetSmoothingEnabled(bool smoothingEnabled)
    }
 }
 
+const scwx::util::time_zone* MapWidget::GetDefaultTimeZone() const
+{
+   return p->radarProductManager_->default_time_zone();
+}
+
 void MapWidget::SelectElevation(float elevation)
 {
    auto radarProductView = p->context_->radar_product_view();

@@ -18,6 +18,14 @@ namespace ui
 static const std::string logPrefix_ = "scwx::qt::ui::animation_dock_widget";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 
+#if (__cpp_lib_chrono >= 201907L)
+using local_days  = std::chrono::local_days;
+using zoned_time_ = std::chrono::zoned_time<std::chrono::seconds>;
+#else
+using local_days  = date::local_days;
+using zoned_time_ = date::zoned_time<std::chrono::seconds>;
+#endif
+
 class AnimationDockWidgetImpl
 {
 public:
@@ -47,8 +55,14 @@ public:
    types::MapTime        viewType_ {types::MapTime::Live};
    bool                  isLive_ {true};
 
-   std::chrono::sys_days selectedDate_ {};
-   std::chrono::seconds  selectedTime_ {};
+   local_days           selectedDate_ {};
+   std::chrono::seconds selectedTime_ {};
+
+   const scwx::util::time_zone* timeZone_ {nullptr};
+
+   void UpdateTimeZoneLabel(const zoned_time_ zonedTime);
+   std::chrono::system_clock::time_point GetTimePoint();
+   void SetTimePoint(std::chrono::system_clock::time_point time);
 
    void ConnectSignals();
    void UpdateAutoUpdateLabel();
@@ -61,21 +75,19 @@ AnimationDockWidget::AnimationDockWidget(QWidget* parent) :
 {
    ui->setupUi(this);
 
-   // Set current date/time
-   QDateTime currentDateTime = QDateTime::currentDateTimeUtc();
-   QDate     currentDate     = currentDateTime.date();
-   QTime     currentTime     = currentDateTime.time();
-   currentTime               = currentTime.addSecs(-currentTime.second() + 59);
-
-   ui->dateEdit->setDate(currentDate);
-   ui->timeEdit->setTime(currentTime);
-   ui->dateEdit->setMaximumDate(currentDateTime.date());
-   p->selectedDate_ = util::SysDays(currentDate);
-   p->selectedTime_ =
-      std::chrono::seconds(currentTime.msecsSinceStartOfDay() / 1000);
+#if (__cpp_lib_chrono >= 201907L)
+   p->timeZone_ = std::chrono::get_tzdb().locate_zone("UTC");
+#else
+   p->timeZone_ = date::get_tzdb().locate_zone("UTC");
+#endif
+   const std::chrono::sys_seconds currentTimePoint =
+      std::chrono::floor<std::chrono::minutes>(
+         std::chrono::system_clock::now());
+   p->SetTimePoint(currentTimePoint);
 
    // Update maximum date on a timer
-   QTimer* maxDateTimer = new QTimer(this);
+   // NOLINTNEXTLINE(cppcoreguidelines-owning-memory) Qt Owns this memory
+   auto* maxDateTimer = new QTimer(this);
    connect(maxDateTimer,
            &QTimer::timeout,
            this,
@@ -106,6 +118,76 @@ AnimationDockWidget::AnimationDockWidget(QWidget* parent) :
 AnimationDockWidget::~AnimationDockWidget()
 {
    delete ui;
+}
+
+void AnimationDockWidgetImpl::UpdateTimeZoneLabel(const zoned_time_ zonedTime)
+{
+#if (__cpp_lib_chrono >= 201907L)
+   namespace df                                            = std;
+   static constexpr std::string_view kFormatStringTimezone = "{:%Z}";
+#else
+   namespace df                                   = date;
+   static const std::string kFormatStringTimezone = "%Z";
+#endif
+   const std::string timeZoneStr = df::format(kFormatStringTimezone, zonedTime);
+   self_->ui->timeZoneLabel->setText(timeZoneStr.c_str());
+}
+
+std::chrono::system_clock::time_point AnimationDockWidgetImpl::GetTimePoint()
+{
+#if (__cpp_lib_chrono >= 201907L)
+   using namespace std::chrono;
+#else
+   using namespace date;
+#endif
+
+   // Convert the local time, to a zoned time, to a system time
+   const local_time<std::chrono::seconds> localTime =
+      selectedDate_ + selectedTime_;
+   const auto zonedTime =
+      zoned_time<std::chrono::seconds>(timeZone_, localTime);
+   const std::chrono::sys_seconds systemTime = zonedTime.get_sys_time();
+
+   // This is done to update it when the date changes
+   UpdateTimeZoneLabel(zonedTime);
+
+   return systemTime;
+}
+
+void AnimationDockWidgetImpl::SetTimePoint(
+   std::chrono::system_clock::time_point systemTime)
+{
+#if (__cpp_lib_chrono >= 201907L)
+   using namespace std::chrono;
+#else
+   using namespace date;
+#endif
+   // Convert the time to a local time
+   auto systemTimeSeconds = time_point_cast<std::chrono::seconds>(systemTime);
+   auto zonedTime =
+      zoned_time<std::chrono::seconds>(timeZone_, systemTimeSeconds);
+   const local_seconds localTime = zonedTime.get_local_time();
+
+   // Get the date and time as seperate fields
+   selectedDate_ = floor<days>(localTime);
+   selectedTime_ = localTime - selectedDate_;
+
+   // Pull out the local date and time as qt times (with c++20 this could be
+   // simplified)
+   auto time         = QTime::fromMSecsSinceStartOfDay(static_cast<int>(
+      duration_cast<std::chrono::milliseconds>(selectedTime_).count()));
+   auto yearMonthDay = year_month_day(selectedDate_);
+   auto date         = QDate(int(yearMonthDay.year()),
+                     // These are always in a small range, so cast is safe
+                     static_cast<int>(unsigned(yearMonthDay.month())),
+                     static_cast<int>(unsigned(yearMonthDay.day())));
+
+   // Update labels
+   self_->ui->timeEdit->setTime(time);
+   self_->ui->dateEdit->setDate(date);
+
+   // Time zone almost certainly just changed, so update it
+   UpdateTimeZoneLabel(zonedTime);
 }
 
 void AnimationDockWidgetImpl::ConnectSignals()
@@ -142,8 +224,8 @@ void AnimationDockWidgetImpl::ConnectSignals()
       {
          if (date.isValid())
          {
-            selectedDate_ = util::SysDays(date);
-            Q_EMIT self_->DateTimeChanged(selectedDate_ + selectedTime_);
+            selectedDate_ = util::LocalDays(date);
+            Q_EMIT self_->DateTimeChanged(GetTimePoint());
          }
       });
    QObject::connect(
@@ -154,9 +236,9 @@ void AnimationDockWidgetImpl::ConnectSignals()
       {
          if (time.isValid())
          {
-            selectedTime_ =
-               std::chrono::seconds(time.msecsSinceStartOfDay() / 1000);
-            Q_EMIT self_->DateTimeChanged(selectedDate_ + selectedTime_);
+            selectedTime_ = std::chrono::duration_cast<std::chrono::seconds>(
+               std::chrono::milliseconds(time.msecsSinceStartOfDay()));
+            Q_EMIT self_->DateTimeChanged(GetTimePoint());
          }
       });
 
@@ -300,6 +382,27 @@ void AnimationDockWidgetImpl::UpdateAutoUpdateLabel()
    {
       self_->ui->autoUpdateLabel->setText(disabledString_);
    }
+}
+
+void AnimationDockWidget::UpdateTimeZone(const scwx::util::time_zone* timeZone)
+{
+   // null timezone is really UTC. This simplifies other code.
+   if (timeZone == nullptr)
+   {
+#if (__cpp_lib_chrono >= 201907L)
+      timeZone = std::chrono::get_tzdb().locate_zone("UTC");
+#else
+      timeZone = date::get_tzdb().locate_zone("UTC");
+#endif
+   }
+
+   // Get the (UTC relative) time that is selected. We want to preserve this
+   // across timezone changes.
+   auto currentTime = p->GetTimePoint();
+   p->timeZone_     = timeZone;
+   // Set the (UTC relative) time that was already selected. This ensures that
+   // the actual time does not change, only the time zone.
+   p->SetTimePoint(currentTime);
 }
 
 } // namespace ui

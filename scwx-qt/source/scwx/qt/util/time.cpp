@@ -17,6 +17,18 @@ std::chrono::sys_days SysDays(const QDate& date)
                                 julianEpoch);
 }
 
+local_days LocalDays(const QDate& date)
+{
+#if (__cpp_lib_chrono >= 201907L)
+   using namespace std::chrono;
+#else
+   using namespace date;
+#endif
+   auto yearMonthDay =
+      year_month_day(year(date.year()), month(date.month()), day(date.day()));
+   return local_days(yearMonthDay);
+}
+
 } // namespace util
 } // namespace qt
 } // namespace scwx
