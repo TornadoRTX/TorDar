@@ -1,6 +1,7 @@
 #pragma once
 
 #include <scwx/qt/types/map_types.hpp>
+#include <scwx/util/time.hpp>
 
 #include <chrono>
 
@@ -32,6 +33,7 @@ public slots:
    void UpdateAnimationState(types::AnimationState state);
    void UpdateLiveState(bool isLive);
    void UpdateViewType(types::MapTime viewType);
+   void UpdateTimeZone(const scwx::util::time_zone* timeZone);
 
 signals:
    void ViewTypeChanged(types::MapTime viewType);

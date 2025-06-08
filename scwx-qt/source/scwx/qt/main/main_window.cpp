@@ -141,6 +141,7 @@ public:
    ~MainWindowImpl()
    {
       homeRadarConnection_.disconnect();
+      defaultTimeZoneConnection_.disconnect();
 
       auto& generalSettings = settings::GeneralSettings::Instance();
 
@@ -245,6 +246,7 @@ public:
    bool layerActionsInitialized_ {false};
 
    boost::signals2::scoped_connection homeRadarConnection_ {};
+   boost::signals2::scoped_connection defaultTimeZoneConnection_ {};
 
    std::vector<map::MapWidget*> maps_;
 
@@ -377,6 +379,7 @@ MainWindow::MainWindow(QWidget* parent) :
    p->animationDockWidget_ = new ui::AnimationDockWidget(this);
    p->timelineGroup_->GetContentsLayout()->addWidget(p->animationDockWidget_);
    ui->radarToolboxScrollAreaContents->layout()->addWidget(p->timelineGroup_);
+   p->animationDockWidget_->UpdateTimeZone(p->activeMap_->GetDefaultTimeZone());
 
    // Reset toolbox spacer at the bottom
    ui->radarToolboxScrollAreaContents->layout()->removeItem(
@@ -982,6 +985,16 @@ void MainWindowImpl::ConnectMapSignals()
 
 void MainWindowImpl::ConnectAnimationSignals()
 {
+   defaultTimeZoneConnection_ = settings::GeneralSettings::Instance()
+                                   .default_time_zone()
+                                   .changed_signal()
+                                   .connect(
+                                      [this]()
+                                      {
+                                         animationDockWidget_->UpdateTimeZone(
+                                            activeMap_->GetDefaultTimeZone());
+                                      });
+
    connect(animationDockWidget_,
            &ui::AnimationDockWidget::DateTimeChanged,
            timelineManager_.get(),
@@ -1602,6 +1615,8 @@ void MainWindowImpl::UpdateRadarSite()
 
    alertManager_->SetRadarSite(radarSite);
    placefileManager_->SetRadarSite(radarSite);
+
+   animationDockWidget_->UpdateTimeZone(activeMap_->GetDefaultTimeZone());
 }
 
 void MainWindowImpl::UpdateVcp()

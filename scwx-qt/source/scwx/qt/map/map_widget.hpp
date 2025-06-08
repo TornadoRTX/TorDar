@@ -45,9 +45,10 @@ public:
    void DumpLayerList() const;
 
    [[nodiscard]] common::Level3ProductCategoryMap
-                                           GetAvailableLevel3Categories();
-   [[nodiscard]] std::optional<float>      GetElevation() const;
-   [[nodiscard]] std::vector<float>        GetElevationCuts() const;
+                                              GetAvailableLevel3Categories();
+   [[nodiscard]] const scwx::util::time_zone* GetDefaultTimeZone() const;
+   [[nodiscard]] std::optional<float>         GetElevation() const;
+   [[nodiscard]] std::vector<float>           GetElevationCuts() const;
    [[nodiscard]] std::optional<float>      GetIncomingLevel2Elevation() const;
    [[nodiscard]] std::vector<std::string>  GetLevel3Products();
    [[nodiscard]] std::string               GetMapStyle() const;
