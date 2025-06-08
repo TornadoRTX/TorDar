@@ -25,6 +25,8 @@ enum class Hotkey
    MapRotateCounterclockwise,
    MapZoomIn,
    MapZoomOut,
+   ProductCategoryPrevious,
+   ProductCategoryNext,
    ProductTiltDecrease,
    ProductTiltIncrease,
    SelectLevel2Ref,

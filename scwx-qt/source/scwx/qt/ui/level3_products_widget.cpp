@@ -216,7 +216,9 @@ void Level3ProductsWidgetImpl::HandleHotkeyPressed(types::Hotkey hotkey,
 
    if (productCategoryIt == kHotkeyProductCategoryMap_.cend() &&
        hotkey != types::Hotkey::ProductTiltDecrease &&
-       hotkey != types::Hotkey::ProductTiltIncrease)
+       hotkey != types::Hotkey::ProductTiltIncrease &&
+       hotkey != types::Hotkey::ProductCategoryNext &&
+       hotkey != types::Hotkey::ProductCategoryPrevious)
    {
       // Not handling this hotkey
       return;
@@ -251,7 +253,69 @@ void Level3ProductsWidgetImpl::HandleHotkeyPressed(types::Hotkey hotkey,
       return;
    }
 
-   std::shared_lock lock {awipsProductMutex_};
+   if (hotkey == types::Hotkey::ProductCategoryNext ||
+       hotkey == types::Hotkey::ProductCategoryPrevious)
+   {
+      const std::shared_lock lock1 {categoryMapMutex_};
+      const std::shared_lock lock2 {awipsProductMutex_};
+
+      const common::Level3ProductCategory category =
+         common::GetLevel3CategoryByProduct(product);
+      auto productsIt = categoryMap_.find(category);
+      if (productsIt == categoryMap_.cend())
+      {
+         logger_->error("Could not find the current category in category map");
+         return;
+      }
+      auto        availableProducts = productsIt->second;
+      const auto& products = common::GetLevel3ProductsByCategory(category);
+
+      auto productIt = std::find(products.begin(), products.end(), product);
+      if (productIt == products.end())
+      {
+         logger_->error("Could not find product in category");
+         return;
+      }
+
+      if (hotkey == types::Hotkey::ProductCategoryNext)
+      {
+         do
+         {
+            productIt = std::next(productIt);
+            if (productIt == products.cend())
+            {
+               logger_->info("Cannot go past the last product");
+               return;
+            }
+         } while (!availableProducts.contains(*productIt));
+      }
+      else
+      {
+         do
+         {
+            if (productIt == products.begin())
+            {
+               logger_->info("Cannot go past the first product");
+               return;
+            }
+            productIt = std::prev(productIt);
+         } while (!availableProducts.contains(*productIt));
+      }
+
+      auto productTiltsIt = productTiltMap_.find(*productIt);
+      if (productTiltsIt == productTiltMap_.cend())
+      {
+         logger_->error("Could not find product tilt map: {}",
+                        common::GetLevel3ProductDescription(product));
+         return;
+      }
+
+      // Select the new tilt
+      productTiltsIt->second.at(0)->trigger();
+      return;
+   }
+
+   const std::shared_lock lock {awipsProductMutex_};
 
    // Find the current product tilt
    auto productTiltsIt = productTiltMap_.find(product);
