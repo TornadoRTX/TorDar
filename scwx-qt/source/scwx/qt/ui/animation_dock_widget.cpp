@@ -146,7 +146,7 @@ std::chrono::system_clock::time_point AnimationDockWidgetImpl::GetTimePoint()
       selectedDate_ + selectedTime_;
    const auto zonedTime =
       zoned_time<std::chrono::seconds>(timeZone_, localTime);
-   const std::chrono::sys_time systemTime = zonedTime.get_sys_time();
+   const std::chrono::sys_seconds systemTime = zonedTime.get_sys_time();
 
    // This is done to update it when the date changes
    UpdateTimeZoneLabel(zonedTime);
