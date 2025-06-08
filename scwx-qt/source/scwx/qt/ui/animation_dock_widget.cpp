@@ -19,11 +19,11 @@ static const std::string logPrefix_ = "scwx::qt::ui::animation_dock_widget";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 
 #if (__cpp_lib_chrono >= 201907L)
-   using local_days  = std::chrono::local_days;
-   using zoned_time_ = std::chrono::zoned_time<std::chrono::seconds>;
+using local_days  = std::chrono::local_days;
+using zoned_time_ = std::chrono::zoned_time<std::chrono::seconds>;
 #else
-   using local_days  = date::local_days;
-   using zoned_time_ = date::zoned_time<std::chrono::seconds>;
+using local_days  = date::local_days;
+using zoned_time_ = date::zoned_time<std::chrono::seconds>;
 #endif
 
 class AnimationDockWidgetImpl
@@ -228,20 +228,19 @@ void AnimationDockWidgetImpl::ConnectSignals()
             Q_EMIT self_->DateTimeChanged(GetTimePoint());
          }
       });
-   QObject::connect(self_->ui->timeEdit,
-                    &QDateTimeEdit::timeChanged,
-                    self_,
-                    [this](QTime time)
-                    {
-                       if (time.isValid())
-                       {
-                          selectedTime_ =
-                             std::chrono::duration_cast<std::chrono::seconds>(
-                                std::chrono::milliseconds(
-                                   time.msecsSinceStartOfDay()));
-                          Q_EMIT self_->DateTimeChanged(GetTimePoint());
-                       }
-                    });
+   QObject::connect(
+      self_->ui->timeEdit,
+      &QDateTimeEdit::timeChanged,
+      self_,
+      [this](QTime time)
+      {
+         if (time.isValid())
+         {
+            selectedTime_ = std::chrono::duration_cast<std::chrono::seconds>(
+               std::chrono::milliseconds(time.msecsSinceStartOfDay()));
+            Q_EMIT self_->DateTimeChanged(GetTimePoint());
+         }
+      });
 
    // Loop controls
    QObject::connect(
