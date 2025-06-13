@@ -175,7 +175,7 @@ public:
       level2ChunksProviderManager_->Disable();
 
       std::shared_lock lock(level3ProviderManagerMutex_);
-      std::for_each(std::execution::par_unseq,
+      std::for_each(std::execution::par,
                     level3ProviderManagerMap_.begin(),
                     level3ProviderManagerMap_.end(),
                     [](auto& p)
@@ -693,7 +693,7 @@ void RadarProductManager::EnableRefresh(common::RadarProductGroup group,
                auto availableProducts =
                   providerManager->provider_->GetAvailableProducts();
 
-               if (std::find(std::execution::par_unseq,
+               if (std::find(std::execution::par,
                              availableProducts.cbegin(),
                              availableProducts.cend(),
                              product) != availableProducts.cend())
@@ -920,13 +920,13 @@ RadarProductManager::GetActiveVolumeTimes(
 
    // For each provider (in parallel)
    std::for_each(
-      std::execution::par_unseq,
+      std::execution::par,
       providers.begin(),
       providers.end(),
       [&](const std::shared_ptr<provider::NexradDataProvider>& provider)
       {
          // For yesterday, today and tomorrow (in parallel)
-         std::for_each(std::execution::par_unseq,
+         std::for_each(std::execution::par,
                        dates.begin(),
                        dates.end(),
                        [&](const auto& date)
@@ -1246,7 +1246,7 @@ void RadarProductManagerImpl::PopulateProductTimes(
    std::mutex                                      volumeTimesMutex {};
 
    // For yesterday, today and tomorrow (in parallel)
-   std::for_each(std::execution::par_unseq,
+   std::for_each(std::execution::par,
                  dates.begin(),
                  dates.end(),
                  [&](const auto& date)

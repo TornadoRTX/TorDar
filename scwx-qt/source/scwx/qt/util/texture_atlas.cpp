@@ -449,7 +449,7 @@ TextureAtlas::Impl::LoadImage(const std::string& imagePath, double scale)
          if (numChannels == 3)
          {
             std::for_each(
-               std::execution::par_unseq,
+               std::execution::par,
                view.begin(),
                view.end(),
                [](boost::gil::rgba8_pixel_t& pixel)
