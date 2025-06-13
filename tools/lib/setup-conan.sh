@@ -1,5 +1,6 @@
 #!/bin/bash
-script_dir="$(dirname "$(readlink -f "$0")")"
+script_source="${BASH_SOURCE[0]:-$0}"
+script_dir="$(cd "$(dirname "${script_source}")" && pwd)"
 
 # Configure default Conan profile
 conan profile detect -e

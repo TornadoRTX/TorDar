@@ -1,8 +1,19 @@
 #!/bin/bash
-script_dir="$(dirname "$(readlink -f "$0")")"
+script_source="${BASH_SOURCE[0]:-$0}"
+script_dir="$(cd "$(dirname "${script_source}")" && pwd)"
 
 # Assign user-specified Python Virtual Environment
-[ "${1:-}" = "none" ] && unset venv_path || export venv_path="$(readlink -f "${1:-${script_dir}/../.venv}")"
+if [ "${1:-}" = "none" ]; then
+    unset venv_path
+else
+    venv_arg="${1:-${script_dir}/../.venv}"
+    # Portable way to get absolute path without requiring the directory to exist
+    case "${venv_arg}" in
+        /*) venv_path="${venv_arg}" ;;
+        *) venv_path="$(cd "$(dirname "${venv_arg}")" && pwd)/$(basename "${venv_arg}")" ;;
+    esac
+    export venv_path
+fi
 
 # Load custom build settings
 if [ -f "${script_dir}/lib/user-setup.sh" ]; then
@@ -11,12 +22,12 @@ fi
 
 # Activate Python Virtual Environment
 if [ -n "${venv_path:-}" ]; then
-    python -m venv "${venv_path}"
+    python3 -m venv "${venv_path}"
     source "${venv_path}/bin/activate"
 fi
 
 # Detect if a Python Virtual Environment was specified above, or elsewhere
-IN_VENV=$(python -c 'import sys; print(sys.prefix != getattr(sys, "base_prefix", sys.prefix))')
+IN_VENV=$(python3 -c 'import sys; print(sys.prefix != getattr(sys, "base_prefix", sys.prefix))')
 
 if [ "${IN_VENV}" = "True" ]; then
     # In a virtual environment, don't use --user
@@ -27,8 +38,8 @@ else
 fi
 
 # Install Python packages
-python -m pip install ${PIP_FLAGS} --upgrade pip
-pip install ${PIP_FLAGS} -r "${script_dir}/../requirements.txt"
+python3 -m pip install ${PIP_FLAGS} --upgrade pip
+python3 -m pip install ${PIP_FLAGS} -r "${script_dir}/../requirements.txt"
 
 # Configure default Conan profile
 conan profile detect -e
