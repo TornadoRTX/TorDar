@@ -13,8 +13,6 @@ namespace util
 namespace color
 {
 
-static const std::string logPrefix_ = "scwx::qt::util::color";
-
 std::string ToArgbString(const boost::gil::rgba8_pixel_t& color)
 {
    return fmt::format(
