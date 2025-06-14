@@ -635,7 +635,7 @@ if (WIN32)
     target_compile_definitions(supercell-wx PUBLIC WIN32_LEAN_AND_MEAN)
 endif()
 
-if (NOT MSVC)
+if (LINUX)
     # Qt emit keyword is incompatible with TBB
     target_compile_definitions(scwx-qt      PRIVATE QT_NO_EMIT)
     target_compile_definitions(supercell-wx PRIVATE QT_NO_EMIT)

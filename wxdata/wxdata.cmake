@@ -14,7 +14,7 @@ find_package(spdlog)
 
 check_cxx_symbol_exists(_LIBCPP_VERSION version LIBCPP)
 
-if (NOT MSVC)
+if (LINUX)
     find_package(TBB)
 endif()
 
