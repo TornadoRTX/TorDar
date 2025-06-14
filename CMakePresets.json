@@ -210,6 +210,81 @@
         "CC": "gcc-11",
         "CXX": "g++-11"
       }
+    },
+    {
+      "name": "macos-base",
+      "inherits": "base",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_PREFIX_PATH": "$env{HOME}/Qt/6.8.3/macos"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      }
+    },
+    {
+      "name": "macos-clang18-base",
+      "inherits": "macos-base",
+      "hidden": true,
+      "environment": {
+        "CC": "/opt/homebrew/opt/llvm@18/bin/clang",
+        "CXX": "/opt/homebrew/opt/llvm@18/bin/clang++",
+        "PATH": "/opt/homebrew/opt/llvm@18/bin:$penv{PATH}",
+        "CPPFLAGS": "-I/opt/homebrew/opt/llvm@18/include",
+        "LDFLAGS": "-L/opt/homebrew/opt/llvm@18/lib -L/opt/homebrew/opt/llvm@18/lib/c++"
+      }
+    },
+    {
+      "name": "macos-clang18-x64-base",
+      "inherits": "macos-clang18-base",
+      "hidden": true,
+      "cacheVariables": {
+        "CONAN_HOST_PROFILE": "scwx-macos_clang-18",
+        "CONAN_BUILD_PROFILE": "scwx-macos_clang-18"
+      }
+    },
+    {
+      "name": "macos-clang18-arm64-base",
+      "inherits": "macos-clang18-base",
+      "hidden": true,
+      "cacheVariables": {
+        "CONAN_HOST_PROFILE": "scwx-macos_clang-18_armv8",
+        "CONAN_BUILD_PROFILE": "scwx-macos_clang-18_armv8"
+      }
+    },
+    {
+      "name": "macos-clang18-x64-debug",
+      "inherits": "macos-clang18-x64-base",
+      "displayName": "macOS Clang 18 x64 Debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "macos-clang18-x64-release",
+      "inherits": "macos-clang18-x64-base",
+      "displayName": "macOS Clang 18 x64 Release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "macos-clang18-arm64-debug",
+      "inherits": "macos-clang18-arm64-base",
+      "displayName": "macOS Clang 18 Arm64 Debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "macos-clang18-arm64-release",
+      "inherits": "macos-clang18-arm64-base",
+      "displayName": "macOS Clang 18 Arm64 Release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
     }
   ],
   "buildPresets": [
@@ -235,6 +310,30 @@
       "name": "linux-gcc-release",
       "configurePreset": "linux-gcc-release",
       "displayName": "Linux GCC Release",
+      "configuration": "Release"
+    },
+    {
+      "name": "macos-clang18-x64-debug",
+      "configurePreset": "macos-clang18-x64-debug",
+      "displayName": "macOS Clang 18 x64 Debug",
+      "configuration": "Debug"
+    },
+    {
+      "name": "macos-clang18-x64-release",
+      "configurePreset": "macos-clang18-x64-release",
+      "displayName": "macOS Clang 18 x64 Release",
+      "configuration": "Release"
+    },
+    {
+      "name": "macos-clang18-arm64-debug",
+      "configurePreset": "macos-clang18-arm64-debug",
+      "displayName": "macOS Clang 18 Arm64 Debug",
+      "configuration": "Debug"
+    },
+    {
+      "name": "macos-clang18-arm64-release",
+      "configurePreset": "macos-clang18-arm64-release",
+      "displayName": "macOS Clang 18 Arm64 Release",
       "configuration": "Release"
     }
   ],

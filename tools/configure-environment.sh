@@ -45,20 +45,29 @@ python3 -m pip install ${PIP_FLAGS} -r "${script_dir}/../requirements.txt"
 conan profile detect -e
 
 # Conan profiles
-conan_profiles=(
-    "scwx-linux_clang-17"
-    "scwx-linux_clang-17_armv8"
-    "scwx-linux_clang-18"
-    "scwx-linux_clang-18_armv8"
-    "scwx-linux_gcc-11"
-    "scwx-linux_gcc-11_armv8"
-    "scwx-linux_gcc-12"
-    "scwx-linux_gcc-12_armv8"
-    "scwx-linux_gcc-13"
-    "scwx-linux_gcc-13_armv8"
-    "scwx-linux_gcc-14"
-    "scwx-linux_gcc-14_armv8"
+if [[ "$(uname)" == "Darwin" ]]; then
+    # macOS profiles
+    conan_profiles=(
+        "scwx-macos_clang-18"
+        "scwx-macos_clang-18_armv8"
     )
+else
+    # Linux profiles
+    conan_profiles=(
+        "scwx-linux_clang-17"
+        "scwx-linux_clang-17_armv8"
+        "scwx-linux_clang-18"
+        "scwx-linux_clang-18_armv8"
+        "scwx-linux_gcc-11"
+        "scwx-linux_gcc-11_armv8"
+        "scwx-linux_gcc-12"
+        "scwx-linux_gcc-12_armv8"
+        "scwx-linux_gcc-13"
+        "scwx-linux_gcc-13_armv8"
+        "scwx-linux_gcc-14"
+        "scwx-linux_gcc-14_armv8"
+    )
+fi
 
 # Install Conan profiles
 for profile_name in "${conan_profiles[@]}"; do
