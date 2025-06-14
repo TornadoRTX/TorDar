@@ -338,6 +338,7 @@ endif()
 if (LIBCPP)
     # Enable support for parallel algorithms
     target_compile_options(wxdata PUBLIC -fexperimental-library)
+    target_link_libraries(wxdata INTERFACE c++experimental)
 endif()
 
 set_target_properties(wxdata PROPERTIES CXX_STANDARD 20
