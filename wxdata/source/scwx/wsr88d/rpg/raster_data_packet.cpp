@@ -2,6 +2,7 @@
 #include <scwx/util/logger.hpp>
 
 #include <istream>
+#include <numeric>
 #include <string>
 
 namespace scwx
