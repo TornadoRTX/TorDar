@@ -31,6 +31,9 @@ macro(scwx_python_setup)
             set(Python3_EXECUTABLE "$ENV{VIRTUAL_ENV}/bin/python")
         endif()
 
+        # Add virtual environment to program search paths
+        set(CMAKE_PROGRAM_PATH "$ENV{VIRTUAL_ENV}/bin" ${CMAKE_PROGRAM_PATH})
+
         message(STATUS "Using virtual environment: $ENV{VIRTUAL_ENV}")
     else()
         message(STATUS "Python virtual environment undefined")
