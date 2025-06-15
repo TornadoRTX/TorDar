@@ -28,6 +28,7 @@
 #include <QApplication>
 #include <QStandardPaths>
 #include <QStyleHints>
+#include <QSurfaceFormat>
 #include <QTranslator>
 #include <QPalette>
 #include <QStyle>
@@ -61,6 +62,16 @@ int main(int argc, char* argv[])
                  scwx::qt::main::kCommitString_);
 
    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts, true);
+
+#if defined(__APPLE__)
+   // For macOS, we must choose between OpenGL 4.1 Core and OpenGL 2.1
+   // Compatibility. OpenGL 2.1 does not meet requirements for shaders used by
+   // Supercell Wx.
+   QSurfaceFormat surfaceFormat = QSurfaceFormat::defaultFormat();
+   surfaceFormat.setVersion(4, 1);
+   surfaceFormat.setProfile(QSurfaceFormat::OpenGLContextProfile::CoreProfile);
+   QSurfaceFormat::setDefaultFormat(surfaceFormat);
+#endif
 
    QApplication a(argc, argv);
 

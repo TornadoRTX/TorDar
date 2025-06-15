@@ -12,6 +12,7 @@ namespace gl
 {
 
 static const std::string logPrefix_ = "scwx::qt::gl::gl_context";
+static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 
 class GlContext::Impl
 {
@@ -83,6 +84,13 @@ void GlContext::Impl::InitializeGL()
 
    gl_->initializeOpenGLFunctions();
    gl30_->initializeOpenGLFunctions();
+
+   logger_->info("OpenGL Version: {}",
+                 reinterpret_cast<const char*>(gl_->glGetString(GL_VERSION)));
+   logger_->info("OpenGL Vendor: {}",
+                 reinterpret_cast<const char*>(gl_->glGetString(GL_VENDOR)));
+   logger_->info("OpenGL Renderer: {}",
+                 reinterpret_cast<const char*>(gl_->glGetString(GL_RENDERER)));
 
    gl_->glGenTextures(1, &textureAtlas_);
 
