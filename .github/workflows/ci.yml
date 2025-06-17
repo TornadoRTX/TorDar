@@ -26,6 +26,8 @@ jobs:
             env_cc: ''
             env_cxx: ''
             compiler: msvc
+            cppflags: ''
+            ldflags: ''
             msvc_arch: x64
             msvc_version: 2022
             qt_version: 6.8.3
@@ -43,6 +45,8 @@ jobs:
             env_cc: gcc-11
             env_cxx: g++-11
             compiler: gcc
+            cppflags: ''
+            ldflags: ''
             qt_version: 6.8.3
             qt_arch_aqt: linux_gcc_64
             qt_arch_dir: gcc_64
@@ -59,6 +63,8 @@ jobs:
             env_cc: clang-17
             env_cxx: clang++-17
             compiler: clang
+            cppflags: ''
+            ldflags: ''
             qt_version: 6.8.3
             qt_arch_aqt: linux_gcc_64
             qt_arch_dir: gcc_64
@@ -75,6 +81,8 @@ jobs:
             env_cc: gcc-11
             env_cxx: g++-11
             compiler: gcc
+            cppflags: ''
+            ldflags: ''
             qt_version: 6.8.3
             qt_arch_aqt: linux_gcc_arm64
             qt_arch_dir: gcc_arm64
@@ -85,10 +93,46 @@ jobs:
             appimage_arch: aarch64
             artifact_suffix: linux-arm64
             compiler_packages: g++-11
+          - name: macos_clang18_x64
+            os: macos-13
+            build_type: Release
+            env_cc: '$(brew --prefix)/opt/llvm@18/bin/clang'
+            env_cxx: '$(brew --prefix)/opt/llvm@18/bin/clang++'
+            compiler: clang
+            cppflags: '-I$(brew --prefix)/opt/llvm@18/include'
+            ldflags: '-L$(brew --prefix)/opt/llvm@18/lib'
+            qt_version: 6.8.3
+            qt_arch_aqt: clang_64
+            qt_arch_dir: macos
+            qt_modules: qtimageformats qtmultimedia qtpositioning qtserialport
+            qt_tools: ''
+            conan_package_manager: ''
+            conan_profile: scwx-macos_clang-18
+            appimage_arch: ''
+            artifact_suffix: macos-x64
+          - name: macos_clang18_arm64
+            os: macos-15
+            build_type: Release
+            env_cc: '$(brew --prefix)/opt/llvm@18/bin/clang'
+            env_cxx: '$(brew --prefix)/opt/llvm@18/bin/clang++'
+            compiler: clang
+            cppflags: '-I$(brew --prefix)/opt/llvm@18/include'
+            ldflags: '-L$(brew --prefix)/opt/llvm@18/lib'
+            qt_version: 6.8.3
+            qt_arch_aqt: clang_64
+            qt_arch_dir: macos
+            qt_modules: qtimageformats qtmultimedia qtpositioning qtserialport
+            qt_tools: ''
+            conan_package_manager: ''
+            conan_profile: scwx-macos_clang-18_armv8
+            appimage_arch: ''
+            artifact_suffix: macos-arm64
     name: ${{ matrix.name }}
     env:
       CC: ${{ matrix.env_cc }}
       CXX: ${{ matrix.env_cxx }}
+      CPPFLAGS: ${{ matrix.cppflags }}
+      LDFLAGS: ${{ matrix.ldflags }}
       SCWX_VERSION: v0.4.9
     runs-on: ${{ matrix.os }}
 
@@ -132,6 +176,12 @@ jobs:
                              flatpak \
                              flatpak-builder \
                              ${{ matrix.compiler_packages }}
+
+    - name: Setup macOS Environment
+      if: ${{ startsWith(matrix.os, 'macos') }}
+      shell: bash
+      run: |
+        brew install llvm@18
 
     - name: Setup Python Environment
       shell: pwsh
@@ -324,6 +374,20 @@ jobs:
       with:
         name: supercell-wx-flatpak-${{ matrix.artifact_suffix }}
         path: ${{ github.workspace }}/supercell-wx.flatpak
+
+    - name: Build Disk Image (macOS)
+      if: ${{ startsWith(matrix.os, 'macos') }}
+      shell: pwsh
+      run: |
+        cd build
+        cpack
+
+    - name: Upload Disk Image (macOs)
+      if: ${{ startsWith(matrix.os, 'macos') }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: supercell-wx-${{ matrix.artifact_suffix }}
+        path: ${{ github.workspace }}/build/supercell-wx-*.dmg*
 
     - name: Test Supercell Wx
       working-directory: ${{ github.workspace }}/build
