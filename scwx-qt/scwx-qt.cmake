@@ -626,6 +626,26 @@ if (WIN32)
     if (SCWX_DISABLE_CONSOLE)
         set_target_properties(supercell-wx PROPERTIES WIN32_EXECUTABLE $<IF:$<CONFIG:Release>,TRUE,FALSE>)
     endif()
+elseif (APPLE)
+    set(SCWX_ICON "${scwx-qt_SOURCE_DIR}/res/icons/scwx.icns")
+
+    set_source_files_properties(${SCWX_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+
+    qt_add_executable(supercell-wx ${EXECUTABLE_SOURCES} ${SCWX_ICON})
+
+    string(TIMESTAMP CURRENT_YEAR "%Y")
+
+    set_target_properties(supercell-wx PROPERTIES
+                          MACOSX_BUNDLE                      TRUE
+                          MACOSX_BUNDLE_INFO_LIST            "${scwx-qt_SOURCE_DIR}/res/scwx-qt.plist.in"
+                          MACOSX_BUNDLE_GUI_IDENTIFIER       "net.supercellwx.app"
+                          MACOSX_BUNDLE_BUNDLE_NAME          "Supercell Wx"
+                          MACOSX_BUNDLE_BUNDLE_VERSION       "${SCWX_VERSION}"
+                          MACOSX_BUNDLE_SHORT_VERSION_STRING "${SCWX_VERSION}"
+                          MACOSX_BUNDLE_COPYRIGHT            "Copyright ${CURRENT_YEAR} Dan Paulat"
+                          MACOSX_BUNDLE_ICON_FILE            "scwx.icns"
+                          MACOSX_BUNDLE_INFO_STRING          "Free and open source advanced weather radar"
+                          RESOURCE                           ${SCWX_ICON})
 else()
     qt_add_executable(supercell-wx ${EXECUTABLE_SOURCES})
 endif()
@@ -735,9 +755,11 @@ target_link_libraries(scwx-qt PUBLIC Qt${QT_VERSION_MAJOR}::Widgets
 target_link_libraries(supercell-wx PRIVATE scwx-qt
                                            wxdata)
 
-# Set DT_RUNPATH for Linux targets
-set_target_properties(MLNQtCore    PROPERTIES INSTALL_RPATH "\$ORIGIN/../lib") # QMapLibre::Core
-set_target_properties(supercell-wx PROPERTIES INSTALL_RPATH "\$ORIGIN/../lib")
+if (LINUX)
+    # Set DT_RUNPATH for Linux targets
+    set_target_properties(MLNQtCore    PROPERTIES INSTALL_RPATH "\$ORIGIN/../lib") # QMapLibre::Core
+    set_target_properties(supercell-wx PROPERTIES INSTALL_RPATH "\$ORIGIN/../lib")
+endif()
 
 install(TARGETS supercell-wx
                 MLNQtCore # QMapLibre::Core
@@ -747,6 +769,10 @@ install(TARGETS supercell-wx
                                "^(/usr)?/lib/.*\\.so(\\..*)?"
         RUNTIME
           COMPONENT supercell-wx
+        BUNDLE
+          DESTINATION .
+          COMPONENT supercell-wx
+          OPTIONAL
         LIBRARY
           COMPONENT supercell-wx
           OPTIONAL
@@ -772,6 +798,42 @@ install(SCRIPT ${deploy_script_qmaplibre_core}
 
 install(SCRIPT ${deploy_script_scwx}
         COMPONENT supercell-wx)
+
+if (APPLE)
+    # Install additional script to fix up the bundle
+    install(CODE [[
+            include (BundleUtilities)
+
+            # Define the bundle path
+            set(BUNDLE_PATH "${CMAKE_INSTALL_PREFIX}/supercell-wx.app")
+
+            file(GLOB_RECURSE PLUGIN_DYLIBS "${BUNDLE_PATH}/Contents/PlugIns/**/*.dylib")
+
+            # Add the correct rpath for plugins to find bundled frameworks
+            foreach(PLUGIN_DYLIB ${PLUGIN_DYLIBS})
+                execute_process(
+                    COMMAND install_name_tool -add_rpath "@loader_path/../../Frameworks"
+                    ${PLUGIN_DYLIB}
+                    )
+            endforeach()
+
+            # Fix up the bundle with all dependencies
+            fixup_bundle(
+                "${BUNDLE_PATH}"
+                ""
+                "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/Frameworks"
+                )
+
+            # Re-sign the bundle
+            execute_process(
+                COMMAND codesign --force --deep --sign - "${BUNDLE_PATH}"
+                )
+
+            # Verify the bundle
+            verify_app("${BUNDLE_PATH}")
+            ]]
+            COMPONENT supercell-wx)
+endif()
 
 if (MSVC)
     set(CPACK_PACKAGE_NAME                "Supercell Wx")
