@@ -831,18 +831,32 @@ if (APPLE)
 
             # Verify the bundle
             verify_app("${BUNDLE_PATH}")
+
+            # Rename to "Supercell Wx.app"
+            file(REMOVE_RECURSE
+                 "${CMAKE_INSTALL_PREFIX}/Supercell Wx.app")
+            file(RENAME
+                 "${BUNDLE_PATH}"
+                 "${CMAKE_INSTALL_PREFIX}/Supercell Wx.app")
+
+            # Remove extra directories
+            file(REMOVE_RECURSE
+                 "${CMAKE_INSTALL_PREFIX}/Frameworks")
+            file(REMOVE_RECURSE
+                 "${CMAKE_INSTALL_PREFIX}/lib")
             ]]
             COMPONENT supercell-wx)
 endif()
 
+set(CPACK_PACKAGE_NAME          "Supercell Wx")
+set(CPACK_PACKAGE_VENDOR        "Dan Paulat")
+set(CPACK_PACKAGE_CHECKSUM      SHA256)
+set(CPACK_RESOURCE_FILE_LICENSE "${SCWX_DIR}/LICENSE.txt")
+
 if (MSVC)
-    set(CPACK_PACKAGE_NAME                "Supercell Wx")
-    set(CPACK_PACKAGE_VENDOR              "Dan Paulat")
     set(CPACK_PACKAGE_FILE_NAME           "supercell-wx-v${SCWX_VERSION}-windows-x64")
     set(CPACK_PACKAGE_INSTALL_DIRECTORY   "Supercell Wx")
     set(CPACK_PACKAGE_ICON                "${CMAKE_CURRENT_SOURCE_DIR}/res/icons/scwx-256.ico")
-    set(CPACK_PACKAGE_CHECKSUM            SHA256)
-    set(CPACK_RESOURCE_FILE_LICENSE       "${SCWX_DIR}/LICENSE.txt")
     set(CPACK_GENERATOR                   WIX)
     set(CPACK_PACKAGE_EXECUTABLES         "supercell-wx;Supercell Wx")
     set(CPACK_WIX_UPGRADE_GUID            36AD0F51-4D4F-4B5D-AB61-94C6B4E4FE1C)
@@ -853,6 +867,16 @@ if (MSVC)
 
     set(CPACK_INSTALL_CMAKE_PROJECTS
         "${CMAKE_CURRENT_BINARY_DIR};${CMAKE_PROJECT_NAME};supercell-wx;/")
+
+    include(CPack)
+elseif(APPLE)
+    set(CPACK_PACKAGE_FILE_NAME   "supercell-wx-v${SCWX_VERSION}-macos")
+    set(CPACK_PACKAGE_ICON        "${SCWX_ICON}")
+    set(CPACK_PACKAGE_VERSION     "${SCWX_VERSION}")
+
+    set(CPACK_GENERATOR DragNDrop)
+
+    set(CPACK_COMPONENTS_ALL supercell-wx)
 
     include(CPack)
 endif()
