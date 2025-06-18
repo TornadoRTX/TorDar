@@ -390,10 +390,9 @@ TextureAtlas::Impl::LoadImage(const std::string& imagePath, double scale)
 
    QUrl url = QUrl::fromUserInput(qImagePath);
 
-
    if (url.isLocalFile())
    {
-      QString suffix = QFileInfo(qImagePath).suffix().toLower();
+      QString suffix          = QFileInfo(qImagePath).suffix().toLower();
       QString qLocalImagePath = url.toString(QUrl::PreferLocalFile);
 
       if (suffix == "svg")
@@ -448,18 +447,18 @@ TextureAtlas::Impl::LoadImage(const std::string& imagePath, double scale)
          // If no alpha channel, replace black with transparent
          if (numChannels == 3)
          {
-            std::for_each(
-               std::execution::par,
-               view.begin(),
-               view.end(),
-               [](boost::gil::rgba8_pixel_t& pixel)
-               {
-                  static const boost::gil::rgba8_pixel_t kBlack {0, 0, 0, 255};
-                  if (pixel == kBlack)
-                  {
-                     pixel[3] = 0;
-                  }
-               });
+            std::for_each(std::execution::par,
+                          view.begin(),
+                          view.end(),
+                          [](boost::gil::rgba8_pixel_t& pixel)
+                          {
+                             static const boost::gil::rgba8_pixel_t kBlack {
+                                0, 0, 0, 255};
+                             if (pixel == kBlack)
+                             {
+                                pixel[3] = 0;
+                             }
+                          });
          }
 
          stbi_image_free(pixelData);
