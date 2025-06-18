@@ -180,7 +180,7 @@ jobs:
         echo "CC=${LLVM_PATH}/bin/clang" >> $GITHUB_ENV
         echo "CXX=${LLVM_PATH}/bin/clang++" >> $GITHUB_ENV
         echo "CPPFLAGS=-I${LLVM_PATH}/include" >> $GITHUB_ENV
-        echo "LDFLAGS=-L${LLVM_PATH}/lib" >> $GITHUB_ENV
+        echo "LDFLAGS=-L${LLVM_PATH}/lib -L${LLVM_PATH}/lib/c++" >> $GITHUB_ENV
 
     - name: Setup Python Environment
       shell: pwsh
