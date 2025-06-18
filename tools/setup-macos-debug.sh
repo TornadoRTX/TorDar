@@ -11,12 +11,12 @@ export qt_arch=macos
 export address_sanitizer=${4:-disabled}
 
 # Set explicit compiler paths
-export CC=/opt/homebrew/opt/llvm@18/bin/clang
-export CXX=/opt/homebrew/opt/llvm@18/bin/clang++
-export PATH="/opt/homebrew/opt/llvm@18/bin:$PATH"
+export CC=$(brew --prefix llvm@18)/bin/clang
+export CXX=$(brew --prefix llvm@18)/bin/clang++
+export PATH="$(brew --prefix llvm@18)/bin:$PATH"
 
-export LDFLAGS="-L/opt/homebrew/opt/llvm@18/lib -L/opt/homebrew/opt/llvm@18/lib/c++"
-export CPPFLAGS="-I/opt/homebrew/opt/llvm@18/include"
+export LDFLAGS="-L$(brew --prefix llvm@18)/lib -L$(brew --prefix llvm@18)/lib/c++"
+export CPPFLAGS="-I$(brew --prefix llvm@18)/include"
 
 # Assign user-specified Python Virtual Environment
 if [ "${3:-}" = "none" ]; then

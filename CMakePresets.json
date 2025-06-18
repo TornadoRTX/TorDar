@@ -227,14 +227,7 @@
     {
       "name": "macos-clang18-base",
       "inherits": "macos-base",
-      "hidden": true,
-      "environment": {
-        "CC": "/opt/homebrew/opt/llvm@18/bin/clang",
-        "CXX": "/opt/homebrew/opt/llvm@18/bin/clang++",
-        "PATH": "/opt/homebrew/opt/llvm@18/bin:$penv{PATH}",
-        "CPPFLAGS": "-I/opt/homebrew/opt/llvm@18/include",
-        "LDFLAGS": "-L/opt/homebrew/opt/llvm@18/lib -L/opt/homebrew/opt/llvm@18/lib/c++"
-      }
+      "hidden": true
     },
     {
       "name": "macos-clang18-x64-base",
@@ -243,6 +236,13 @@
       "cacheVariables": {
         "CONAN_HOST_PROFILE": "scwx-macos_clang-18",
         "CONAN_BUILD_PROFILE": "scwx-macos_clang-18"
+      },
+      "environment": {
+        "CC": "/usr/local/opt/llvm@18/bin/clang",
+        "CXX": "/usr/local/opt/llvm@18/bin/clang++",
+        "PATH": "/usr/local/opt/llvm@18/bin:$penv{PATH}",
+        "CPPFLAGS": "-I/usr/local/opt/llvm@18/include",
+        "LDFLAGS": "-L/usr/local/opt/llvm@18/lib -L/usr/local/opt/llvm@18/lib/c++"
       }
     },
     {
@@ -252,6 +252,13 @@
       "cacheVariables": {
         "CONAN_HOST_PROFILE": "scwx-macos_clang-18_armv8",
         "CONAN_BUILD_PROFILE": "scwx-macos_clang-18_armv8"
+      },
+      "environment": {
+        "CC": "/opt/homebrew/opt/llvm@18/bin/clang",
+        "CXX": "/opt/homebrew/opt/llvm@18/bin/clang++",
+        "PATH": "/opt/homebrew/opt/llvm@18/bin:$penv{PATH}",
+        "CPPFLAGS": "-I/opt/homebrew/opt/llvm@18/include",
+        "LDFLAGS": "-L/opt/homebrew/opt/llvm@18/lib -L/opt/homebrew/opt/llvm@18/lib/c++"
       }
     },
     {
