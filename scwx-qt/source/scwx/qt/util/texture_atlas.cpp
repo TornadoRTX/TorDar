@@ -392,8 +392,8 @@ TextureAtlas::Impl::LoadImage(const std::string& imagePath, double scale)
 
    if (url.isLocalFile())
    {
-      QString suffix          = QFileInfo(qImagePath).suffix().toLower();
-      QString qLocalImagePath = url.toString(QUrl::PreferLocalFile);
+      const QString suffix          = QFileInfo(qImagePath).suffix().toLower();
+      const QString qLocalImagePath = url.toString(QUrl::PreferLocalFile);
 
       if (suffix == "svg")
       {
