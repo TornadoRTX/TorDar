@@ -35,6 +35,12 @@ else()
     target_compile_options(MLNQtCore PRIVATE "$<$<CONFIG:Release>:-g>")
 endif()
 
+if (APPLE)
+    # Enable GL check error debug
+    target_compile_definitions(mbgl-core PRIVATE MLN_GL_CHECK_ERRORS=1)
+    target_compile_definitions(MLNQtCore PRIVATE MLN_GL_CHECK_ERRORS=1)
+endif()
+
 set(MLN_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/maplibre-native/include
                      ${CMAKE_CURRENT_SOURCE_DIR}/maplibre-native-qt/src/core/include
                      ${CMAKE_CURRENT_BINARY_DIR}/maplibre-native-qt/src/core/include PARENT_SCOPE)
