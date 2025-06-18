@@ -96,11 +96,9 @@ jobs:
           - name: macos_clang18_x64
             os: macos-13
             build_type: Release
-            env_cc: '$(brew --prefix)/opt/llvm@18/bin/clang'
-            env_cxx: '$(brew --prefix)/opt/llvm@18/bin/clang++'
+            env_cc: clang
+            env_cxx: clang++
             compiler: clang
-            cppflags: '-I$(brew --prefix)/opt/llvm@18/include'
-            ldflags: '-L$(brew --prefix)/opt/llvm@18/lib'
             qt_version: 6.8.3
             qt_arch_aqt: clang_64
             qt_arch_dir: macos
@@ -113,11 +111,9 @@ jobs:
           - name: macos_clang18_arm64
             os: macos-15
             build_type: Release
-            env_cc: '$(brew --prefix)/opt/llvm@18/bin/clang'
-            env_cxx: '$(brew --prefix)/opt/llvm@18/bin/clang++'
+            env_cc: clang
+            env_cxx: clang++
             compiler: clang
-            cppflags: '-I$(brew --prefix)/opt/llvm@18/include'
-            ldflags: '-L$(brew --prefix)/opt/llvm@18/lib'
             qt_version: 6.8.3
             qt_arch_aqt: clang_64
             qt_arch_dir: macos
@@ -131,8 +127,6 @@ jobs:
     env:
       CC: ${{ matrix.env_cc }}
       CXX: ${{ matrix.env_cxx }}
-      CPPFLAGS: ${{ matrix.cppflags }}
-      LDFLAGS: ${{ matrix.ldflags }}
       SCWX_VERSION: v0.4.9
     runs-on: ${{ matrix.os }}
 
@@ -182,6 +176,11 @@ jobs:
       shell: bash
       run: |
         brew install llvm@18
+        LLVM_PATH=$(brew --prefix llvm@18)
+        echo "CC=${LLVM_PATH}/clang" >> $GITHUB_ENV
+        echo "CXX=${LLVM_PATH}/clang++" >> $GITHUB_ENV
+        echo "CPPFLAGS=-I${LLVM_PATH}/include" >> $GITHUB_ENV
+        echo "LDFLAGS=-L${LLVM_PATH}/lib" >> $GITHUB_ENV
 
     - name: Setup Python Environment
       shell: pwsh
