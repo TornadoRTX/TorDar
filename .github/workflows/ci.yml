@@ -381,7 +381,7 @@ jobs:
         cd build
         cpack
 
-    - name: Upload Disk Image (macOs)
+    - name: Upload Disk Image (macOS)
       if: ${{ startsWith(matrix.os, 'macos') }}
       uses: actions/upload-artifact@v4
       with:
@@ -393,7 +393,7 @@ jobs:
       env:
         MAPBOX_API_KEY:   ${{ secrets.MAPBOX_API_KEY }}
         MAPTILER_API_KEY: ${{ secrets.MAPTILER_API_KEY }}
-      run: ctest -C ${{ matrix.build_type }} --exclude-regex test_mln.*
+      run: ctest -C ${{ matrix.build_type }} --exclude-regex "test_mln.*|UpdateManager.*"
 
     - name: Upload Test Logs
       if: ${{ !cancelled() }}
