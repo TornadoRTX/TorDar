@@ -740,7 +740,7 @@ bool Icons::RunMousePicking(
 
    // For each pickable icon
    auto it = std::find_if( //
-      std::execution::par_unseq,
+      std::execution::par,
       p->currentHoverIcons_.crbegin(),
       p->currentHoverIcons_.crend(),
       [&mouseLocalCoords](const auto& icon)

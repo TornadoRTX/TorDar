@@ -4,10 +4,15 @@
 
 #include <mutex>
 
-#include <GL/glu.h>
 #include <boost/container/stable_vector.hpp>
 
-#if defined(_WIN32)
+#if !defined(__APPLE__)
+#   include <GL/glu.h>
+#else
+#   include <OpenGL/glu.h>
+#endif
+
+#if defined(_WIN32) || defined(__APPLE__)
 typedef void (*_GLUfuncptr)(void);
 #endif
 

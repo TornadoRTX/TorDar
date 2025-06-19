@@ -7,8 +7,6 @@ namespace network
 namespace cpr
 {
 
-static const std::string logPrefix_ = "scwx::network::cpr";
-
 static ::cpr::Header header_ {};
 
 ::cpr::Header GetHeader()

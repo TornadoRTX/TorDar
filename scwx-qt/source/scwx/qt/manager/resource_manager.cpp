@@ -62,7 +62,7 @@ LoadImageResources(const std::vector<std::string>& urlStrings)
    std::mutex                                              m {};
    std::vector<std::shared_ptr<boost::gil::rgba8_image_t>> images {};
 
-   std::for_each(std::execution::par_unseq,
+   std::for_each(std::execution::par,
                  urlStrings.begin(),
                  urlStrings.end(),
                  [&](auto& urlString)

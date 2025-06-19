@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.24)
 
 project(scwx-data)
 
+include(CheckCXXSymbolExists)
+
 find_package(Boost)
 find_package(cpr)
 find_package(LibXml2)
@@ -10,7 +12,9 @@ find_package(range-v3)
 find_package(re2)
 find_package(spdlog)
 
-if (NOT MSVC)
+check_cxx_symbol_exists(_LIBCPP_VERSION version LIBCPP)
+
+if (LINUX)
     find_package(TBB)
 endif()
 
@@ -327,8 +331,14 @@ if (NOT CHRONO_HAS_TIMEZONES_AND_CALENDERS)
     target_link_libraries(wxdata PUBLIC date::date-tz)
 endif()
 
-if (NOT MSVC)
+if (LINUX)
     target_link_libraries(wxdata PUBLIC TBB::tbb)
+endif()
+
+if (LIBCPP)
+    # Enable support for parallel algorithms
+    target_compile_options(wxdata PUBLIC -fexperimental-library)
+    target_link_libraries(wxdata INTERFACE c++experimental)
 endif()
 
 set_target_properties(wxdata PROPERTIES CXX_STANDARD 20

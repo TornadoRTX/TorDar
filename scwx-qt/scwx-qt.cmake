@@ -626,6 +626,26 @@ if (WIN32)
     if (SCWX_DISABLE_CONSOLE)
         set_target_properties(supercell-wx PROPERTIES WIN32_EXECUTABLE $<IF:$<CONFIG:Release>,TRUE,FALSE>)
     endif()
+elseif (APPLE)
+    set(SCWX_ICON "${scwx-qt_SOURCE_DIR}/res/icons/scwx.icns")
+
+    set_source_files_properties(${SCWX_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+
+    qt_add_executable(supercell-wx ${EXECUTABLE_SOURCES} ${SCWX_ICON})
+
+    string(TIMESTAMP CURRENT_YEAR "%Y")
+
+    set_target_properties(supercell-wx PROPERTIES
+                          MACOSX_BUNDLE                      TRUE
+                          MACOSX_BUNDLE_INFO_PLIST           "${scwx-qt_SOURCE_DIR}/res/scwx-qt.plist.in"
+                          MACOSX_BUNDLE_GUI_IDENTIFIER       "net.supercellwx.app"
+                          MACOSX_BUNDLE_BUNDLE_NAME          "Supercell Wx"
+                          MACOSX_BUNDLE_BUNDLE_VERSION       "${SCWX_VERSION}"
+                          MACOSX_BUNDLE_SHORT_VERSION_STRING "${SCWX_VERSION}"
+                          MACOSX_BUNDLE_COPYRIGHT            "Copyright ${CURRENT_YEAR} Dan Paulat"
+                          MACOSX_BUNDLE_ICON_FILE            "scwx.icns"
+                          MACOSX_BUNDLE_INFO_STRING          "Free and open source advanced weather radar"
+                          RESOURCE                           ${SCWX_ICON})
 else()
     qt_add_executable(supercell-wx ${EXECUTABLE_SOURCES})
 endif()
@@ -635,7 +655,7 @@ if (WIN32)
     target_compile_definitions(supercell-wx PUBLIC WIN32_LEAN_AND_MEAN)
 endif()
 
-if (NOT MSVC)
+if (LINUX)
     # Qt emit keyword is incompatible with TBB
     target_compile_definitions(scwx-qt      PRIVATE QT_NO_EMIT)
     target_compile_definitions(supercell-wx PRIVATE QT_NO_EMIT)
@@ -694,7 +714,9 @@ if (MSVC)
 else()
     target_compile_options(scwx-qt PRIVATE "$<$<CONFIG:Release>:-g>")
     target_compile_options(supercell-wx PRIVATE "$<$<CONFIG:Release>:-g>")
+endif()
 
+if (LINUX)
     # Add wayland client packages
     find_package(QT NAMES Qt6
                  COMPONENTS WaylandClient
@@ -733,9 +755,11 @@ target_link_libraries(scwx-qt PUBLIC Qt${QT_VERSION_MAJOR}::Widgets
 target_link_libraries(supercell-wx PRIVATE scwx-qt
                                            wxdata)
 
-# Set DT_RUNPATH for Linux targets
-set_target_properties(MLNQtCore    PROPERTIES INSTALL_RPATH "\$ORIGIN/../lib") # QMapLibre::Core
-set_target_properties(supercell-wx PROPERTIES INSTALL_RPATH "\$ORIGIN/../lib")
+if (LINUX)
+    # Set DT_RUNPATH for Linux targets
+    set_target_properties(MLNQtCore    PROPERTIES INSTALL_RPATH "\$ORIGIN/../lib") # QMapLibre::Core
+    set_target_properties(supercell-wx PROPERTIES INSTALL_RPATH "\$ORIGIN/../lib")
+endif()
 
 install(TARGETS supercell-wx
                 MLNQtCore # QMapLibre::Core
@@ -745,7 +769,15 @@ install(TARGETS supercell-wx
                                "^(/usr)?/lib/.*\\.so(\\..*)?"
         RUNTIME
           COMPONENT supercell-wx
+        BUNDLE
+          DESTINATION .
+          COMPONENT supercell-wx
+          OPTIONAL
         LIBRARY
+          COMPONENT supercell-wx
+          OPTIONAL
+        FRAMEWORK
+          DESTINATION Frameworks
           COMPONENT supercell-wx
           OPTIONAL)
 
@@ -767,14 +799,64 @@ install(SCRIPT ${deploy_script_qmaplibre_core}
 install(SCRIPT ${deploy_script_scwx}
         COMPONENT supercell-wx)
 
+if (APPLE)
+    # Install additional script to fix up the bundle
+    install(CODE [[
+            include (BundleUtilities)
+
+            # Define the bundle path
+            set(BUNDLE_PATH "${CMAKE_INSTALL_PREFIX}/supercell-wx.app")
+
+            file(GLOB_RECURSE PLUGIN_DYLIBS "${BUNDLE_PATH}/Contents/PlugIns/**/*.dylib")
+
+            # Add the correct rpath for plugins to find bundled frameworks
+            foreach(PLUGIN_DYLIB ${PLUGIN_DYLIBS})
+                execute_process(
+                    COMMAND install_name_tool -add_rpath "@loader_path/../../Frameworks"
+                    ${PLUGIN_DYLIB}
+                    )
+            endforeach()
+
+            # Fix up the bundle with all dependencies
+            fixup_bundle(
+                "${BUNDLE_PATH}"
+                ""
+                "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/Frameworks"
+                )
+
+            # Re-sign the bundle
+            execute_process(
+                COMMAND codesign --force --deep --sign - "${BUNDLE_PATH}"
+                )
+
+            # Verify the bundle
+            verify_app("${BUNDLE_PATH}")
+
+            # Rename to "Supercell Wx.app"
+            file(REMOVE_RECURSE
+                 "${CMAKE_INSTALL_PREFIX}/Supercell Wx.app")
+            file(RENAME
+                 "${BUNDLE_PATH}"
+                 "${CMAKE_INSTALL_PREFIX}/Supercell Wx.app")
+
+            # Remove extra directories
+            file(REMOVE_RECURSE
+                 "${CMAKE_INSTALL_PREFIX}/Frameworks")
+            file(REMOVE_RECURSE
+                 "${CMAKE_INSTALL_PREFIX}/lib")
+            ]]
+            COMPONENT supercell-wx)
+endif()
+
+set(CPACK_PACKAGE_NAME          "Supercell Wx")
+set(CPACK_PACKAGE_VENDOR        "Dan Paulat")
+set(CPACK_PACKAGE_CHECKSUM      SHA256)
+set(CPACK_RESOURCE_FILE_LICENSE "${SCWX_DIR}/LICENSE.txt")
+
 if (MSVC)
-    set(CPACK_PACKAGE_NAME                "Supercell Wx")
-    set(CPACK_PACKAGE_VENDOR              "Dan Paulat")
     set(CPACK_PACKAGE_FILE_NAME           "supercell-wx-v${SCWX_VERSION}-windows-x64")
     set(CPACK_PACKAGE_INSTALL_DIRECTORY   "Supercell Wx")
     set(CPACK_PACKAGE_ICON                "${CMAKE_CURRENT_SOURCE_DIR}/res/icons/scwx-256.ico")
-    set(CPACK_PACKAGE_CHECKSUM            SHA256)
-    set(CPACK_RESOURCE_FILE_LICENSE       "${SCWX_DIR}/LICENSE.txt")
     set(CPACK_GENERATOR                   WIX)
     set(CPACK_PACKAGE_EXECUTABLES         "supercell-wx;Supercell Wx")
     set(CPACK_WIX_UPGRADE_GUID            36AD0F51-4D4F-4B5D-AB61-94C6B4E4FE1C)
@@ -785,6 +867,16 @@ if (MSVC)
 
     set(CPACK_INSTALL_CMAKE_PROJECTS
         "${CMAKE_CURRENT_BINARY_DIR};${CMAKE_PROJECT_NAME};supercell-wx;/")
+
+    include(CPack)
+elseif(APPLE)
+    set(CPACK_PACKAGE_FILE_NAME   "supercell-wx-v${SCWX_VERSION}-macos")
+    set(CPACK_PACKAGE_ICON        "${SCWX_ICON}")
+    set(CPACK_PACKAGE_VERSION     "${SCWX_VERSION}")
+
+    set(CPACK_GENERATOR DragNDrop)
+
+    set(CPACK_COMPONENTS_ALL supercell-wx)
 
     include(CPack)
 endif()

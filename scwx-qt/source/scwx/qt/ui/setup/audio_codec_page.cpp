@@ -124,6 +124,9 @@ void AudioCodecPage::Impl::SetInstructionsLabelText()
                     self_,
                     [](const QString& link)
                     { QDesktopServices::openUrl(QUrl {link}); });
+#elif defined(__APPLE__)
+   instructionsLabel_->setText(tr(
+      "Please see the instructions for your Mac for installing media codecs."));
 #else
    instructionsLabel_->setText(
       tr("Please see the instructions for your Linux distribution for "

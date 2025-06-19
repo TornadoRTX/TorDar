@@ -17,7 +17,6 @@
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/thread_pool.hpp>
 #include <boost/container/stable_vector.hpp>
-#include <boost/range/irange.hpp>
 #include <range/v3/range/conversion.hpp>
 #include <range/v3/view/filter.hpp>
 #include <range/v3/view/single.hpp>
@@ -488,7 +487,7 @@ void TextEventManager::Impl::LoadArchives(
 
    std::vector<scwx::types::iem::AfosEntry> loadListEntries {};
 
-   for (auto date : boost::irange(startDate, endDate))
+   for (auto date = startDate; date < endDate; date += std::chrono::days {1})
    {
       auto mapIt = unloadedProductMap_.find(date);
       if (mapIt == unloadedProductMap_.cend())

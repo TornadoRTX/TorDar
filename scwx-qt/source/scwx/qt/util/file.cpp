@@ -12,8 +12,6 @@ namespace qt
 namespace util
 {
 
-static const std::string logPrefix_ = "scwx::qt::util::file";
-
 std::unique_ptr<std::istream> OpenFile(const std::string&      filename,
                                        std::ios_base::openmode mode)
 {
