@@ -637,7 +637,7 @@ elseif (APPLE)
 
     set_target_properties(supercell-wx PROPERTIES
                           MACOSX_BUNDLE                      TRUE
-                          MACOSX_BUNDLE_INFO_LIST            "${scwx-qt_SOURCE_DIR}/res/scwx-qt.plist.in"
+                          MACOSX_BUNDLE_INFO_PLIST           "${scwx-qt_SOURCE_DIR}/res/scwx-qt.plist.in"
                           MACOSX_BUNDLE_GUI_IDENTIFIER       "net.supercellwx.app"
                           MACOSX_BUNDLE_BUNDLE_NAME          "Supercell Wx"
                           MACOSX_BUNDLE_BUNDLE_VERSION       "${SCWX_VERSION}"
