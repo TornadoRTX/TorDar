@@ -683,29 +683,36 @@ void RadarProductManager::EnableRefresh(common::RadarProductGroup group,
          p->GetLevel3ProviderManager(product);
 
       // Only enable refresh on available products
-      boost::asio::post(
-         p->threadPool_,
-         [=, this]()
-         {
-            try
+      if (enabled)
+      {
+         boost::asio::post(
+            p->threadPool_,
+            [=, this]()
             {
-               providerManager->provider_->RequestAvailableProducts();
-               auto availableProducts =
-                  providerManager->provider_->GetAvailableProducts();
-
-               if (std::find(std::execution::par,
-                             availableProducts.cbegin(),
-                             availableProducts.cend(),
-                             product) != availableProducts.cend())
+               try
                {
-                  p->EnableRefresh(uuid, {providerManager}, enabled);
+                  providerManager->provider_->RequestAvailableProducts();
+                  auto availableProducts =
+                     providerManager->provider_->GetAvailableProducts();
+
+                  if (std::find(std::execution::par,
+                                availableProducts.cbegin(),
+                                availableProducts.cend(),
+                                product) != availableProducts.cend())
+                  {
+                     p->EnableRefresh(uuid, {providerManager}, enabled);
+                  }
                }
-            }
-            catch (const std::exception& ex)
-            {
-               logger_->error(ex.what());
-            }
-         });
+               catch (const std::exception& ex)
+               {
+                  logger_->error(ex.what());
+               }
+            });
+      }
+      else
+      {
+         p->EnableRefresh(uuid, {providerManager}, enabled);
+      }
    }
 }
 
