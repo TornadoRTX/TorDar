@@ -162,7 +162,10 @@ void PlacefileIcons::set_thresholded(bool thresholded)
 void PlacefileIcons::Initialize()
 {
    gl::OpenGLFunctions& gl   = p->context_->gl();
+
+#if !defined(__APPLE__)
    auto&                gl30 = p->context_->gl30();
+#endif
 
    p->shaderProgram_ = p->context_->GetShaderProgram(
       {{GL_VERTEX_SHADER, ":/gl/geo_texture2d.vert"},
@@ -253,7 +256,11 @@ void PlacefileIcons::Initialize()
    gl.glEnableVertexAttribArray(6);
 
    // aDisplayed
+#if !defined(__APPLE__)
    gl30.glVertexAttribI1i(7, 1);
+#else
+   glVertexAttribI1i(7, 1);
+#endif
 
    p->dirty_ = true;
 }

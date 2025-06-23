@@ -56,10 +56,12 @@ gl::OpenGLFunctions& GlContext::gl()
    return *p->gl_;
 }
 
+#if !defined(__APPLE__)
 QOpenGLFunctions_3_0& GlContext::gl30()
 {
    return *p->gl30_;
 }
+#endif
 
 std::uint64_t GlContext::texture_buffer_count() const
 {
