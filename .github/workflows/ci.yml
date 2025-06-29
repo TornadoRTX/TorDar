@@ -109,7 +109,7 @@ jobs:
             appimage_arch: ''
             artifact_suffix: macos-x64
           - name: macos_clang18_arm64
-            os: macos-15
+            os: macos-14
             build_type: Release
             env_cc: clang
             env_cxx: clang++
