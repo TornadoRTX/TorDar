@@ -54,9 +54,7 @@
       "inherits": "windows-x64-base",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_PREFIX_PATH": "C:/Qt/6.8.3/msvc2022_64",
-        "CONAN_HOST_PROFILE": "scwx-windows_msvc2022_x64",
-        "CONAN_BUILD_PROFILE": "scwx-windows_msvc2022_x64"
+        "CMAKE_PREFIX_PATH": "C:/Qt/6.8.3/msvc2022_64"
       }
     },
     {
@@ -65,9 +63,7 @@
       "hidden": true,
       "generator": "Ninja",
       "cacheVariables": {
-        "CMAKE_PREFIX_PATH": "C:/Qt/6.8.3/msvc2022_64",
-        "CONAN_HOST_PROFILE": "scwx-windows_msvc2022_x64",
-        "CONAN_BUILD_PROFILE": "scwx-windows_msvc2022_x64"
+        "CMAKE_PREFIX_PATH": "C:/Qt/6.8.3/msvc2022_64"
       }
     },
     {
@@ -75,9 +71,7 @@
       "inherits": "linux-base",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_PREFIX_PATH": "/opt/Qt/6.8.3/gcc_64",
-        "CONAN_HOST_PROFILE": "scwx-linux_gcc-11",
-        "CONAN_BUILD_PROFILE": "scwx-linux_gcc-11"
+        "CMAKE_PREFIX_PATH": "/opt/Qt/6.8.3/gcc_64"
       },
       "environment": {
         "CC": "gcc-11",
@@ -93,7 +87,9 @@
         "strategy": "external"
       },
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CONAN_HOST_PROFILE": "scwx-windows_msvc2022_x64-debug",
+        "CONAN_BUILD_PROFILE": "scwx-windows_msvc2022_x64-debug"
       }
     },
     {
@@ -105,7 +101,9 @@
         "strategy": "external"
       },
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
+        "CMAKE_BUILD_TYPE": "Release",
+        "CONAN_HOST_PROFILE": "scwx-windows_msvc2022_x64",
+        "CONAN_BUILD_PROFILE": "scwx-windows_msvc2022_x64"
       }
     },
     {
@@ -113,7 +111,9 @@
       "inherits": "windows-msvc2022-x64-ninja-base",
       "displayName": "Windows MSVC 2022 x64 Ninja Debug",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CONAN_HOST_PROFILE": "scwx-windows_msvc2022_x64-debug",
+        "CONAN_BUILD_PROFILE": "scwx-windows_msvc2022_x64-debug"
       }
     },
     {
@@ -121,7 +121,9 @@
       "inherits": "windows-msvc2022-x64-ninja-base",
       "displayName": "Windows MSVC 2022 x64 Ninja Release",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
+        "CMAKE_BUILD_TYPE": "Release",
+        "CONAN_HOST_PROFILE": "scwx-windows_msvc2022_x64",
+        "CONAN_BUILD_PROFILE": "scwx-windows_msvc2022_x64"
       }
     },
     {
@@ -130,7 +132,9 @@
       "displayName": "Linux GCC Debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/Debug/supercell-wx"
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/Debug/supercell-wx",
+        "CONAN_HOST_PROFILE": "scwx-linux_gcc-11-debug",
+        "CONAN_BUILD_PROFILE": "scwx-linux_gcc-11-debug"
       }
     },
     {
@@ -139,7 +143,9 @@
       "displayName": "Linux GCC Release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/Release/supercell-wx"
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/Release/supercell-wx",
+        "CONAN_HOST_PROFILE": "scwx-linux_gcc-11",
+        "CONAN_BUILD_PROFILE": "scwx-linux_gcc-11"
       }
     },
     {
@@ -149,6 +155,8 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/Debug/supercell-wx",
+        "CONAN_HOST_PROFILE": "scwx-linux_gcc-11-debug",
+        "CONAN_BUILD_PROFILE": "scwx-linux_gcc-11-debug",
         "SCWX_ADDRESS_SANITIZER": {
           "type": "BOOL",
           "value": "ON"
@@ -162,6 +170,8 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/Release/supercell-wx",
+        "CONAN_HOST_PROFILE": "scwx-linux_gcc-11",
+        "CONAN_BUILD_PROFILE": "scwx-linux_gcc-11",
         "SCWX_ADDRESS_SANITIZER": {
           "type": "BOOL",
           "value": "ON"
@@ -202,9 +212,9 @@
       "displayName": "CI Linux GCC ARM64",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_PREFIX_PATH": "/opt/Qt/6.8.3/gcc_arm64",
         "CONAN_HOST_PROFILE": "scwx-linux_gcc-11_armv8",
-        "CONAN_BUILD_PROFILE": "scwx-linux_gcc-11_armv8",
-        "CMAKE_PREFIX_PATH": "/opt/Qt/6.8.3/gcc_arm64"
+        "CONAN_BUILD_PROFILE": "scwx-linux_gcc-11_armv8"
       },
       "environment": {
         "CC": "gcc-11",
@@ -233,10 +243,6 @@
       "name": "macos-clang18-x64-base",
       "inherits": "macos-clang18-base",
       "hidden": true,
-      "cacheVariables": {
-        "CONAN_HOST_PROFILE": "scwx-macos_clang-18",
-        "CONAN_BUILD_PROFILE": "scwx-macos_clang-18"
-      },
       "environment": {
         "CC": "/usr/local/opt/llvm@18/bin/clang",
         "CXX": "/usr/local/opt/llvm@18/bin/clang++",
@@ -249,10 +255,6 @@
       "name": "macos-clang18-arm64-base",
       "inherits": "macos-clang18-base",
       "hidden": true,
-      "cacheVariables": {
-        "CONAN_HOST_PROFILE": "scwx-macos_clang-18_armv8",
-        "CONAN_BUILD_PROFILE": "scwx-macos_clang-18_armv8"
-      },
       "environment": {
         "CC": "/opt/homebrew/opt/llvm@18/bin/clang",
         "CXX": "/opt/homebrew/opt/llvm@18/bin/clang++",
@@ -266,7 +268,9 @@
       "inherits": "macos-clang18-x64-base",
       "displayName": "macOS Clang 18 x64 Debug",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CONAN_HOST_PROFILE": "scwx-macos_clang-18-debug",
+        "CONAN_BUILD_PROFILE": "scwx-macos_clang-18-debug"
       }
     },
     {
@@ -274,7 +278,9 @@
       "inherits": "macos-clang18-x64-base",
       "displayName": "macOS Clang 18 x64 Release",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
+        "CMAKE_BUILD_TYPE": "Release",
+        "CONAN_HOST_PROFILE": "scwx-macos_clang-18",
+        "CONAN_BUILD_PROFILE": "scwx-macos_clang-18"
       }
     },
     {
@@ -282,7 +288,9 @@
       "inherits": "macos-clang18-arm64-base",
       "displayName": "macOS Clang 18 Arm64 Debug",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CONAN_HOST_PROFILE": "scwx-macos_clang-18_armv8-debug",
+        "CONAN_BUILD_PROFILE": "scwx-macos_clang-18_armv8-debug"
       }
     },
     {
@@ -290,7 +298,9 @@
       "inherits": "macos-clang18-arm64-base",
       "displayName": "macOS Clang 18 Arm64 Release",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
+        "CMAKE_BUILD_TYPE": "Release",
+        "CONAN_HOST_PROFILE": "scwx-macos_clang-18_armv8",
+        "CONAN_BUILD_PROFILE": "scwx-macos_clang-18_armv8"
       }
     }
   ],
