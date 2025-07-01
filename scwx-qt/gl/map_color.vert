@@ -26,6 +26,9 @@ void main()
    // Always set displayed to true
    vsOut.displayed = 1;
 
+   // Initialize texCoord to default value
+   vsOut.texCoord = vec3(0.0f, 0.0f, 0.0f);
+
    // Pass the threshold and time range to the geometry shader
    vsOut.threshold = aThreshold;
    vsOut.timeRange = aTimeRange;
