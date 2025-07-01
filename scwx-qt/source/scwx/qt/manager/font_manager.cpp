@@ -139,22 +139,22 @@ void FontManager::Impl::ConnectSignals()
             });
    }
 
-   QObject::connect(
-      &SettingsManager::Instance(),
-      &SettingsManager::SettingsSaved,
-      self_,
-      [this]()
-      {
-         std::scoped_lock lock {dirtyFontsMutex_, fontCategoryMutex_};
+   QObject::connect(&SettingsManager::Instance(),
+                    &SettingsManager::SettingsSaved,
+                    self_,
+                    [this]()
+                    {
+                       std::scoped_lock lock {dirtyFontsMutex_,
+                                              fontCategoryMutex_};
 
-         for (auto fontCategory : dirtyFonts_)
-         {
-            UpdateImGuiFont(fontCategory);
-            UpdateQFont(fontCategory);
-         }
+                       for (auto fontCategory : dirtyFonts_)
+                       {
+                          UpdateImGuiFont(fontCategory);
+                          UpdateQFont(fontCategory);
+                       }
 
-         dirtyFonts_.clear();
-      });
+                       dirtyFonts_.clear();
+                    });
 }
 
 void FontManager::InitializeFonts()
