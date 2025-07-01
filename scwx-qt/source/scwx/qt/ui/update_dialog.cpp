@@ -42,13 +42,19 @@ public:
 UpdateDialog::UpdateDialog(QWidget* parent) :
     QDialog(parent), p {std::make_unique<Impl>(this)}, ui(new Ui::UpdateDialog)
 {
+#if !defined(__APPLE__)
+   static constexpr int titleFontSize = 12;
+#else
+   static constexpr int titleFontSize = 16;
+#endif
+
    ui->setupUi(this);
 
-   int titleFontId =
+   const int titleFontId =
       manager::FontManager::Instance().GetFontId(types::Font::din1451alt_g);
-   QString titleFontFamily =
+   const QString titleFontFamily =
       QFontDatabase::applicationFontFamilies(titleFontId).at(0);
-   QFont titleFont(titleFontFamily, 12);
+   const QFont titleFont(titleFontFamily, titleFontSize);
    ui->bannerLabel->setFont(titleFont);
 
    ui->releaseNotesText->setOpenExternalLinks(true);
