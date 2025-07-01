@@ -16,12 +16,6 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QFrame" name="topFrame">
-     <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
-     </property>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <property name="leftMargin">
        <number>0</number>
@@ -56,12 +50,6 @@
       </item>
       <item>
        <widget class="QFrame" name="textFrame">
-        <property name="frameShape">
-         <enum>QFrame::StyledPanel</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Raised</enum>
-        </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <property name="leftMargin">
           <number>0</number>
@@ -113,12 +101,6 @@
    </item>
    <item>
     <widget class="QFrame" name="bottomFrame">
-     <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
-     </property>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <property name="leftMargin">
        <number>0</number>
@@ -149,7 +131,7 @@
       <item>
        <spacer name="horizontalSpacer">
         <property name="orientation">
-         <enum>Qt::Horizontal</enum>
+         <enum>Qt::Orientation::Horizontal</enum>
         </property>
         <property name="sizeHint" stdset="0">
          <size>
@@ -162,10 +144,10 @@
       <item>
        <widget class="QDialogButtonBox" name="buttonBox">
         <property name="orientation">
-         <enum>Qt::Horizontal</enum>
+         <enum>Qt::Orientation::Horizontal</enum>
         </property>
         <property name="standardButtons">
-         <set>QDialogButtonBox::Ok</set>
+         <set>QDialogButtonBox::StandardButton::Ok</set>
         </property>
        </widget>
       </item>
