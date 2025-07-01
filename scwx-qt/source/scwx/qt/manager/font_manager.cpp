@@ -191,7 +191,13 @@ void FontManager::Impl::UpdateQFont(types::FontCategory fontCategory)
    QFont font = QFontDatabase::font(QString::fromStdString(family),
                                     QString::fromStdString(styles),
                                     static_cast<int>(size.value()));
+
+#if !defined(__APPLE__)
    font.setPointSizeF(size.value());
+#else
+   const units::font_size::pixels<double> pixelSize {size};
+   font.setPixelSize(static_cast<int>(pixelSize.value()));
+#endif
 
    fontCategoryQFontMap_.insert_or_assign(fontCategory, font);
 }

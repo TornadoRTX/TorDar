@@ -1496,6 +1496,12 @@ void SettingsDialogImpl::UpdateFontDisplayData()
    self_->ui->fontStyleLabel->setText(font.styleName());
    self_->ui->fontSizeLabel->setText(QString::number(font.pointSizeF()));
 
+#if defined(__APPLE__)
+   const units::font_size::points<double> fontSize {font.pointSizeF()};
+   const units::font_size::pixels<double> fontPixels {fontSize};
+   font.setPixelSize(static_cast<int>(fontPixels.value()));
+#endif
+
    self_->ui->fontPreviewLabel->setFont(font);
 
    if (selectedFontCategory_ != types::FontCategory::Unknown)
