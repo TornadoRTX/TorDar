@@ -577,7 +577,8 @@ else()
                                -v ${SCWX_VERSION}
                                -c ${VERSIONS_CACHE}
                                -i ${VERSIONS_INPUT}
-                               -o ${VERSIONS_HEADER})
+                               -o ${VERSIONS_HEADER}
+                               -b ${SCWX_BUILD_NUM})
 endif()
 
 add_custom_target(scwx-qt_generate_versions ALL
