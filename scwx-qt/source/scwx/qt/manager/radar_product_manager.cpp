@@ -679,7 +679,7 @@ void RadarProductManager::EnableRefresh(common::RadarProductGroup group,
    }
    else
    {
-      std::shared_ptr<ProviderManager> providerManager =
+      const std::shared_ptr<ProviderManager> providerManager =
          p->GetLevel3ProviderManager(product);
 
       // Only enable refresh on available products
@@ -687,12 +687,12 @@ void RadarProductManager::EnableRefresh(common::RadarProductGroup group,
       {
          boost::asio::post(
             p->threadPool_,
-            [=, this]()
+            [providerManager, product, uuid, enabled, this]()
             {
                try
                {
                   providerManager->provider_->RequestAvailableProducts();
-                  auto availableProducts =
+                  const auto availableProducts =
                      providerManager->provider_->GetAvailableProducts();
 
                   if (std::find(std::execution::par,
