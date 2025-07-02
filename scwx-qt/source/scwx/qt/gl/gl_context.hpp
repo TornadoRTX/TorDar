@@ -25,7 +25,10 @@ public:
    GlContext& operator=(GlContext&&) noexcept;
 
    gl::OpenGLFunctions&  gl();
+
+#if !defined(__APPLE__)
    QOpenGLFunctions_3_0& gl30();
+#endif
 
    std::uint64_t texture_buffer_count() const;
 

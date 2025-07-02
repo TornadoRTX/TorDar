@@ -54,7 +54,13 @@ AlertDialog::AlertDialog(QWidget* parent) :
 
    // Set monospace font for alert view
    QFont monospaceFont("?");
-   monospaceFont.setStyleHint(QFont::TypeWriter);
+   monospaceFont.setStyleHint(QFont::StyleHint::TypeWriter);
+
+   if (!monospaceFont.fixedPitch())
+   {
+      monospaceFont.setStyleHint(QFont::StyleHint::Monospace);
+   }
+
    ui->alertText->setFont(monospaceFont);
 
    // Add Go button to button box

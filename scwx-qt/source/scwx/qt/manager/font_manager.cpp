@@ -139,22 +139,22 @@ void FontManager::Impl::ConnectSignals()
             });
    }
 
-   QObject::connect(
-      &SettingsManager::Instance(),
-      &SettingsManager::SettingsSaved,
-      self_,
-      [this]()
-      {
-         std::scoped_lock lock {dirtyFontsMutex_, fontCategoryMutex_};
+   QObject::connect(&SettingsManager::Instance(),
+                    &SettingsManager::SettingsSaved,
+                    self_,
+                    [this]()
+                    {
+                       const std::scoped_lock lock {dirtyFontsMutex_,
+                                                    fontCategoryMutex_};
 
-         for (auto fontCategory : dirtyFonts_)
-         {
-            UpdateImGuiFont(fontCategory);
-            UpdateQFont(fontCategory);
-         }
+                       for (auto fontCategory : dirtyFonts_)
+                       {
+                          UpdateImGuiFont(fontCategory);
+                          UpdateQFont(fontCategory);
+                       }
 
-         dirtyFonts_.clear();
-      });
+                       dirtyFonts_.clear();
+                    });
 }
 
 void FontManager::InitializeFonts()
@@ -191,7 +191,13 @@ void FontManager::Impl::UpdateQFont(types::FontCategory fontCategory)
    QFont font = QFontDatabase::font(QString::fromStdString(family),
                                     QString::fromStdString(styles),
                                     static_cast<int>(size.value()));
+
+#if !defined(__APPLE__)
    font.setPointSizeF(size.value());
+#else
+   const units::font_size::pixels<double> pixelSize {size};
+   font.setPixelSize(static_cast<int>(pixelSize.value()));
+#endif
 
    fontCategoryQFontMap_.insert_or_assign(fontCategory, font);
 }

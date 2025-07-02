@@ -71,7 +71,25 @@ fi
 
 # Install Conan profiles
 for profile_name in "${conan_profiles[@]}"; do
+    # Install original profile
     conan config install "${script_dir}/conan/profiles/${profile_name}" -tf profiles
+
+    # Create debug profile in temp directory
+    debug_profile="/tmp/${profile_name}-debug"
+    cp "${script_dir}/conan/profiles/${profile_name}" "${debug_profile}"
+
+    # Replace build_type=Release with build_type=Debug
+    if [[ "$(uname)" == "Darwin" ]]; then
+        sed -i '' 's/build_type=Release/build_type=Debug/g' "${debug_profile}"
+    else
+        sed -i 's/build_type=Release/build_type=Debug/g' "${debug_profile}"
+    fi
+
+    # Install the debug profile
+    conan config install "${debug_profile}" -tf profiles
+
+    # Remove temporary debug profile
+    rm "${debug_profile}"
 done
 
 # Deactivate Python Virtual Environment

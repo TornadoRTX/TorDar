@@ -39,7 +39,7 @@
      <x>0</x>
      <y>0</y>
      <width>1024</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -155,8 +155,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>205</width>
-          <height>701</height>
+          <width>191</width>
+          <height>703</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -174,12 +174,6 @@
          </property>
          <item>
           <widget class="QFrame" name="radarInfoFrame">
-           <property name="frameShape">
-            <enum>QFrame::Shape::StyledPanel</enum>
-           </property>
-           <property name="frameShadow">
-            <enum>QFrame::Shadow::Raised</enum>
-           </property>
            <layout class="QGridLayout" name="gridLayout" columnstretch="0,0,0,0,0">
             <item row="3" column="2" colspan="3">
              <widget class="QLabel" name="vcpValueLabel">

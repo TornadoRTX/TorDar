@@ -30,12 +30,6 @@
     </item>
     <item>
      <widget class="QFrame" name="frame_2">
-      <property name="frameShape">
-       <enum>QFrame::StyledPanel</enum>
-      </property>
-      <property name="frameShadow">
-       <enum>QFrame::Raised</enum>
-      </property>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <property name="leftMargin">
         <number>0</number>
@@ -62,7 +56,7 @@
        <item>
         <spacer name="horizontalSpacer_2">
          <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+          <enum>Qt::Orientation::Horizontal</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -85,7 +79,7 @@
            <normaloff>:/res/icons/font-awesome-6/sliders-solid.svg</normaloff>:/res/icons/font-awesome-6/sliders-solid.svg</iconset>
          </property>
          <property name="popupMode">
-          <enum>QToolButton::InstantPopup</enum>
+          <enum>QToolButton::ToolButtonPopupMode::InstantPopup</enum>
          </property>
         </widget>
        </item>

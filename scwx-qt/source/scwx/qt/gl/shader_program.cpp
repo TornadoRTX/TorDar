@@ -138,7 +138,7 @@ bool ShaderProgram::Load(
       }
       else if (logLength > 0)
       {
-         logger_->error("Shader compiled with warnings: {}", infoLog);
+         logger_->warn("Shader compiled with warnings: {}", infoLog);
       }
    }
 
@@ -160,7 +160,7 @@ bool ShaderProgram::Load(
       }
       else if (logLength > 0)
       {
-         logger_->error("Shader program linked with warnings: {}", infoLog);
+         logger_->warn("Shader program linked with warnings: {}", infoLog);
       }
    }
 

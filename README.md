@@ -28,7 +28,9 @@ Supercell Wx supports the following 64-bit operating systems:
   - Ubuntu 22.04+
   - NixOS 25.05+
   - Most distributions supporting the GCC Standard C++ Library 11+
-- macOS 12 (Monterey) or later
+- macOS
+  - 13.6+ for Intel-based Macs
+  - 14.0+ for Apple silicon-based Macs
 
 ## Linux Dependencies
 
