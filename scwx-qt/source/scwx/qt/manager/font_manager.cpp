@@ -144,8 +144,8 @@ void FontManager::Impl::ConnectSignals()
                     self_,
                     [this]()
                     {
-                       std::scoped_lock lock {dirtyFontsMutex_,
-                                              fontCategoryMutex_};
+                       const std::scoped_lock lock {dirtyFontsMutex_,
+                                                    fontCategoryMutex_};
 
                        for (auto fontCategory : dirtyFonts_)
                        {
