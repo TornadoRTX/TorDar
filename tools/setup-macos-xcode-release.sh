@@ -26,5 +26,9 @@ else
     export venv_path="$(python3 -c 'import os,sys;print(os.path.realpath(sys.argv[1]))' "${3:-${script_dir}/../.venv}")"
 fi
 
+# FIXME: aws-sdk-cpp fails to configure using Xcode
+echo "Xcode is not supported"
+read -p "Press Enter to continue..."
+
 # Perform common setup
-"${script_dir}/lib/setup-common.sh"
+# "${script_dir}/lib/setup-common.sh"
