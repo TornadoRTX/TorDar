@@ -79,7 +79,7 @@ public:
 };
 
 LinkedVectors::LinkedVectors(std::shared_ptr<GlContext> context) :
-    DrawItem(context->gl()), p(std::make_unique<Impl>(context))
+    DrawItem(), p(std::make_unique<Impl>(context))
 {
 }
 LinkedVectors::~LinkedVectors() = default;

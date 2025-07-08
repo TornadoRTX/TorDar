@@ -72,7 +72,7 @@ public:
 
 PlacefileText::PlacefileText(const std::shared_ptr<GlContext>& context,
                              const std::string&                placefileName) :
-    DrawItem(context->gl()), p(std::make_unique<Impl>(context, placefileName))
+    DrawItem(), p(std::make_unique<Impl>(context, placefileName))
 {
 }
 PlacefileText::~PlacefileText() = default;

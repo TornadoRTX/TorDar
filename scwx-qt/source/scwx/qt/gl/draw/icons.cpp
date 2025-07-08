@@ -21,11 +21,11 @@ namespace draw
 static const std::string logPrefix_ = "scwx::qt::gl::draw::icons";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 
-static constexpr std::size_t kNumRectangles        = 1;
-static constexpr std::size_t kNumTriangles         = kNumRectangles * 2;
-static constexpr std::size_t kVerticesPerTriangle  = 3;
-static constexpr std::size_t kPointsPerVertex      = 10;
-static constexpr std::size_t kPointsPerTexCoord    = 3;
+static constexpr std::size_t kNumRectangles       = 1;
+static constexpr std::size_t kNumTriangles        = kNumRectangles * 2;
+static constexpr std::size_t kVerticesPerTriangle = 3;
+static constexpr std::size_t kPointsPerVertex     = 10;
+static constexpr std::size_t kPointsPerTexCoord   = 3;
 static constexpr std::size_t kIconBufferLength =
    kNumTriangles * kVerticesPerTriangle * kPointsPerVertex;
 static constexpr std::size_t kTextureBufferLength =
@@ -116,7 +116,7 @@ public:
 };
 
 Icons::Icons(const std::shared_ptr<GlContext>& context) :
-    DrawItem(context->gl()), p(std::make_unique<Impl>(context))
+    DrawItem(), p(std::make_unique<Impl>(context))
 {
 }
 Icons::~Icons() = default;
@@ -126,8 +126,6 @@ Icons& Icons::operator=(Icons&&) noexcept = default;
 
 void Icons::Initialize()
 {
-   gl::OpenGLFunctions& gl = p->context_->gl();
-
    p->shaderProgram_ = p->context_->GetShaderProgram(
       {{GL_VERTEX_SHADER, ":/gl/texture2d_array.vert"},
        {GL_GEOMETRY_SHADER, ":/gl/threshold.geom"},
@@ -135,69 +133,69 @@ void Icons::Initialize()
 
    p->uMVPMatrixLocation_ = p->shaderProgram_->GetUniformLocation("uMVPMatrix");
 
-   gl.glGenVertexArrays(1, &p->vao_);
-   gl.glGenBuffers(static_cast<GLsizei>(p->vbo_.size()), p->vbo_.data());
+   glGenVertexArrays(1, &p->vao_);
+   glGenBuffers(static_cast<GLsizei>(p->vbo_.size()), p->vbo_.data());
 
-   gl.glBindVertexArray(p->vao_);
-   gl.glBindBuffer(GL_ARRAY_BUFFER, p->vbo_[0]);
-   gl.glBufferData(GL_ARRAY_BUFFER, 0u, nullptr, GL_DYNAMIC_DRAW);
+   glBindVertexArray(p->vao_);
+   glBindBuffer(GL_ARRAY_BUFFER, p->vbo_[0]);
+   glBufferData(GL_ARRAY_BUFFER, 0u, nullptr, GL_DYNAMIC_DRAW);
 
    // aVertex
-   gl.glVertexAttribPointer(0,
-                            2,
-                            GL_FLOAT,
-                            GL_FALSE,
-                            kPointsPerVertex * sizeof(float),
-                            reinterpret_cast<void*>(0));
-   gl.glEnableVertexAttribArray(0);
+   glVertexAttribPointer(0,
+                         2,
+                         GL_FLOAT,
+                         GL_FALSE,
+                         kPointsPerVertex * sizeof(float),
+                         reinterpret_cast<void*>(0));
+   glEnableVertexAttribArray(0);
 
    // aXYOffset
-   gl.glVertexAttribPointer(1,
-                            2,
-                            GL_FLOAT,
-                            GL_FALSE,
-                            kPointsPerVertex * sizeof(float),
-                            reinterpret_cast<void*>(2 * sizeof(float)));
-   gl.glEnableVertexAttribArray(1);
+   glVertexAttribPointer(1,
+                         2,
+                         GL_FLOAT,
+                         GL_FALSE,
+                         kPointsPerVertex * sizeof(float),
+                         reinterpret_cast<void*>(2 * sizeof(float)));
+   glEnableVertexAttribArray(1);
 
    // aModulate
-   gl.glVertexAttribPointer(3,
-                            4,
-                            GL_FLOAT,
-                            GL_FALSE,
-                            kPointsPerVertex * sizeof(float),
-                            reinterpret_cast<void*>(4 * sizeof(float)));
-   gl.glEnableVertexAttribArray(3);
+   glVertexAttribPointer(3,
+                         4,
+                         GL_FLOAT,
+                         GL_FALSE,
+                         kPointsPerVertex * sizeof(float),
+                         reinterpret_cast<void*>(4 * sizeof(float)));
+   glEnableVertexAttribArray(3);
 
    // aAngle
-   gl.glVertexAttribPointer(4,
-                            1,
-                            GL_FLOAT,
-                            GL_FALSE,
-                            kPointsPerVertex * sizeof(float),
-                            reinterpret_cast<void*>(8 * sizeof(float)));
-   gl.glEnableVertexAttribArray(4);
+   glVertexAttribPointer(4,
+                         1,
+                         GL_FLOAT,
+                         GL_FALSE,
+                         kPointsPerVertex * sizeof(float),
+                         reinterpret_cast<void*>(8 * sizeof(float)));
+   glEnableVertexAttribArray(4);
 
    // aDisplayed
-   gl.glVertexAttribPointer(5,
-                            1,
-                            GL_FLOAT,
-                            GL_FALSE,
-                            kPointsPerVertex * sizeof(float),
-                            reinterpret_cast<void*>(9 * sizeof(float)));
-   gl.glEnableVertexAttribArray(5);
+   glVertexAttribPointer(5,
+                         1,
+                         GL_FLOAT,
+                         GL_FALSE,
+                         kPointsPerVertex * sizeof(float),
+                         reinterpret_cast<void*>(9 * sizeof(float)));
+   glEnableVertexAttribArray(5);
 
-   gl.glBindBuffer(GL_ARRAY_BUFFER, p->vbo_[1]);
-   gl.glBufferData(GL_ARRAY_BUFFER, 0u, nullptr, GL_DYNAMIC_DRAW);
+   glBindBuffer(GL_ARRAY_BUFFER, p->vbo_[1]);
+   glBufferData(GL_ARRAY_BUFFER, 0u, nullptr, GL_DYNAMIC_DRAW);
 
    // aTexCoord
-   gl.glVertexAttribPointer(2,
-                            3,
-                            GL_FLOAT,
-                            GL_FALSE,
-                            kPointsPerTexCoord * sizeof(float),
-                            static_cast<void*>(0));
-   gl.glEnableVertexAttribArray(2);
+   glVertexAttribPointer(2,
+                         3,
+                         GL_FLOAT,
+                         GL_FALSE,
+                         kPointsPerTexCoord * sizeof(float),
+                         static_cast<void*>(0));
+   glEnableVertexAttribArray(2);
 
    p->dirty_ = true;
 }
@@ -219,29 +217,25 @@ void Icons::Render(const QMapLibre::CustomLayerRenderParameters& params,
 
    if (!p->currentIconList_.empty())
    {
-      gl::OpenGLFunctions& gl = p->context_->gl();
-
-      gl.glBindVertexArray(p->vao_);
+      glBindVertexArray(p->vao_);
 
       p->Update(textureAtlasChanged);
       p->shaderProgram_->Use();
       UseDefaultProjection(params, p->uMVPMatrixLocation_);
 
       // Interpolate texture coordinates
-      gl.glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      gl.glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
       // Draw icons
-      gl.glDrawArrays(GL_TRIANGLES, 0, p->numVertices_);
+      glDrawArrays(GL_TRIANGLES, 0, p->numVertices_);
    }
 }
 
 void Icons::Deinitialize()
 {
-   gl::OpenGLFunctions& gl = p->context_->gl();
-
-   gl.glDeleteVertexArrays(1, &p->vao_);
-   gl.glDeleteBuffers(static_cast<GLsizei>(p->vbo_.size()), p->vbo_.data());
+   glDeleteVertexArrays(1, &p->vao_);
+   glDeleteBuffers(static_cast<GLsizei>(p->vbo_.size()), p->vbo_.data());
 
    std::unique_lock lock {p->iconMutex_};
 
@@ -679,8 +673,6 @@ void Icons::Impl::UpdateModifiedIconBuffers()
 
 void Icons::Impl::Update(bool textureAtlasChanged)
 {
-   gl::OpenGLFunctions& gl = context_->gl();
-
    UpdateModifiedIconBuffers();
 
    // If the texture atlas has changed
@@ -696,11 +688,11 @@ void Icons::Impl::Update(bool textureAtlasChanged)
       UpdateTextureBuffer();
 
       // Buffer texture data
-      gl.glBindBuffer(GL_ARRAY_BUFFER, vbo_[1]);
-      gl.glBufferData(GL_ARRAY_BUFFER,
-                      sizeof(float) * textureBuffer_.size(),
-                      textureBuffer_.data(),
-                      GL_DYNAMIC_DRAW);
+      glBindBuffer(GL_ARRAY_BUFFER, vbo_[1]);
+      glBufferData(GL_ARRAY_BUFFER,
+                   sizeof(float) * textureBuffer_.size(),
+                   textureBuffer_.data(),
+                   GL_DYNAMIC_DRAW);
 
       lastTextureAtlasChanged_ = false;
    }
@@ -709,11 +701,11 @@ void Icons::Impl::Update(bool textureAtlasChanged)
    if (dirty_)
    {
       // Buffer vertex data
-      gl.glBindBuffer(GL_ARRAY_BUFFER, vbo_[0]);
-      gl.glBufferData(GL_ARRAY_BUFFER,
-                      sizeof(float) * currentIconBuffer_.size(),
-                      currentIconBuffer_.data(),
-                      GL_DYNAMIC_DRAW);
+      glBindBuffer(GL_ARRAY_BUFFER, vbo_[0]);
+      glBufferData(GL_ARRAY_BUFFER,
+                   sizeof(float) * currentIconBuffer_.size(),
+                   currentIconBuffer_.data(),
+                   GL_DYNAMIC_DRAW);
 
       numVertices_ =
          static_cast<GLsizei>(currentIconBuffer_.size() / kPointsPerVertex);

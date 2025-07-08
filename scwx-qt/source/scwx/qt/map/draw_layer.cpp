@@ -127,8 +127,7 @@ void DrawLayer::RenderWithoutImGui(
 {
    auto& glContext = p->glContext_;
 
-   gl::OpenGLFunctions& gl = glContext->gl();
-   p->textureAtlas_        = glContext->GetTextureAtlas();
+   p->textureAtlas_ = glContext->GetTextureAtlas();
 
    // Determine if the texture atlas changed since last render
    const std::uint64_t newTextureAtlasBuildCount =
@@ -137,10 +136,10 @@ void DrawLayer::RenderWithoutImGui(
       newTextureAtlasBuildCount != p->textureAtlasBuildCount_;
 
    // Set OpenGL blend mode for transparency
-   gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-   gl.glActiveTexture(GL_TEXTURE0);
-   gl.glBindTexture(GL_TEXTURE_2D_ARRAY, p->textureAtlas_);
+   glActiveTexture(GL_TEXTURE0);
+   glBindTexture(GL_TEXTURE_2D_ARRAY, p->textureAtlas_);
 
    for (auto& item : p->drawList_)
    {

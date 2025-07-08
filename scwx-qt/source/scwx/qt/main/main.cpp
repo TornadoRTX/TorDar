@@ -43,6 +43,7 @@ static const std::string logPrefix_ = "scwx::main";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 
 static void ConfigureTheme(const std::vector<std::string>& args);
+static void InitializeOpenGL();
 static void OverrideDefaultStyle(const std::vector<std::string>& args);
 static void OverridePlatform();
 
@@ -66,17 +67,7 @@ int main(int argc, char* argv[])
                  scwx::qt::main::kBuildNumber_,
                  scwx::qt::main::kCommitString_);
 
-   QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts, true);
-
-#if defined(__APPLE__)
-   // For macOS, we must choose between OpenGL 4.1 Core and OpenGL 2.1
-   // Compatibility. OpenGL 2.1 does not meet requirements for shaders used by
-   // Supercell Wx.
-   QSurfaceFormat surfaceFormat = QSurfaceFormat::defaultFormat();
-   surfaceFormat.setVersion(4, 1);
-   surfaceFormat.setProfile(QSurfaceFormat::OpenGLContextProfile::CoreProfile);
-   QSurfaceFormat::setDefaultFormat(surfaceFormat);
-#endif
+   InitializeOpenGL();
 
    QApplication a(argc, argv);
 
@@ -232,6 +223,23 @@ static void ConfigureTheme(const std::vector<std::string>& args)
 
       QApplication::setPalette(palette);
    }
+}
+
+static void InitializeOpenGL()
+{
+   QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts, true);
+
+   QSurfaceFormat surfaceFormat = QSurfaceFormat::defaultFormat();
+   surfaceFormat.setProfile(QSurfaceFormat::OpenGLContextProfile::CoreProfile);
+
+#if defined(__APPLE__)
+   // For macOS, we must choose between OpenGL 4.1 Core and OpenGL 2.1
+   // Compatibility. OpenGL 2.1 does not meet requirements for shaders used by
+   // Supercell Wx.
+   surfaceFormat.setVersion(4, 1);
+#endif
+
+   QSurfaceFormat::setDefaultFormat(surfaceFormat);
 }
 
 static void

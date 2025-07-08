@@ -165,8 +165,6 @@ void MarkerLayer::Impl::set_icon_sheets()
 void MarkerLayer::Render(const std::shared_ptr<MapContext>& mapContext,
                          const QMapLibre::CustomLayerRenderParameters& params)
 {
-   gl::OpenGLFunctions& gl = gl_context()->gl();
-
    DrawLayer::Render(mapContext, params);
 
    SCWX_GL_CHECK_ERROR();

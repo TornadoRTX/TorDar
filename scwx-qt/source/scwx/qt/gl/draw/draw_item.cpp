@@ -30,13 +30,11 @@ static const std::string logPrefix_ = "scwx::qt::gl::draw::draw_item";
 class DrawItem::Impl
 {
 public:
-   explicit Impl(OpenGLFunctions& gl) : gl_ {gl} {}
+   explicit Impl() {}
    ~Impl() {}
-
-   OpenGLFunctions& gl_;
 };
 
-DrawItem::DrawItem(OpenGLFunctions& gl) : p(std::make_unique<Impl>(gl)) {}
+DrawItem::DrawItem() : p(std::make_unique<Impl>()) {}
 DrawItem::~DrawItem() = default;
 
 DrawItem::DrawItem(DrawItem&&) noexcept            = default;
@@ -74,7 +72,7 @@ void DrawItem::UseDefaultProjection(
                                      0.0f,
                                      static_cast<float>(params.height));
 
-   p->gl_.glUniformMatrix4fv(
+   glUniformMatrix4fv(
       uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(projection));
 }
 
@@ -91,7 +89,7 @@ void DrawItem::UseRotationProjection(
                             glm::radians<float>(params.bearing),
                             glm::vec3(0.0f, 0.0f, 1.0f));
 
-   p->gl_.glUniformMatrix4fv(
+   glUniformMatrix4fv(
       uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(projection));
 }
 
@@ -100,16 +98,14 @@ void DrawItem::UseMapProjection(
    GLint                                         uMVPMatrixLocation,
    GLint                                         uMapScreenCoordLocation)
 {
-   OpenGLFunctions& gl = p->gl_;
-
    const glm::mat4 uMVPMatrix = util::maplibre::GetMapMatrix(params);
 
-   gl.glUniform2fv(uMapScreenCoordLocation,
-                   1,
-                   glm::value_ptr(util::maplibre::LatLongToScreenCoordinate(
-                      {params.latitude, params.longitude})));
+   glUniform2fv(uMapScreenCoordLocation,
+                1,
+                glm::value_ptr(util::maplibre::LatLongToScreenCoordinate(
+                   {params.latitude, params.longitude})));
 
-   gl.glUniformMatrix4fv(
+   glUniformMatrix4fv(
       uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(uMVPMatrix));
 }
 

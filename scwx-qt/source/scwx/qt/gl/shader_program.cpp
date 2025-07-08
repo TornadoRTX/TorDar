@@ -2,6 +2,7 @@
 #include <scwx/util/logger.hpp>
 
 #include <QFile>
+#include <QTextStream>
 
 namespace scwx
 {
@@ -23,29 +24,24 @@ static const std::unordered_map<GLenum, std::string> kShaderNames_ {
 class ShaderProgram::Impl
 {
 public:
-   explicit Impl(OpenGLFunctions& gl) : gl_(gl), id_ {GL_INVALID_INDEX}
+   explicit Impl() : id_ {GL_INVALID_INDEX}
    {
       // Create shader program
-      id_ = gl_.glCreateProgram();
+      id_ = glCreateProgram();
    }
 
    ~Impl()
    {
       // Delete shader program
-      gl_.glDeleteProgram(id_);
+      glDeleteProgram(id_);
    }
 
    static std::string ShaderName(GLenum type);
 
-   OpenGLFunctions& gl_;
-
    GLuint id_;
 };
 
-ShaderProgram::ShaderProgram(OpenGLFunctions& gl) :
-    p(std::make_unique<Impl>(gl))
-{
-}
+ShaderProgram::ShaderProgram() : p(std::make_unique<Impl>()) {}
 ShaderProgram::~ShaderProgram() = default;
 
 ShaderProgram::ShaderProgram(ShaderProgram&&) noexcept            = default;
@@ -58,7 +54,7 @@ GLuint ShaderProgram::id() const
 
 GLint ShaderProgram::GetUniformLocation(const std::string& name)
 {
-   GLint location = p->gl_.glGetUniformLocation(p->id_, name.c_str());
+   GLint location = glGetUniformLocation(p->id_, name.c_str());
    if (location == -1)
    {
       logger_->warn("Could not find {}", name);
@@ -87,8 +83,6 @@ bool ShaderProgram::Load(
    std::initializer_list<std::pair<GLenum, std::string>> shaders)
 {
    logger_->debug("Load()");
-
-   OpenGLFunctions& gl = p->gl_;
 
    GLint   glSuccess;
    bool    success = true;
@@ -120,16 +114,16 @@ bool ShaderProgram::Load(
       const char* shaderSourceC = shaderSource.c_str();
 
       // Create a shader
-      GLuint shaderId = gl.glCreateShader(shader.first);
+      GLuint shaderId = glCreateShader(shader.first);
       shaderIds.push_back(shaderId);
 
       // Attach the shader source code and compile the shader
-      gl.glShaderSource(shaderId, 1, &shaderSourceC, NULL);
-      gl.glCompileShader(shaderId);
+      glShaderSource(shaderId, 1, &shaderSourceC, NULL);
+      glCompileShader(shaderId);
 
       // Check for errors
-      gl.glGetShaderiv(shaderId, GL_COMPILE_STATUS, &glSuccess);
-      gl.glGetShaderInfoLog(shaderId, kInfoLogBufSize, &logLength, infoLog);
+      glGetShaderiv(shaderId, GL_COMPILE_STATUS, &glSuccess);
+      glGetShaderInfoLog(shaderId, kInfoLogBufSize, &logLength, infoLog);
       if (!glSuccess)
       {
          logger_->error("Shader compilation failed: {}", infoLog);
@@ -146,13 +140,13 @@ bool ShaderProgram::Load(
    {
       for (auto& shaderId : shaderIds)
       {
-         gl.glAttachShader(p->id_, shaderId);
+         glAttachShader(p->id_, shaderId);
       }
-      gl.glLinkProgram(p->id_);
+      glLinkProgram(p->id_);
 
       // Check for errors
-      gl.glGetProgramiv(p->id_, GL_LINK_STATUS, &glSuccess);
-      gl.glGetProgramInfoLog(p->id_, kInfoLogBufSize, &logLength, infoLog);
+      glGetProgramiv(p->id_, GL_LINK_STATUS, &glSuccess);
+      glGetProgramInfoLog(p->id_, kInfoLogBufSize, &logLength, infoLog);
       if (!glSuccess)
       {
          logger_->error("Shader program link failed: {}", infoLog);
@@ -167,7 +161,7 @@ bool ShaderProgram::Load(
    // Delete shaders
    for (auto& shaderId : shaderIds)
    {
-      gl.glDeleteShader(shaderId);
+      glDeleteShader(shaderId);
    }
 
    return success;
@@ -175,7 +169,7 @@ bool ShaderProgram::Load(
 
 void ShaderProgram::Use() const
 {
-   p->gl_.glUseProgram(p->id_);
+   glUseProgram(p->id_);
 }
 
 } // namespace gl

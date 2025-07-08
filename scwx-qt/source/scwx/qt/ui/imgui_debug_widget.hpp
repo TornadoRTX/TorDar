@@ -1,5 +1,7 @@
 #pragma once
 
+#include <scwx/qt/gl/gl.hpp>
+
 #include <QOpenGLWidget>
 
 struct ImGuiContext;

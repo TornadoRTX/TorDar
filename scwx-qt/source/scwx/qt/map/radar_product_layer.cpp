@@ -78,42 +78,40 @@ void RadarProductLayer::Initialize(
 
    auto glContext = gl_context();
 
-   gl::OpenGLFunctions& gl = glContext->gl();
-
    // Load and configure radar shader
    p->shaderProgram_ =
       glContext->GetShaderProgram(":/gl/radar.vert", ":/gl/radar.frag");
 
    p->uMVPMatrixLocation_ =
-      gl.glGetUniformLocation(p->shaderProgram_->id(), "uMVPMatrix");
+      glGetUniformLocation(p->shaderProgram_->id(), "uMVPMatrix");
    if (p->uMVPMatrixLocation_ == -1)
    {
       logger_->warn("Could not find uMVPMatrix");
    }
 
    p->uMapScreenCoordLocation_ =
-      gl.glGetUniformLocation(p->shaderProgram_->id(), "uMapScreenCoord");
+      glGetUniformLocation(p->shaderProgram_->id(), "uMapScreenCoord");
    if (p->uMapScreenCoordLocation_ == -1)
    {
       logger_->warn("Could not find uMapScreenCoord");
    }
 
    p->uDataMomentOffsetLocation_ =
-      gl.glGetUniformLocation(p->shaderProgram_->id(), "uDataMomentOffset");
+      glGetUniformLocation(p->shaderProgram_->id(), "uDataMomentOffset");
    if (p->uDataMomentOffsetLocation_ == -1)
    {
       logger_->warn("Could not find uDataMomentOffset");
    }
 
    p->uDataMomentScaleLocation_ =
-      gl.glGetUniformLocation(p->shaderProgram_->id(), "uDataMomentScale");
+      glGetUniformLocation(p->shaderProgram_->id(), "uDataMomentScale");
    if (p->uDataMomentScaleLocation_ == -1)
    {
       logger_->warn("Could not find uDataMomentScale");
    }
 
    p->uCFPEnabledLocation_ =
-      gl.glGetUniformLocation(p->shaderProgram_->id(), "uCFPEnabled");
+      glGetUniformLocation(p->shaderProgram_->id(), "uCFPEnabled");
    if (p->uCFPEnabledLocation_ == -1)
    {
       logger_->warn("Could not find uCFPEnabled");
@@ -122,22 +120,22 @@ void RadarProductLayer::Initialize(
    p->shaderProgram_->Use();
 
    // Generate a vertex array object
-   gl.glGenVertexArrays(1, &p->vao_);
+   glGenVertexArrays(1, &p->vao_);
 
    // Generate vertex buffer objects
-   gl.glGenBuffers(3, p->vbo_.data());
+   glGenBuffers(3, p->vbo_.data());
 
    // Update radar sweep
    p->sweepNeedsUpdate_ = true;
    UpdateSweep(mapContext);
 
    // Create color table
-   gl.glGenTextures(1, &p->texture_);
+   glGenTextures(1, &p->texture_);
    p->colorTableNeedsUpdate_ = true;
    UpdateColorTable(mapContext);
-   gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-   gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-   gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 
    auto radarProductView = mapContext->radar_product_view();
    connect(radarProductView.get(),
@@ -153,8 +151,6 @@ void RadarProductLayer::Initialize(
 void RadarProductLayer::UpdateSweep(
    const std::shared_ptr<MapContext>& mapContext)
 {
-   gl::OpenGLFunctions& gl = gl_context()->gl();
-
    boost::timer::cpu_timer timer;
 
    std::shared_ptr<view::RadarProductView> radarProductView =
@@ -174,20 +170,20 @@ void RadarProductLayer::UpdateSweep(
    const std::vector<float>& vertices = radarProductView->vertices();
 
    // Bind a vertex array object
-   gl.glBindVertexArray(p->vao_);
+   glBindVertexArray(p->vao_);
 
    // Buffer vertices
-   gl.glBindBuffer(GL_ARRAY_BUFFER, p->vbo_[0]);
+   glBindBuffer(GL_ARRAY_BUFFER, p->vbo_[0]);
    timer.start();
-   gl.glBufferData(GL_ARRAY_BUFFER,
-                   vertices.size() * sizeof(GLfloat),
-                   vertices.data(),
-                   GL_STATIC_DRAW);
+   glBufferData(GL_ARRAY_BUFFER,
+                vertices.size() * sizeof(GLfloat),
+                vertices.data(),
+                GL_STATIC_DRAW);
    timer.stop();
    logger_->debug("Vertices buffered in {}", timer.format(6, "%ws"));
 
-   gl.glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, static_cast<void*>(0));
-   gl.glEnableVertexAttribArray(0);
+   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, static_cast<void*>(0));
+   glEnableVertexAttribArray(0);
 
    // Buffer data moments
    const GLvoid* data;
@@ -206,14 +202,14 @@ void RadarProductLayer::UpdateSweep(
       type = GL_UNSIGNED_SHORT;
    }
 
-   gl.glBindBuffer(GL_ARRAY_BUFFER, p->vbo_[1]);
+   glBindBuffer(GL_ARRAY_BUFFER, p->vbo_[1]);
    timer.start();
-   gl.glBufferData(GL_ARRAY_BUFFER, dataSize, data, GL_STATIC_DRAW);
+   glBufferData(GL_ARRAY_BUFFER, dataSize, data, GL_STATIC_DRAW);
    timer.stop();
    logger_->debug("Data moments buffered in {}", timer.format(6, "%ws"));
 
-   gl.glVertexAttribIPointer(1, 1, type, 0, static_cast<void*>(0));
-   gl.glEnableVertexAttribArray(1);
+   glVertexAttribIPointer(1, 1, type, 0, static_cast<void*>(0));
+   glEnableVertexAttribArray(1);
 
    // Buffer CFP data
    const GLvoid* cfpData;
@@ -235,18 +231,18 @@ void RadarProductLayer::UpdateSweep(
          cfpType = GL_UNSIGNED_SHORT;
       }
 
-      gl.glBindBuffer(GL_ARRAY_BUFFER, p->vbo_[2]);
+      glBindBuffer(GL_ARRAY_BUFFER, p->vbo_[2]);
       timer.start();
-      gl.glBufferData(GL_ARRAY_BUFFER, cfpDataSize, cfpData, GL_STATIC_DRAW);
+      glBufferData(GL_ARRAY_BUFFER, cfpDataSize, cfpData, GL_STATIC_DRAW);
       timer.stop();
       logger_->debug("CFP moments buffered in {}", timer.format(6, "%ws"));
 
-      gl.glVertexAttribIPointer(2, 1, cfpType, 0, static_cast<void*>(0));
-      gl.glEnableVertexAttribArray(2);
+      glVertexAttribIPointer(2, 1, cfpType, 0, static_cast<void*>(0));
+      glEnableVertexAttribArray(2);
    }
    else
    {
-      gl.glDisableVertexAttribArray(2);
+      glDisableVertexAttribArray(2);
    }
 
    p->numVertices_ = vertices.size() / 2;
@@ -256,18 +252,17 @@ void RadarProductLayer::Render(
    const std::shared_ptr<MapContext>&            mapContext,
    const QMapLibre::CustomLayerRenderParameters& params)
 {
-   gl::OpenGLFunctions& gl = gl_context()->gl();
 
    p->shaderProgram_->Use();
 
    // Set OpenGL blend mode for transparency
-   gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
    const bool wireframeEnabled = mapContext->settings().radarWireframeEnabled_;
    if (wireframeEnabled)
    {
       // Set polygon mode to draw wireframe
-      gl.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
    }
 
    if (p->colorTableNeedsUpdate_)
@@ -291,28 +286,28 @@ void RadarProductLayer::Render(
                             glm::radians<float>(params.bearing),
                             glm::vec3(0.0f, 0.0f, 1.0f));
 
-   gl.glUniform2fv(p->uMapScreenCoordLocation_,
-                   1,
-                   glm::value_ptr(util::maplibre::LatLongToScreenCoordinate(
-                      {params.latitude, params.longitude})));
+   glUniform2fv(p->uMapScreenCoordLocation_,
+                1,
+                glm::value_ptr(util::maplibre::LatLongToScreenCoordinate(
+                   {params.latitude, params.longitude})));
 
-   gl.glUniformMatrix4fv(
+   glUniformMatrix4fv(
       p->uMVPMatrixLocation_, 1, GL_FALSE, glm::value_ptr(uMVPMatrix));
 
-   gl.glUniform1i(p->uCFPEnabledLocation_, p->cfpEnabled_ ? 1 : 0);
+   glUniform1i(p->uCFPEnabledLocation_, p->cfpEnabled_ ? 1 : 0);
 
-   gl.glUniform1ui(p->uDataMomentOffsetLocation_, p->rangeMin_);
-   gl.glUniform1f(p->uDataMomentScaleLocation_, p->scale_);
+   glUniform1ui(p->uDataMomentOffsetLocation_, p->rangeMin_);
+   glUniform1f(p->uDataMomentScaleLocation_, p->scale_);
 
-   gl.glActiveTexture(GL_TEXTURE0);
-   gl.glBindTexture(GL_TEXTURE_1D, p->texture_);
-   gl.glBindVertexArray(p->vao_);
-   gl.glDrawArrays(GL_TRIANGLES, 0, p->numVertices_);
+   glActiveTexture(GL_TEXTURE0);
+   glBindTexture(GL_TEXTURE_1D, p->texture_);
+   glBindVertexArray(p->vao_);
+   glDrawArrays(GL_TRIANGLES, 0, p->numVertices_);
 
    if (wireframeEnabled)
    {
       // Restore polygon mode to default
-      gl.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
    }
 
    SCWX_GL_CHECK_ERROR();
@@ -322,10 +317,8 @@ void RadarProductLayer::Deinitialize()
 {
    logger_->debug("Deinitialize()");
 
-   gl::OpenGLFunctions& gl = gl_context()->gl();
-
-   gl.glDeleteVertexArrays(1, &p->vao_);
-   gl.glDeleteBuffers(3, p->vbo_.data());
+   glDeleteVertexArrays(1, &p->vao_);
+   glDeleteBuffers(3, p->vbo_.data());
 
    p->uMVPMatrixLocation_        = GL_INVALID_INDEX;
    p->uMapScreenCoordLocation_   = GL_INVALID_INDEX;
@@ -536,7 +529,6 @@ void RadarProductLayer::UpdateColorTable(
 
    p->colorTableNeedsUpdate_ = false;
 
-   gl::OpenGLFunctions&                    gl = gl_context()->gl();
    std::shared_ptr<view::RadarProductView> radarProductView =
       mapContext->radar_product_view();
 
@@ -547,17 +539,17 @@ void RadarProductLayer::UpdateColorTable(
 
    const float scale = rangeMax - rangeMin;
 
-   gl.glActiveTexture(GL_TEXTURE0);
-   gl.glBindTexture(GL_TEXTURE_1D, p->texture_);
-   gl.glTexImage1D(GL_TEXTURE_1D,
-                   0,
-                   GL_RGBA,
-                   (GLsizei) colorTable.size(),
-                   0,
-                   GL_RGBA,
-                   GL_UNSIGNED_BYTE,
-                   colorTable.data());
-   gl.glGenerateMipmap(GL_TEXTURE_1D);
+   glActiveTexture(GL_TEXTURE0);
+   glBindTexture(GL_TEXTURE_1D, p->texture_);
+   glTexImage1D(GL_TEXTURE_1D,
+                0,
+                GL_RGBA,
+                (GLsizei) colorTable.size(),
+                0,
+                GL_RGBA,
+                GL_UNSIGNED_BYTE,
+                colorTable.data());
+   glGenerateMipmap(GL_TEXTURE_1D);
 
    p->rangeMin_ = rangeMin;
    p->scale_    = scale;

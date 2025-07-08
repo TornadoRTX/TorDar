@@ -132,8 +132,6 @@ void PlacefileLayer::Render(
    const std::shared_ptr<MapContext>&            mapContext,
    const QMapLibre::CustomLayerRenderParameters& params)
 {
-   gl::OpenGLFunctions& gl = gl_context()->gl();
-
    std::shared_ptr<manager::PlacefileManager> placefileManager =
       manager::PlacefileManager::Instance();
 

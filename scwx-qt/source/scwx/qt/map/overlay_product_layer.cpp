@@ -142,8 +142,6 @@ void OverlayProductLayer::Render(
    const std::shared_ptr<MapContext>&            mapContext,
    const QMapLibre::CustomLayerRenderParameters& params)
 {
-   gl::OpenGLFunctions& gl = gl_context()->gl();
-
    if (p->stiNeedsUpdate_)
    {
       p->UpdateStormTrackingInformation(mapContext);

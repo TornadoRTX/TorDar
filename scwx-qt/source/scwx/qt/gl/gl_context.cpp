@@ -30,9 +30,6 @@ public:
    static std::size_t
    GetShaderKey(std::initializer_list<std::pair<GLenum, std::string>> shaders);
 
-   gl::OpenGLFunctions*  gl_ {nullptr};
-   QOpenGLFunctions_3_0* gl30_ {nullptr};
-
    bool glInitialized_ {false};
 
    std::unordered_map<std::size_t, std::shared_ptr<gl::ShaderProgram>>
@@ -51,18 +48,6 @@ GlContext::~GlContext() = default;
 GlContext::GlContext(GlContext&&) noexcept            = default;
 GlContext& GlContext::operator=(GlContext&&) noexcept = default;
 
-gl::OpenGLFunctions& GlContext::gl()
-{
-   return *p->gl_;
-}
-
-#if !defined(__APPLE__)
-QOpenGLFunctions_3_0& GlContext::gl30()
-{
-   return *p->gl30_;
-}
-#endif
-
 std::uint64_t GlContext::texture_buffer_count() const
 {
    return p->textureBufferCount_;
@@ -75,26 +60,21 @@ void GlContext::Impl::InitializeGL()
       return;
    }
 
-   // QOpenGLFunctions objects will not be freed. Since "destruction" takes
-   // place at the end of program execution, it is OK to intentionally leak
-   // these.
-
-   // NOLINTBEGIN(cppcoreguidelines-owning-memory)
-   gl_   = new gl::OpenGLFunctions();
-   gl30_ = new QOpenGLFunctions_3_0();
-   // NOLINTEND(cppcoreguidelines-owning-memory)
-
-   gl_->initializeOpenGLFunctions();
-   gl30_->initializeOpenGLFunctions();
+   GLenum error = glewInit();
+   if (error != GLEW_OK)
+   {
+      logger_->error("glewInit failed: {}",
+                     reinterpret_cast<const char*>(glewGetErrorString(error)));
+   }
 
    logger_->info("OpenGL Version: {}",
-                 reinterpret_cast<const char*>(gl_->glGetString(GL_VERSION)));
+                 reinterpret_cast<const char*>(glGetString(GL_VERSION)));
    logger_->info("OpenGL Vendor: {}",
-                 reinterpret_cast<const char*>(gl_->glGetString(GL_VENDOR)));
+                 reinterpret_cast<const char*>(glGetString(GL_VENDOR)));
    logger_->info("OpenGL Renderer: {}",
-                 reinterpret_cast<const char*>(gl_->glGetString(GL_RENDERER)));
+                 reinterpret_cast<const char*>(glGetString(GL_RENDERER)));
 
-   gl_->glGenTextures(1, &textureAtlas_);
+   glGenTextures(1, &textureAtlas_);
 
    glInitialized_ = true;
 }
@@ -119,7 +99,7 @@ std::shared_ptr<gl::ShaderProgram> GlContext::GetShaderProgram(
 
    if (it == p->shaderProgramMap_.end())
    {
-      shaderProgram = std::make_shared<gl::ShaderProgram>(*p->gl_);
+      shaderProgram = std::make_shared<gl::ShaderProgram>();
       shaderProgram->Load(shaders);
       p->shaderProgramMap_[key] = shaderProgram;
    }
@@ -142,7 +122,7 @@ GLuint GlContext::GetTextureAtlas()
    if (p->textureBufferCount_ != textureAtlas.BuildCount())
    {
       p->textureBufferCount_ = textureAtlas.BuildCount();
-      textureAtlas.BufferAtlas(*p->gl_, p->textureAtlas_);
+      textureAtlas.BufferAtlas(p->textureAtlas_);
    }
 
    return p->textureAtlas_;
@@ -155,10 +135,8 @@ void GlContext::Initialize()
 
 void GlContext::StartFrame()
 {
-   auto& gl = p->gl_;
-
-   gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-   gl->glClear(GL_COLOR_BUFFER_BIT);
+   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+   glClear(GL_COLOR_BUFFER_BIT);
 }
 
 std::size_t GlContext::Impl::GetShaderKey(
