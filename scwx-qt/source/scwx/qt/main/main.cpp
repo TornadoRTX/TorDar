@@ -258,11 +258,11 @@ OverrideDefaultStyle([[maybe_unused]] const std::vector<std::string>& args)
 #endif
 }
 
-constexpr std::string NVIDIA_ID = "0x10de";
-static void           OverridePlatform()
+static void OverridePlatform()
 {
 #if defined(__linux__)
-   namespace fs = std::filesystem;
+   static const std::string NVIDIA_ID = "0x10de";
+   namespace fs                       = std::filesystem;
    for (const auto& entry : fs::directory_iterator("/sys/class/drm"))
    {
       if (!entry.is_directory() ||
