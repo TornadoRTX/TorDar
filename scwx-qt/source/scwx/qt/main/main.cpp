@@ -151,8 +151,23 @@ int main(int argc, char* argv[])
       // Run Qt main loop
       {
          scwx::qt::main::MainWindow w;
-         w.show();
-         result = a.exec();
+
+         bool initialized = false;
+
+         try
+         {
+            w.show();
+            initialized = true;
+         }
+         catch (const std::exception& ex)
+         {
+            logger_->critical(ex.what());
+         }
+
+         if (initialized)
+         {
+            result = a.exec();
+         }
       }
    }
 

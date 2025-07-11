@@ -3,12 +3,9 @@
 #include <scwx/util/logger.hpp>
 
 #include <boost/container_hash/hash.hpp>
+#include <QMessageBox>
 
-namespace scwx
-{
-namespace qt
-{
-namespace gl
+namespace scwx::qt::gl
 {
 
 static const std::string logPrefix_ = "scwx::qt::gl::gl_context";
@@ -63,16 +60,49 @@ void GlContext::Impl::InitializeGL()
    const GLenum error = glewInit();
    if (error != GLEW_OK)
    {
-      logger_->error("glewInit failed: {}",
-                     reinterpret_cast<const char*>(glewGetErrorString(error)));
+      auto glewErrorString =
+         reinterpret_cast<const char*>(glewGetErrorString(error));
+      logger_->error("glewInit failed: {}", glewErrorString);
+
+      QMessageBox::critical(
+         nullptr,
+         "Supercell Wx",
+         QString("Unable to initialize OpenGL: %1").arg(glewErrorString));
+
+      throw std::runtime_error("Unable to initialize OpenGL");
    }
 
-   logger_->info("OpenGL Version: {}",
-                 reinterpret_cast<const char*>(glGetString(GL_VERSION)));
-   logger_->info("OpenGL Vendor: {}",
-                 reinterpret_cast<const char*>(glGetString(GL_VENDOR)));
-   logger_->info("OpenGL Renderer: {}",
-                 reinterpret_cast<const char*>(glGetString(GL_RENDERER)));
+   auto glVersion  = reinterpret_cast<const char*>(glGetString(GL_VERSION));
+   auto glVendor   = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
+   auto glRenderer = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
+
+   logger_->info("OpenGL Version: {}", glVersion);
+   logger_->info("OpenGL Vendor: {}", glVendor);
+   logger_->info("OpenGL Renderer: {}", glRenderer);
+
+   // Get OpenGL version
+   GLint major = 0;
+   GLint minor = 0;
+   glGetIntegerv(GL_MAJOR_VERSION, &major);
+   glGetIntegerv(GL_MINOR_VERSION, &minor);
+
+   if (major < 3 || (major == 3 && minor < 3))
+   {
+      logger_->error(
+         "OpenGL 3.3 or greater is required, found {}.{}", major, minor);
+
+      QMessageBox::critical(
+         nullptr,
+         "Supercell Wx",
+         QString("OpenGL 3.3 or greater is required, found %1.%2\n\n%3\n%4\n%5")
+            .arg(major)
+            .arg(minor)
+            .arg(glVersion)
+            .arg(glVendor)
+            .arg(glRenderer));
+
+      throw std::runtime_error("OpenGL version too low");
+   }
 
    glGenTextures(1, &textureAtlas_);
 
@@ -151,6 +181,4 @@ std::size_t GlContext::Impl::GetShaderKey(
    return seed;
 }
 
-} // namespace gl
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::gl
