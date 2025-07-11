@@ -34,8 +34,7 @@ public:
           std::make_shared<gl::draw::PlacefilePolygons>(glContext)},
        placefileTriangles_ {
           std::make_shared<gl::draw::PlacefileTriangles>(glContext)},
-       placefileText_ {
-          std::make_shared<gl::draw::PlacefileText>(glContext, placefileName)}
+       placefileText_ {std::make_shared<gl::draw::PlacefileText>(placefileName)}
    {
       ConnectSignals();
    }

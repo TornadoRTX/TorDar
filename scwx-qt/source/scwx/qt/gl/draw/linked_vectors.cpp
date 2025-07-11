@@ -63,13 +63,11 @@ class LinkedVectors::Impl
 {
 public:
    explicit Impl(std::shared_ptr<GlContext> context) :
-       context_ {context}, geoLines_ {std::make_shared<GeoLines>(context)}
+       geoLines_ {std::make_shared<GeoLines>(context)}
    {
    }
 
    ~Impl() {}
-
-   std::shared_ptr<GlContext> context_;
 
    bool borderEnabled_ {true};
    bool visible_ {true};

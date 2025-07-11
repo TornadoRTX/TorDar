@@ -148,6 +148,10 @@ void PlacefileLines::Initialize()
    glBindBuffer(GL_ARRAY_BUFFER, p->vbo_[0]);
    glBufferData(GL_ARRAY_BUFFER, 0u, nullptr, GL_DYNAMIC_DRAW);
 
+   // NOLINTBEGIN(modernize-use-nullptr)
+   // NOLINTBEGIN(performance-no-int-to-ptr)
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+
    // aLatLong
    glVertexAttribPointer(0,
                          2,
@@ -205,6 +209,10 @@ void PlacefileLines::Initialize()
 
    // aDisplayed
    glVertexAttribI1i(7, 1);
+
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+   // NOLINTEND(performance-no-int-to-ptr)
+   // NOLINTEND(modernize-use-nullptr)
 
    p->dirty_ = true;
 }
@@ -470,17 +478,19 @@ void PlacefileLines::Impl::Update()
    {
       // Buffer lines data
       glBindBuffer(GL_ARRAY_BUFFER, vbo_[0]);
-      glBufferData(GL_ARRAY_BUFFER,
-                   sizeof(float) * currentLinesBuffer_.size(),
-                   currentLinesBuffer_.data(),
-                   GL_DYNAMIC_DRAW);
+      glBufferData(
+         GL_ARRAY_BUFFER,
+         static_cast<GLsizeiptr>(sizeof(float) * currentLinesBuffer_.size()),
+         currentLinesBuffer_.data(),
+         GL_DYNAMIC_DRAW);
 
       // Buffer threshold data
       glBindBuffer(GL_ARRAY_BUFFER, vbo_[1]);
-      glBufferData(GL_ARRAY_BUFFER,
-                   sizeof(GLint) * currentIntegerBuffer_.size(),
-                   currentIntegerBuffer_.data(),
-                   GL_DYNAMIC_DRAW);
+      glBufferData(
+         GL_ARRAY_BUFFER,
+         static_cast<GLsizeiptr>(sizeof(GLint) * currentIntegerBuffer_.size()),
+         currentIntegerBuffer_.data(),
+         GL_DYNAMIC_DRAW);
    }
 
    dirty_ = false;

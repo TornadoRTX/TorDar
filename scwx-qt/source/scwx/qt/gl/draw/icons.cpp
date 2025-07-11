@@ -140,6 +140,10 @@ void Icons::Initialize()
    glBindBuffer(GL_ARRAY_BUFFER, p->vbo_[0]);
    glBufferData(GL_ARRAY_BUFFER, 0u, nullptr, GL_DYNAMIC_DRAW);
 
+   // NOLINTBEGIN(modernize-use-nullptr)
+   // NOLINTBEGIN(performance-no-int-to-ptr)
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+
    // aVertex
    glVertexAttribPointer(0,
                          2,
@@ -196,6 +200,10 @@ void Icons::Initialize()
                          kPointsPerTexCoord * sizeof(float),
                          static_cast<void*>(0));
    glEnableVertexAttribArray(2);
+
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+   // NOLINTEND(performance-no-int-to-ptr)
+   // NOLINTEND(modernize-use-nullptr)
 
    p->dirty_ = true;
 }
@@ -689,10 +697,11 @@ void Icons::Impl::Update(bool textureAtlasChanged)
 
       // Buffer texture data
       glBindBuffer(GL_ARRAY_BUFFER, vbo_[1]);
-      glBufferData(GL_ARRAY_BUFFER,
-                   sizeof(float) * textureBuffer_.size(),
-                   textureBuffer_.data(),
-                   GL_DYNAMIC_DRAW);
+      glBufferData(
+         GL_ARRAY_BUFFER,
+         static_cast<GLsizeiptr>(sizeof(float) * textureBuffer_.size()),
+         textureBuffer_.data(),
+         GL_DYNAMIC_DRAW);
 
       lastTextureAtlasChanged_ = false;
    }
@@ -702,10 +711,11 @@ void Icons::Impl::Update(bool textureAtlasChanged)
    {
       // Buffer vertex data
       glBindBuffer(GL_ARRAY_BUFFER, vbo_[0]);
-      glBufferData(GL_ARRAY_BUFFER,
-                   sizeof(float) * currentIconBuffer_.size(),
-                   currentIconBuffer_.data(),
-                   GL_DYNAMIC_DRAW);
+      glBufferData(
+         GL_ARRAY_BUFFER,
+         static_cast<GLsizeiptr>(sizeof(float) * currentIconBuffer_.size()),
+         currentIconBuffer_.data(),
+         GL_DYNAMIC_DRAW);
 
       numVertices_ =
          static_cast<GLsizei>(currentIconBuffer_.size() / kPointsPerVertex);

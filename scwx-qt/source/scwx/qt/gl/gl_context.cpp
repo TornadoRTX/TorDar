@@ -60,7 +60,7 @@ void GlContext::Impl::InitializeGL()
       return;
    }
 
-   GLenum error = glewInit();
+   const GLenum error = glewInit();
    if (error != GLEW_OK)
    {
       logger_->error("glewInit failed: {}",

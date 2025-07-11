@@ -25,9 +25,8 @@ static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 class PlacefileText::Impl
 {
 public:
-   explicit Impl(const std::shared_ptr<GlContext>& context,
-                 const std::string&                placefileName) :
-       context_ {context}, placefileName_ {placefileName}
+   explicit Impl(const std::string& placefileName) :
+       placefileName_ {placefileName}
    {
    }
 
@@ -42,8 +41,6 @@ public:
                    boost::gil::rgba8_pixel_t                     color,
                    float                                         x,
                    float                                         y);
-
-   std::shared_ptr<GlContext> context_;
 
    std::string placefileName_;
 
@@ -70,9 +67,8 @@ public:
    std::vector<std::shared_ptr<types::ImGuiFont>> newFonts_ {};
 };
 
-PlacefileText::PlacefileText(const std::shared_ptr<GlContext>& context,
-                             const std::string&                placefileName) :
-    DrawItem(), p(std::make_unique<Impl>(context, placefileName))
+PlacefileText::PlacefileText(const std::string& placefileName) :
+    DrawItem(), p(std::make_unique<Impl>(placefileName))
 {
 }
 PlacefileText::~PlacefileText() = default;

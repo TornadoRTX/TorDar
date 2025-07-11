@@ -30,8 +30,8 @@ static const std::string logPrefix_ = "scwx::qt::gl::draw::draw_item";
 class DrawItem::Impl
 {
 public:
-   explicit Impl() {}
-   ~Impl() {}
+   explicit Impl() = default;
+   ~Impl()         = default;
 };
 
 DrawItem::DrawItem() : p(std::make_unique<Impl>()) {}

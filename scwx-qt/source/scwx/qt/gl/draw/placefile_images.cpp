@@ -160,6 +160,10 @@ void PlacefileImages::Initialize()
    glBindBuffer(GL_ARRAY_BUFFER, p->vbo_[0]);
    glBufferData(GL_ARRAY_BUFFER, 0u, nullptr, GL_DYNAMIC_DRAW);
 
+   // NOLINTBEGIN(modernize-use-nullptr)
+   // NOLINTBEGIN(performance-no-int-to-ptr)
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+
    // aLatLong
    glVertexAttribPointer(0,
                          2,
@@ -220,6 +224,10 @@ void PlacefileImages::Initialize()
 
    // aDisplayed
    glVertexAttribI1i(7, 1);
+
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+   // NOLINTEND(performance-no-int-to-ptr)
+   // NOLINTEND(modernize-use-nullptr)
 
    p->dirty_ = true;
 }
@@ -446,10 +454,11 @@ void PlacefileImages::Impl::Update(bool textureAtlasChanged)
 
       // Buffer texture data
       glBindBuffer(GL_ARRAY_BUFFER, vbo_[1]);
-      glBufferData(GL_ARRAY_BUFFER,
-                   sizeof(float) * textureBuffer_.size(),
-                   textureBuffer_.data(),
-                   GL_DYNAMIC_DRAW);
+      glBufferData(
+         GL_ARRAY_BUFFER,
+         static_cast<GLsizeiptr>(sizeof(float) * textureBuffer_.size()),
+         textureBuffer_.data(),
+         GL_DYNAMIC_DRAW);
    }
 
    // If buffers need updating
@@ -457,17 +466,19 @@ void PlacefileImages::Impl::Update(bool textureAtlasChanged)
    {
       // Buffer vertex data
       glBindBuffer(GL_ARRAY_BUFFER, vbo_[0]);
-      glBufferData(GL_ARRAY_BUFFER,
-                   sizeof(float) * currentImageBuffer_.size(),
-                   currentImageBuffer_.data(),
-                   GL_DYNAMIC_DRAW);
+      glBufferData(
+         GL_ARRAY_BUFFER,
+         static_cast<GLsizeiptr>(sizeof(float) * currentImageBuffer_.size()),
+         currentImageBuffer_.data(),
+         GL_DYNAMIC_DRAW);
 
       // Buffer threshold data
       glBindBuffer(GL_ARRAY_BUFFER, vbo_[2]);
-      glBufferData(GL_ARRAY_BUFFER,
-                   sizeof(GLint) * currentIntegerBuffer_.size(),
-                   currentIntegerBuffer_.data(),
-                   GL_DYNAMIC_DRAW);
+      glBufferData(
+         GL_ARRAY_BUFFER,
+         static_cast<GLsizeiptr>(sizeof(GLint) * currentIntegerBuffer_.size()),
+         currentIntegerBuffer_.data(),
+         GL_DYNAMIC_DRAW);
 
       numVertices_ =
          static_cast<GLsizei>(currentImageBuffer_.size() / kPointsPerVertex);

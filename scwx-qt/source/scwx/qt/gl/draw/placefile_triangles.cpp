@@ -117,6 +117,10 @@ void PlacefileTriangles::Initialize()
    glBindBuffer(GL_ARRAY_BUFFER, p->vbo_[0]);
    glBufferData(GL_ARRAY_BUFFER, 0u, nullptr, GL_DYNAMIC_DRAW);
 
+   // NOLINTBEGIN(modernize-use-nullptr)
+   // NOLINTBEGIN(performance-no-int-to-ptr)
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+
    // aScreenCoord
    glVertexAttribPointer(0,
                          2,
@@ -162,6 +166,10 @@ void PlacefileTriangles::Initialize()
                           kIntegersPerVertex_ * sizeof(GLint),
                           reinterpret_cast<void*>(1 * sizeof(GLint)));
    glEnableVertexAttribArray(4);
+
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+   // NOLINTEND(performance-no-int-to-ptr)
+   // NOLINTEND(modernize-use-nullptr)
 
    p->dirty_ = true;
 }
@@ -318,17 +326,19 @@ void PlacefileTriangles::Impl::Update()
 
       // Buffer vertex data
       glBindBuffer(GL_ARRAY_BUFFER, vbo_[0]);
-      glBufferData(GL_ARRAY_BUFFER,
-                   sizeof(GLfloat) * currentBuffer_.size(),
-                   currentBuffer_.data(),
-                   GL_DYNAMIC_DRAW);
+      glBufferData(
+         GL_ARRAY_BUFFER,
+         static_cast<GLsizeiptr>(sizeof(GLfloat) * currentBuffer_.size()),
+         currentBuffer_.data(),
+         GL_DYNAMIC_DRAW);
 
       // Buffer threshold data
       glBindBuffer(GL_ARRAY_BUFFER, vbo_[1]);
-      glBufferData(GL_ARRAY_BUFFER,
-                   sizeof(GLint) * currentIntegerBuffer_.size(),
-                   currentIntegerBuffer_.data(),
-                   GL_DYNAMIC_DRAW);
+      glBufferData(
+         GL_ARRAY_BUFFER,
+         static_cast<GLsizeiptr>(sizeof(GLint) * currentIntegerBuffer_.size()),
+         currentIntegerBuffer_.data(),
+         GL_DYNAMIC_DRAW);
 
       numVertices_ =
          static_cast<GLsizei>(currentBuffer_.size() / kPointsPerVertex);

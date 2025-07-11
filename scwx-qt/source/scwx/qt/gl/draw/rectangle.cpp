@@ -101,6 +101,8 @@ void Rectangle::Initialize()
    glBufferData(
       GL_ARRAY_BUFFER, sizeof(float) * BUFFER_LENGTH, nullptr, GL_DYNAMIC_DRAW);
 
+   // NOLINTBEGIN(performance-no-int-to-ptr)
+
    glVertexAttribPointer(0,
                          3,
                          GL_FLOAT,
@@ -116,6 +118,8 @@ void Rectangle::Initialize()
                          POINTS_PER_VERTEX * sizeof(float),
                          reinterpret_cast<void*>(3 * sizeof(float)));
    glEnableVertexAttribArray(1);
+
+   // NOLINTEND(performance-no-int-to-ptr)
 
    p->dirty_ = true;
 }
@@ -134,12 +138,14 @@ void Rectangle::Render(const QMapLibre::CustomLayerRenderParameters& params)
       if (p->fillColor_.has_value())
       {
          // Draw fill
+         // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
          glDrawArrays(GL_TRIANGLES, 24, 6);
       }
 
       if (p->borderWidth_ > 0.0f)
       {
          // Draw border
+         // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
          glDrawArrays(GL_TRIANGLES, 0, 24);
       }
    }
@@ -283,7 +289,7 @@ void Rectangle::Impl::Update()
 
       glBufferData(GL_ARRAY_BUFFER,
                    sizeof(float) * BUFFER_LENGTH,
-                   buffer,
+                   static_cast<const void*>(buffer),
                    GL_DYNAMIC_DRAW);
 
       dirty_ = false;
