@@ -746,6 +746,7 @@ target_link_libraries(scwx-qt PUBLIC Qt${QT_VERSION_MAJOR}::Widgets
                                      GEOS::geos
                                      GEOS::geos_cxx_flags
                                      glad_gl_core_33
+                                     GLEW::GLEW
                                      glm::glm
                                      imgui
                                      qt6ct-common
@@ -753,8 +754,7 @@ target_link_libraries(scwx-qt PUBLIC Qt${QT_VERSION_MAJOR}::Widgets
                                      SQLite::SQLite3
                                      wxdata)
 
-target_link_libraries(supercell-wx PRIVATE GLEW::GLEW
-                                           scwx-qt
+target_link_libraries(supercell-wx PRIVATE scwx-qt
                                            wxdata)
 
 if (LINUX)
