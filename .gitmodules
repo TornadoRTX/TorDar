@@ -40,3 +40,6 @@
 [submodule "external/qt6ct"]
 	path = external/qt6ct
 	url = https://github.com/AdenKoperczak/qt6ct.git
+[submodule "external/glad"]
+	path = external/glad
+	url = https://github.com/Dav1dde/glad.git
