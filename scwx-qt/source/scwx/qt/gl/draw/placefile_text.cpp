@@ -10,13 +10,7 @@
 #include <imgui.h>
 #include <mbgl/util/constants.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace gl
-{
-namespace draw
+namespace scwx::qt::gl::draw
 {
 
 static const std::string logPrefix_ = "scwx::qt::gl::draw::placefile_text";
@@ -25,13 +19,16 @@ static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 class PlacefileText::Impl
 {
 public:
-   explicit Impl(const std::shared_ptr<GlContext>& context,
-                 const std::string&                placefileName) :
-       context_ {context}, placefileName_ {placefileName}
+   explicit Impl(std::string placefileName) :
+       placefileName_ {std::move(placefileName)}
    {
    }
+   ~Impl() = default;
 
-   ~Impl() {}
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    void RenderTextDrawItem(
       const QMapLibre::CustomLayerRenderParameters&             params,
@@ -42,8 +39,6 @@ public:
                    boost::gil::rgba8_pixel_t                     color,
                    float                                         x,
                    float                                         y);
-
-   std::shared_ptr<GlContext> context_;
 
    std::string placefileName_;
 
@@ -70,9 +65,8 @@ public:
    std::vector<std::shared_ptr<types::ImGuiFont>> newFonts_ {};
 };
 
-PlacefileText::PlacefileText(const std::shared_ptr<GlContext>& context,
-                             const std::string&                placefileName) :
-    DrawItem(context->gl()), p(std::make_unique<Impl>(context, placefileName))
+PlacefileText::PlacefileText(const std::string& placefileName) :
+    DrawItem(), p(std::make_unique<Impl>(placefileName))
 {
 }
 PlacefileText::~PlacefileText() = default;
@@ -310,7 +304,4 @@ void PlacefileText::FinishText()
    p->newFonts_.clear();
 }
 
-} // namespace draw
-} // namespace gl
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::gl::draw

@@ -2011,10 +2011,14 @@ void MapWidgetImpl::RadarProductViewConnect()
             std::shared_ptr<config::RadarSite> radarSite =
                radarProductManager_->radar_site();
 
-            RadarRangeLayer::Update(
-               map_,
-               radarProductView->range(),
-               {radarSite->latitude(), radarSite->longitude()});
+            if (map_ != nullptr)
+            {
+               RadarRangeLayer::Update(
+                  map_,
+                  radarProductView->range(),
+                  {radarSite->latitude(), radarSite->longitude()});
+            }
+
             widget_->update();
             Q_EMIT widget_->RadarSweepUpdated();
          },

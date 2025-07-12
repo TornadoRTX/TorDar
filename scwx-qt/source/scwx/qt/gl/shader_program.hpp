@@ -19,7 +19,7 @@ namespace gl
 class ShaderProgram
 {
 public:
-   explicit ShaderProgram(OpenGLFunctions& gl);
+   explicit ShaderProgram();
    virtual ~ShaderProgram();
 
    ShaderProgram(const ShaderProgram&)            = delete;

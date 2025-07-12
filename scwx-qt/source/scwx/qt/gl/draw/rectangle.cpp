@@ -3,13 +3,7 @@
 
 #include <optional>
 
-namespace scwx
-{
-namespace qt
-{
-namespace gl
-{
-namespace draw
+namespace scwx::qt::gl::draw
 {
 
 static const std::string logPrefix_ = "scwx::qt::gl::draw::rectangle";
@@ -27,7 +21,7 @@ class Rectangle::Impl
 {
 public:
    explicit Impl(std::shared_ptr<GlContext> context) :
-       context_ {context},
+       context_ {std::move(context)},
        dirty_ {false},
        visible_ {true},
        x_ {0.0f},
@@ -44,8 +38,12 @@ public:
        vbo_ {GL_INVALID_INDEX}
    {
    }
+   ~Impl() = default;
 
-   ~Impl() {}
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    std::shared_ptr<GlContext> context_;
 
@@ -73,7 +71,7 @@ public:
 };
 
 Rectangle::Rectangle(std::shared_ptr<GlContext> context) :
-    DrawItem(context->gl()), p(std::make_unique<Impl>(context))
+    DrawItem(), p(std::make_unique<Impl>(context))
 {
 }
 Rectangle::~Rectangle() = default;
@@ -83,41 +81,45 @@ Rectangle& Rectangle::operator=(Rectangle&&) noexcept = default;
 
 void Rectangle::Initialize()
 {
-   gl::OpenGLFunctions& gl = p->context_->gl();
-
    p->shaderProgram_ =
       p->context_->GetShaderProgram(":/gl/color.vert", ":/gl/color.frag");
 
    p->uMVPMatrixLocation_ =
-      gl.glGetUniformLocation(p->shaderProgram_->id(), "uMVPMatrix");
+      glGetUniformLocation(p->shaderProgram_->id(), "uMVPMatrix");
    if (p->uMVPMatrixLocation_ == -1)
    {
       logger_->warn("Could not find uMVPMatrix");
    }
 
-   gl.glGenVertexArrays(1, &p->vao_);
-   gl.glGenBuffers(1, &p->vbo_);
+   glGenVertexArrays(1, &p->vao_);
+   glGenBuffers(1, &p->vbo_);
 
-   gl.glBindVertexArray(p->vao_);
-   gl.glBindBuffer(GL_ARRAY_BUFFER, p->vbo_);
-   gl.glBufferData(
+   glBindVertexArray(p->vao_);
+   glBindBuffer(GL_ARRAY_BUFFER, p->vbo_);
+   glBufferData(
       GL_ARRAY_BUFFER, sizeof(float) * BUFFER_LENGTH, nullptr, GL_DYNAMIC_DRAW);
 
-   gl.glVertexAttribPointer(0,
-                            3,
-                            GL_FLOAT,
-                            GL_FALSE,
-                            POINTS_PER_VERTEX * sizeof(float),
-                            static_cast<void*>(0));
-   gl.glEnableVertexAttribArray(0);
+   // NOLINTBEGIN(modernize-use-nullptr)
+   // NOLINTBEGIN(performance-no-int-to-ptr)
 
-   gl.glVertexAttribPointer(1,
-                            4,
-                            GL_FLOAT,
-                            GL_FALSE,
-                            POINTS_PER_VERTEX * sizeof(float),
-                            reinterpret_cast<void*>(3 * sizeof(float)));
-   gl.glEnableVertexAttribArray(1);
+   glVertexAttribPointer(0,
+                         3,
+                         GL_FLOAT,
+                         GL_FALSE,
+                         POINTS_PER_VERTEX * sizeof(float),
+                         static_cast<void*>(0));
+   glEnableVertexAttribArray(0);
+
+   glVertexAttribPointer(1,
+                         4,
+                         GL_FLOAT,
+                         GL_FALSE,
+                         POINTS_PER_VERTEX * sizeof(float),
+                         reinterpret_cast<void*>(3 * sizeof(float)));
+   glEnableVertexAttribArray(1);
+
+   // NOLINTEND(performance-no-int-to-ptr)
+   // NOLINTEND(modernize-use-nullptr)
 
    p->dirty_ = true;
 }
@@ -126,10 +128,8 @@ void Rectangle::Render(const QMapLibre::CustomLayerRenderParameters& params)
 {
    if (p->visible_)
    {
-      gl::OpenGLFunctions& gl = p->context_->gl();
-
-      gl.glBindVertexArray(p->vao_);
-      gl.glBindBuffer(GL_ARRAY_BUFFER, p->vbo_);
+      glBindVertexArray(p->vao_);
+      glBindBuffer(GL_ARRAY_BUFFER, p->vbo_);
 
       p->Update();
       p->shaderProgram_->Use();
@@ -138,23 +138,23 @@ void Rectangle::Render(const QMapLibre::CustomLayerRenderParameters& params)
       if (p->fillColor_.has_value())
       {
          // Draw fill
-         gl.glDrawArrays(GL_TRIANGLES, 24, 6);
+         // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
+         glDrawArrays(GL_TRIANGLES, 24, 6);
       }
 
       if (p->borderWidth_ > 0.0f)
       {
          // Draw border
-         gl.glDrawArrays(GL_TRIANGLES, 0, 24);
+         // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
+         glDrawArrays(GL_TRIANGLES, 0, 24);
       }
    }
 }
 
 void Rectangle::Deinitialize()
 {
-   gl::OpenGLFunctions& gl = p->context_->gl();
-
-   gl.glDeleteVertexArrays(1, &p->vao_);
-   gl.glDeleteBuffers(1, &p->vbo_);
+   glDeleteVertexArrays(1, &p->vao_);
+   glDeleteBuffers(1, &p->vbo_);
 }
 
 void Rectangle::SetBorder(float width, boost::gil::rgba8_pixel_t color)
@@ -206,8 +206,6 @@ void Rectangle::Impl::Update()
 {
    if (dirty_)
    {
-      gl::OpenGLFunctions& gl = context_->gl();
-
       const float lox = x_;
       const float rox = x_ + width_;
       const float boy = y_;
@@ -289,16 +287,13 @@ void Rectangle::Impl::Update()
              {lox, toy, z_, fc0, fc1, fc2, fc3}  // TL
           }};
 
-      gl.glBufferData(GL_ARRAY_BUFFER,
-                      sizeof(float) * BUFFER_LENGTH,
-                      buffer,
-                      GL_DYNAMIC_DRAW);
+      glBufferData(GL_ARRAY_BUFFER,
+                   sizeof(float) * BUFFER_LENGTH,
+                   static_cast<const void*>(buffer),
+                   GL_DYNAMIC_DRAW);
 
       dirty_ = false;
    }
 }
 
-} // namespace draw
-} // namespace gl
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::gl::draw

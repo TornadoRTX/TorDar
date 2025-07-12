@@ -338,10 +338,9 @@ void OverlayLayer::Render(const std::shared_ptr<MapContext>& mapContext,
 {
    const std::unique_lock lock {p->renderMutex_};
 
-   gl::OpenGLFunctions& gl               = gl_context()->gl();
-   auto                 radarProductView = mapContext->radar_product_view();
-   auto&                settings         = mapContext->settings();
-   const float          pixelRatio       = mapContext->pixel_ratio();
+   auto        radarProductView = mapContext->radar_product_view();
+   auto&       settings         = mapContext->settings();
+   const float pixelRatio       = mapContext->pixel_ratio();
 
    ImGuiFrameStart(mapContext);
 

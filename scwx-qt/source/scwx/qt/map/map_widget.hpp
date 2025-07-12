@@ -3,6 +3,7 @@
 #include <scwx/common/geographic.hpp>
 #include <scwx/common/products.hpp>
 #include <scwx/qt/config/radar_site.hpp>
+#include <scwx/qt/gl/gl.hpp>
 #include <scwx/qt/types/map_types.hpp>
 #include <scwx/qt/types/radar_product_record.hpp>
 #include <scwx/qt/types/text_event_key.hpp>

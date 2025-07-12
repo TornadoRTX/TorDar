@@ -300,8 +300,6 @@ void AlertLayer::Initialize(const std::shared_ptr<MapContext>& mapContext)
 void AlertLayer::Render(const std::shared_ptr<MapContext>& mapContext,
                         const QMapLibre::CustomLayerRenderParameters& params)
 {
-   gl::OpenGLFunctions& gl = gl_context()->gl();
-
    for (auto alertActive : {false, true})
    {
       p->geoLines_.at(alertActive)->set_selected_time(p->selectedTime_);

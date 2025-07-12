@@ -314,7 +314,7 @@ void TextureAtlas::BuildAtlas(std::size_t width, std::size_t height)
    logger_->debug("Texture atlas built in {}", timer.format(6, "%ws"));
 }
 
-void TextureAtlas::BufferAtlas(gl::OpenGLFunctions& gl, GLuint texture)
+void TextureAtlas::BufferAtlas(GLuint texture)
 {
    std::shared_lock lock(p->atlasMutex_);
 
@@ -343,25 +343,23 @@ void TextureAtlas::BufferAtlas(gl::OpenGLFunctions& gl, GLuint texture)
 
       lock.unlock();
 
-      gl.glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
+      glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
 
-      gl.glTexParameteri(
-         GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-      gl.glTexParameteri(
-         GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-      gl.glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      gl.glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-      gl.glTexImage3D(GL_TEXTURE_2D_ARRAY,
-                      0,
-                      GL_RGBA,
-                      static_cast<GLsizei>(width),
-                      static_cast<GLsizei>(height),
-                      static_cast<GLsizei>(numLayers),
-                      0,
-                      GL_RGBA,
-                      GL_UNSIGNED_BYTE,
-                      pixelData.data());
+      glTexImage3D(GL_TEXTURE_2D_ARRAY,
+                   0,
+                   GL_RGBA,
+                   static_cast<GLsizei>(width),
+                   static_cast<GLsizei>(height),
+                   static_cast<GLsizei>(numLayers),
+                   0,
+                   GL_RGBA,
+                   GL_UNSIGNED_BYTE,
+                   pixelData.data());
    }
 }
 

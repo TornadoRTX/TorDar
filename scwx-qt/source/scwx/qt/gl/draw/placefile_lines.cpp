@@ -106,7 +106,7 @@ public:
 };
 
 PlacefileLines::PlacefileLines(const std::shared_ptr<GlContext>& context) :
-    DrawItem(context->gl()), p(std::make_unique<Impl>(context))
+    DrawItem(), p(std::make_unique<Impl>(context))
 {
 }
 PlacefileLines::~PlacefileLines() = default;
@@ -127,12 +127,6 @@ void PlacefileLines::set_thresholded(bool thresholded)
 
 void PlacefileLines::Initialize()
 {
-   gl::OpenGLFunctions& gl   = p->context_->gl();
-
-#if !defined(__APPLE__)
-   auto&                gl30 = p->context_->gl30();
-#endif
-
    p->shaderProgram_ = p->context_->GetShaderProgram(
       {{GL_VERTEX_SHADER, ":/gl/geo_texture2d.vert"},
        {GL_GEOMETRY_SHADER, ":/gl/threshold.geom"},
@@ -147,74 +141,78 @@ void PlacefileLines::Initialize()
    p->uSelectedTimeLocation_ =
       p->shaderProgram_->GetUniformLocation("uSelectedTime");
 
-   gl.glGenVertexArrays(1, &p->vao_);
-   gl.glGenBuffers(2, p->vbo_.data());
+   glGenVertexArrays(1, &p->vao_);
+   glGenBuffers(2, p->vbo_.data());
 
-   gl.glBindVertexArray(p->vao_);
-   gl.glBindBuffer(GL_ARRAY_BUFFER, p->vbo_[0]);
-   gl.glBufferData(GL_ARRAY_BUFFER, 0u, nullptr, GL_DYNAMIC_DRAW);
+   glBindVertexArray(p->vao_);
+   glBindBuffer(GL_ARRAY_BUFFER, p->vbo_[0]);
+   glBufferData(GL_ARRAY_BUFFER, 0u, nullptr, GL_DYNAMIC_DRAW);
+
+   // NOLINTBEGIN(modernize-use-nullptr)
+   // NOLINTBEGIN(performance-no-int-to-ptr)
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
 
    // aLatLong
-   gl.glVertexAttribPointer(0,
-                            2,
-                            GL_FLOAT,
-                            GL_FALSE,
-                            kPointsPerVertex * sizeof(float),
-                            static_cast<void*>(0));
-   gl.glEnableVertexAttribArray(0);
+   glVertexAttribPointer(0,
+                         2,
+                         GL_FLOAT,
+                         GL_FALSE,
+                         kPointsPerVertex * sizeof(float),
+                         static_cast<void*>(0));
+   glEnableVertexAttribArray(0);
 
    // aXYOffset
-   gl.glVertexAttribPointer(1,
-                            2,
-                            GL_FLOAT,
-                            GL_FALSE,
-                            kPointsPerVertex * sizeof(float),
-                            reinterpret_cast<void*>(2 * sizeof(float)));
-   gl.glEnableVertexAttribArray(1);
+   glVertexAttribPointer(1,
+                         2,
+                         GL_FLOAT,
+                         GL_FALSE,
+                         kPointsPerVertex * sizeof(float),
+                         reinterpret_cast<void*>(2 * sizeof(float)));
+   glEnableVertexAttribArray(1);
 
    // aModulate
-   gl.glVertexAttribPointer(3,
-                            4,
-                            GL_FLOAT,
-                            GL_FALSE,
-                            kPointsPerVertex * sizeof(float),
-                            reinterpret_cast<void*>(4 * sizeof(float)));
-   gl.glEnableVertexAttribArray(3);
+   glVertexAttribPointer(3,
+                         4,
+                         GL_FLOAT,
+                         GL_FALSE,
+                         kPointsPerVertex * sizeof(float),
+                         reinterpret_cast<void*>(4 * sizeof(float)));
+   glEnableVertexAttribArray(3);
 
    // aAngle
-   gl.glVertexAttribPointer(4,
-                            1,
-                            GL_FLOAT,
-                            GL_FALSE,
-                            kPointsPerVertex * sizeof(float),
-                            reinterpret_cast<void*>(8 * sizeof(float)));
-   gl.glEnableVertexAttribArray(4);
+   glVertexAttribPointer(4,
+                         1,
+                         GL_FLOAT,
+                         GL_FALSE,
+                         kPointsPerVertex * sizeof(float),
+                         reinterpret_cast<void*>(8 * sizeof(float)));
+   glEnableVertexAttribArray(4);
 
-   gl.glBindBuffer(GL_ARRAY_BUFFER, p->vbo_[1]);
-   gl.glBufferData(GL_ARRAY_BUFFER, 0u, nullptr, GL_DYNAMIC_DRAW);
+   glBindBuffer(GL_ARRAY_BUFFER, p->vbo_[1]);
+   glBufferData(GL_ARRAY_BUFFER, 0u, nullptr, GL_DYNAMIC_DRAW);
 
    // aThreshold
-   gl.glVertexAttribIPointer(5, //
-                             1,
-                             GL_INT,
-                             kIntegersPerVertex_ * sizeof(GLint),
-                             static_cast<void*>(0));
-   gl.glEnableVertexAttribArray(5);
+   glVertexAttribIPointer(5, //
+                          1,
+                          GL_INT,
+                          kIntegersPerVertex_ * sizeof(GLint),
+                          static_cast<void*>(0));
+   glEnableVertexAttribArray(5);
 
    // aTimeRange
-   gl.glVertexAttribIPointer(6, //
-                             2,
-                             GL_INT,
-                             kIntegersPerVertex_ * sizeof(GLint),
-                             reinterpret_cast<void*>(1 * sizeof(GLint)));
-   gl.glEnableVertexAttribArray(6);
+   glVertexAttribIPointer(6, //
+                          2,
+                          GL_INT,
+                          kIntegersPerVertex_ * sizeof(GLint),
+                          reinterpret_cast<void*>(1 * sizeof(GLint)));
+   glEnableVertexAttribArray(6);
 
    // aDisplayed
-#if !defined(__APPLE__)
-   gl30.glVertexAttribI1i(7, 1);
-#else
    glVertexAttribI1i(7, 1);
-#endif
+
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+   // NOLINTEND(performance-no-int-to-ptr)
+   // NOLINTEND(modernize-use-nullptr)
 
    p->dirty_ = true;
 }
@@ -226,9 +224,7 @@ void PlacefileLines::Render(
 
    if (p->currentNumLines_ > 0)
    {
-      gl::OpenGLFunctions& gl = p->context_->gl();
-
-      gl.glBindVertexArray(p->vao_);
+      glBindVertexArray(p->vao_);
 
       p->Update();
       p->shaderProgram_->Use();
@@ -241,12 +237,12 @@ void PlacefileLines::Render(
          // If thresholding is enabled, set the map distance
          units::length::nautical_miles<float> mapDistance =
             util::maplibre::GetMapDistance(params);
-         gl.glUniform1f(p->uMapDistanceLocation_, mapDistance.value());
+         glUniform1f(p->uMapDistanceLocation_, mapDistance.value());
       }
       else
       {
          // If thresholding is disabled, set the map distance to 0
-         gl.glUniform1f(p->uMapDistanceLocation_, 0.0f);
+         glUniform1f(p->uMapDistanceLocation_, 0.0f);
       }
 
       // Selected time
@@ -254,23 +250,21 @@ void PlacefileLines::Render(
          (p->selectedTime_ == std::chrono::system_clock::time_point {}) ?
             std::chrono::system_clock::now() :
             p->selectedTime_;
-      gl.glUniform1i(
+      glUniform1i(
          p->uSelectedTimeLocation_,
          static_cast<GLint>(std::chrono::duration_cast<std::chrono::minutes>(
                                selectedTime.time_since_epoch())
                                .count()));
 
       // Draw icons
-      gl.glDrawArrays(GL_TRIANGLES, 0, p->numVertices_);
+      glDrawArrays(GL_TRIANGLES, 0, p->numVertices_);
    }
 }
 
 void PlacefileLines::Deinitialize()
 {
-   gl::OpenGLFunctions& gl = p->context_->gl();
-
-   gl.glDeleteVertexArrays(1, &p->vao_);
-   gl.glDeleteBuffers(2, p->vbo_.data());
+   glDeleteVertexArrays(1, &p->vao_);
+   glDeleteBuffers(2, p->vbo_.data());
 
    std::unique_lock lock {p->lineMutex_};
 
@@ -482,21 +476,21 @@ void PlacefileLines::Impl::Update()
    // If the placefile has been updated
    if (dirty_)
    {
-      gl::OpenGLFunctions& gl = context_->gl();
-
       // Buffer lines data
-      gl.glBindBuffer(GL_ARRAY_BUFFER, vbo_[0]);
-      gl.glBufferData(GL_ARRAY_BUFFER,
-                      sizeof(float) * currentLinesBuffer_.size(),
-                      currentLinesBuffer_.data(),
-                      GL_DYNAMIC_DRAW);
+      glBindBuffer(GL_ARRAY_BUFFER, vbo_[0]);
+      glBufferData(
+         GL_ARRAY_BUFFER,
+         static_cast<GLsizeiptr>(sizeof(float) * currentLinesBuffer_.size()),
+         currentLinesBuffer_.data(),
+         GL_DYNAMIC_DRAW);
 
       // Buffer threshold data
-      gl.glBindBuffer(GL_ARRAY_BUFFER, vbo_[1]);
-      gl.glBufferData(GL_ARRAY_BUFFER,
-                      sizeof(GLint) * currentIntegerBuffer_.size(),
-                      currentIntegerBuffer_.data(),
-                      GL_DYNAMIC_DRAW);
+      glBindBuffer(GL_ARRAY_BUFFER, vbo_[1]);
+      glBufferData(
+         GL_ARRAY_BUFFER,
+         static_cast<GLsizeiptr>(sizeof(GLint) * currentIntegerBuffer_.size()),
+         currentIntegerBuffer_.data(),
+         GL_DYNAMIC_DRAW);
    }
 
    dirty_ = false;

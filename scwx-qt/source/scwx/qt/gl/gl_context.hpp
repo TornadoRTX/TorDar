@@ -3,8 +3,6 @@
 #include <scwx/qt/gl/gl.hpp>
 #include <scwx/qt/gl/shader_program.hpp>
 
-#include <QOpenGLFunctions_3_0>
-
 namespace scwx
 {
 namespace qt
@@ -23,12 +21,6 @@ public:
 
    GlContext(GlContext&&) noexcept;
    GlContext& operator=(GlContext&&) noexcept;
-
-   gl::OpenGLFunctions&  gl();
-
-#if !defined(__APPLE__)
-   QOpenGLFunctions_3_0& gl30();
-#endif
 
    std::uint64_t texture_buffer_count() const;
 

@@ -21,7 +21,7 @@ namespace draw
 class DrawItem
 {
 public:
-   explicit DrawItem(OpenGLFunctions& gl);
+   explicit DrawItem();
    virtual ~DrawItem();
 
    DrawItem(const DrawItem&)            = delete;
