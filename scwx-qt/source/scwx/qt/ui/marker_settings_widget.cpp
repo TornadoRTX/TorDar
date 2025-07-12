@@ -3,17 +3,15 @@
 
 #include <scwx/qt/manager/marker_manager.hpp>
 #include <scwx/qt/model/marker_model.hpp>
+#include <scwx/qt/settings/hotkey_settings.hpp>
+#include <scwx/qt/types/hotkey_types.hpp>
 #include <scwx/qt/types/qt_types.hpp>
 #include <scwx/qt/ui/edit_marker_dialog.hpp>
 #include <scwx/util/logger.hpp>
 
 #include <QSortFilterProxyModel>
 
-namespace scwx
-{
-namespace qt
-{
-namespace ui
+namespace scwx::qt::ui
 {
 
 static const std::string logPrefix_ = "scwx::qt::ui::marker_settings_widget";
@@ -34,6 +32,7 @@ public:
    }
 
    void ConnectSignals();
+   void UpdateHotkeyLabel();
 
    MarkerSettingsWidget*                   self_;
    model::MarkerModel*                     markerModel_;
@@ -41,8 +40,8 @@ public:
    std::shared_ptr<manager::MarkerManager> markerManager_ {
       manager::MarkerManager::Instance()};
    std::shared_ptr<ui::EditMarkerDialog> editMarkerDialog_ {nullptr};
+   boost::signals2::scoped_connection    hotkeyConnection_;
 };
-
 
 MarkerSettingsWidget::MarkerSettingsWidget(QWidget* parent) :
     QFrame(parent),
@@ -53,6 +52,7 @@ MarkerSettingsWidget::MarkerSettingsWidget(QWidget* parent) :
 
    ui->removeButton->setEnabled(false);
    ui->markerView->setModel(p->proxyModel_);
+   p->UpdateHotkeyLabel();
 
    p->editMarkerDialog_ = std::make_shared<ui::EditMarkerDialog>(this);
 
@@ -128,8 +128,22 @@ void MarkerSettingsWidgetImpl::ConnectSignals()
                        editMarkerDialog_->setup(id.toULongLong());
                        editMarkerDialog_->show();
                     });
+   hotkeyConnection_ = settings::HotkeySettings::Instance()
+                          .hotkey(types::Hotkey::AddLocationMarker)
+                          .changed_signal()
+                          .connect([this]() { UpdateHotkeyLabel(); });
 }
 
-} // namespace ui
-} // namespace qt
-} // namespace scwx
+void MarkerSettingsWidgetImpl::UpdateHotkeyLabel()
+{
+   self_->ui->hotkeyLabel->setText(
+      fmt::format(
+         "A Location Marker can be placed at the location under the cursor by "
+         "pressing \"{}\" and edited by right clicking it on the map.",
+         settings::HotkeySettings::Instance()
+            .hotkey(types::Hotkey::AddLocationMarker)
+            .GetValue())
+         .c_str());
+}
+
+} // namespace scwx::qt::ui
