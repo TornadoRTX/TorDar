@@ -4,11 +4,7 @@
 #include <QFile>
 #include <QTextStream>
 
-namespace scwx
-{
-namespace qt
-{
-namespace gl
+namespace scwx::qt::gl
 {
 
 static const std::string logPrefix_ = "scwx::qt::gl::shader_program";
@@ -24,17 +20,18 @@ static const std::unordered_map<GLenum, std::string> kShaderNames_ {
 class ShaderProgram::Impl
 {
 public:
-   explicit Impl() : id_ {GL_INVALID_INDEX}
-   {
-      // Create shader program
-      id_ = glCreateProgram();
-   }
+   explicit Impl() : id_ {glCreateProgram()} {}
 
    ~Impl()
    {
       // Delete shader program
       glDeleteProgram(id_);
    }
+
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    static std::string ShaderName(GLenum type);
 
@@ -54,7 +51,7 @@ GLuint ShaderProgram::id() const
 
 GLint ShaderProgram::GetUniformLocation(const std::string& name)
 {
-   GLint location = glGetUniformLocation(p->id_, name.c_str());
+   const GLint location = glGetUniformLocation(p->id_, name.c_str());
    if (location == -1)
    {
       logger_->warn("Could not find {}", name);
@@ -114,16 +111,17 @@ bool ShaderProgram::Load(
       const char* shaderSourceC = shaderSource.c_str();
 
       // Create a shader
-      GLuint shaderId = glCreateShader(shader.first);
+      const GLuint shaderId = glCreateShader(shader.first);
       shaderIds.push_back(shaderId);
 
       // Attach the shader source code and compile the shader
-      glShaderSource(shaderId, 1, &shaderSourceC, NULL);
+      glShaderSource(shaderId, 1, &shaderSourceC, nullptr);
       glCompileShader(shaderId);
 
       // Check for errors
       glGetShaderiv(shaderId, GL_COMPILE_STATUS, &glSuccess);
-      glGetShaderInfoLog(shaderId, kInfoLogBufSize, &logLength, infoLog);
+      glGetShaderInfoLog(
+         shaderId, kInfoLogBufSize, &logLength, static_cast<GLchar*>(infoLog));
       if (!glSuccess)
       {
          logger_->error("Shader compilation failed: {}", infoLog);
@@ -172,6 +170,4 @@ void ShaderProgram::Use() const
    glUseProgram(p->id_);
 }
 
-} // namespace gl
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::gl

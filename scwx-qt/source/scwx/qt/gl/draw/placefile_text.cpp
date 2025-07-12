@@ -10,13 +10,7 @@
 #include <imgui.h>
 #include <mbgl/util/constants.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace gl
-{
-namespace draw
+namespace scwx::qt::gl::draw
 {
 
 static const std::string logPrefix_ = "scwx::qt::gl::draw::placefile_text";
@@ -25,12 +19,16 @@ static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 class PlacefileText::Impl
 {
 public:
-   explicit Impl(const std::string& placefileName) :
-       placefileName_ {placefileName}
+   explicit Impl(std::string placefileName) :
+       placefileName_ {std::move(placefileName)}
    {
    }
+   ~Impl() = default;
 
-   ~Impl() {}
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    void RenderTextDrawItem(
       const QMapLibre::CustomLayerRenderParameters&             params,
@@ -306,7 +304,4 @@ void PlacefileText::FinishText()
    p->newFonts_.clear();
 }
 
-} // namespace draw
-} // namespace gl
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::gl::draw

@@ -78,6 +78,9 @@ void ColorTableLayer::Initialize(const std::shared_ptr<MapContext>& mapContext)
 
    glBindVertexArray(p->vao_);
 
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+   // NOLINTBEGIN(modernize-use-nullptr)
+
    // Bottom panel
    glBindBuffer(GL_ARRAY_BUFFER, p->vbo_[0]);
    glBufferData(
@@ -87,6 +90,7 @@ void ColorTableLayer::Initialize(const std::shared_ptr<MapContext>& mapContext)
    glEnableVertexAttribArray(0);
 
    // Color table panel texture coordinates
+   // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays)
    const float textureCoords[6][1] = {{0.0f}, // TL
                                       {0.0f}, // BL
                                       {1.0f}, // TR
@@ -95,11 +99,16 @@ void ColorTableLayer::Initialize(const std::shared_ptr<MapContext>& mapContext)
                                       {1.0f},  // TR
                                       {1.0f}}; // BR
    glBindBuffer(GL_ARRAY_BUFFER, p->vbo_[1]);
-   glBufferData(
-      GL_ARRAY_BUFFER, sizeof(textureCoords), textureCoords, GL_STATIC_DRAW);
+   glBufferData(GL_ARRAY_BUFFER,
+                sizeof(textureCoords),
+                static_cast<const void*>(textureCoords),
+                GL_STATIC_DRAW);
 
    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 0, static_cast<void*>(0));
    glEnableVertexAttribArray(1);
+
+   // NOLINTEND(modernize-use-nullptr)
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
    connect(mapContext->radar_product_view().get(),
            &view::RadarProductView::ColorTableLutUpdated,
@@ -154,6 +163,9 @@ void ColorTableLayer::Render(
    if (p->colorTable_.size() > 0 && radarProductView->sweep_time() !=
                                        std::chrono::system_clock::time_point())
    {
+      // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
+      // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+
       // Color table panel vertices
       const float vertexLX       = 0.0f;
       const float vertexRX       = static_cast<float>(params.width);
@@ -170,7 +182,10 @@ void ColorTableLayer::Render(
       // Draw vertices
       glBindVertexArray(p->vao_);
       glBindBuffer(GL_ARRAY_BUFFER, p->vbo_[0]);
-      glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+      glBufferSubData(GL_ARRAY_BUFFER,
+                      0,
+                      sizeof(vertices),
+                      static_cast<const void*>(vertices));
       glDrawArrays(GL_TRIANGLES, 0, 6);
 
       static constexpr int kLeftMargin_   = 0;
@@ -180,6 +195,9 @@ void ColorTableLayer::Render(
 
       mapContext->set_color_table_margins(
          QMargins {kLeftMargin_, kTopMargin_, kRightMargin_, kBottomMargin_});
+
+      // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+      // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
    }
    else
    {

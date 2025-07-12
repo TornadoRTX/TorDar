@@ -3,13 +3,7 @@
 
 #include <optional>
 
-namespace scwx
-{
-namespace qt
-{
-namespace gl
-{
-namespace draw
+namespace scwx::qt::gl::draw
 {
 
 static const std::string logPrefix_ = "scwx::qt::gl::draw::rectangle";
@@ -27,7 +21,7 @@ class Rectangle::Impl
 {
 public:
    explicit Impl(std::shared_ptr<GlContext> context) :
-       context_ {context},
+       context_ {std::move(context)},
        dirty_ {false},
        visible_ {true},
        x_ {0.0f},
@@ -44,8 +38,12 @@ public:
        vbo_ {GL_INVALID_INDEX}
    {
    }
+   ~Impl() = default;
 
-   ~Impl() {}
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
 
    std::shared_ptr<GlContext> context_;
 
@@ -101,6 +99,7 @@ void Rectangle::Initialize()
    glBufferData(
       GL_ARRAY_BUFFER, sizeof(float) * BUFFER_LENGTH, nullptr, GL_DYNAMIC_DRAW);
 
+   // NOLINTBEGIN(modernize-use-nullptr)
    // NOLINTBEGIN(performance-no-int-to-ptr)
 
    glVertexAttribPointer(0,
@@ -120,6 +119,7 @@ void Rectangle::Initialize()
    glEnableVertexAttribArray(1);
 
    // NOLINTEND(performance-no-int-to-ptr)
+   // NOLINTEND(modernize-use-nullptr)
 
    p->dirty_ = true;
 }
@@ -296,7 +296,4 @@ void Rectangle::Impl::Update()
    }
 }
 
-} // namespace draw
-} // namespace gl
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::gl::draw

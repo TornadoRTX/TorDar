@@ -151,6 +151,9 @@ void RadarProductLayer::Initialize(
 void RadarProductLayer::UpdateSweep(
    const std::shared_ptr<MapContext>& mapContext)
 {
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+   // NOLINTBEGIN(modernize-use-nullptr)
+
    boost::timer::cpu_timer timer;
 
    std::shared_ptr<view::RadarProductView> radarProductView =
@@ -176,7 +179,7 @@ void RadarProductLayer::UpdateSweep(
    glBindBuffer(GL_ARRAY_BUFFER, p->vbo_[0]);
    timer.start();
    glBufferData(GL_ARRAY_BUFFER,
-                vertices.size() * sizeof(GLfloat),
+                static_cast<GLsizeiptr>(vertices.size() * sizeof(GLfloat)),
                 vertices.data(),
                 GL_STATIC_DRAW);
    timer.stop();
@@ -245,7 +248,10 @@ void RadarProductLayer::UpdateSweep(
       glDisableVertexAttribArray(2);
    }
 
-   p->numVertices_ = vertices.size() / 2;
+   p->numVertices_ = static_cast<GLsizeiptr>(vertices.size() / 2);
+
+   // NOLINTEND(modernize-use-nullptr)
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 }
 
 void RadarProductLayer::Render(
@@ -302,7 +308,7 @@ void RadarProductLayer::Render(
    glActiveTexture(GL_TEXTURE0);
    glBindTexture(GL_TEXTURE_1D, p->texture_);
    glBindVertexArray(p->vao_);
-   glDrawArrays(GL_TRIANGLES, 0, p->numVertices_);
+   glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(p->numVertices_));
 
    if (wireframeEnabled)
    {
