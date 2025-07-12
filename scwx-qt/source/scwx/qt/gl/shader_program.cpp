@@ -144,7 +144,8 @@ bool ShaderProgram::Load(
 
       // Check for errors
       glGetProgramiv(p->id_, GL_LINK_STATUS, &glSuccess);
-      glGetProgramInfoLog(p->id_, kInfoLogBufSize, &logLength, infoLog);
+      glGetProgramInfoLog(
+         p->id_, kInfoLogBufSize, &logLength, static_cast<GLchar*>(infoLog));
       if (!glSuccess)
       {
          logger_->error("Shader program link failed: {}", infoLog);
