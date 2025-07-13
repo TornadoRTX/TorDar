@@ -246,6 +246,7 @@ static void InitializeOpenGL()
 
    QSurfaceFormat surfaceFormat = QSurfaceFormat::defaultFormat();
    surfaceFormat.setProfile(QSurfaceFormat::OpenGLContextProfile::CoreProfile);
+   surfaceFormat.setRenderableType(QSurfaceFormat::RenderableType::OpenGL);
 
 #if defined(__APPLE__)
    // For macOS, we must choose between OpenGL 4.1 Core and OpenGL 2.1
