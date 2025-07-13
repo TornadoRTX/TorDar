@@ -17,8 +17,8 @@ find_package(Boost)
 find_package(Fontconfig)
 find_package(geographiclib)
 find_package(geos)
-find_package(GLEW)
 find_package(glm)
+find_package(OpenGL)
 find_package(Python COMPONENTS Interpreter)
 find_package(SQLite3)
 
@@ -746,9 +746,9 @@ target_link_libraries(scwx-qt PUBLIC Qt${QT_VERSION_MAJOR}::Widgets
                                      GEOS::geos
                                      GEOS::geos_cxx_flags
                                      glad_gl_core_33
-                                     GLEW::GLEW
                                      glm::glm
                                      imgui
+                                     OpenGL::GLU
                                      qt6ct-common
                                      qt6ct-widgets
                                      SQLite::SQLite3
