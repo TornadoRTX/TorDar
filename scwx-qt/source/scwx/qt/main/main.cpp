@@ -19,8 +19,6 @@
 #include <scwx/util/logger.hpp>
 #include <scwx/util/threads.hpp>
 
-#include <filesystem>
-#include <fstream>
 #include <string>
 #include <vector>
 
@@ -45,7 +43,6 @@ static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 static void ConfigureTheme(const std::vector<std::string>& args);
 static void InitializeOpenGL();
 static void OverrideDefaultStyle(const std::vector<std::string>& args);
-static void OverridePlatform();
 
 int main(int argc, char* argv[])
 {
@@ -55,8 +52,6 @@ int main(int argc, char* argv[])
    {
       args.push_back(argv[i]);
    }
-
-   OverridePlatform();
 
    // Initialize logger
    auto& logManager = scwx::qt::manager::LogManager::Instance();
@@ -278,35 +273,6 @@ OverrideDefaultStyle([[maybe_unused]] const std::vector<std::string>& args)
    if (!hasStyleArgument)
    {
       QApplication::setStyle("windowsvista");
-   }
-#endif
-}
-
-static void OverridePlatform()
-{
-#if defined(__linux__)
-   static const std::string NVIDIA_ID = "0x10de";
-   namespace fs                       = std::filesystem;
-   for (const auto& entry : fs::directory_iterator("/sys/class/drm"))
-   {
-      if (!entry.is_directory() ||
-          !entry.path().filename().string().starts_with("card"))
-      {
-         continue;
-      }
-
-      auto          vendorPath = entry.path() / "device" / "vendor";
-      std::ifstream vendorFile(vendorPath);
-      std::string   vendor;
-      if (vendorFile && std::getline(vendorFile, vendor))
-      {
-         if (vendor == NVIDIA_ID)
-         {
-            // Force xcb on NVIDIA
-            setenv("QT_QPA_PLATFORM", "xcb", 1);
-            return;
-         }
-      }
    }
 #endif
 }
