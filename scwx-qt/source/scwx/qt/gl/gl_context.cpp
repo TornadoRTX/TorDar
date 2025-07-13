@@ -57,20 +57,20 @@ void GlContext::Impl::InitializeGL()
       return;
    }
 
-   const GLenum error = glewInit();
-   if (error != GLEW_OK)
+   const int gladVersion = gladLoaderLoadGL();
+   if (!gladVersion)
    {
-      auto glewErrorString =
-         reinterpret_cast<const char*>(glewGetErrorString(error));
-      logger_->error("glewInit failed: {}", glewErrorString);
+      logger_->error("gladLoaderLoadGL failed");
 
       QMessageBox::critical(
-         nullptr,
-         "Supercell Wx",
-         QString("Unable to initialize OpenGL: %1").arg(glewErrorString));
+         nullptr, "Supercell Wx", "Unable to initialize OpenGL");
 
       throw std::runtime_error("Unable to initialize OpenGL");
    }
+
+   logger_->info("GLAD initialization complete: OpenGL {}.{}",
+                 GLAD_VERSION_MAJOR(gladVersion),
+                 GLAD_VERSION_MINOR(gladVersion));
 
    auto glVersion  = reinterpret_cast<const char*>(glGetString(GL_VERSION));
    auto glVendor   = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
@@ -86,7 +86,7 @@ void GlContext::Impl::InitializeGL()
    glGetIntegerv(GL_MAJOR_VERSION, &major);
    glGetIntegerv(GL_MINOR_VERSION, &minor);
 
-   if (major < 3 || (major == 3 && minor < 3))
+   if (major < 3 || (major == 3 && minor < 3) || !GLAD_GL_VERSION_3_3)
    {
       logger_->error(
          "OpenGL 3.3 or greater is required, found {}.{}", major, minor);

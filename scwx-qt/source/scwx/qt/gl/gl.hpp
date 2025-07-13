@@ -1,6 +1,6 @@
 #pragma once
 
-#include <GL/glew.h>
+#include <glad/gl.h>
 
 #define SCWX_GL_CHECK_ERROR()                                                  \
    {                                                                           \

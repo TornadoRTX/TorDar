@@ -745,6 +745,7 @@ target_link_libraries(scwx-qt PUBLIC Qt${QT_VERSION_MAJOR}::Widgets
                                      GeographicLib::GeographicLib
                                      GEOS::geos
                                      GEOS::geos_cxx_flags
+                                     glad_gl_core_33
                                      GLEW::GLEW
                                      glm::glm
                                      imgui
