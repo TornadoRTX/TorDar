@@ -662,6 +662,11 @@ if (LINUX)
     target_compile_definitions(supercell-wx PRIVATE QT_NO_EMIT)
 endif()
 
+if (APPLE)
+    target_compile_definitions(scwx-qt      PRIVATE GL_SILENCE_DEPRECATION)
+    target_compile_definitions(supercell-wx PRIVATE GL_SILENCE_DEPRECATION)
+endif()
+
 target_include_directories(scwx-qt PUBLIC ${scwx-qt_SOURCE_DIR}/source
                                           ${FTGL_INCLUDE_DIR}
                                           ${IMGUI_INCLUDE_DIRS}
