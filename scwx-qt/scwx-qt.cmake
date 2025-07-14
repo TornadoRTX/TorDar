@@ -734,6 +734,13 @@ if (LINUX)
     target_link_libraries(scwx-qt PUBLIC Qt${QT_VERSION_MAJOR}::WaylandClient)
 endif()
 
+if (LINUX)
+    find_package(mesa-glu REQUIRED)
+    target_link_libraries(scwx-qt PUBLIC mesa-glu::mesa-glu)
+else()
+    target_link_libraries(scwx-qt PUBLIC OpenGL::GLU)
+endif()
+
 target_link_libraries(scwx-qt PUBLIC Qt${QT_VERSION_MAJOR}::Widgets
                                      Qt${QT_VERSION_MAJOR}::OpenGLWidgets
                                      Qt${QT_VERSION_MAJOR}::Multimedia
@@ -753,7 +760,6 @@ target_link_libraries(scwx-qt PUBLIC Qt${QT_VERSION_MAJOR}::Widgets
                                      glad_gl_core_33
                                      glm::glm
                                      imgui
-                                     OpenGL::GLU
                                      qt6ct-common
                                      qt6ct-widgets
                                      SQLite::SQLite3
