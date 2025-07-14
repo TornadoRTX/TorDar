@@ -91,7 +91,14 @@ void UpdateDialog::UpdateReleaseInfo(const std::string&        latestVersion,
 void UpdateDialog::Impl::HandleAsset(const types::gh::ReleaseAsset& asset)
 {
 #if defined(_WIN32)
-   if (asset.name_.ends_with(".msi"))
+
+#   if defined(_M_AMD64)
+   static constexpr std::string assetSuffix = "-x64.msi";
+#   else
+   static constexpr std::string assetSuffix = "-arm64.msi";
+#   endif
+
+   if (asset.name_.ends_with(assetSuffix))
    {
       self_->ui->installUpdateButton->setVisible(true);
       installUrl_      = asset.browserDownloadUrl_;
