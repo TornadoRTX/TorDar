@@ -42,7 +42,7 @@ class SupercellWxConan(ConanFile):
     def requirements(self):
         if self.settings.os == "Linux":
             self.requires("mesa-glu/9.0.3")
-            self.requires("onetbb/2022.0.0")
+            self.requires("onetbb/2022.2.0")
 
     def generate(self):
         build_folder = os.path.join(self.build_folder,
