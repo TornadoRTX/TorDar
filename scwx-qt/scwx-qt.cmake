@@ -17,8 +17,8 @@ find_package(Boost)
 find_package(Fontconfig)
 find_package(geographiclib)
 find_package(geos)
-find_package(GLEW)
 find_package(glm)
+find_package(OpenGL)
 find_package(Python COMPONENTS Interpreter)
 find_package(SQLite3)
 
@@ -662,6 +662,11 @@ if (LINUX)
     target_compile_definitions(supercell-wx PRIVATE QT_NO_EMIT)
 endif()
 
+if (APPLE)
+    target_compile_definitions(scwx-qt      PRIVATE GL_SILENCE_DEPRECATION)
+    target_compile_definitions(supercell-wx PRIVATE GL_SILENCE_DEPRECATION)
+endif()
+
 target_include_directories(scwx-qt PUBLIC ${scwx-qt_SOURCE_DIR}/source
                                           ${FTGL_INCLUDE_DIR}
                                           ${IMGUI_INCLUDE_DIRS}
@@ -729,6 +734,13 @@ if (LINUX)
     target_link_libraries(scwx-qt PUBLIC Qt${QT_VERSION_MAJOR}::WaylandClient)
 endif()
 
+if (LINUX)
+    find_package(mesa-glu REQUIRED)
+    target_link_libraries(scwx-qt PUBLIC mesa-glu::mesa-glu)
+else()
+    target_link_libraries(scwx-qt PUBLIC OpenGL::GLU)
+endif()
+
 target_link_libraries(scwx-qt PUBLIC Qt${QT_VERSION_MAJOR}::Widgets
                                      Qt${QT_VERSION_MAJOR}::OpenGLWidgets
                                      Qt${QT_VERSION_MAJOR}::Multimedia
@@ -746,7 +758,6 @@ target_link_libraries(scwx-qt PUBLIC Qt${QT_VERSION_MAJOR}::Widgets
                                      GEOS::geos
                                      GEOS::geos_cxx_flags
                                      glad_gl_core_33
-                                     GLEW::GLEW
                                      glm::glm
                                      imgui
                                      qt6ct-common
