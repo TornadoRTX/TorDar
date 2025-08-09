@@ -60,9 +60,11 @@ set(HDR_GR include/scwx/gr/color.hpp
 set(SRC_GR source/scwx/gr/color.cpp
            source/scwx/gr/placefile.cpp)
 set(HDR_NETWORK include/scwx/network/cpr.hpp
-                include/scwx/network/dir_list.hpp)
+                include/scwx/network/dir_list.hpp
+                include/scwx/network/ntp_client.hpp)
 set(SRC_NETWORK source/scwx/network/cpr.cpp
-                source/scwx/network/dir_list.cpp)
+                source/scwx/network/dir_list.cpp
+                source/scwx/network/ntp_client.cpp)
 set(HDR_PROVIDER include/scwx/provider/aws_level2_data_provider.hpp
                  include/scwx/provider/aws_level2_chunks_data_provider.hpp
                  include/scwx/provider/aws_level3_data_provider.hpp
@@ -80,8 +82,10 @@ set(SRC_PROVIDER source/scwx/provider/aws_level2_data_provider.cpp
                  source/scwx/provider/nexrad_data_provider.cpp
                  source/scwx/provider/nexrad_data_provider_factory.cpp
                  source/scwx/provider/warnings_provider.cpp)
-set(HDR_TYPES include/scwx/types/iem_types.hpp)
-set(SRC_TYPES source/scwx/types/iem_types.cpp)
+set(HDR_TYPES include/scwx/types/iem_types.hpp
+              include/scwx/types/ntp_types.hpp)
+set(SRC_TYPES source/scwx/types/iem_types.cpp
+              source/scwx/types/ntp_types.cpp)
 set(HDR_UTIL include/scwx/util/digest.hpp
              include/scwx/util/enum.hpp
              include/scwx/util/environment.hpp
