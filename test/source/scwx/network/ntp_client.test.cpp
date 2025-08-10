@@ -11,10 +11,24 @@ TEST(NtpClient, Poll)
 {
    NtpClient client {};
 
-   client.Open("time.nist.gov", "123");
-   //client.Open("pool.ntp.org", "123");
-   //client.Open("time.windows.com", "123");
-   client.Poll();
+   const std::string firstServer   = client.RotateServer();
+   std::string       currentServer = firstServer;
+   std::string       lastServer    = firstServer;
+   bool              error         = false;
+
+   do
+   {
+      client.RunOnce();
+      error = client.error();
+
+      EXPECT_EQ(error, false);
+
+      // Loop until the current server repeats the first server, or fails to
+      // rotate
+      lastServer    = currentServer;
+      currentServer = client.RotateServer();
+   } while (currentServer != firstServer && currentServer != lastServer &&
+            !error);
 }
 
 } // namespace network

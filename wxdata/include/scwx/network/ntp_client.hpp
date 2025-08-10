@@ -1,6 +1,8 @@
 #pragma once
 
+#include <chrono>
 #include <memory>
+#include <string>
 #include <string_view>
 
 namespace scwx::network
@@ -21,8 +23,17 @@ public:
    NtpClient(NtpClient&&) noexcept;
    NtpClient& operator=(NtpClient&&) noexcept;
 
-   void Open(std::string_view host, std::string_view service);
-   void Poll();
+   bool                                error();
+   std::chrono::system_clock::duration time_offset() const;
+
+   void        Start();
+   void        Open(std::string_view host, std::string_view service);
+   void        OpenCurrentServer();
+   void        Poll();
+   std::string RotateServer();
+   void        RunOnce();
+
+   static std::shared_ptr<NtpClient> Instance();
 
 private:
    class Impl;
