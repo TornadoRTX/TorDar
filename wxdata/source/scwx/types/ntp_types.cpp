@@ -20,15 +20,6 @@ NtpPacket NtpPacket::Parse(const std::span<std::uint8_t> data)
 
    packet = *reinterpret_cast<const NtpPacket*>(data.data());
 
-   // Detect Kiss-o'-Death (KoD) packet
-   if (packet.stratum == 0)
-   {
-      // TODO
-      std::string kissCode =
-         std::string(reinterpret_cast<char*>(&packet.refId), 4);
-      (void) kissCode;
-   }
-
    packet.rootDelay      = ntohl(packet.rootDelay);
    packet.rootDispersion = ntohl(packet.rootDispersion);
    packet.refId          = ntohl(packet.refId);

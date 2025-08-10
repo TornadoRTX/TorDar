@@ -48,8 +48,7 @@ struct NtpPacket
    std::uint32_t rxTm_s; // Received time-stamp seconds.
    std::uint32_t rxTm_f; // Received time-stamp fraction of a second.
 
-   std::uint32_t txTm_s; // The most important field the client cares about.
-                         // Transmit time-stamp seconds.
+   std::uint32_t txTm_s; // Transmit time-stamp seconds.
    std::uint32_t txTm_f; // Transmit time-stamp fraction of a second.
 
    static NtpPacket Parse(const std::span<std::uint8_t> data);
