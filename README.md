@@ -1,61 +1,33 @@
-# Supercell Wx
+> [!CAUTION]
+> The only official websites that are affilated with TorDar are this GitHub page and TornadoRTX social media. Do not trust any other websites or Social Media accounts that claim to be affilated or have ownership of this fork.
 
-[![CI](https://github.com/dpaulat/supercell-wx/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/dpaulat/supercell-wx/actions/workflows/ci.yml)
-[![Documentation Status](https://readthedocs.org/projects/supercell-wx/badge/?version=latest)](https://supercell-wx.readthedocs.io/en/latest/?badge=latest)
-[![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?style=flat&logo=discord&logoColor=white&labelColor=%235865f2)](https://discord.gg/vFMV76brwU)
-[![GitHub Sponsor](https://img.shields.io/github/sponsors/dpaulat?label=Sponsor&logo=GitHub)](https://github.com/sponsors/dpaulat)
+# TorDar (Tornado Radar)
 
-Supercell Wx is a free, open source application to visualize live and archive
-NEXRAD Level 2 and Level 3 data, and severe weather alerts. It displays
-continuously updating weather data on top of a responsive map, providing the
-capability to monitor weather events using reflectivity, velocity, and other
-products.
+Tornado Radar (TorDar for short) is currently in devolpment and is a fork of Supercell WX, which is free and open source. TorDar will feature a more modern and updated UI than Supercell WX.
 
-Please be sure to check out the documentation before getting started: [Supercell Wx Documentation](https://supercell-wx.rtfd.io/)
+Go check out Supercell WX here: https://github.com/dpaulat/supercell-wx
 
-![image](https://supercell-wx.readthedocs.io/en/latest/_images/initial-setup-03-initial-configured-small.png)
+TorDar will only be available on Windows at launch, but may be fitted to other operating systems at a later date. (Not guaranteed)
 
-## Supported Platforms
+More updates will be shown here for devolpment, as well as a trailer on YouTube once TorDar is ready to be released into Beta.
 
-Supercell Wx supports the following 64-bit operating systems:
+TorDar aims to keep most, if not all of the features Supercell WX has. However, this may not be the case for the first few publicly released versions.
 
-- Windows 10 (1809 or later)
-- Windows 11
-- Linux
-  - Arch Linux (EndeavourOS, SteamOS [Steam Deck], and other Arch derivatives)
-  - Fedora Linux 34+
-  - openSUSE Tumbleweed
-  - Ubuntu 22.04+
-  - NixOS 25.05+
-  - Most distributions supporting the GCC Standard C++ Library 11+
-- macOS
-  - 13.6+ for Intel-based Macs
-  - 14.0+ for Apple silicon-based Macs
+This is the current vision and blueprint for TorDar, and also the full version of the blueprint:
 
-## Linux Dependencies
+# Uncollapsed Blueprint
 
-Supercell Wx requires the following Linux dependencies:
+![TorDar Blueprint uncollapsed](https://github.com/user-attachments/assets/7224a71d-d69a-460f-979f-d96b92ee1aff)
 
-- Linux/X11 (Wayland works too) with support for GCC 11, OpenGL 3.3 and OpenGL ES 3.0
-- X11/XCB libraries including xcb-cursor
 
-## FAQ
+# Collapsed Blueprint
 
-Frequently asked questions:
+![TorDar Blueprint Collapsed](https://github.com/user-attachments/assets/afe5dca0-72f7-4517-84a1-80446c4581c2)
 
-- Q: Why is the map black when loading for the first time?
 
-  - A. You must obtain a free API key from either (or both) [MapTiler](https://cloud.maptiler.com/auth/widget?next=https://cloud.maptiler.com/maps/) which currently does not require a credit/debit card, or [Mapbox](https://account.mapbox.com/) which ***does*** require a credit/debit card, but as of writing, you will receive 200K free requests per month, which should be sufficient for an individual user.
 
-- Q: Why is it that when I change my color table, API key, grid width/height settings, nothing happens after hitting apply?
+A ton of elements have been taken from the radar program Ryan Hall Y'all built.
 
-  - A. As of right now, you must restart Supercell Wx in order to apply these changes. In future iterations, this will no longer be an issue.
+This blueprint is not the final version and may change.
 
-- Q. Is it possible to get dark mode?
-
-  - A. In Windows, make sure to set the flag `-style fusion` at the end of the target path of the .exe
-    - Example: `C:\Users\Administrator\Desktop\Supercell-Wx\bin\supercell-wx.exe -style fusion`
-  - A. In Linux, if you're using KDE, Supercell Wx should automatically follow your theme settings.
-
-- Q: How can I contribute?
-  - A. Head to [Developer Setup](https://supercell-wx.readthedocs.io/en/stable/development/developer-setup.html) and [Contributing](CONTRIBUTING.md) to configure the Supercell Wx development environment for your IDE. Currently Visual Studio and Visual Studio Code are recommended, with other IDEs remaining untested at this time.
+Any feedback and/or help is both needed and appreciated. Message me on Discord if you want to help out. Discord is @tornadortx
