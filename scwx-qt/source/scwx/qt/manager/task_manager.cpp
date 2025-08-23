@@ -17,6 +17,7 @@ void Initialize()
    ntpClient_ = network::NtpClient::Instance();
 
    ntpClient_->Start();
+   ntpClient_->WaitForInitialOffset();
 }
 
 void Shutdown()

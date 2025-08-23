@@ -35,6 +35,8 @@ public:
    std::string RotateServer();
    void        RunOnce();
 
+   void WaitForInitialOffset();
+
    static std::shared_ptr<NtpClient> Instance();
 
 private:

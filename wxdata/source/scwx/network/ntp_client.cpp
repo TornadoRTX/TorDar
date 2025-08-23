@@ -3,6 +3,9 @@
 #include <scwx/util/logger.hpp>
 #include <scwx/util/threads.hpp>
 
+#include <condition_variable>
+#include <mutex>
+
 #include <boost/asio/ip/udp.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/thread_pool.hpp>
@@ -112,6 +115,8 @@ public:
    void        Run();
    void        RunOnce();
 
+   void FinishInitialization();
+
    boost::asio::thread_pool threadPool_ {2u};
 
    boost::asio::steady_timer pollTimer_ {threadPool_};
@@ -121,6 +126,10 @@ public:
    bool error_ {false};
    bool disableServer_ {false};
    bool rotateServer_ {false};
+
+   std::mutex              initializationMutex_ {};
+   std::condition_variable initializationCondition_ {};
+   std::atomic<bool>       initialized_ {false};
 
    types::ntp::NtpPacket transmitPacket_ {};
 
@@ -164,6 +173,14 @@ NtpClient::Impl::Impl()
 
    transmitPacket_.fields.vn   = 3; // Version
    transmitPacket_.fields.mode = 3; // Client (3)
+
+   // If the NTP client is enabled, wait until the first refresh to consider
+   // "initialized". Otherwise, mark as initialized immediately to prevent a
+   // deadlock.
+   if (!enabled_)
+   {
+      initialized_ = true;
+   }
 }
 
 NtpClient::Impl::~Impl()
@@ -253,7 +270,7 @@ void NtpClient::Impl::Poll()
 {
    using namespace std::chrono_literals;
 
-   static constexpr auto kTimeout_ = 15s;
+   static constexpr auto kTimeout_ = 5s;
 
    try
    {
@@ -359,8 +376,6 @@ void NtpClient::Impl::ReceivePacket(std::size_t length)
          timeOffset_ = ((t1 - t0) + (t2 - t3)) / 2;
 
          logger_->debug("Time offset updated: {:%jd %T}", timeOffset_);
-
-         // TODO: Signal
       }
    }
    else
@@ -495,6 +510,34 @@ void NtpClient::Impl::RunOnce()
    {
       // Did not poll this frame
       error_ = true;
+   }
+
+   FinishInitialization();
+}
+
+void NtpClient::Impl::FinishInitialization()
+{
+   if (!initialized_)
+   {
+      // Set initialized to true
+      std::unique_lock lock(initializationMutex_);
+      initialized_ = true;
+      lock.unlock();
+
+      // Notify any threads waiting for initialization
+      initializationCondition_.notify_all();
+   }
+}
+
+void NtpClient::WaitForInitialOffset()
+{
+   std::unique_lock lock(p->initializationMutex_);
+
+   // While not yet initialized
+   while (!p->initialized_)
+   {
+      // Wait for initialization
+      p->initializationCondition_.wait(lock);
    }
 }
 
