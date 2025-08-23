@@ -8,6 +8,7 @@ Checks:
   - 'performance-*'
   - '-bugprone-easily-swappable-parameters'
   - '-cppcoreguidelines-avoid-do-while'
+  - '-cppcoreguidelines-avoid-non-const-global-variables'
   - '-cppcoreguidelines-pro-type-reinterpret-cast'
   - '-cppcoreguidelines-pro-type-union-access'
   - '-misc-include-cleaner'
