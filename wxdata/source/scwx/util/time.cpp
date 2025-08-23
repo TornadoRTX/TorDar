@@ -8,6 +8,7 @@
 #   define __cpp_lib_format 202110L
 #endif
 
+#include <scwx/network/ntp_client.hpp>
 #include <scwx/util/time.hpp>
 #include <scwx/util/enum.hpp>
 #include <scwx/util/logger.hpp>
@@ -21,7 +22,7 @@
 #   include <date/date.h>
 #endif
 
-namespace scwx::util
+namespace scwx::util::time
 {
 
 static const std::string logPrefix_ = "scwx::util::time";
@@ -32,12 +33,34 @@ static const std::unordered_map<ClockFormat, std::string> clockFormatName_ {
    {ClockFormat::_24Hour, "24-hour"},
    {ClockFormat::Unknown, "?"}};
 
+static std::shared_ptr<network::NtpClient> ntpClient_ {nullptr};
+
 SCWX_GET_ENUM(ClockFormat, GetClockFormat, clockFormatName_)
 
 const std::string& GetClockFormatName(ClockFormat clockFormat)
 {
    return clockFormatName_.at(clockFormat);
 }
+
+template<typename Clock>
+std::chrono::time_point<Clock> now()
+{
+   if (ntpClient_ == nullptr)
+   {
+      ntpClient_ = network::NtpClient::Instance();
+   }
+
+   if (ntpClient_ != nullptr)
+   {
+      return Clock::now() + ntpClient_->time_offset();
+   }
+   else
+   {
+      return Clock::now();
+   }
+}
+
+template std::chrono::time_point<std::chrono::system_clock> now();
 
 std::chrono::system_clock::time_point TimePoint(uint32_t modifiedJulianDate,
                                                 uint32_t milliseconds)
@@ -153,4 +176,4 @@ template std::optional<std::chrono::sys_time<std::chrono::seconds>>
 TryParseDateTime<std::chrono::seconds>(const std::string& dateTimeFormat,
                                        const std::string& str);
 
-} // namespace scwx::util
+} // namespace scwx::util::time
