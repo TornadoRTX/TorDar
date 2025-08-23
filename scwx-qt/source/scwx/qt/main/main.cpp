@@ -53,9 +53,18 @@ int main(int argc, char* argv[])
       args.push_back(argv[i]);
    }
 
+   if (!scwx::util::GetEnvironment("SCWX_TEST").empty())
+   {
+      QStandardPaths::setTestModeEnabled(true);
+   }
+
    // Initialize logger
    auto& logManager = scwx::qt::manager::LogManager::Instance();
    logManager.Initialize();
+
+   QCoreApplication::setApplicationName("Supercell Wx");
+
+   logManager.InitializeLogFile();
 
    logger_->info("Supercell Wx v{}.{} ({})",
                  scwx::qt::main::kVersionString_,
@@ -66,7 +75,6 @@ int main(int argc, char* argv[])
 
    QApplication a(argc, argv);
 
-   QCoreApplication::setApplicationName("Supercell Wx");
    scwx::network::cpr::SetUserAgent(
       fmt::format("SupercellWx/{}", scwx::qt::main::kVersionString_));
 
@@ -75,11 +83,6 @@ int main(int argc, char* argv[])
    if (translator.load(QLocale(), "scwx", "_", ":/i18n"))
    {
       QCoreApplication::installTranslator(&translator);
-   }
-
-   if (!scwx::util::GetEnvironment("SCWX_TEST").empty())
-   {
-      QStandardPaths::setTestModeEnabled(true);
    }
 
    // Test to see if scwx was run with high privilege
@@ -116,7 +119,6 @@ int main(int argc, char* argv[])
    Aws::InitAPI(awsSdkOptions);
 
    // Initialize application
-   logManager.InitializeLogFile();
    scwx::qt::config::RadarSite::Initialize();
    scwx::qt::config::CountyDatabase::Initialize();
    scwx::qt::manager::SettingsManager::Instance().Initialize();
