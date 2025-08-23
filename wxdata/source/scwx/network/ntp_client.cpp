@@ -191,6 +191,14 @@ void NtpClient::Start()
    }
 }
 
+void NtpClient::Stop()
+{
+   p->enabled_ = false;
+   p->socket_.cancel();
+   p->pollTimer_.cancel();
+   p->threadPool_.join();
+}
+
 void NtpClient::Open(std::string_view host, std::string_view service)
 {
    p->Open(host, service);

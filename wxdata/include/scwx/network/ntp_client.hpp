@@ -26,7 +26,9 @@ public:
    bool                                error();
    std::chrono::system_clock::duration time_offset() const;
 
-   void        Start();
+   void Start();
+   void Stop();
+
    void        Open(std::string_view host, std::string_view service);
    void        OpenCurrentServer();
    void        Poll();

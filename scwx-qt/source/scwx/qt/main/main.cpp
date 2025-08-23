@@ -9,6 +9,7 @@
 #include <scwx/qt/manager/radar_product_manager.hpp>
 #include <scwx/qt/manager/resource_manager.hpp>
 #include <scwx/qt/manager/settings_manager.hpp>
+#include <scwx/qt/manager/task_manager.hpp>
 #include <scwx/qt/manager/thread_manager.hpp>
 #include <scwx/qt/settings/general_settings.hpp>
 #include <scwx/qt/types/qt_types.hpp>
@@ -121,6 +122,7 @@ int main(int argc, char* argv[])
    // Initialize application
    scwx::qt::config::RadarSite::Initialize();
    scwx::qt::config::CountyDatabase::Initialize();
+   scwx::qt::manager::TaskManager::Initialize();
    scwx::qt::manager::SettingsManager::Instance().Initialize();
    scwx::qt::manager::ResourceManager::Initialize();
 
@@ -181,6 +183,7 @@ int main(int argc, char* argv[])
    // Shutdown application
    scwx::qt::manager::ResourceManager::Shutdown();
    scwx::qt::manager::SettingsManager::Instance().Shutdown();
+   scwx::qt::manager::TaskManager::Shutdown();
 
    // Shutdown AWS SDK
    Aws::ShutdownAPI(awsSdkOptions);
