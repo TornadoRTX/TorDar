@@ -4,6 +4,7 @@
 #include <scwx/qt/util/texture_atlas.hpp>
 #include <scwx/qt/util/tooltip.hpp>
 #include <scwx/util/logger.hpp>
+#include <scwx/util/time.hpp>
 
 #include <execution>
 
@@ -313,7 +314,7 @@ void GeoIcons::Render(const QMapLibre::CustomLayerRenderParameters& params,
       // Selected time
       std::chrono::system_clock::time_point selectedTime =
          (p->selectedTime_ == std::chrono::system_clock::time_point {}) ?
-            std::chrono::system_clock::now() :
+            scwx::util::time::now() :
             p->selectedTime_;
       glUniform1i(
          p->uSelectedTimeLocation_,
@@ -930,7 +931,7 @@ bool GeoIcons::RunMousePicking(
    // If no time has been selected, use the current time
    std::chrono::system_clock::time_point selectedTime =
       (p->selectedTime_ == std::chrono::system_clock::time_point {}) ?
-         std::chrono::system_clock::now() :
+         scwx::util::time::now() :
          p->selectedTime_;
 
    // For each pickable icon

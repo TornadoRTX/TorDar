@@ -187,7 +187,7 @@ void OverlayProductView::Impl::LoadProduct(
                   header.date_of_message(), header.time_of_message() * 1000);
 
                // If the record is from the last 30 minutes
-               if (productTime + 30min >= std::chrono::system_clock::now() ||
+               if (productTime + 30min >= scwx::util::time::now() ||
                    (selectedTime_ != std::chrono::system_clock::time_point {} &&
                     productTime + 30min >= selectedTime_))
                {

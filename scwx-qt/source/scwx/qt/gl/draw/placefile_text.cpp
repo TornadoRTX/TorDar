@@ -5,6 +5,7 @@
 #include <scwx/qt/util/maplibre.hpp>
 #include <scwx/qt/util/tooltip.hpp>
 #include <scwx/util/logger.hpp>
+#include <scwx/util/time.hpp>
 
 #include <fmt/format.h>
 #include <imgui.h>
@@ -127,7 +128,7 @@ void PlacefileText::Impl::RenderTextDrawItem(
    // If no time has been selected, use the current time
    std::chrono::system_clock::time_point selectedTime =
       (selectedTime_ == std::chrono::system_clock::time_point {}) ?
-         std::chrono::system_clock::now() :
+         scwx::util::time::now() :
          selectedTime_;
 
    const bool thresholdMet =

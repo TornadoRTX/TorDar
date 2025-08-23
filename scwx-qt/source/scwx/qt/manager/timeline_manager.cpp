@@ -218,7 +218,7 @@ void TimelineManager::AnimationStepBegin()
        p->pinnedTime_ == std::chrono::system_clock::time_point {})
    {
       // If the selected view type is live, select the current products
-      p->SelectTimeAsync(std::chrono::system_clock::now() - p->loopTime_);
+      p->SelectTimeAsync(scwx::util::time::now() - p->loopTime_);
    }
    else
    {
@@ -385,8 +385,8 @@ TimelineManager::Impl::GetLoopStartAndEndTimes()
    if (viewType_ == types::MapTime::Live ||
        pinnedTime_ == std::chrono::system_clock::time_point {})
    {
-      endTime = std::chrono::floor<std::chrono::minutes>(
-         std::chrono::system_clock::now());
+      endTime =
+         std::chrono::floor<std::chrono::minutes>(scwx::util::time::now());
    }
    else
    {
@@ -656,8 +656,8 @@ void TimelineManager::Impl::Step(Direction direction)
    {
       if (direction == Direction::Back)
       {
-         newTime = std::chrono::floor<std::chrono::minutes>(
-            std::chrono::system_clock::now());
+         newTime =
+            std::chrono::floor<std::chrono::minutes>(scwx::util::time::now());
       }
       else
       {
@@ -688,7 +688,7 @@ void TimelineManager::Impl::Step(Direction direction)
          newTime += 1min;
 
          // If the new time is more than 2 minutes in the future, stop stepping
-         if (newTime > std::chrono::system_clock::now() + 2min)
+         if (newTime > scwx::util::time::now() + 2min)
          {
             break;
          }

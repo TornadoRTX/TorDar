@@ -352,7 +352,7 @@ std::pair<size_t, size_t> AwsNexradDataProvider::Refresh()
 
    logger_->debug("Refresh()");
 
-   auto today     = floor<days>(system_clock::now());
+   auto today     = floor<days>(util::time::now());
    auto yesterday = today - days {1};
 
    std::unique_lock lock(p->refreshMutex_);
@@ -388,7 +388,7 @@ void AwsNexradDataProvider::Impl::PruneObjects()
 {
    using namespace std::chrono;
 
-   auto today     = floor<days>(system_clock::now());
+   auto today     = floor<days>(util::time::now());
    auto yesterday = today - days {1};
 
    std::unique_lock lock(objectsMutex_);
