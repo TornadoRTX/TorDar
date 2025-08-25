@@ -23,7 +23,7 @@ struct NtpPacket
    union
    {
       std::uint8_t li_vn_mode;
-      struct
+      struct LiVnMode
       {
          std::uint8_t mode : 3; // Client will pick mode 3 for client.
          std::uint8_t vn : 3;   // Version number of the protocol.
