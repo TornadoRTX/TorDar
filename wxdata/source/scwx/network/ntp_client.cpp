@@ -5,6 +5,7 @@
 
 #include <condition_variable>
 #include <mutex>
+#include <optional>
 
 #include <boost/asio/ip/udp.hpp>
 #include <boost/asio/steady_timer.hpp>
