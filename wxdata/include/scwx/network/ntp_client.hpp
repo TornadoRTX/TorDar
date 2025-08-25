@@ -23,8 +23,9 @@ public:
    NtpClient(NtpClient&&) noexcept;
    NtpClient& operator=(NtpClient&&) noexcept;
 
-   bool                                error();
-   std::chrono::system_clock::duration time_offset() const;
+   bool error();
+
+   [[nodiscard]] std::chrono::system_clock::duration time_offset() const;
 
    void Start();
    void Stop();

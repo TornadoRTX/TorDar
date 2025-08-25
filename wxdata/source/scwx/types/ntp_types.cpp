@@ -14,7 +14,7 @@ namespace scwx::types::ntp
 
 NtpPacket NtpPacket::Parse(const std::span<std::uint8_t> data)
 {
-   NtpPacket packet;
+   NtpPacket packet {};
 
    assert(data.size() >= sizeof(NtpPacket));
 

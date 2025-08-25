@@ -56,7 +56,7 @@ public:
    NtpTimestamp& operator=(NtpTimestamp&&)      = default;
 
    template<typename Clock = std::chrono::system_clock>
-   std::chrono::time_point<Clock> ToTimePoint() const
+   [[nodiscard]] std::chrono::time_point<Clock> ToTimePoint() const
    {
       // Convert NTP seconds to Unix seconds
       // Don't cast to a larger type to account for rollover, and this should
@@ -191,8 +191,8 @@ NtpClient::Impl::~Impl()
 
 bool NtpClient::error()
 {
-   bool returnValue = p->error_;
-   p->error_        = false;
+   const bool returnValue = p->error_;
+   p->error_              = false;
    return returnValue;
 }
 
@@ -273,6 +273,13 @@ void NtpClient::Impl::Poll()
 
    static constexpr auto kTimeout_ = 5s;
 
+   if (!serverEndpoint_.has_value())
+   {
+      logger_->error("Server endpoint not set");
+      error_ = true;
+      return;
+   }
+
    try
    {
       const auto originTimestamp =
@@ -280,7 +287,7 @@ void NtpClient::Impl::Poll()
       transmitPacket_.txTm_s = ntohl(originTimestamp.seconds_);
       transmitPacket_.txTm_f = ntohl(originTimestamp.fraction_);
 
-      std::size_t transmitPacketSize = sizeof(transmitPacket_);
+      const std::size_t transmitPacketSize = sizeof(transmitPacket_);
       // Send NTP request
       socket_.send_to(boost::asio::buffer(&transmitPacket_, transmitPacketSize),
                       *serverEndpoint_);
@@ -310,6 +317,7 @@ void NtpClient::Impl::Poll()
    catch (const std::exception& ex)
    {
       logger_->error("Error polling: {}", ex.what());
+      error_ = true;
    }
 }
 
@@ -437,7 +445,7 @@ void NtpClient::Impl::Run()
 
    if (enabled_)
    {
-      std::chrono::seconds pollIntervalSeconds {1u << pollInterval_};
+      const std::chrono::seconds pollIntervalSeconds {1u << pollInterval_};
       pollTimer_.expires_after(pollIntervalSeconds);
       pollTimer_.async_wait(
          [this](const boost::system::error_code& e)
@@ -547,7 +555,7 @@ std::shared_ptr<NtpClient> NtpClient::Instance()
    static std::weak_ptr<NtpClient> ntpClientReference_ {};
    static std::mutex               instanceMutex_ {};
 
-   std::unique_lock lock(instanceMutex_);
+   const std::unique_lock lock(instanceMutex_);
 
    std::shared_ptr<NtpClient> ntpClient = ntpClientReference_.lock();
 

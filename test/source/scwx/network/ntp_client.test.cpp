@@ -2,9 +2,7 @@
 
 #include <gtest/gtest.h>
 
-namespace scwx
-{
-namespace network
+namespace scwx::network
 {
 
 TEST(NtpClient, Poll)
@@ -31,5 +29,4 @@ TEST(NtpClient, Poll)
             !error);
 }
 
-} // namespace network
-} // namespace scwx
+} // namespace scwx::network
