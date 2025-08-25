@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstddef>
 #include <cstdint>
 #include <span>
 
@@ -20,15 +19,17 @@ namespace scwx::types::ntp
 
 struct NtpPacket
 {
+   struct LiVnMode
+   {
+      std::uint8_t mode : 3; // Client will pick mode 3 for client.
+      std::uint8_t vn : 3;   // Version number of the protocol.
+      std::uint8_t li : 2;   // Leap indicator.
+   };
+
    union
    {
       std::uint8_t li_vn_mode;
-      struct LiVnMode
-      {
-         std::uint8_t mode : 3; // Client will pick mode 3 for client.
-         std::uint8_t vn : 3;   // Version number of the protocol.
-         std::uint8_t li : 2;   // Leap indicator.
-      } fields;
+      LiVnMode     fields;
    };
 
    std::uint8_t stratum;   // Stratum level of the local clock.
