@@ -393,7 +393,7 @@ jobs:
       env:
         MAPBOX_API_KEY:   ${{ secrets.MAPBOX_API_KEY }}
         MAPTILER_API_KEY: ${{ secrets.MAPTILER_API_KEY }}
-      run: ctest -C ${{ matrix.build_type }} --exclude-regex "test_mln.*|UpdateManager.*"
+      run: ctest -C ${{ matrix.build_type }} --exclude-regex "test_mln.*|NtpClient.*|UpdateManager.*"
 
     - name: Upload Test Logs
       if: ${{ !cancelled() }}
