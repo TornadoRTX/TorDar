@@ -6,6 +6,7 @@
 #include <scwx/qt/util/color.hpp>
 #include <scwx/qt/util/tooltip.hpp>
 #include <scwx/util/logger.hpp>
+#include <scwx/util/time.hpp>
 
 #include <chrono>
 #include <mutex>
@@ -581,8 +582,7 @@ void AlertLayer::Impl::ScheduleRefresh()
 
    // Expires at the top of the next minute
    std::chrono::system_clock::time_point now =
-      std::chrono::floor<std::chrono::minutes>(
-         std::chrono::system_clock::now());
+      std::chrono::floor<std::chrono::minutes>(scwx::util::time::now());
    refreshTimer_.expires_at(now + 1min);
 
    refreshTimer_.async_wait(

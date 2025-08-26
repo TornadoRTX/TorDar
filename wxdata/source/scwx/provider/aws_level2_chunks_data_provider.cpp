@@ -302,7 +302,7 @@ AwsLevel2ChunksDataProvider::Impl::GetScanTime(const std::string& prefix)
    if (scanTimeIt != scanTimes_.cend())
    {
       // If the time is greater than 2 hours ago, it may be a new scan
-      auto replaceBy = system_clock::now() - hours {2};
+      auto replaceBy = util::time::now() - hours {2};
       if (scanTimeIt->second > replaceBy)
       {
          return scanTimeIt->second;
@@ -333,8 +333,7 @@ AwsLevel2ChunksDataProvider::Impl::ListObjects()
    size_t       newObjects   = 0;
    const size_t totalObjects = 0;
 
-   const std::chrono::system_clock::time_point now =
-      std::chrono::system_clock::now();
+   const std::chrono::system_clock::time_point now = util::time::now();
 
    if (currentScan_.valid_ && !currentScan_.hasAllFiles_ &&
        lastTimeListed_ + std::chrono::minutes(2) > now)

@@ -9,6 +9,7 @@
 #include <scwx/util/logger.hpp>
 #include <scwx/util/map.hpp>
 #include <scwx/util/threads.hpp>
+#include <scwx/util/time.hpp>
 #include <scwx/wsr88d/nexrad_file_factory.hpp>
 
 #include <execution>
@@ -821,7 +822,7 @@ void RadarProductManagerImpl::RefreshDataSync(
       auto latestTime        = providerManager->provider_->FindLatestTime();
       auto updatePeriod      = providerManager->provider_->update_period();
       auto lastModified      = providerManager->provider_->last_modified();
-      auto sinceLastModified = std::chrono::system_clock::now() - lastModified;
+      auto sinceLastModified = scwx::util::time::now() - lastModified;
 
       // For the default interval, assume products are updated at a
       // constant rate. Expect the next product at a time based on the
@@ -939,7 +940,7 @@ RadarProductManager::GetActiveVolumeTimes(
                        [&](const auto& date)
                        {
                           // Don't query for a time point in the future
-                          if (date > std::chrono::system_clock::now())
+                          if (date > scwx::util::time::now())
                           {
                              return;
                           }
@@ -1259,7 +1260,7 @@ void RadarProductManagerImpl::PopulateProductTimes(
                  [&](const auto& date)
                  {
                     // Don't query for a time point in the future
-                    if (date > std::chrono::system_clock::now())
+                    if (date > scwx::util::time::now())
                     {
                        return;
                     }
@@ -1556,7 +1557,7 @@ RadarProductManager::GetLevel2Data(wsr88d::rda::DataBlockType dataBlockType,
    bool              needArchive   = true;
    static const auto maxChunkDelay = std::chrono::minutes(10);
    const std::chrono::system_clock::time_point firstValidChunkTime =
-      (isEpox ? std::chrono::system_clock::now() : time) - maxChunkDelay;
+      (isEpox ? scwx::util::time::now() : time) - maxChunkDelay;
 
    // See if we have this one in the chunk provider.
    auto chunkFile = std::dynamic_pointer_cast<wsr88d::Ar2vFile>(

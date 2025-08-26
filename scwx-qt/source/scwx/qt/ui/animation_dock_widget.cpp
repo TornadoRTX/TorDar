@@ -5,6 +5,7 @@
 #include <scwx/qt/settings/general_settings.hpp>
 #include <scwx/qt/util/time.hpp>
 #include <scwx/util/logger.hpp>
+#include <scwx/util/time.hpp>
 
 #include <QTimer>
 
@@ -81,8 +82,7 @@ AnimationDockWidget::AnimationDockWidget(QWidget* parent) :
    p->timeZone_ = date::get_tzdb().locate_zone("UTC");
 #endif
    const std::chrono::sys_seconds currentTimePoint =
-      std::chrono::floor<std::chrono::minutes>(
-         std::chrono::system_clock::now());
+      std::chrono::floor<std::chrono::minutes>(scwx::util::time::now());
    p->SetTimePoint(currentTimePoint);
 
    // Update maximum date on a timer

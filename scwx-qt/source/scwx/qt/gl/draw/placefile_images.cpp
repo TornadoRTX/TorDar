@@ -2,6 +2,7 @@
 #include <scwx/qt/util/maplibre.hpp>
 #include <scwx/qt/util/texture_atlas.hpp>
 #include <scwx/util/logger.hpp>
+#include <scwx/util/time.hpp>
 
 #include <QDir>
 #include <QUrl>
@@ -264,7 +265,7 @@ void PlacefileImages::Render(
       // Selected time
       std::chrono::system_clock::time_point selectedTime =
          (p->selectedTime_ == std::chrono::system_clock::time_point {}) ?
-            std::chrono::system_clock::now() :
+            scwx::util::time::now() :
             p->selectedTime_;
       glUniform1i(
          p->uSelectedTimeLocation_,
