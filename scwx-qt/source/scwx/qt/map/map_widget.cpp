@@ -172,7 +172,6 @@ public:
    void HandleHotkeyReleased(types::Hotkey hotkey);
    void HandleHotkeyUpdates();
    void HandlePinchGesture(QPinchGesture* gesture);
-   void ImGuiCheckFonts();
    void InitializeCustomStyles();
    void InitializeNewRadarProductView(const std::string& colorPalette);
    void RadarProductManagerConnect();
@@ -222,8 +221,7 @@ public:
 
    ImGuiContext* imGuiContext_;
    std::string   imGuiContextName_;
-   bool          imGuiRendererInitialized_;
-   std::uint64_t imGuiFontsBuildCount_ {};
+   bool          imGuiRendererInitialized_ {false};
 
    std::shared_ptr<model::LayerModel> layerModel_ {
       model::LayerModel::Instance()};
@@ -1575,8 +1573,6 @@ void MapWidget::initializeGL()
    ImGui::SetCurrentContext(p->imGuiContext_);
    ImGui_ImplQt_RegisterWidget(this);
    ImGui_ImplOpenGL3_Init();
-   p->imGuiFontsBuildCount_ =
-      manager::FontManager::Instance().imgui_fonts_build_count();
    p->imGuiRendererInitialized_ = true;
 
    p->map_.reset(
@@ -1628,10 +1624,6 @@ void MapWidget::paintGL()
    std::shared_lock imguiFontAtlasLock {
       manager::FontManager::Instance().imgui_font_atlas_mutex()};
 
-   // Check ImGui fonts
-   ImGui::SetCurrentContext(p->imGuiContext_);
-   p->ImGuiCheckFonts();
-
    // Update pixel ratio
    p->context_->set_pixel_ratio(pixelRatio());
 
@@ -1646,12 +1638,13 @@ void MapWidget::paintGL()
    ImGui::SetCurrentContext(p->imGuiContext_);
 
    // Start ImGui Frame
+   model::ImGuiContextModel::Instance().NewFrame();
    ImGui_ImplQt_NewFrame(this);
    ImGui_ImplOpenGL3_NewFrame();
    ImGui::NewFrame();
 
    // Set default font
-   ImGui::PushFont(defaultFont->font());
+   ImGui::PushFont(defaultFont->font(), 0.0f);
 
    // Perform mouse picking
    if (p->hasMouse_)
@@ -1680,30 +1673,6 @@ void MapWidget::paintGL()
    Q_EMIT WidgetPainted();
 
    p->isPainting_ = false;
-}
-
-void MapWidgetImpl::ImGuiCheckFonts()
-{
-   // Update ImGui Fonts if required
-   std::uint64_t currentImGuiFontsBuildCount =
-      manager::FontManager::Instance().imgui_fonts_build_count();
-
-   if (imGuiFontsBuildCount_ != currentImGuiFontsBuildCount ||
-       !model::ImGuiContextModel::Instance().font_atlas()->IsBuilt())
-   {
-      ImGui_ImplOpenGL3_DestroyFontsTexture();
-      ImGui_ImplOpenGL3_CreateFontsTexture();
-   }
-
-   static bool haveLogged = false;
-   if (!model::ImGuiContextModel::Instance().font_atlas()->IsBuilt() &&
-       !haveLogged)
-   {
-      logger_->error("ImGui font atlas could not be built.");
-      haveLogged = true;
-   }
-
-   imGuiFontsBuildCount_ = currentImGuiFontsBuildCount;
 }
 
 void MapWidgetImpl::RunMousePicking()

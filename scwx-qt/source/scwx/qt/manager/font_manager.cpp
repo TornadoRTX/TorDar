@@ -18,11 +18,7 @@
 #include <fmt/ranges.h>
 #include <fontconfig/fontconfig.h>
 
-namespace scwx
-{
-namespace qt
-{
-namespace manager
+namespace scwx::qt::manager
 {
 
 static const std::string logPrefix_ = "scwx::qt::manager::font_manager";
@@ -80,8 +76,6 @@ public:
    std::string fontCachePath_ {};
 
    std::shared_mutex imguiFontAtlasMutex_ {};
-
-   std::uint64_t imguiFontsBuildCount_ {};
 
    boost::unordered_flat_map<FontRecordPair,
                              std::shared_ptr<types::ImGuiFont>,
@@ -207,11 +201,6 @@ std::shared_mutex& FontManager::imgui_font_atlas_mutex()
    return p->imguiFontAtlasMutex_;
 }
 
-std::uint64_t FontManager::imgui_fonts_build_count() const
-{
-   return p->imguiFontsBuildCount_;
-}
-
 int FontManager::GetFontId(types::Font font) const
 {
    auto it = p->fontIds_.find(font);
@@ -326,9 +315,6 @@ FontManager::LoadImGuiFont(const std::string&               family,
 
    // Store the ImGui font
    p->imguiFonts_.insert_or_assign(imguiFontKey, imguiFont);
-
-   // Increment ImGui font build count
-   ++p->imguiFontsBuildCount_;
 
    // Return the ImGui font
    return imguiFont;
@@ -585,6 +571,4 @@ bool operator==(const FontRecord& lhs, const FontRecord& rhs)
           lhs.filename_ == rhs.filename_;
 }
 
-} // namespace manager
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::manager

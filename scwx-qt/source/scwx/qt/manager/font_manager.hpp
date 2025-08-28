@@ -26,7 +26,6 @@ public:
    ~FontManager();
 
    std::shared_mutex& imgui_font_atlas_mutex();
-   std::uint64_t      imgui_fonts_build_count() const;
 
    int GetFontId(types::Font font) const;
    std::shared_ptr<types::ImGuiFont>

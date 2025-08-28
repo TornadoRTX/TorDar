@@ -159,7 +159,7 @@ void PlacefileText::Impl::RenderTextDrawItem(
       std::size_t fontNumber = std::clamp<std::size_t>(di->fontNumber_, 0, 8);
 
       // Set the font for the drop shadow and text
-      ImGui::PushFont(fonts_[fontNumber]->font());
+      ImGui::PushFont(fonts_[fontNumber]->font(), 0.0f);
 
       if (settings::TextSettings::Instance()
              .placefile_text_drop_shadow_enabled()
