@@ -539,7 +539,8 @@ void OverlayLayer::Render(const std::shared_ptr<MapContext>& mapContext,
                               ImVec2 {1.0f, 1.0f});
       ImGui::SetNextWindowBgAlpha(0.5f);
       ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2 {3.0f, 2.0f});
-      ImGui::PushFont(attributionFont->font());
+      ImGui::PushFont(attributionFont.first->font(),
+                      attributionFont.second.value());
       ImGui::Begin("Attribution",
                    nullptr,
                    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
