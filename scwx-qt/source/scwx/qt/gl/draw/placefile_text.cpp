@@ -62,10 +62,10 @@ public:
    std::vector<std::shared_ptr<const gr::Placefile::TextDrawItem>> newList_ {};
 
    std::vector<std::pair<std::shared_ptr<types::ImGuiFont>,
-                         units::font_size::pixels<int>>>
+                         units::font_size::pixels<float>>>
       fonts_ {};
    std::vector<std::pair<std::shared_ptr<types::ImGuiFont>,
-                         units::font_size::pixels<int>>>
+                         units::font_size::pixels<float>>>
       newFonts_ {};
 };
 

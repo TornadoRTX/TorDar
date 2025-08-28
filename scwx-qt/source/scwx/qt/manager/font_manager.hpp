@@ -28,7 +28,7 @@ public:
    std::shared_mutex& imgui_font_atlas_mutex();
 
    int GetFontId(types::Font font) const;
-   std::pair<std::shared_ptr<types::ImGuiFont>, units::font_size::pixels<int>>
+   std::pair<std::shared_ptr<types::ImGuiFont>, units::font_size::pixels<float>>
          GetImGuiFont(types::FontCategory fontCategory);
    QFont GetQFont(types::FontCategory fontCategory);
    std::shared_ptr<types::ImGuiFont>
@@ -39,7 +39,7 @@ public:
    void LoadApplicationFont(types::Font font, const std::string& filename);
    void InitializeFonts();
 
-   static units::font_size::pixels<int>
+   static units::font_size::pixels<float>
    ImFontSize(units::font_size::pixels<double> size);
 
    static FontManager& Instance();

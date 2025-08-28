@@ -26,7 +26,7 @@ public:
    using FontMap =
       boost::unordered_flat_map<std::size_t,
                                 std::pair<std::shared_ptr<types::ImGuiFont>,
-                                          units::font_size::pixels<int>>>;
+                                          units::font_size::pixels<float>>>;
 
    bool        placefile_enabled(const std::string& name);
    bool        placefile_thresholded(const std::string& name);

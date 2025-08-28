@@ -84,11 +84,11 @@ public:
    boost::unordered_flat_map<std::string, std::vector<char>> rawFontData_ {};
    std::mutex rawFontDataMutex_ {};
 
-   std::pair<std::shared_ptr<types::ImGuiFont>, units::font_size::pixels<int>>
+   std::pair<std::shared_ptr<types::ImGuiFont>, units::font_size::pixels<float>>
       defaultFont_ {};
    boost::unordered_flat_map<types::FontCategory,
                              std::pair<std::shared_ptr<types::ImGuiFont>,
-                                       units::font_size::pixels<int>>>
+                                       units::font_size::pixels<float>>>
       fontCategoryImguiFontMap_ {};
    boost::unordered_flat_map<types::FontCategory, QFont>
               fontCategoryQFontMap_ {};
@@ -160,13 +160,18 @@ void FontManager::InitializeFonts()
    }
 }
 
-units::font_size::pixels<int>
+units::font_size::pixels<float>
 FontManager::ImFontSize(units::font_size::pixels<double> size)
 {
+   static constexpr units::font_size::pixels<int> kMinFontSize_ {8};
+   static constexpr units::font_size::pixels<int> kMaxFontSize_ {96};
+
    // Only allow whole pixels, and clamp to 6-72 pt
-   units::font_size::pixels<double> pixels {size};
-   units::font_size::pixels<int>    imFontSize {
-      std::clamp(static_cast<int>(pixels.value()), 8, 96)};
+   const units::font_size::pixels<double> pixels {size};
+   const units::font_size::pixels<int>    imFontSize {
+      std::clamp(static_cast<int>(pixels.value()),
+                 kMinFontSize_.value(),
+                 kMaxFontSize_.value())};
 
    return imFontSize;
 }
@@ -223,7 +228,7 @@ int FontManager::GetFontId(types::Font font) const
    return -1;
 }
 
-std::pair<std::shared_ptr<types::ImGuiFont>, units::font_size::pixels<int>>
+std::pair<std::shared_ptr<types::ImGuiFont>, units::font_size::pixels<float>>
 FontManager::GetImGuiFont(types::FontCategory fontCategory)
 {
    std::unique_lock lock {p->fontCategoryMutex_};

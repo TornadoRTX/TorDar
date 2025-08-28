@@ -23,9 +23,8 @@ static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 class ImGuiFont::Impl
 {
 public:
-   explicit Impl(const std::string&       fontName,
-                 const std::vector<char>& fontData) :
-       fontName_ {fontName}
+   explicit Impl(std::string fontName, const std::vector<char>& fontData) :
+       fontName_ {std::move(fontName)}
    {
       CreateImGuiFont(fontData);
    }
@@ -34,7 +33,7 @@ public:
 
    void CreateImGuiFont(const std::vector<char>& fontData);
 
-   const std::string fontName_;
+   std::string fontName_;
 
    ImFont* imFont_ {nullptr};
 };
