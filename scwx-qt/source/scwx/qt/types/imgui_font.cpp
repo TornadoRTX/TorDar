@@ -49,7 +49,8 @@ void ImGuiFont::Impl::CreateImGuiFont(const std::vector<char>& fontData)
 {
    logger_->debug("Creating Font: {}", fontName_);
 
-   static constexpr float kSizePixels_ = 0.0f;
+   // Default render size, used in debug widget
+   static constexpr float kSizePixels_ = 16.0f;
 
    ImFontAtlas* fontAtlas = model::ImGuiContextModel::Instance().font_atlas();
    ImFontConfig fontConfig {};
