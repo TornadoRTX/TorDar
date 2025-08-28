@@ -1644,7 +1644,7 @@ void MapWidget::paintGL()
    ImGui::NewFrame();
 
    // Set default font
-   ImGui::PushFont(defaultFont->font(), 0.0f);
+   ImGui::PushFont(defaultFont.first->font(), defaultFont.second.value());
 
    // Perform mouse picking
    if (p->hasMouse_)

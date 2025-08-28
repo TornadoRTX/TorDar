@@ -34,15 +34,13 @@ struct FontRecord
    std::string filename_ {};
 };
 
-typedef std::pair<FontRecord, units::font_size::pixels<int>> FontRecordPair;
-
 template<class Key>
 struct FontRecordHash;
 
 template<>
-struct FontRecordHash<FontRecordPair>
+struct FontRecordHash<FontRecord>
 {
-   size_t operator()(const FontRecordPair& x) const;
+   size_t operator()(const FontRecord& x) const;
 };
 
 class FontManager::Impl
@@ -77,18 +75,20 @@ public:
 
    std::shared_mutex imguiFontAtlasMutex_ {};
 
-   boost::unordered_flat_map<FontRecordPair,
+   boost::unordered_flat_map<FontRecord,
                              std::shared_ptr<types::ImGuiFont>,
-                             FontRecordHash<FontRecordPair>>
+                             FontRecordHash<FontRecord>>
                      imguiFonts_ {};
    std::shared_mutex imguiFontsMutex_ {};
 
    boost::unordered_flat_map<std::string, std::vector<char>> rawFontData_ {};
    std::mutex rawFontDataMutex_ {};
 
-   std::shared_ptr<types::ImGuiFont> defaultFont_ {};
+   std::pair<std::shared_ptr<types::ImGuiFont>, units::font_size::pixels<int>>
+      defaultFont_ {};
    boost::unordered_flat_map<types::FontCategory,
-                             std::shared_ptr<types::ImGuiFont>>
+                             std::pair<std::shared_ptr<types::ImGuiFont>,
+                                       units::font_size::pixels<int>>>
       fontCategoryImguiFontMap_ {};
    boost::unordered_flat_map<types::FontCategory, QFont>
               fontCategoryQFontMap_ {};
@@ -160,6 +160,17 @@ void FontManager::InitializeFonts()
    }
 }
 
+units::font_size::pixels<int>
+FontManager::ImFontSize(units::font_size::pixels<double> size)
+{
+   // Only allow whole pixels, and clamp to 6-72 pt
+   units::font_size::pixels<double> pixels {size};
+   units::font_size::pixels<int>    imFontSize {
+      std::clamp(static_cast<int>(pixels.value()), 8, 96)};
+
+   return imFontSize;
+}
+
 void FontManager::Impl::UpdateImGuiFont(types::FontCategory fontCategory)
 {
    auto& textSettings = settings::TextSettings::Instance();
@@ -170,7 +181,8 @@ void FontManager::Impl::UpdateImGuiFont(types::FontCategory fontCategory)
       textSettings.font_point_size(fontCategory).GetValue()};
 
    fontCategoryImguiFontMap_.insert_or_assign(
-      fontCategory, self_->LoadImGuiFont(family, {styles}, size));
+      fontCategory,
+      std::make_pair(self_->LoadImGuiFont(family, {styles}), ImFontSize(size)));
 }
 
 void FontManager::Impl::UpdateQFont(types::FontCategory fontCategory)
@@ -211,7 +223,7 @@ int FontManager::GetFontId(types::Font font) const
    return -1;
 }
 
-std::shared_ptr<types::ImGuiFont>
+std::pair<std::shared_ptr<types::ImGuiFont>, units::font_size::pixels<int>>
 FontManager::GetImGuiFont(types::FontCategory fontCategory)
 {
    std::unique_lock lock {p->fontCategoryMutex_};
@@ -239,31 +251,23 @@ QFont FontManager::GetQFont(types::FontCategory fontCategory)
 }
 
 std::shared_ptr<types::ImGuiFont>
-FontManager::LoadImGuiFont(const std::string&               family,
-                           const std::vector<std::string>&  styles,
-                           units::font_size::points<double> size,
-                           bool                             loadIfNotFound)
+FontManager::LoadImGuiFont(const std::string&              family,
+                           const std::vector<std::string>& styles,
+                           bool                            loadIfNotFound)
 {
    const std::string styleString = fmt::format("{}", fmt::join(styles, " "));
-   const std::string fontString =
-      fmt::format("{}-{}:{}", family, size.value(), styleString);
+   const std::string fontString  = fmt::format("{}:{}", family, styleString);
 
    logger_->debug("LoadFontResource: {}", fontString);
 
    FontRecord fontRecord = Impl::MatchFontFile(family, styles);
-
-   // Only allow whole pixels, and clamp to 6-72 pt
-   units::font_size::pixels<double> pixels {size};
-   units::font_size::pixels<int>    imFontSize {
-      std::clamp(static_cast<int>(pixels.value()), 8, 96)};
-   auto imguiFontKey = std::make_pair(fontRecord, imFontSize);
 
    // Search for a loaded ImGui font
    {
       std::shared_lock imguiFontLock {p->imguiFontsMutex_};
 
       // Search for the associated ImGui font
-      auto it = p->imguiFonts_.find(imguiFontKey);
+      auto it = p->imguiFonts_.find(fontRecord);
       if (it != p->imguiFonts_.end())
       {
          return it->second;
@@ -288,7 +292,7 @@ FontManager::LoadImGuiFont(const std::string&               family,
 
    // Search for the associated ImGui font again, to prevent loading the same
    // font twice
-   auto it = p->imguiFonts_.find(imguiFontKey);
+   auto it = p->imguiFonts_.find(fontRecord);
    if (it != p->imguiFonts_.end())
    {
       return it->second;
@@ -299,22 +303,20 @@ FontManager::LoadImGuiFont(const std::string&               family,
    try
    {
       fontName = fmt::format(
-         "{}:{}",
-         std::filesystem::path(fontRecord.filename_).filename().string(),
-         imFontSize.value());
+         "{}", std::filesystem::path(fontRecord.filename_).filename().string());
    }
    catch (const std::exception& ex)
    {
       logger_->warn(ex.what());
-      fontName = fmt::format("{}:{}", fontRecord.filename_, imFontSize.value());
+      fontName = fmt::format("{}", fontRecord.filename_);
    }
 
    // Create an ImGui font
    std::shared_ptr<types::ImGuiFont> imguiFont =
-      std::make_shared<types::ImGuiFont>(fontName, rawFontData, imFontSize);
+      std::make_shared<types::ImGuiFont>(fontName, rawFontData);
 
    // Store the ImGui font
-   p->imguiFonts_.insert_or_assign(imguiFontKey, imguiFont);
+   p->imguiFonts_.insert_or_assign(fontRecord, imguiFont);
 
    // Return the ImGui font
    return imguiFont;
@@ -554,13 +556,12 @@ FontManager& FontManager::Instance()
    return instance_;
 }
 
-size_t FontRecordHash<FontRecordPair>::operator()(const FontRecordPair& x) const
+size_t FontRecordHash<FontRecord>::operator()(const FontRecord& x) const
 {
    size_t seed = 0;
-   boost::hash_combine(seed, x.first.family_);
-   boost::hash_combine(seed, x.first.style_);
-   boost::hash_combine(seed, x.first.filename_);
-   boost::hash_combine(seed, x.second.value());
+   boost::hash_combine(seed, x.family_);
+   boost::hash_combine(seed, x.style_);
+   boost::hash_combine(seed, x.filename_);
    return seed;
 }
 

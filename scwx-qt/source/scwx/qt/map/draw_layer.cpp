@@ -102,7 +102,7 @@ void DrawLayer::ImGuiFrameStart(const std::shared_ptr<MapContext>& mapContext)
    ImGui_ImplQt_NewFrame(mapContext->widget());
    ImGui_ImplOpenGL3_NewFrame();
    ImGui::NewFrame();
-   ImGui::PushFont(defaultFont->font(), 0.0f);
+   ImGui::PushFont(defaultFont.first->font(), defaultFont.second.value());
 }
 
 void DrawLayer::ImGuiFrameEnd()
