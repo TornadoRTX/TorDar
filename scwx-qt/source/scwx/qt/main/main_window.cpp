@@ -472,12 +472,12 @@ void MainWindow::showEvent(QShowEvent* event)
       auto& uiSettings = settings::UiSettings::Instance();
 
       // restore the geometry state
-      std::string uiGeometry = uiSettings.main_ui_geometry().GetValue();
+      const std::string uiGeometry = uiSettings.main_ui_geometry().GetValue();
       restoreGeometry(
          QByteArray::fromBase64(QByteArray::fromStdString(uiGeometry)));
 
       // restore the UI state
-      std::string uiState = uiSettings.main_ui_state().GetValue();
+      const std::string uiState = uiSettings.main_ui_state().GetValue();
 
       restored = restoreState(
          QByteArray::fromBase64(QByteArray::fromStdString(uiState)));
