@@ -146,6 +146,21 @@ void RadarProductLayer::Initialize(
            &view::RadarProductView::SweepComputed,
            this,
            [this]() { p->sweepNeedsUpdate_ = true; });
+   connect(radarProductView.get(),
+           &view::RadarProductView::SweepNotComputed,
+           this,
+           [this](types::NoUpdateReason reason)
+           {
+              if (reason == types::NoUpdateReason::NotAvailable)
+              {
+                 // Ensure the radar product is hidden by re-rendering
+                 Q_EMIT NeedsRendering();
+              }
+              if (reason == types::NoUpdateReason::NoChange)
+              {
+                 Q_EMIT NeedsRendering();
+              }
+           });
 }
 
 void RadarProductLayer::UpdateSweep(
@@ -281,34 +296,46 @@ void RadarProductLayer::Render(
       UpdateSweep(mapContext);
    }
 
-   const float scale = std::pow(2.0, params.zoom) * 2.0f *
-                       mbgl::util::tileSize_D / mbgl::util::DEGREES_MAX;
-   const float xScale = scale / params.width;
-   const float yScale = scale / params.height;
+   std::shared_ptr<view::RadarProductView> radarProductView =
+      mapContext->radar_product_view();
 
-   glm::mat4 uMVPMatrix(1.0f);
-   uMVPMatrix = glm::scale(uMVPMatrix, glm::vec3(xScale, yScale, 1.0f));
-   uMVPMatrix = glm::rotate(uMVPMatrix,
-                            glm::radians<float>(params.bearing),
-                            glm::vec3(0.0f, 0.0f, 1.0f));
+   const bool sweepVisible =
+      radarProductView != nullptr &&
+      radarProductView->load_status() !=
+         types::RadarProductLoadStatus::ProductNotAvailable;
 
-   glUniform2fv(p->uMapScreenCoordLocation_,
-                1,
-                glm::value_ptr(util::maplibre::LatLongToScreenCoordinate(
-                   {params.latitude, params.longitude})));
+   if (sweepVisible)
+   {
+      const float scale = std::pow(2.0, params.zoom) * 2.0f *
+                          mbgl::util::tileSize_D / mbgl::util::DEGREES_MAX;
+      const float xScale = scale / params.width;
+      const float yScale = scale / params.height;
 
-   glUniformMatrix4fv(
-      p->uMVPMatrixLocation_, 1, GL_FALSE, glm::value_ptr(uMVPMatrix));
+      glm::mat4 uMVPMatrix(1.0f);
+      uMVPMatrix = glm::scale(uMVPMatrix, glm::vec3(xScale, yScale, 1.0f));
+      uMVPMatrix = glm::rotate(uMVPMatrix,
+                               glm::radians<float>(params.bearing),
+                               glm::vec3(0.0f, 0.0f, 1.0f));
 
-   glUniform1i(p->uCFPEnabledLocation_, p->cfpEnabled_ ? 1 : 0);
+      glUniform2fv(p->uMapScreenCoordLocation_,
+                   1,
+                   glm::value_ptr(util::maplibre::LatLongToScreenCoordinate(
+                      {params.latitude, params.longitude})));
 
-   glUniform1ui(p->uDataMomentOffsetLocation_, p->rangeMin_);
-   glUniform1f(p->uDataMomentScaleLocation_, p->scale_);
+      glUniformMatrix4fv(
+         p->uMVPMatrixLocation_, 1, GL_FALSE, glm::value_ptr(uMVPMatrix));
 
-   glActiveTexture(GL_TEXTURE0);
-   glBindTexture(GL_TEXTURE_1D, p->texture_);
-   glBindVertexArray(p->vao_);
-   glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(p->numVertices_));
+      glUniform1i(p->uCFPEnabledLocation_, p->cfpEnabled_ ? 1 : 0);
+
+      glUniform1ui(p->uDataMomentOffsetLocation_, p->rangeMin_);
+      glUniform1f(p->uDataMomentScaleLocation_, p->scale_);
+
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_1D, p->texture_);
+      glBindVertexArray(p->vao_);
+
+      glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(p->numVertices_));
+   }
 
    if (wireframeEnabled)
    {
