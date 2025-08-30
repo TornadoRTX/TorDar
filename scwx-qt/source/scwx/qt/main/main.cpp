@@ -27,6 +27,7 @@
 #include <boost/asio.hpp>
 #include <fmt/format.h>
 #include <QApplication>
+#include <QLibraryInfo>
 #include <QStandardPaths>
 #include <QStyleHints>
 #include <QSurfaceFormat>
@@ -71,6 +72,8 @@ int main(int argc, char* argv[])
                  scwx::qt::main::kVersionString_,
                  scwx::qt::main::kBuildNumber_,
                  scwx::qt::main::kCommitString_);
+   logger_->info("Qt version {}",
+                 QLibraryInfo::version().toString().toStdString());
 
    InitializeOpenGL();
 
