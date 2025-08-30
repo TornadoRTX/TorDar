@@ -25,6 +25,7 @@ enum class NoUpdateReason
 {
    NoChange,
    NotLoaded,
+   NotAvailable,
    InvalidProduct,
    InvalidData
 };

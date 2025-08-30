@@ -548,17 +548,20 @@ void Level2ProductView::ComputeSweep()
 
    std::shared_ptr<wsr88d::rda::ElevationScan> radarData;
    std::chrono::system_clock::time_point       requestedTime {selected_time()};
-   std::tie(radarData,
-            p->elevationCut_,
-            p->elevationCuts_,
-            std::ignore,
-            std::ignore) =
+   types::RadarProductLoadStatus               loadStatus {};
+   std::tie(
+      radarData, p->elevationCut_, p->elevationCuts_, std::ignore, loadStatus) =
       radarProductManager->GetLevel2Data(
          p->dataBlockType_, p->selectedElevation_, requestedTime);
 
+   set_load_status(loadStatus);
+
    if (radarData == nullptr)
    {
-      Q_EMIT SweepNotComputed(types::NoUpdateReason::NotLoaded);
+      Q_EMIT SweepNotComputed(
+         loadStatus == types::RadarProductLoadStatus::ProductNotAvailable ?
+            types::NoUpdateReason::NotAvailable :
+            types::NoUpdateReason::NotLoaded);
       return;
    }
    if ((radarData == p->elevationScan_) &&
