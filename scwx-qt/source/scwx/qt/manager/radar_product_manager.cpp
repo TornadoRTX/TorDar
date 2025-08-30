@@ -1233,14 +1233,14 @@ bool RadarProductManagerImpl::AreProductTimesPopulated(
    const std::shared_ptr<ProviderManager>& providerManager,
    std::chrono::system_clock::time_point   time)
 {
-   const auto today = std::chrono::floor<std::chrono::days>(time);
+   auto today = std::chrono::floor<std::chrono::days>(time);
 
    bool productTimesPopulated = true;
 
-   // Don't query for the epoch, assume populated
+   // Assume a query for the epoch is a query for now
    if (today == std::chrono::system_clock::time_point {})
    {
-      return productTimesPopulated;
+      today = std::chrono::floor<std::chrono::days>(scwx::util::time::now());
    }
 
    const auto yesterday = today - std::chrono::days {1};
@@ -1307,12 +1307,12 @@ void RadarProductManagerImpl::PopulateProductTimes(
                   providerManager->product_,
                   scwx::util::time::TimeString(time));
 
-   const auto today = std::chrono::floor<std::chrono::days>(time);
+   auto today = std::chrono::floor<std::chrono::days>(time);
 
-   // Don't query for the epoch
+   // Assume a query for the epoch is a query for now
    if (today == std::chrono::system_clock::time_point {})
    {
-      return;
+      today = std::chrono::floor<std::chrono::days>(scwx::util::time::now());
    }
 
    const auto yesterday = today - std::chrono::days {1};
