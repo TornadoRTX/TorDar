@@ -289,9 +289,16 @@ AwsLevel2ChunksDataProvider::FindLatestTime()
 
 std::vector<std::chrono::system_clock::time_point>
 AwsLevel2ChunksDataProvider::GetTimePointsByDate(
-   std::chrono::system_clock::time_point /*date*/)
+   std::chrono::system_clock::time_point /* date */, bool /* update */)
 {
    return {};
+}
+
+bool AwsLevel2ChunksDataProvider::IsDateCached(
+   std::chrono::system_clock::time_point /* date */)
+{
+   // No cache, default to true
+   return true;
 }
 
 std::chrono::system_clock::time_point

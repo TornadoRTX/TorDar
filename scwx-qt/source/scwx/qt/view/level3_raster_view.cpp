@@ -10,11 +10,7 @@
 #include <boost/timer/timer.hpp>
 #include <units/angle.h>
 
-namespace scwx
-{
-namespace qt
-{
-namespace view
+namespace scwx::qt::view
 {
 
 static const std::string logPrefix_ = "scwx::qt::view::level3_raster_view";
@@ -125,7 +121,7 @@ void Level3RasterView::ComputeSweep()
    std::shared_ptr<wsr88d::rpg::Level3Message> message;
    std::chrono::system_clock::time_point       requestedTime {selected_time()};
    std::chrono::system_clock::time_point       foundTime;
-   std::tie(message, foundTime) =
+   std::tie(message, foundTime, std::ignore) =
       radarProductManager->GetLevel3Data(GetRadarProductName(), requestedTime);
 
    // If a different time was found than what was requested, update it
@@ -538,6 +534,4 @@ std::shared_ptr<Level3RasterView> Level3RasterView::Create(
    return std::make_shared<Level3RasterView>(product, radarProductManager);
 }
 
-} // namespace view
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::view

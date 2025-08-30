@@ -8,11 +8,7 @@
 #include <boost/asio.hpp>
 #include <boost/uuid/random_generator.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace view
+namespace scwx::qt::view
 {
 
 static const std::string logPrefix_ = "scwx::qt::view::overlay_product_view";
@@ -128,6 +124,22 @@ void OverlayProductView::Impl::ConnectRadarProductManager()
          }
       },
       Qt::QueuedConnection);
+
+   connect(radarProductManager_.get(),
+           &manager::RadarProductManager::ProductTimesPopulated,
+           self_,
+           [this](common::RadarProductGroup             group,
+                  const std::string&                    product,
+                  std::chrono::system_clock::time_point queryTime)
+           {
+              if (group == common::RadarProductGroup::Level3 &&
+                  product == kNst_ && queryTime == selectedTime_)
+              {
+                 // If the data associated with the currently selected time is
+                 // reloaded, update the view
+                 Update(product);
+              }
+           });
 }
 
 void OverlayProductView::Impl::DisconnectRadarProductManager()
@@ -286,7 +298,7 @@ void OverlayProductView::Impl::Update(const std::string& product)
    std::shared_ptr<wsr88d::rpg::Level3Message> message;
    std::chrono::system_clock::time_point       requestedTime {selectedTime_};
    std::chrono::system_clock::time_point       foundTime;
-   std::tie(message, foundTime) =
+   std::tie(message, foundTime, std::ignore) =
       radarProductManager_->GetLevel3Data(product, requestedTime);
 
    // If a different time was found than what was requested, update it
@@ -329,6 +341,4 @@ void OverlayProductView::SetAutoUpdate(bool enabled)
    p->autoUpdateEnabled_ = enabled;
 }
 
-} // namespace view
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::view
