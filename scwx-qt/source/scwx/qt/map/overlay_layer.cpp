@@ -349,17 +349,12 @@ void OverlayLayer::Render(const std::shared_ptr<MapContext>& mapContext,
    auto&       settings         = mapContext->settings();
    const float pixelRatio       = mapContext->pixel_ratio();
 
-   types::RadarProductLoadStatus newLoadStatus =
-      types::RadarProductLoadStatus::ProductNotLoaded;
-
    ImGuiFrameStart(mapContext);
 
    p->sweepTimePicked_ = false;
 
    if (radarProductView != nullptr)
    {
-      newLoadStatus = radarProductView->load_status();
-
       scwx::util::ClockFormat clockFormat = scwx::util::GetClockFormat(
          settings::GeneralSettings::Instance().clock_format().GetValue());
 
