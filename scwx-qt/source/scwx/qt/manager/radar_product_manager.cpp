@@ -203,8 +203,9 @@ public:
    void RefreshData(std::shared_ptr<ProviderManager> providerManager);
    void RefreshDataSync(std::shared_ptr<ProviderManager> providerManager);
 
-   std::map<std::chrono::system_clock::time_point,
-            std::shared_ptr<types::RadarProductRecord>>
+   std::tuple<std::map<std::chrono::system_clock::time_point,
+                       std::shared_ptr<types::RadarProductRecord>>,
+              types::RadarProductLoadStatus>
    GetLevel2ProductRecords(std::chrono::system_clock::time_point time);
    std::tuple<std::shared_ptr<types::RadarProductRecord>,
               std::chrono::system_clock::time_point,
@@ -1363,8 +1364,9 @@ void RadarProductManagerImpl::PopulateProductTimes(
                   });
 }
 
-std::map<std::chrono::system_clock::time_point,
-         std::shared_ptr<types::RadarProductRecord>>
+std::tuple<std::map<std::chrono::system_clock::time_point,
+                    std::shared_ptr<types::RadarProductRecord>>,
+           types::RadarProductLoadStatus>
 RadarProductManagerImpl::GetLevel2ProductRecords(
    std::chrono::system_clock::time_point time)
 {
@@ -1372,9 +1374,40 @@ RadarProductManagerImpl::GetLevel2ProductRecords(
             std::shared_ptr<types::RadarProductRecord>>
                                                      records {};
    std::vector<RadarProductRecordMap::const_pointer> recordPtrs {};
+   types::RadarProductLoadStatus                     status {
+      types::RadarProductLoadStatus::ListingProducts};
+
+   std::size_t recordPtrCount = 0u;
+   std::size_t recordCount    = 0u;
 
    // Ensure Level 2 product records are updated
-   PopulateLevel2ProductTimes(time);
+   if (!AreLevel2ProductTimesPopulated(time))
+   {
+      logger_->debug("Level 2 product times need populated: {}",
+                     scwx::util::time::TimeString(time));
+
+      // Populate level 2 product times asynchronously
+      boost::asio::post(threadPool_,
+                        [time, this]()
+                        {
+                           // Populate product times
+                           PopulateLevel2ProductTimes(time);
+
+                           // Signal finished
+                           Q_EMIT self_->ProductTimesPopulated(
+                              common::RadarProductGroup::Level2, "", time);
+                        });
+
+      // Return listing products status
+      return {records, status};
+   }
+   else
+   {
+      PopulateLevel2ProductTimes(time, false);
+   }
+
+   // Advance to loading product
+   status = types::RadarProductLoadStatus::LoadingProduct;
 
    {
       std::shared_lock lock {level2ProductRecordMutex_};
@@ -1413,9 +1446,29 @@ RadarProductManagerImpl::GetLevel2ProductRecords(
 
       if (recordPtr != nullptr)
       {
+         using namespace std::chrono_literals;
+
          // Don't check for an exact time match for level 2 products
          recordTime = recordPtr->first;
-         record     = recordPtr->second.lock();
+
+         if (
+            // For latest data, ensure it is from the last 24 hours
+            (time == std::chrono::system_clock::time_point {} &&
+             (recordTime > scwx::util::time::now() - 24h ||
+              recordTime == time)) ||
+            // For time queries, ensure data is within 24 hours of the request
+            (time != std::chrono::system_clock::time_point {} &&
+             std::chrono::abs(recordTime - time) < 24h))
+         {
+            record = recordPtr->second.lock();
+            ++recordPtrCount;
+         }
+         else
+         {
+            // Reset the record
+            recordPtr  = nullptr;
+            recordTime = time;
+         }
       }
 
       if (recordPtr != nullptr && record == nullptr &&
@@ -1438,16 +1491,30 @@ RadarProductManagerImpl::GetLevel2ProductRecords(
             });
 
          self_->LoadLevel2Data(recordTime, request);
+
+         // Status is already set to LoadingProduct
       }
 
       if (record != nullptr)
       {
          // Return valid records
          records.insert_or_assign(recordTime, record);
+         ++recordCount;
       }
    }
 
-   return records;
+   if (recordPtrCount == 0)
+   {
+      // If all records are empty, the product is not available
+      status = types::RadarProductLoadStatus::ProductNotAvailable;
+   }
+   else if (recordCount == recordPtrCount)
+   {
+      // If all records were populated, the product has been loaded
+      status = types::RadarProductLoadStatus::ProductLoaded;
+   }
+
+   return {records, status};
 }
 
 std::tuple<std::shared_ptr<types::RadarProductRecord>,
@@ -1684,6 +1751,8 @@ RadarProductManager::GetLevel2Data(wsr88d::rda::DataBlockType dataBlockType,
    float                                       elevationCut = 0.0f;
    std::vector<float>                          elevationCuts {};
    std::chrono::system_clock::time_point       foundTime {};
+   types::RadarProductLoadStatus               loadStatus {
+      types::RadarProductLoadStatus::ProductNotLoaded};
 
    const bool        isEpox = time == std::chrono::system_clock::time_point {};
    bool              needArchive   = true;
@@ -1719,6 +1788,7 @@ RadarProductManager::GetLevel2Data(wsr88d::rda::DataBlockType dataBlockType,
          if (foundTime >= firstValidChunkTime)
          {
             needArchive = false;
+            loadStatus  = types::RadarProductLoadStatus::ProductLoaded;
          }
       }
    }
@@ -1726,7 +1796,11 @@ RadarProductManager::GetLevel2Data(wsr88d::rda::DataBlockType dataBlockType,
    // It is not in the chunk provider, so get it from the archive
    if (needArchive)
    {
-      auto records = p->GetLevel2ProductRecords(time);
+      std::map<std::chrono::system_clock::time_point,
+               std::shared_ptr<types::RadarProductRecord>>
+         records;
+
+      std::tie(records, loadStatus) = p->GetLevel2ProductRecords(time);
       for (auto& recordPair : records)
       {
          auto& record = recordPair.second;
@@ -1771,11 +1845,15 @@ RadarProductManager::GetLevel2Data(wsr88d::rda::DataBlockType dataBlockType,
       }
    }
 
-   return {radarData,
-           elevationCut,
-           elevationCuts,
-           foundTime,
-           types::RadarProductLoadStatus::ProductLoaded};
+   if (loadStatus == types::RadarProductLoadStatus::ProductLoaded &&
+       radarData == nullptr)
+   {
+      // If all data was available for the time point, but there is no matching
+      // radar data, consider this as no product available
+      loadStatus = types::RadarProductLoadStatus::ProductNotAvailable;
+   }
+
+   return {radarData, elevationCut, elevationCuts, foundTime, loadStatus};
 }
 
 std::tuple<std::shared_ptr<wsr88d::rpg::Level3Message>,

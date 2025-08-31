@@ -210,6 +210,22 @@ void Level2ProductView::ConnectRadarProductManager()
                  Update();
               }
            });
+
+   connect(radar_product_manager().get(),
+           &manager::RadarProductManager::ProductTimesPopulated,
+           this,
+           [this](common::RadarProductGroup group,
+                  const std::string& /* product */,
+                  std::chrono::system_clock::time_point queryTime)
+           {
+              if (group == common::RadarProductGroup::Level2 &&
+                  queryTime == selected_time())
+              {
+                 // If the data associated with the currently selected time is
+                 // reloaded, update the view
+                 Update();
+              }
+           });
 }
 
 void Level2ProductView::DisconnectRadarProductManager()
