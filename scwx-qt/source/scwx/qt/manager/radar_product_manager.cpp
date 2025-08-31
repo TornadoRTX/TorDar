@@ -1302,11 +1302,20 @@ void RadarProductManagerImpl::PopulateProductTimes(
    std::chrono::system_clock::time_point time,
    bool                                  update)
 {
-   logger_->debug("Populating product times (Update: {}): {}, {}, {}",
-                  update,
-                  common::GetRadarProductGroupName(providerManager->group_),
-                  providerManager->product_,
-                  scwx::util::time::TimeString(time));
+   if (update)
+   {
+      logger_->debug("Populating product times: {}, {}, {}",
+                     common::GetRadarProductGroupName(providerManager->group_),
+                     providerManager->product_,
+                     scwx::util::time::TimeString(time));
+   }
+   else
+   {
+      logger_->trace("Populating cached product times: {}, {}, {}",
+                     common::GetRadarProductGroupName(providerManager->group_),
+                     providerManager->product_,
+                     scwx::util::time::TimeString(time));
+   }
 
    auto today = std::chrono::floor<std::chrono::days>(time);
 
