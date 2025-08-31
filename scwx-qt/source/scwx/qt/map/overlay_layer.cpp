@@ -153,6 +153,9 @@ public:
    float    lastFontSize_ {0.0f};
    QMargins lastColorTableMargins_ {};
 
+   types::RadarProductLoadStatus latchedLoadStatus_ {
+      types::RadarProductLoadStatus::ProductNotAvailable};
+
    double                             cursorScale_ {1};
    boost::signals2::scoped_connection cursorScaleConnection_;
 
@@ -349,12 +352,17 @@ void OverlayLayer::Render(const std::shared_ptr<MapContext>& mapContext,
    auto&       settings         = mapContext->settings();
    const float pixelRatio       = mapContext->pixel_ratio();
 
+   types::RadarProductLoadStatus newLoadStatus =
+      types::RadarProductLoadStatus::ProductNotLoaded;
+
    ImGuiFrameStart(mapContext);
 
    p->sweepTimePicked_ = false;
 
    if (radarProductView != nullptr)
    {
+      newLoadStatus = radarProductView->load_status();
+
       scwx::util::ClockFormat clockFormat = scwx::util::GetClockFormat(
          settings::GeneralSettings::Instance().clock_format().GetValue());
 
@@ -469,6 +477,16 @@ void OverlayLayer::Render(const std::shared_ptr<MapContext>& mapContext,
 
    ImGuiFrameEnd();
 
+   if (radarProductView != nullptr &&
+       // Don't latch a transition from Not Available to Listing Products
+       !(p->latchedLoadStatus_ ==
+            types::RadarProductLoadStatus::ProductNotAvailable &&
+         newLoadStatus == types::RadarProductLoadStatus::ListingProducts))
+   {
+      // Latch last load status
+      p->latchedLoadStatus_ = newLoadStatus;
+   }
+
    SCWX_GL_CHECK_ERROR();
 }
 
@@ -520,11 +538,34 @@ void OverlayLayer::Impl::RenderProductDetails(
                            ImGuiCond_Always,
                            ImVec2 {1.0f, 0.0f});
 
-   if (radarProductView != nullptr &&
-       radarProductView->load_status() ==
-          types::RadarProductLoadStatus::ProductNotAvailable)
+   bool                          productNotAvailable = false;
+   types::RadarProductLoadStatus newLoadStatus =
+      types::RadarProductLoadStatus::ProductNotLoaded;
+
+   if (radarProductView != nullptr)
    {
-      ImGui::Begin("Product Details",
+      newLoadStatus = radarProductView->load_status();
+
+      switch (newLoadStatus)
+      {
+      case types::RadarProductLoadStatus::ProductNotAvailable:
+         productNotAvailable = true;
+         break;
+
+      case types::RadarProductLoadStatus::ListingProducts:
+         productNotAvailable =
+            latchedLoadStatus_ ==
+            types::RadarProductLoadStatus::ProductNotAvailable;
+         break;
+
+      default:
+         productNotAvailable = false;
+      }
+   }
+
+   if (productNotAvailable)
+   {
+      ImGui::Begin("Product Not Available",
                    nullptr,
                    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
                       ImGuiWindowFlags_AlwaysAutoResize);
@@ -592,13 +633,19 @@ void OverlayLayer::Impl::RenderAttribution(
       auto attributionFont = manager::FontManager::Instance().GetImGuiFont(
          types::FontCategory::Attribution);
 
-      ImGui::SetNextWindowPos(ImVec2 {static_cast<float>(params.width),
-                                      static_cast<float>(params.height) -
-                                         colorTableMargins.bottom()},
-                              ImGuiCond_Always,
-                              ImVec2 {1.0f, 1.0f});
-      ImGui::SetNextWindowBgAlpha(0.5f);
-      ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2 {3.0f, 2.0f});
+      static constexpr float kWindowBgAlpha_  = 0.5f;
+      static constexpr float kWindowPaddingX_ = 3.0f;
+      static constexpr float kWindowPaddingY_ = 2.0f;
+
+      ImGui::SetNextWindowPos(
+         ImVec2 {
+            static_cast<float>(params.width),
+            static_cast<float>(params.height - colorTableMargins.bottom())},
+         ImGuiCond_Always,
+         ImVec2 {1.0f, 1.0f});
+      ImGui::SetNextWindowBgAlpha(kWindowBgAlpha_);
+      ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,
+                          ImVec2 {kWindowPaddingX_, kWindowPaddingY_});
       ImGui::PushFont(attributionFont.first->font(),
                       attributionFont.second.value());
       ImGui::Begin("Attribution",

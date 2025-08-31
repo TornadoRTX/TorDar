@@ -64,7 +64,7 @@ public:
    bool colorTableNeedsUpdate_ {false};
    bool sweepNeedsUpdate_ {false};
 
-   types::RadarProductLoadStatus lastLoadStatus_ {
+   types::RadarProductLoadStatus latchedLoadStatus_ {
       types::RadarProductLoadStatus::ProductNotAvailable};
 };
 
@@ -161,7 +161,7 @@ void RadarProductLayer::Initialize(
               }
               if (reason == types::NoUpdateReason::NoChange)
               {
-                 if (p->lastLoadStatus_ ==
+                 if (p->latchedLoadStatus_ ==
                      types::RadarProductLoadStatus::ProductNotAvailable)
                  {
                     // Ensure the radar product is shown by re-rendering
@@ -306,10 +306,29 @@ void RadarProductLayer::Render(
    std::shared_ptr<view::RadarProductView> radarProductView =
       mapContext->radar_product_view();
 
-   const bool sweepVisible =
-      radarProductView != nullptr &&
-      radarProductView->load_status() !=
-         types::RadarProductLoadStatus::ProductNotAvailable;
+   bool                          sweepVisible = false;
+   types::RadarProductLoadStatus newLoadStatus =
+      types::RadarProductLoadStatus::ProductNotLoaded;
+
+   if (radarProductView != nullptr)
+   {
+      newLoadStatus = radarProductView->load_status();
+
+      switch (newLoadStatus)
+      {
+      case types::RadarProductLoadStatus::ProductNotAvailable:
+         sweepVisible = false;
+         break;
+
+      case types::RadarProductLoadStatus::ListingProducts:
+         sweepVisible = p->latchedLoadStatus_ !=
+                        types::RadarProductLoadStatus::ProductNotAvailable;
+         break;
+
+      default:
+         sweepVisible = true;
+      }
+   }
 
    if (sweepVisible)
    {
@@ -350,10 +369,14 @@ void RadarProductLayer::Render(
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
    }
 
-   if (radarProductView != nullptr)
+   if (radarProductView != nullptr &&
+       // Don't latch a transition from Not Available to Listing Products
+       !(p->latchedLoadStatus_ ==
+            types::RadarProductLoadStatus::ProductNotAvailable &&
+         newLoadStatus == types::RadarProductLoadStatus::ListingProducts))
    {
-      // Save last load status
-      p->lastLoadStatus_ = radarProductView->load_status();
+      // Latch last load status
+      p->latchedLoadStatus_ = newLoadStatus;
    }
 
    SCWX_GL_CHECK_ERROR();
