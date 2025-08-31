@@ -573,6 +573,20 @@ void OverlayLayer::Impl::RenderProductDetails(
       ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, 255));
       ImGui::TextUnformatted("NO DATA AVAILABLE");
       ImGui::PopStyleColor();
+      if (ImGui::BeginItemTooltip())
+      {
+         static constexpr float  kFontSizeFactor_  = 20.0f;
+         static constexpr double kMaxWidthPercent_ = 0.8;
+
+         ImGui::PushTextWrapPos(
+            std::min(ImGui::GetFontSize() * kFontSizeFactor_,
+                     static_cast<float>(params.width * kMaxWidthPercent_)));
+         ImGui::TextUnformatted(
+            "No data found for the selected product and time. Please select a "
+            "different product, or update your time selection.");
+         ImGui::PopTextWrapPos();
+         ImGui::EndTooltip();
+      }
 
       ImGui::End();
    }
