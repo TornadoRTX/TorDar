@@ -317,8 +317,7 @@ void TimelineManager::ReceiveRadarSweepNotUpdated(std::size_t mapIndex,
                                                   types::NoUpdateReason reason)
 {
    if (!p->radarSweepMonitorActive_ ||
-       (reason == types::NoUpdateReason::NotLoaded ||
-        reason == types::NoUpdateReason::NotAvailable))
+       reason == types::NoUpdateReason::NotLoaded)
    {
       return;
    }
