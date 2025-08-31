@@ -212,10 +212,10 @@ void RadarProductLayer::UpdateSweep(
    glEnableVertexAttribArray(0);
 
    // Buffer data moments
-   const GLvoid* data;
-   GLsizeiptr    dataSize;
-   size_t        componentSize;
-   GLenum        type;
+   const GLvoid* data {};
+   GLsizeiptr    dataSize {};
+   size_t        componentSize {};
+   GLenum        type {};
 
    std::tie(data, dataSize, componentSize) = radarProductView->GetMomentData();
 
@@ -238,10 +238,10 @@ void RadarProductLayer::UpdateSweep(
    glEnableVertexAttribArray(1);
 
    // Buffer CFP data
-   const GLvoid* cfpData;
-   GLsizeiptr    cfpDataSize;
-   size_t        cfpComponentSize;
-   GLenum        cfpType;
+   const GLvoid* cfpData {};
+   GLsizeiptr    cfpDataSize {};
+   size_t        cfpComponentSize {};
+   GLenum        cfpType {};
 
    std::tie(cfpData, cfpDataSize, cfpComponentSize) =
       radarProductView->GetCfpMomentData();
@@ -313,15 +313,15 @@ void RadarProductLayer::Render(
 
    if (sweepVisible)
    {
-      const float scale = std::pow(2.0, params.zoom) * 2.0f *
-                          mbgl::util::tileSize_D / mbgl::util::DEGREES_MAX;
-      const float xScale = scale / params.width;
-      const float yScale = scale / params.height;
+      const double scale = std::pow(2.0, params.zoom) * 2.0 *
+                           mbgl::util::tileSize_D / mbgl::util::DEGREES_MAX;
+      const auto xScale = static_cast<float>(scale / params.width);
+      const auto yScale = static_cast<float>(scale / params.height);
 
       glm::mat4 uMVPMatrix(1.0f);
       uMVPMatrix = glm::scale(uMVPMatrix, glm::vec3(xScale, yScale, 1.0f));
       uMVPMatrix = glm::rotate(uMVPMatrix,
-                               glm::radians<float>(params.bearing),
+                               glm::radians(static_cast<float>(params.bearing)),
                                glm::vec3(0.0f, 0.0f, 1.0f));
 
       glUniform2fv(p->uMapScreenCoordLocation_,
@@ -583,7 +583,7 @@ void RadarProductLayer::UpdateColorTable(
    const uint16_t rangeMin = radarProductView->color_table_min();
    const uint16_t rangeMax = radarProductView->color_table_max();
 
-   const float scale = rangeMax - rangeMin;
+   const auto scale = static_cast<float>(rangeMax - rangeMin);
 
    glActiveTexture(GL_TEXTURE0);
    glBindTexture(GL_TEXTURE_1D, p->texture_);
