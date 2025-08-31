@@ -63,6 +63,9 @@ public:
 
    bool colorTableNeedsUpdate_ {false};
    bool sweepNeedsUpdate_ {false};
+
+   types::RadarProductLoadStatus lastLoadStatus_ {
+      types::RadarProductLoadStatus::ProductNotAvailable};
 };
 
 RadarProductLayer::RadarProductLayer(std::shared_ptr<gl::GlContext> glContext) :
@@ -158,7 +161,12 @@ void RadarProductLayer::Initialize(
               }
               if (reason == types::NoUpdateReason::NoChange)
               {
-                 Q_EMIT NeedsRendering();
+                 if (p->lastLoadStatus_ ==
+                     types::RadarProductLoadStatus::ProductNotAvailable)
+                 {
+                    // Ensure the radar product is shown by re-rendering
+                    Q_EMIT NeedsRendering();
+                 }
               }
            });
 }
@@ -273,7 +281,6 @@ void RadarProductLayer::Render(
    const std::shared_ptr<MapContext>&            mapContext,
    const QMapLibre::CustomLayerRenderParameters& params)
 {
-
    p->shaderProgram_->Use();
 
    // Set OpenGL blend mode for transparency
@@ -341,6 +348,12 @@ void RadarProductLayer::Render(
    {
       // Restore polygon mode to default
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+   }
+
+   if (radarProductView != nullptr)
+   {
+      // Save last load status
+      p->lastLoadStatus_ = radarProductView->load_status();
    }
 
    SCWX_GL_CHECK_ERROR();
