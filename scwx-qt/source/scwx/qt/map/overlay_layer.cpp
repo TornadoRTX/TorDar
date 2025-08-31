@@ -153,9 +153,6 @@ public:
    float    lastFontSize_ {0.0f};
    QMargins lastColorTableMargins_ {};
 
-   types::RadarProductLoadStatus latchedLoadStatus_ {
-      types::RadarProductLoadStatus::ProductNotAvailable};
-
    double                             cursorScale_ {1};
    boost::signals2::scoped_connection cursorScaleConnection_;
 
@@ -477,16 +474,6 @@ void OverlayLayer::Render(const std::shared_ptr<MapContext>& mapContext,
 
    ImGuiFrameEnd();
 
-   if (radarProductView != nullptr &&
-       // Don't latch a transition from Not Available to Listing Products
-       !(p->latchedLoadStatus_ ==
-            types::RadarProductLoadStatus::ProductNotAvailable &&
-         newLoadStatus == types::RadarProductLoadStatus::ListingProducts))
-   {
-      // Latch last load status
-      p->latchedLoadStatus_ = newLoadStatus;
-   }
-
    SCWX_GL_CHECK_ERROR();
 }
 
@@ -550,12 +537,6 @@ void OverlayLayer::Impl::RenderProductDetails(
       {
       case types::RadarProductLoadStatus::ProductNotAvailable:
          productNotAvailable = true;
-         break;
-
-      case types::RadarProductLoadStatus::ListingProducts:
-         productNotAvailable =
-            latchedLoadStatus_ ==
-            types::RadarProductLoadStatus::ProductNotAvailable;
          break;
 
       default:
