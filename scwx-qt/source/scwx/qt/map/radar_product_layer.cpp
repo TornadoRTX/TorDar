@@ -303,7 +303,7 @@ void RadarProductLayer::Render(
       UpdateSweep(mapContext);
    }
 
-   std::shared_ptr<view::RadarProductView> radarProductView =
+   const std::shared_ptr<view::RadarProductView> radarProductView =
       mapContext->radar_product_view();
 
    bool                          sweepVisible = false;

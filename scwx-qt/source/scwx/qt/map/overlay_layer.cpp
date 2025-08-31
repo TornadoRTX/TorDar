@@ -438,9 +438,13 @@ void OverlayLayer::Render(const std::shared_ptr<MapContext>& mapContext,
    // Map Center Icon
    if (params.width != p->lastWidth_ || params.height != p->lastHeight_)
    {
+      static constexpr double xPosition = 0.5;
+      static constexpr double yPosition = 0.5;
+
       // Draw the icon in the center of the widget
-      p->icons_->SetIconLocation(
-         p->mapCenterIcon_, params.width / 2.0, params.height / 2.0);
+      p->icons_->SetIconLocation(p->mapCenterIcon_,
+                                 params.width * xPosition,
+                                 params.height * yPosition);
    }
    p->icons_->SetIconVisible(p->mapCenterIcon_,
                              generalSettings.show_map_center().GetValue());
@@ -448,10 +452,13 @@ void OverlayLayer::Render(const std::shared_ptr<MapContext>& mapContext,
    const QMargins colorTableMargins = mapContext->color_table_margins();
    if (colorTableMargins != p->lastColorTableMargins_ || p->firstRender_)
    {
+      static constexpr int xOffset = 10;
+      static constexpr int yOffset = 10;
+
       // Draw map logo with a 10x10 indent from the bottom left
       p->icons_->SetIconLocation(p->mapLogoIcon_,
-                                 10 + colorTableMargins.left(),
-                                 10 + colorTableMargins.bottom());
+                                 colorTableMargins.left() + xOffset,
+                                 colorTableMargins.bottom() + yOffset);
    }
    p->icons_->SetIconVisible(p->mapLogoIcon_,
                              generalSettings.show_map_logo().GetValue());
