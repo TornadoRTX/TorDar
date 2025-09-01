@@ -181,6 +181,7 @@ public:
                        auto& [key, providerManager] = p;
                        providerManager->Disable();
                     });
+      lock.unlock();
 
       threadPool_.join();
    }
