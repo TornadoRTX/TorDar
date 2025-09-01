@@ -53,8 +53,10 @@ public:
       // Lock mutexes before destroying
       std::unique_lock animationTimerLock {animationTimerMutex_};
       animationTimer_.cancel();
+      animationTimerLock.unlock();
 
-      std::unique_lock selectTimeLock {selectTimeMutex_};
+      selectThreadPool_.join();
+      playThreadPool_.join();
    }
 
    TimelineManager* self_;
