@@ -1,17 +1,29 @@
 #pragma once
 
+#include <memory>
+
+#include <cpr/api.h>
+#include <cpr/async_wrapper.h>
 #include <cpr/cprtypes.h>
 
-namespace scwx
-{
-namespace network
-{
-namespace cpr
+namespace scwx::network::cpr
 {
 
-::cpr::Header GetHeader();
-void          SetUserAgent(const std::string& userAgent);
+using AsyncResponseC = ::cpr::AsyncWrapper<::cpr::Response, true>;
 
-} // namespace cpr
-} // namespace network
-} // namespace scwx
+template<typename... Ts>
+std::shared_ptr<AsyncResponseC> GetAsyncC(Ts... ts)
+{
+   std::vector<AsyncResponseC> responses =
+      ::cpr::MultiGetAsync(std::tuple {std::forward<Ts>(ts)...});
+   auto responsePtr = std::make_shared<AsyncResponseC>(std::move(responses[0]));
+   return responsePtr;
+}
+
+::cpr::ConnectTimeout GetDefaultConnectTimeout();
+::cpr::Timeout        GetDefaultTimeout();
+::cpr::LowSpeed       GetDefaultLowSpeed();
+::cpr::Header         GetHeader();
+void                  SetUserAgent(const std::string& userAgent);
+
+} // namespace scwx::network::cpr
