@@ -106,21 +106,27 @@ public:
                     group, product, isChunks_, latestTime);
               });
    }
-   ~ProviderManager() { threadPool_.join(); };
+   ~ProviderManager()
+   {
+      providerThreadPool_.stop();
+      providerThreadPool_.join();
+   };
 
    std::string name() const;
 
    void Disable();
+   void RefreshData();
+   void RefreshDataSync();
 
-   boost::asio::thread_pool threadPool_ {1u};
+   boost::asio::thread_pool providerThreadPool_ {1u};
 
-   const std::string                             radarId_;
-   const common::RadarProductGroup               group_;
-   const std::string                             product_;
-   const bool                                    isChunks_;
-   bool                                          refreshEnabled_ {false};
-   boost::asio::steady_timer                     refreshTimer_ {threadPool_};
-   std::mutex                                    refreshTimerMutex_ {};
+   const std::string               radarId_;
+   const common::RadarProductGroup group_;
+   const std::string               product_;
+   const bool                      isChunks_;
+   bool                            refreshEnabled_ {false};
+   boost::asio::steady_timer       refreshTimer_ {providerThreadPool_};
+   std::mutex                      refreshTimerMutex_ {};
    std::shared_ptr<provider::NexradDataProvider> provider_ {nullptr};
    size_t                                        refreshCount_ {0};
 
@@ -183,6 +189,7 @@ public:
                     });
       lock.unlock();
 
+      threadPool_.stop();
       threadPool_.join();
    }
 
@@ -197,8 +204,6 @@ public:
       boost::uuids::uuid                                uuid,
       const std::set<std::shared_ptr<ProviderManager>>& providerManagers,
       bool                                              enabled);
-   void RefreshData(std::shared_ptr<ProviderManager> providerManager);
-   void RefreshDataSync(std::shared_ptr<ProviderManager> providerManager);
 
    std::tuple<std::map<std::chrono::system_clock::time_point,
                        std::shared_ptr<types::RadarProductRecord>>,
@@ -781,28 +786,27 @@ void RadarProductManagerImpl::EnableRefresh(
          if (providerManager->refreshEnabled_ != enabled)
          {
             providerManager->refreshEnabled_ = enabled;
-            RefreshData(providerManager);
+            providerManager->RefreshData();
          }
       }
    }
 }
 
-void RadarProductManagerImpl::RefreshData(
-   std::shared_ptr<ProviderManager> providerManager)
+void ProviderManager::RefreshData()
 {
-   logger_->trace("RefreshData: {}", providerManager->name());
+   logger_->trace("RefreshData: {}", name());
 
    {
-      std::unique_lock lock(providerManager->refreshTimerMutex_);
-      providerManager->refreshTimer_.cancel();
+      std::unique_lock lock(refreshTimerMutex_);
+      refreshTimer_.cancel();
    }
 
-   boost::asio::post(threadPool_,
+   boost::asio::post(providerThreadPool_,
                      [=, this]()
                      {
                         try
                         {
-                           RefreshDataSync(providerManager);
+                           RefreshDataSync();
                         }
                         catch (const std::exception& ex)
                         {
@@ -811,27 +815,24 @@ void RadarProductManagerImpl::RefreshData(
                      });
 }
 
-void RadarProductManagerImpl::RefreshDataSync(
-   std::shared_ptr<ProviderManager> providerManager)
+void ProviderManager::RefreshDataSync()
 {
    using namespace std::chrono_literals;
 
-   auto [newObjects, totalObjects] = providerManager->provider_->Refresh();
+   auto [newObjects, totalObjects] = provider_->Refresh();
 
    // Level2 chunked data is updated quickly and uses a faster interval
    const std::chrono::milliseconds fastRetryInterval =
-      providerManager->isChunks_ ? kFastRetryIntervalChunks_ :
-                                   kFastRetryInterval_;
+      isChunks_ ? kFastRetryIntervalChunks_ : kFastRetryInterval_;
    const std::chrono::milliseconds slowRetryInterval =
-      providerManager->isChunks_ ? kSlowRetryIntervalChunks_ :
-                                   kSlowRetryInterval_;
+      isChunks_ ? kSlowRetryIntervalChunks_ : kSlowRetryInterval_;
    std::chrono::milliseconds interval = fastRetryInterval;
 
    if (totalObjects > 0)
    {
-      auto latestTime        = providerManager->provider_->FindLatestTime();
-      auto updatePeriod      = providerManager->provider_->update_period();
-      auto lastModified      = providerManager->provider_->last_modified();
+      auto latestTime        = provider_->FindLatestTime();
+      auto updatePeriod      = provider_->update_period();
+      auto lastModified      = provider_->last_modified();
       auto sinceLastModified = scwx::util::time::now() - lastModified;
 
       // For the default interval, assume products are updated at a
@@ -854,46 +855,43 @@ void RadarProductManagerImpl::RefreshDataSync(
 
       if (newObjects > 0)
       {
-         Q_EMIT providerManager->NewDataAvailable(
-            providerManager->group_, providerManager->product_, latestTime);
+         Q_EMIT NewDataAvailable(group_, product_, latestTime);
       }
    }
-   else if (providerManager->refreshEnabled_)
+   else if (refreshEnabled_)
    {
-      logger_->info("[{}] No data found", providerManager->name());
+      logger_->info("[{}] No data found", name());
 
       // If no data is found, retry at the slow retry interval
       interval = slowRetryInterval;
    }
 
-   std::unique_lock const lock(providerManager->refreshTimerMutex_);
+   std::unique_lock const lock(refreshTimerMutex_);
 
-   if (providerManager->refreshEnabled_)
+   if (refreshEnabled_)
    {
       logger_->trace(
          "[{}] Scheduled refresh in {:%M:%S}",
-         providerManager->name(),
+         name(),
          std::chrono::duration_cast<std::chrono::seconds>(interval));
 
       {
-         providerManager->refreshTimer_.expires_after(interval);
-         providerManager->refreshTimer_.async_wait(
+         refreshTimer_.expires_after(interval);
+         refreshTimer_.async_wait(
             [=, this](const boost::system::error_code& e)
             {
                if (e == boost::system::errc::success)
                {
-                  RefreshData(providerManager);
+                  RefreshData();
                }
                else if (e == boost::asio::error::operation_aborted)
                {
-                  logger_->debug("[{}] Data refresh timer cancelled",
-                                 providerManager->name());
+                  logger_->debug("[{}] Data refresh timer cancelled", name());
                }
                else
                {
-                  logger_->warn("[{}] Data refresh timer error: {}",
-                                providerManager->name(),
-                                e.message());
+                  logger_->warn(
+                     "[{}] Data refresh timer error: {}", name(), e.message());
                }
             });
       }
