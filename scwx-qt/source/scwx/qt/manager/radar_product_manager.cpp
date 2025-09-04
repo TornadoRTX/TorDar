@@ -106,7 +106,7 @@ public:
                     group, product, isChunks_, latestTime);
               });
    }
-   ~ProviderManager()
+   ~ProviderManager() override
    {
       providerThreadPool_.stop();
       providerThreadPool_.join();
@@ -797,12 +797,12 @@ void ProviderManager::RefreshData()
    logger_->trace("RefreshData: {}", name());
 
    {
-      std::unique_lock lock(refreshTimerMutex_);
+      const std::unique_lock lock(refreshTimerMutex_);
       refreshTimer_.cancel();
    }
 
    boost::asio::post(providerThreadPool_,
-                     [=, this]()
+                     [this]()
                      {
                         try
                         {
@@ -841,7 +841,11 @@ void ProviderManager::RefreshDataSync()
       interval = std::chrono::duration_cast<std::chrono::milliseconds>(
          updatePeriod - sinceLastModified);
 
-      if (updatePeriod > 0s && sinceLastModified > updatePeriod * 5)
+      // Allow 5 update periods before considering the data stale
+      constexpr std::size_t kUpdatePeriodStaleCount = 5;
+
+      if (updatePeriod > 0s &&
+          sinceLastModified > updatePeriod * kUpdatePeriodStaleCount)
       {
          // If it has been at least 5 update periods since the file has
          // been last modified, slow the retry period
@@ -878,7 +882,7 @@ void ProviderManager::RefreshDataSync()
       {
          refreshTimer_.expires_after(interval);
          refreshTimer_.async_wait(
-            [=, this](const boost::system::error_code& e)
+            [this](const boost::system::error_code& e)
             {
                if (e == boost::system::errc::success)
                {
