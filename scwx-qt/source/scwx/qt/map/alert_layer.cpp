@@ -6,8 +6,8 @@
 #include <scwx/qt/util/color.hpp>
 #include <scwx/qt/util/tooltip.hpp>
 #include <scwx/util/logger.hpp>
-#include <scwx/util/time.hpp>
 
+#include <atomic>
 #include <chrono>
 #include <mutex>
 #include <ranges>
@@ -15,6 +15,7 @@
 #include <shared_mutex>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/asio/system_timer.hpp>
@@ -22,7 +23,6 @@
 #include <boost/container/stable_vector.hpp>
 #include <boost/container_hash/hash.hpp>
 #include <QEvent>
-#include <utility>
 
 namespace scwx::qt::map
 {
@@ -153,9 +153,11 @@ public:
    ~Impl()
    {
       std::unique_lock refreshLock(refreshMutex_);
+      refreshEnabled_ = false;
       refreshTimer_.cancel();
       refreshLock.unlock();
 
+      threadPool_.stop();
       threadPool_.join();
 
       receiver_ = nullptr;
@@ -213,6 +215,7 @@ public:
 
    AlertLayer* self_;
 
+   std::atomic<bool>         refreshEnabled_ {true};
    boost::asio::system_timer refreshTimer_ {threadPool_};
    std::mutex                refreshMutex_;
 
@@ -582,7 +585,8 @@ void AlertLayer::Impl::ScheduleRefresh()
 
    // Expires at the top of the next minute
    std::chrono::system_clock::time_point now =
-      std::chrono::floor<std::chrono::minutes>(scwx::util::time::now());
+      std::chrono::floor<std::chrono::minutes>(
+         std::chrono::system_clock::now());
    refreshTimer_.expires_at(now + 1min);
 
    refreshTimer_.async_wait(
@@ -599,7 +603,11 @@ void AlertLayer::Impl::ScheduleRefresh()
          else
          {
             Q_EMIT self_->NeedsRendering();
-            ScheduleRefresh();
+
+            if (refreshEnabled_)
+            {
+               ScheduleRefresh();
+            }
          }
       });
 }
