@@ -93,9 +93,9 @@ void UpdateDialog::Impl::HandleAsset(const types::gh::ReleaseAsset& asset)
 #if defined(_WIN32)
 
 #   if defined(_M_AMD64)
-   static constexpr std::string assetSuffix = "-x64.msi";
+   static const std::string assetSuffix = "-x64.msi";
 #   else
-   static constexpr std::string assetSuffix = "-arm64.msi";
+   static const std::string assetSuffix = "-arm64.msi";
 #   endif
 
    if (asset.name_.ends_with(assetSuffix))

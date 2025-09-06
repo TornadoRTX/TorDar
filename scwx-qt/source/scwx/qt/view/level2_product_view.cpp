@@ -11,11 +11,7 @@
 #include <boost/range/irange.hpp>
 #include <boost/timer/timer.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace view
+namespace scwx::qt::view
 {
 
 static const std::string logPrefix_ = "scwx::qt::view::level2_product_view";
@@ -211,6 +207,22 @@ void Level2ProductView::ConnectRadarProductManager()
                   common::RadarProductGroup::Level2)
               {
                  // If level 2 data associated was reloaded, update the view
+                 Update();
+              }
+           });
+
+   connect(radar_product_manager().get(),
+           &manager::RadarProductManager::ProductTimesPopulated,
+           this,
+           [this](common::RadarProductGroup group,
+                  const std::string& /* product */,
+                  std::chrono::system_clock::time_point queryTime)
+           {
+              if (group == common::RadarProductGroup::Level2 &&
+                  queryTime == selected_time())
+              {
+                 // If the data associated with the currently selected time is
+                 // reloaded, update the view
                  Update();
               }
            });
@@ -552,13 +564,20 @@ void Level2ProductView::ComputeSweep()
 
    std::shared_ptr<wsr88d::rda::ElevationScan> radarData;
    std::chrono::system_clock::time_point       requestedTime {selected_time()};
-   std::tie(radarData, p->elevationCut_, p->elevationCuts_, std::ignore) =
+   types::RadarProductLoadStatus               loadStatus {};
+   std::tie(
+      radarData, p->elevationCut_, p->elevationCuts_, std::ignore, loadStatus) =
       radarProductManager->GetLevel2Data(
          p->dataBlockType_, p->selectedElevation_, requestedTime);
 
+   set_load_status(loadStatus);
+
    if (radarData == nullptr)
    {
-      Q_EMIT SweepNotComputed(types::NoUpdateReason::NotLoaded);
+      Q_EMIT SweepNotComputed(
+         loadStatus == types::RadarProductLoadStatus::ProductNotAvailable ?
+            types::NoUpdateReason::NotAvailable :
+            types::NoUpdateReason::NotLoaded);
       return;
    }
    if ((radarData == p->elevationScan_) &&
@@ -1369,7 +1388,7 @@ Level2ProductView::GetBinLevel(const common::Coordinate& coordinate) const
             auto nextRadial = radarData->find((i + 1) % numRadials);
             if (nextRadial != radarData->cend())
             {
-               nextAngle    = nextRadial->second->azimuth_angle();
+               nextAngle = nextRadial->second->azimuth_angle();
 
                // Level 2 angles are the center of the bins.
                const units::degrees<float> deltaAngle =
@@ -1564,6 +1583,4 @@ std::shared_ptr<Level2ProductView> Level2ProductView::Create(
    return std::make_shared<Level2ProductView>(product, radarProductManager);
 }
 
-} // namespace view
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::view

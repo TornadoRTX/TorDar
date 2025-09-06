@@ -38,11 +38,12 @@ public:
    [[nodiscard]] virtual std::shared_ptr<common::ColorTable>
    color_table() const = 0;
    [[nodiscard]] virtual const std::vector<boost::gil::rgba8_pixel_t>&
-                                              color_table_lut() const;
-   [[nodiscard]] virtual std::uint16_t        color_table_min() const;
-   [[nodiscard]] virtual std::uint16_t        color_table_max() const;
-   [[nodiscard]] virtual std::optional<float> elevation() const;
-   [[nodiscard]] virtual float                range() const;
+                                               color_table_lut() const;
+   [[nodiscard]] virtual std::uint16_t         color_table_min() const;
+   [[nodiscard]] virtual std::uint16_t         color_table_max() const;
+   [[nodiscard]] virtual std::optional<float>  elevation() const;
+   [[nodiscard]] types::RadarProductLoadStatus load_status() const;
+   [[nodiscard]] virtual float                 range() const;
    [[nodiscard]] virtual std::chrono::system_clock::time_point
                                                    sweep_time() const;
    [[nodiscard]] virtual float                     unit_scale() const = 0;
@@ -97,6 +98,8 @@ protected:
    virtual void ConnectRadarProductManager()    = 0;
    virtual void DisconnectRadarProductManager() = 0;
    virtual void UpdateColorTableLut()           = 0;
+
+   void set_load_status(types::RadarProductLoadStatus loadStatus);
 
 protected slots:
    virtual void ComputeSweep();

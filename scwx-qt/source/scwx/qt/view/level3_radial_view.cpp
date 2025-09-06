@@ -10,11 +10,7 @@
 #include <boost/range/irange.hpp>
 #include <boost/timer/timer.hpp>
 
-namespace scwx
-{
-namespace qt
-{
-namespace view
+namespace scwx::qt::view
 {
 
 static const std::string logPrefix_ = "scwx::qt::view::level3_radial_view";
@@ -31,15 +27,7 @@ static constexpr std::uint32_t VALUES_PER_VERTEX = 2u;
 class Level3RadialView::Impl
 {
 public:
-   explicit Impl(Level3RadialView* self) :
-       self_ {self},
-       latitude_ {},
-       longitude_ {},
-       range_ {},
-       vcp_ {},
-       sweepTime_ {}
-   {
-   }
+   explicit Impl(Level3RadialView* self) : self_ {self} {}
    ~Impl() { threadPool_.join(); };
 
    void ComputeCoordinates(
@@ -65,13 +53,13 @@ public:
    bool lastShowSmoothedRangeFolding_ {false};
    bool lastSmoothingEnabled_ {false};
 
-   float         latitude_;
-   float         longitude_;
+   float                latitude_ {};
+   float                longitude_ {};
    std::optional<float> elevation_ {};
-   float         range_;
-   std::uint16_t vcp_;
+   float                range_ {};
+   std::uint16_t        vcp_ {};
 
-   std::chrono::system_clock::time_point sweepTime_;
+   std::chrono::system_clock::time_point sweepTime_ {};
 };
 
 Level3RadialView::Level3RadialView(
@@ -148,8 +136,11 @@ void Level3RadialView::ComputeSweep()
    std::shared_ptr<wsr88d::rpg::Level3Message> message;
    std::chrono::system_clock::time_point       requestedTime {selected_time()};
    std::chrono::system_clock::time_point       foundTime;
-   std::tie(message, foundTime) =
+   types::RadarProductLoadStatus               loadStatus {};
+   std::tie(message, foundTime, loadStatus) =
       radarProductManager->GetLevel3Data(GetRadarProductName(), requestedTime);
+
+   set_load_status(loadStatus);
 
    // If a different time was found than what was requested, update it
    if (requestedTime != foundTime)
@@ -160,7 +151,10 @@ void Level3RadialView::ComputeSweep()
    if (message == nullptr)
    {
       logger_->debug("Level 3 data not found");
-      Q_EMIT SweepNotComputed(types::NoUpdateReason::NotLoaded);
+      Q_EMIT SweepNotComputed(
+         loadStatus == types::RadarProductLoadStatus::ProductNotAvailable ?
+            types::NoUpdateReason::NotAvailable :
+            types::NoUpdateReason::NotLoaded);
       return;
    }
 
@@ -752,6 +746,4 @@ std::shared_ptr<Level3RadialView> Level3RadialView::Create(
    return std::make_shared<Level3RadialView>(product, radarProductManager);
 }
 
-} // namespace view
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::view

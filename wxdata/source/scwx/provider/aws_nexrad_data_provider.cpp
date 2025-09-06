@@ -15,9 +15,7 @@
 #include <aws/s3/model/ListObjectsV2Request.h>
 #include <fmt/chrono.h>
 
-namespace scwx
-{
-namespace provider
+namespace scwx::provider
 {
 
 static const std::string logPrefix_ =
@@ -177,7 +175,7 @@ std::chrono::system_clock::time_point AwsNexradDataProvider::FindLatestTime()
 
 std::vector<std::chrono::system_clock::time_point>
 AwsNexradDataProvider::GetTimePointsByDate(
-   std::chrono::system_clock::time_point date)
+   std::chrono::system_clock::time_point date, bool update)
 {
    const auto day = std::chrono::floor<std::chrono::days>(date);
 
@@ -188,23 +186,26 @@ AwsNexradDataProvider::GetTimePointsByDate(
    std::shared_lock lock(p->objectsMutex_);
 
    // Is the date present in the date list?
-   bool currentDatePresent;
+   bool currentDatePresent = false;
    auto currentDateIterator =
       std::find(p->objectDates_.cbegin(), p->objectDates_.cend(), day);
    if (currentDateIterator == p->objectDates_.cend())
    {
-      // Temporarily unlock mutex
-      lock.unlock();
-
-      // List objects, since the date is not present in the date list
-      auto [success, newObjects, totalObjects] = ListObjects(date);
-      if (success)
+      if (update)
       {
-         p->UpdateObjectDates(date);
-      }
+         // Temporarily unlock mutex
+         lock.unlock();
 
-      // Re-lock mutex
-      lock.lock();
+         // List objects, since the date is not present in the date list
+         const auto [success, newObjects, totalObjects] = ListObjects(date);
+         if (success)
+         {
+            p->UpdateObjectDates(date);
+         }
+
+         // Re-lock mutex
+         lock.lock();
+      }
 
       currentDatePresent = false;
    }
@@ -214,8 +215,8 @@ AwsNexradDataProvider::GetTimePointsByDate(
    }
 
    // Determine objects to retrieve
-   auto objectsBegin = p->objects_.lower_bound(day);
-   auto objectsEnd   = p->objects_.lower_bound(day + std::chrono::days {1});
+   const auto objectsBegin = p->objects_.lower_bound(day);
+   const auto objectsEnd = p->objects_.lower_bound(day + std::chrono::days {1});
 
    // Copy time points to destination vector
    std::transform(objectsBegin,
@@ -234,6 +235,20 @@ AwsNexradDataProvider::GetTimePointsByDate(
    }
 
    return timePoints;
+}
+
+bool AwsNexradDataProvider::IsDateCached(
+   std::chrono::system_clock::time_point date)
+{
+   const auto day = std::chrono::floor<std::chrono::days>(date);
+
+   const std::shared_lock lock(p->objectsMutex_);
+
+   // Is the date present in the date list?
+   const auto currentDateIterator =
+      std::find(p->objectDates_.cbegin(), p->objectDates_.cend(), day);
+
+   return currentDateIterator != p->objectDates_.cend();
 }
 
 std::tuple<bool, size_t, size_t>
@@ -446,5 +461,4 @@ void AwsNexradDataProvider::Impl::UpdateObjectDates(
    objectDates_.push_back(day);
 }
 
-} // namespace provider
-} // namespace scwx
+} // namespace scwx::provider
