@@ -1272,6 +1272,11 @@ void RadarProductManagerImpl::PopulateLevel2ProductTimes(
                         level2ProductRecordMutex_,
                         time,
                         update);
+   PopulateProductTimes(level2ChunksProviderManager_,
+                        level2ProductRecords_,
+                        level2ProductRecordMutex_,
+                        time,
+                        update);
 }
 
 void RadarProductManagerImpl::PopulateLevel3ProductTimes(
