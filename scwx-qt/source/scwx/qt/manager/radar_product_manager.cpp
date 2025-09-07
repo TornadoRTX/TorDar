@@ -118,7 +118,7 @@ public:
    void RefreshData();
    void RefreshDataSync();
 
-   boost::asio::thread_pool providerThreadPool_ {1u};
+   boost::asio::thread_pool providerThreadPool_ {2u};
 
    const std::string               radarId_;
    const common::RadarProductGroup group_;
