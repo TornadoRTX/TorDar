@@ -118,7 +118,7 @@ public:
    void RefreshData();
    void RefreshDataSync();
 
-   boost::asio::thread_pool providerThreadPool_ {1u};
+   boost::asio::thread_pool providerThreadPool_ {2u};
 
    const std::string               radarId_;
    const common::RadarProductGroup group_;
@@ -1268,6 +1268,11 @@ void RadarProductManagerImpl::PopulateLevel2ProductTimes(
    std::chrono::system_clock::time_point time, bool update)
 {
    PopulateProductTimes(level2ProviderManager_,
+                        level2ProductRecords_,
+                        level2ProductRecordMutex_,
+                        time,
+                        update);
+   PopulateProductTimes(level2ChunksProviderManager_,
                         level2ProductRecords_,
                         level2ProductRecordMutex_,
                         time,

@@ -55,6 +55,9 @@ public:
       animationTimer_.cancel();
       animationTimerLock.unlock();
 
+      selectThreadPool_.stop();
+      playThreadPool_.stop();
+
       selectThreadPool_.join();
       playThreadPool_.join();
    }
