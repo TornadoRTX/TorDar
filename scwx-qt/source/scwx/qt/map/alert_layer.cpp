@@ -891,7 +891,7 @@ void AlertLayer::Impl::HandleGeoLinesEvent(
 
    switch (ev->type())
    {
-   case QEvent::Type::MouseButtonPress:
+   case QEvent::Type::MouseButtonRelease:
    {
       auto it = segmentsByLine_.find(di);
       if (it != segmentsByLine_.cend())
