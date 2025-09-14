@@ -87,7 +87,8 @@ public:
                else
                {
                   // Validate level 3 product
-                  auto level3Product = common::GetLevel3ProductByAwipsId(value);
+                  const auto level3Product =
+                     common::GetLevel3ProductByAwipsId(value);
                   return !level3Product.empty() && level3Product != "?";
                }
             });
