@@ -13,8 +13,6 @@ namespace scwx::provider
 static const std::string logPrefix_ = "scwx::provider::nws_api_provider";
 static const auto        logger_    = util::Logger::Create(logPrefix_);
 
-using namespace std::chrono_literals;
-
 const std::string kBaseUrl_ = "https://api.weather.gov";
 
 const std::string kRadarStationsEndpoint_ = "/radar/stations";

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <optional>
 #include <string>
 
@@ -81,5 +82,7 @@ ParameterError tag_invoke(boost::json::value_to_tag<ParameterError>,
                           const boost::json::value& jv);
 ErrorResponse  tag_invoke(boost::json::value_to_tag<ErrorResponse>,
                           const boost::json::value& jv);
+
+std::chrono::milliseconds GetQuantitativeTime(const QuantitativeValue& value);
 
 } // namespace scwx::types::nws

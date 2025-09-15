@@ -1,9 +1,13 @@
 #include <scwx/types/nws_types.hpp>
+#include <scwx/util/logger.hpp>
 
 #include <boost/json/value_to.hpp>
 
 namespace scwx::types::nws
 {
+
+static const std::string logPrefix_ = "scwx::types::nws_types";
+static const auto        logger_    = util::Logger::Create(logPrefix_);
 
 static double GetDouble(const boost::json::value& v)
 {
@@ -175,6 +179,46 @@ ErrorResponse tag_invoke(boost::json::value_to_tag<ErrorResponse>,
    }
 
    return errorResponse;
+}
+
+std::chrono::milliseconds
+GetQuantitativeTime(const scwx::types::nws::QuantitativeValue& value)
+{
+   const double rawValue = value.value_.value_or(0);
+   auto&        unitCode = value.unitCode_;
+
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+
+   if (unitCode.ends_with(":min"))
+   {
+      // Convert minutes to milliseconds
+      return std::chrono::milliseconds(
+         static_cast<long long>(rawValue * 60 * 1000));
+   }
+   else if (unitCode.ends_with(":h"))
+   {
+      // Convert hours to milliseconds
+      return std::chrono::milliseconds(
+         static_cast<long long>(rawValue * 60 * 60 * 1000));
+   }
+   else if (unitCode.ends_with(":d"))
+   {
+      // Convert days to milliseconds
+      return std::chrono::milliseconds(
+         static_cast<long long>(rawValue * 24 * 60 * 60 * 1000));
+   }
+   else
+   {
+      if (!unitCode.empty() && !unitCode.ends_with(":s"))
+      {
+         logger_->warn("Unknown unit code, assuming seconds: {}", unitCode);
+      }
+
+      // Convert seconds to milliseconds
+      return std::chrono::milliseconds(static_cast<long long>(rawValue * 1000));
+   }
+
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 }
 
 } // namespace scwx::types::nws
