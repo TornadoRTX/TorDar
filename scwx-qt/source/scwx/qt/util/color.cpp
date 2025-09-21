@@ -4,19 +4,34 @@
 #include <re2/re2.h>
 #include <QColor>
 
-namespace scwx
-{
-namespace qt
-{
-namespace util
-{
-namespace color
+namespace scwx::qt::util::color
 {
 
 std::string ToArgbString(const boost::gil::rgba8_pixel_t& color)
 {
    return fmt::format(
       "#{:02x}{:02x}{:02x}{:02x}", color[3], color[0], color[1], color[2]);
+}
+
+ImVec4 ToImVec4(const boost::gil::rgba8_pixel_t& color)
+{
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+   return ImVec4 {static_cast<float>(color[0]) / 255.0f,
+                  static_cast<float>(color[1]) / 255.0f,
+                  static_cast<float>(color[2]) / 255.0f,
+                  static_cast<float>(color[3]) / 255.0f};
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+}
+
+ImVec4 ToImVec4(const std::string& argbString)
+{
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+   QRgb color = QColor(QString::fromStdString(argbString)).rgba();
+   return ImVec4 {static_cast<float>(qRed(color)) / 255.0f,
+                  static_cast<float>(qGreen(color)) / 255.0f,
+                  static_cast<float>(qBlue(color)) / 255.0f,
+                  static_cast<float>(qAlpha(color)) / 255.0f};
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 }
 
 boost::gil::rgba8_pixel_t ToRgba8PixelT(const std::string& argbString)
@@ -30,11 +45,14 @@ boost::gil::rgba8_pixel_t ToRgba8PixelT(const std::string& argbString)
 
 boost::gil::rgba32f_pixel_t ToRgba32fPixelT(const std::string& argbString)
 {
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
    boost::gil::rgba8_pixel_t rgba8Pixel = ToRgba8PixelT(argbString);
-   return boost::gil::rgba32f_pixel_t {rgba8Pixel[0] / 255.0f,
-                                       rgba8Pixel[1] / 255.0f,
-                                       rgba8Pixel[2] / 255.0f,
-                                       rgba8Pixel[3] / 255.0f};
+   return boost::gil::rgba32f_pixel_t {
+      static_cast<float>(rgba8Pixel[0]) / 255.0f,
+      static_cast<float>(rgba8Pixel[1]) / 255.0f,
+      static_cast<float>(rgba8Pixel[2]) / 255.0f,
+      static_cast<float>(rgba8Pixel[3]) / 255.0f};
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 }
 
 bool ValidateArgbString(const std::string& argbString)
@@ -43,7 +61,4 @@ bool ValidateArgbString(const std::string& argbString)
    return RE2::FullMatch(argbString, *re);
 }
 
-} // namespace color
-} // namespace util
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::util::color

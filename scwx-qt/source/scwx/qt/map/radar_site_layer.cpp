@@ -1,8 +1,11 @@
 #include <scwx/qt/map/radar_site_layer.hpp>
 #include <scwx/qt/config/radar_site.hpp>
 #include <scwx/qt/gl/draw/geo_lines.hpp>
+#include <scwx/qt/manager/radar_site_status_manager.hpp>
 #include <scwx/qt/settings/general_settings.hpp>
+#include <scwx/qt/settings/palette_settings.hpp>
 #include <scwx/qt/settings/text_settings.hpp>
+#include <scwx/qt/util/color.hpp>
 #include <scwx/qt/util/maplibre.hpp>
 #include <scwx/qt/util/tooltip.hpp>
 #include <scwx/common/geographic.hpp>
@@ -61,6 +64,10 @@ RadarSiteLayer::RadarSiteLayer(
     DrawLayer(glContext, "RadarSiteLayer"),
     p(std::make_unique<Impl>(this, glContext))
 {
+   connect(manager::RadarSiteStatusManager::Instance().get(),
+           &manager::RadarSiteStatusManager::StatusUpdated,
+           this,
+           &GenericLayer::NeedsRendering);
 }
 
 RadarSiteLayer::~RadarSiteLayer() = default;
@@ -171,6 +178,22 @@ void RadarSiteLayer::Impl::RenderRadarSite(
                     ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
                        ImGuiWindowFlags_AlwaysAutoResize))
    {
+      auto  radarSiteStatus = radarSite->status();
+      auto& buttonPalette   = settings::PaletteSettings::Instance()
+                               .radar_site_status_palette(radarSiteStatus)
+                               .button();
+
+      static constexpr int kPushStyleCount = 3;
+      ImGui::PushStyleColor(
+         ImGuiCol_Button,
+         util::color::ToImVec4(buttonPalette.button_color().GetValue()));
+      ImGui::PushStyleColor(
+         ImGuiCol_ButtonHovered,
+         util::color::ToImVec4(buttonPalette.hover_color().GetValue()));
+      ImGui::PushStyleColor(
+         ImGuiCol_ButtonActive,
+         util::color::ToImVec4(buttonPalette.active_color().GetValue()));
+
       // Render text
       if (ImGui::Button(radarSite->id().c_str()))
       {
@@ -192,6 +215,8 @@ void RadarSiteLayer::Impl::RenderRadarSite(
                         common::GetLatitudeString(radarSite->latitude()),
                         common::GetLongitudeString(radarSite->longitude()));
       }
+
+      ImGui::PopStyleColor(kPushStyleCount);
 
       // End window
       ImGui::End();

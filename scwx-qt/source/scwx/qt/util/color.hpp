@@ -1,6 +1,7 @@
 #pragma once
 
 #include <boost/gil/typedefs.hpp>
+#include <imgui.h>
 
 namespace scwx
 {
@@ -19,6 +20,25 @@ namespace color
  * @return ARGB string in the format #AARRGGBB
  */
 std::string ToArgbString(const boost::gil::rgba8_pixel_t& color);
+
+/**
+ * Converts a Boost.GIL 8-bit RGBA pixel to an ImVec4 structure used by ImGui.
+ *
+ * @param color RGBA8 pixel
+ *
+ * @return ImVec4 structure
+ */
+ImVec4 ToImVec4(const boost::gil::rgba8_pixel_t& color);
+
+/**
+ * Converts an ARGB string used by Qt libraries to an ImVec4 structure used by
+ * ImGui.
+ *
+ * @param argbString ARGB string in the format #AARRGGBB
+ *
+ * @return ImVec4 structure
+ */
+ImVec4 ToImVec4(const std::string& argbString);
 
 /**
  * Converts an ARGB string used by Qt libraries to a Boost.GIL 8-bit RGBA pixel.
