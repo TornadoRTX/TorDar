@@ -1,10 +1,9 @@
+#include <scwx/qt/config/radar_site.hpp>
 #include <scwx/qt/manager/radar_site_status_manager.hpp>
 #include <scwx/qt/types/radar_site_types.hpp>
 #include <scwx/provider/nws_api_provider.hpp>
 #include <scwx/util/logger.hpp>
 #include <scwx/util/time.hpp>
-
-#include <mutex>
 
 #include <boost/asio/post.hpp>
 #include <boost/asio/steady_timer.hpp>
@@ -24,7 +23,7 @@ static const auto logger_ = util::Logger::Create(logPrefix_);
 class RadarSiteStatusManager::Impl
 {
 public:
-   explicit Impl()               = default;
+   explicit Impl(RadarSiteStatusManager* self) : self_ {self} {}
    ~Impl()                       = default;
    Impl(const Impl&)             = delete;
    Impl& operator=(const Impl&)  = delete;
@@ -33,7 +32,9 @@ public:
 
    void Stop();
    void Run();
-   void RunOnce() const;
+   void RunOnce();
+
+   RadarSiteStatusManager* self_ {};
 
    boost::asio::thread_pool threadPool_ {1u};
 
@@ -43,17 +44,15 @@ public:
 
    std::unique_ptr<provider::NwsApiProvider> nwsApiProvider_ {
       std::make_unique<provider::NwsApiProvider>()};
+
+   std::chrono::system_clock::time_point lastUpdate_ {};
 };
 
-RadarSiteStatusManager::RadarSiteStatusManager() : p(std::make_unique<Impl>())
+RadarSiteStatusManager::RadarSiteStatusManager() :
+    p(std::make_unique<Impl>(this))
 {
 }
 RadarSiteStatusManager::~RadarSiteStatusManager() = default;
-
-RadarSiteStatusManager::RadarSiteStatusManager(
-   RadarSiteStatusManager&&) noexcept = default;
-RadarSiteStatusManager&
-RadarSiteStatusManager::operator=(RadarSiteStatusManager&&) noexcept = default;
 
 void RadarSiteStatusManager::Start()
 {
@@ -118,7 +117,7 @@ void RadarSiteStatusManager::Impl::Run()
    }
 }
 
-void RadarSiteStatusManager::Impl::RunOnce() const
+void RadarSiteStatusManager::Impl::RunOnce()
 {
    const auto now      = scwx::util::time::now();
    const auto response = nwsApiProvider_->GetRadarStations();
@@ -129,6 +128,8 @@ void RadarSiteStatusManager::Impl::RunOnce() const
       for (auto& station : result)
       {
          types::RadarSiteStatus status = types::RadarSiteStatus::Unknown;
+         std::chrono::system_clock::time_point lastReceived {};
+         std::chrono::milliseconds             averageLatency {};
 
          if (station.latency_.has_value())
          {
@@ -151,6 +152,8 @@ void RadarSiteStatusManager::Impl::RunOnce() const
 
             if (!ssDateTime.fail())
             {
+               lastReceived = dateTime;
+
                // Determine level 2 age
                static constexpr auto kDownThreshold    = 30min;
                static constexpr auto kWarningThreshold = 5min;
@@ -184,8 +187,7 @@ void RadarSiteStatusManager::Impl::RunOnce() const
                // If the radar site is up, check for high latency
                static constexpr auto kHighLatencyThreshold = 60s;
 
-               auto averageLatency =
-                  GetQuantitativeTime(latency.average_.value());
+               averageLatency = GetQuantitativeTime(latency.average_.value());
 
                if (averageLatency > kHighLatencyThreshold)
                {
@@ -202,7 +204,20 @@ void RadarSiteStatusManager::Impl::RunOnce() const
          {
             logger_->warn("No latency information for {}", station.id_);
          }
+
+         // Update the radar site
+         auto radarSite = config::RadarSite::Get(station.id_);
+         if (radarSite != nullptr)
+         {
+            radarSite->set_status(status);
+            radarSite->set_last_received(lastReceived);
+            radarSite->set_latency(averageLatency);
+         }
+
+         lastUpdate_ = now;
       }
+
+      Q_EMIT self_->StatusUpdated();
    }
 }
 
