@@ -88,7 +88,7 @@ void RadarSiteStatusManager::Impl::Run()
 {
    using namespace std::chrono_literals;
 
-   static constexpr auto kInterval = 5min;
+   static constexpr auto kInterval = 1min;
 
    RunOnce();
 
