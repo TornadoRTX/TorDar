@@ -7,11 +7,7 @@
 #include <fmt/format.h>
 #include <QColorDialog>
 
-namespace scwx
-{
-namespace qt
-{
-namespace ui
+namespace scwx::qt::ui
 {
 
 static const std::string logPrefix_ = "scwx::qt::ui::edit_button_dialog";
@@ -27,9 +23,9 @@ public:
          QObject::connect(colorLineEdit_,
                           &QLineEdit::textEdited,
                           self,
-                          [=, this](const QString& text)
+                          [self, this](const QString& text)
                           {
-                             boost::gil::rgba8_pixel_t color =
+                             const boost::gil::rgba8_pixel_t color =
                                 util::color::ToRgba8PixelT(text.toStdString());
                              self->p->set_color(*this, color, false);
                           });
@@ -37,7 +33,7 @@ public:
          QObject::connect(colorButton_,
                           &QAbstractButton::clicked,
                           self,
-                          [=, this]() { self->p->ShowColorDialog(*this); });
+                          [self, this]() { self->p->ShowColorDialog(*this); });
       }
 
       boost::gil::rgba8_pixel_t color_;
@@ -49,21 +45,28 @@ public:
    explicit Impl(EditButtonDialog* self) : self_ {self} {}
    ~Impl() = default;
 
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
+   Impl& operator=(const Impl&&) = delete;
+
    void SetDefaults();
    void ShowColorDialog(EditComponent& component);
    void UpdateSampleButton();
 
-   void set_color(EditComponent&            component,
-                  boost::gil::rgba8_pixel_t color,
-                  bool                      updateLineEdit = true);
+   void set_color(EditComponent&                   component,
+                  const boost::gil::rgba8_pixel_t& color,
+                  bool                             updateLineEdit = true);
 
    static void SetBackgroundColor(const std::string& value, QFrame* frame);
 
    EditButtonDialog* self_;
 
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
    boost::gil::rgba8_pixel_t defaultButtonColor_ {66, 150, 250, 102};
    boost::gil::rgba8_pixel_t defaultHoverColor_ {66, 150, 250, 255};
    boost::gil::rgba8_pixel_t defaultActiveColor_ {15, 135, 250, 255};
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
    EditComponent buttonComponent_ {};
    EditComponent hoverComponent_ {};
@@ -100,7 +103,7 @@ EditButtonDialog::EditButtonDialog(QWidget* parent) :
                     this,
                     [this](QAbstractButton* button)
                     {
-                       QDialogButtonBox::ButtonRole role =
+                       const QDialogButtonBox::ButtonRole role =
                           ui->buttonBox->buttonRole(button);
 
                        switch (role)
@@ -135,24 +138,24 @@ boost::gil::rgba8_pixel_t EditButtonDialog::hover_color() const
    return p->hoverComponent_.color_;
 }
 
-void EditButtonDialog::set_active_color(boost::gil::rgba8_pixel_t color)
+void EditButtonDialog::set_active_color(const boost::gil::rgba8_pixel_t& color)
 {
    p->set_color(p->activeComponent_, color);
 }
 
-void EditButtonDialog::set_button_color(boost::gil::rgba8_pixel_t color)
+void EditButtonDialog::set_button_color(const boost::gil::rgba8_pixel_t& color)
 {
    p->set_color(p->buttonComponent_, color);
 }
 
-void EditButtonDialog::set_hover_color(boost::gil::rgba8_pixel_t color)
+void EditButtonDialog::set_hover_color(const boost::gil::rgba8_pixel_t& color)
 {
    p->set_color(p->hoverComponent_, color);
 }
 
-void EditButtonDialog::Impl::set_color(EditComponent&            component,
-                                       boost::gil::rgba8_pixel_t color,
-                                       bool                      updateLineEdit)
+void EditButtonDialog::Impl::set_color(EditComponent& component,
+                                       const boost::gil::rgba8_pixel_t& color,
+                                       bool updateLineEdit)
 {
    const std::string argbString {util::color::ToArgbString(color)};
 
@@ -187,9 +190,9 @@ void EditButtonDialog::Impl::UpdateSampleButton()
                   util::color::ToArgbString(activeComponent_.color_))));
 }
 
-void EditButtonDialog::Initialize(boost::gil::rgba8_pixel_t activeColor,
-                                  boost::gil::rgba8_pixel_t buttonColor,
-                                  boost::gil::rgba8_pixel_t hoverColor)
+void EditButtonDialog::Initialize(const boost::gil::rgba8_pixel_t& activeColor,
+                                  const boost::gil::rgba8_pixel_t& buttonColor,
+                                  const boost::gil::rgba8_pixel_t& hoverColor)
 {
    p->defaultActiveColor_ = activeColor;
    p->defaultButtonColor_ = buttonColor;
@@ -207,7 +210,8 @@ void EditButtonDialog::Impl::SetDefaults()
 
 void EditButtonDialog::Impl::ShowColorDialog(EditComponent& component)
 {
-   QColorDialog* dialog = new QColorDialog(self_);
+   // NOLINTNEXTLINE(cppcoreguidelines-owning-memory): Owned by parent
+   auto* dialog = new QColorDialog(self_);
 
    dialog->setAttribute(Qt::WA_DeleteOnClose);
    dialog->setOption(QColorDialog::ColorDialogOption::ShowAlphaChannel);
@@ -224,8 +228,8 @@ void EditButtonDialog::Impl::ShowColorDialog(EditComponent& component)
       self_,
       [this, &component](const QColor& qColor)
       {
-         QString colorName = qColor.name(QColor::NameFormat::HexArgb);
-         boost::gil::rgba8_pixel_t color =
+         const QString colorName = qColor.name(QColor::NameFormat::HexArgb);
+         const boost::gil::rgba8_pixel_t color =
             util::color::ToRgba8PixelT(colorName.toStdString());
 
          logger_->info("Selected color: {}", colorName.toStdString());
@@ -242,6 +246,4 @@ void EditButtonDialog::Impl::SetBackgroundColor(const std::string& value,
       QString::fromStdString(fmt::format("background-color: {}", value)));
 }
 
-} // namespace ui
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::ui

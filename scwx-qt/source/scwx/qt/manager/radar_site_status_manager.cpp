@@ -74,7 +74,7 @@ void RadarSiteStatusManager::Stop()
 
 void RadarSiteStatusManager::Impl::Stop()
 {
-   std::unique_lock lock {scheduleMutex_};
+   const std::unique_lock lock {scheduleMutex_};
    if (scheduled_)
    {
       scheduled_ = false;
@@ -92,7 +92,7 @@ void RadarSiteStatusManager::Impl::Run()
 
    RunOnce();
 
-   std::unique_lock lock {scheduleMutex_};
+   const std::unique_lock lock {scheduleMutex_};
 
    if (scheduled_)
    {

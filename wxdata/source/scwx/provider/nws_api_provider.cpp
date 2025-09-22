@@ -131,7 +131,7 @@ NwsApiProvider::Impl::RequestData(std::string_view       endpointUrl,
       try
       {
          // Log error response details
-         auto errorResponse =
+         const auto errorResponse =
             boost::json::value_to<types::nws::ErrorResponse>(json);
          logger_->warn("GetRadarStations error response ({}): {} ({})",
                        response.status_code,
@@ -173,15 +173,16 @@ NwsApiProvider::Impl::RequestData(std::string_view       endpointUrl,
 void NwsApiProvider::Impl::TrackAsyncResponse(
    std::shared_ptr<network::cpr::AsyncResponseC> response)
 {
-   std::unique_lock lock {responseMutex_};
+   const std::unique_lock lock {responseMutex_};
    responsePool_.emplace_back(response);
 }
 
 void NwsApiProvider::Impl::UntrackAsyncResponse(
    const std::shared_ptr<network::cpr::AsyncResponseC>& response)
 {
-   std::unique_lock lock {responseMutex_};
-   auto it = std::find(responsePool_.begin(), responsePool_.end(), response);
+   const std::unique_lock lock {responseMutex_};
+
+   auto it = std::ranges::find(responsePool_, response);
    if (it != responsePool_.end())
    {
       responsePool_.erase(it);
@@ -190,7 +191,7 @@ void NwsApiProvider::Impl::UntrackAsyncResponse(
 
 void NwsApiProvider::Impl::CancelAsyncResponses()
 {
-   std::unique_lock lock {responseMutex_};
+   const std::unique_lock lock {responseMutex_};
    for (auto& response : responsePool_)
    {
       auto result = response->Cancel();

@@ -3,7 +3,6 @@
 #include <scwx/qt/types/radar_site_types.hpp>
 
 #include <memory>
-#include <string>
 
 #include <QObject>
 
@@ -20,7 +19,7 @@ class RadarSiteStatusManager : public QObject
 
 public:
    explicit RadarSiteStatusManager();
-   ~RadarSiteStatusManager();
+   ~RadarSiteStatusManager() override;
 
    void Start();
    void Stop();
