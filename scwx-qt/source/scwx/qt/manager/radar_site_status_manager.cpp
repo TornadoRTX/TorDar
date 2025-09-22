@@ -129,7 +129,7 @@ void RadarSiteStatusManager::Impl::RunOnce()
       {
          types::RadarSiteStatus status = types::RadarSiteStatus::Unknown;
          std::chrono::system_clock::time_point lastReceived {};
-         std::chrono::milliseconds             averageLatency {};
+         std::chrono::milliseconds             currentLatency {};
 
          if (station.latency_.has_value())
          {
@@ -182,20 +182,20 @@ void RadarSiteStatusManager::Impl::RunOnce()
 
             if ((status == types::RadarSiteStatus::Up ||
                  status == types::RadarSiteStatus::Unknown) &&
-                latency.average_.has_value())
+                latency.current_.has_value())
             {
                // If the radar site is up, check for high latency
                static constexpr auto kHighLatencyThreshold = 60s;
 
-               averageLatency = GetQuantitativeTime(latency.average_.value());
+               currentLatency = GetQuantitativeTime(latency.current_.value());
 
-               if (averageLatency > kHighLatencyThreshold)
+               if (currentLatency > kHighLatencyThreshold)
                {
                   status = types::RadarSiteStatus::HighLatency;
                }
             }
             else if (!latency.levelTwoLastReceivedTime_.empty() &&
-                     !latency.average_.has_value())
+                     !latency.current_.has_value())
             {
                logger_->warn("No latency for {}", station.id_);
             }
@@ -211,7 +211,7 @@ void RadarSiteStatusManager::Impl::RunOnce()
          {
             radarSite->set_status(status);
             radarSite->set_last_received(lastReceived);
-            radarSite->set_latency(averageLatency);
+            radarSite->set_latency(currentLatency);
          }
 
          lastUpdate_ = now;
