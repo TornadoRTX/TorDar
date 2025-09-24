@@ -30,4 +30,4 @@ A ton of elements have been taken from the radar program Ryan Hall Y'all built.
 
 This blueprint is not the final version and may change.
 
-Any feedback and/or help is both needed and appreciated. Message me on Discord if you want to help out. Discord is @tornadortx
+Any feedback and/or help is both needed and appreciated. Join the Discord if you would like to help, or have questions: https://discord.gg/8ThKUMTfRn
