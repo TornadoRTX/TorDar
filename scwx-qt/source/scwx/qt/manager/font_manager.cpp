@@ -202,6 +202,7 @@ void FontManager::Impl::UpdateQFont(types::FontCategory fontCategory)
    QFont font = QFontDatabase::font(QString::fromStdString(family),
                                     QString::fromStdString(styles),
                                     static_cast<int>(size.value()));
+   font.setHintingPreference(QFont::HintingPreference::PreferNoHinting);
 
 #if !defined(__APPLE__)
    font.setPointSizeF(size.value());

@@ -1499,6 +1499,7 @@ QFont SettingsDialogImpl::GetSelectedFont()
                                     QString::fromStdString(fontStyle),
                                     static_cast<int>(fontSize.value()));
    font.setPointSizeF(fontSize.value());
+   font.setHintingPreference(QFont::HintingPreference::PreferNoHinting);
 
    return font;
 }
