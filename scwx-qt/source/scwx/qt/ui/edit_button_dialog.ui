@@ -185,7 +185,7 @@
     </widget>
    </item>
    <item row="4" column="0" colspan="5">
-    <widget class="QWidget" name="lineLabelContainer" native="true">
+    <widget class="QWidget" name="buttonContainer" native="true">
      <property name="minimumSize">
       <size>
        <width>0</width>
@@ -217,19 +217,6 @@
          </size>
         </property>
        </spacer>
-      </item>
-      <item>
-       <widget class="QPushButton" name="sampleButton">
-        <property name="styleSheet">
-         <string notr="true">border:1px;</string>
-        </property>
-        <property name="text">
-         <string>BUTTON TEXT</string>
-        </property>
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
       </item>
       <item>
        <spacer name="horizontalSpacer_2">

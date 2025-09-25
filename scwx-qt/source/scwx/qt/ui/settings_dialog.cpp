@@ -29,6 +29,7 @@
 #include <scwx/qt/ui/serial_port_dialog.hpp>
 #include <scwx/qt/ui/settings/alert_palette_settings_widget.hpp>
 #include <scwx/qt/ui/settings/hotkey_settings_widget.hpp>
+#include <scwx/qt/ui/settings/radar_site_status_palette_settings_widget.hpp>
 #include <scwx/qt/ui/settings/unit_settings_widget.hpp>
 #include <scwx/qt/ui/wfo_dialog.hpp>
 #include <scwx/qt/util/color.hpp>
@@ -54,12 +55,11 @@
 #include <qt6ct/paletteeditdialog.h>
 #undef QT6CT_LIBRARY
 
-namespace scwx
+namespace scwx::qt::ui
 {
-namespace qt
-{
-namespace ui
-{
+
+// Extensive usage of "new" with Qt-managed objects
+// NOLINTBEGIN(cppcoreguidelines-owning-memory)
 
 static const std::string logPrefix_ = "scwx::qt::ui::settings_dialog";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
@@ -195,6 +195,7 @@ public:
    void SetupGeneralTab();
    void SetupPalettesColorTablesTab();
    void SetupPalettesAlertsTab();
+   void SetupPalettesRadarSiteStatusTab();
    void SetupUnitsTab();
    void SetupAudioTab();
    void SetupTextTab();
@@ -246,6 +247,9 @@ public:
    AlertPaletteSettingsWidget*      alertPaletteSettingsWidget_ {};
    HotkeySettingsWidget*            hotkeySettingsWidget_ {};
    UnitSettingsWidget*              unitSettingsWidget_ {};
+
+   RadarSiteStatusPaletteSettingsWidget*
+      radarSiteStatusPaletteSettingsWidget_ {};
 
    settings::SettingsInterface<std::string>  defaultRadarSite_ {};
    settings::SettingsInterface<std::int64_t> gridWidth_ {};
@@ -328,6 +332,9 @@ SettingsDialog::SettingsDialog(QMapLibre::Settings& mapSettings,
 
    // Palettes > Alerts
    p->SetupPalettesAlertsTab();
+
+   // Palettes > Radar Site Status
+   p->SetupPalettesRadarSiteStatusTab();
 
    // Units
    p->SetupUnitsTab();
@@ -979,10 +986,23 @@ void SettingsDialogImpl::SetupPalettesAlertsTab()
    QVBoxLayout* layout = new QVBoxLayout(self_->ui->alertsPalette);
 
    alertPaletteSettingsWidget_ =
-      new AlertPaletteSettingsWidget(self_->ui->hotkeys);
+      new AlertPaletteSettingsWidget(self_->ui->alertsPalette);
    layout->addWidget(alertPaletteSettingsWidget_);
 
    settingsPages_.push_back(alertPaletteSettingsWidget_);
+}
+
+void SettingsDialogImpl::SetupPalettesRadarSiteStatusTab()
+{
+   // Palettes > Radar Site Status
+   auto layout = new QVBoxLayout(self_->ui->radarSiteStatusPalette);
+
+   radarSiteStatusPaletteSettingsWidget_ =
+      new RadarSiteStatusPaletteSettingsWidget(
+         self_->ui->radarSiteStatusPalette);
+   layout->addWidget(radarSiteStatusPaletteSettingsWidget_);
+
+   settingsPages_.push_back(radarSiteStatusPaletteSettingsWidget_);
 }
 
 void SettingsDialogImpl::SetupUnitsTab()
@@ -1574,6 +1594,6 @@ std::string SettingsDialogImpl::RadarSiteLabel(
    return fmt::format("{} ({})", radarSite->id(), radarSite->location_name());
 }
 
-} // namespace ui
-} // namespace qt
-} // namespace scwx
+// NOLINTEND(cppcoreguidelines-owning-memory)
+
+} // namespace scwx::qt::ui

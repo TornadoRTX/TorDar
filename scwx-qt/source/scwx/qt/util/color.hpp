@@ -13,6 +13,17 @@ namespace color
 {
 
 /**
+ * Blends two Boost.GIL 8-bit RGBA pixels
+ *
+ * @param foreground Foreground color
+ * @param background Background color
+ *
+ * @return Blended color
+ */
+boost::gil::rgba8_pixel_t Blend(const boost::gil::rgba8_pixel_t& foreground,
+                                const boost::gil::rgba8_pixel_t& background);
+
+/**
  * Converts a Boost.GIL 8-bit RGBA pixel to an ARGB string used by Qt libraries.
  *
  * @param color RGBA8 pixel

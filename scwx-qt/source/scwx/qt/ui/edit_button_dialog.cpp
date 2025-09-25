@@ -1,6 +1,8 @@
 #include "edit_button_dialog.hpp"
 #include "ui_edit_button_dialog.h"
 
+#include <scwx/qt/manager/font_manager.hpp>
+#include <scwx/qt/ui/widgets/imgui_button.hpp>
 #include <scwx/qt/util/color.hpp>
 #include <scwx/util/logger.hpp>
 
@@ -42,7 +44,10 @@ public:
       QToolButton*              colorButton_ {nullptr};
    };
 
-   explicit Impl(EditButtonDialog* self) : self_ {self} {}
+   explicit Impl(EditButtonDialog* self) :
+       self_ {self}, button_ {new ImGuiButton(self)}
+   {
+   }
    ~Impl() = default;
 
    Impl(const Impl&)             = delete;
@@ -61,6 +66,8 @@ public:
    static void SetBackgroundColor(const std::string& value, QFrame* frame);
 
    EditButtonDialog* self_;
+
+   ImGuiButton* button_;
 
    // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
    boost::gil::rgba8_pixel_t defaultButtonColor_ {66, 150, 250, 102};
@@ -93,6 +100,17 @@ EditButtonDialog::EditButtonDialog(QWidget* parent) :
    p->hoverComponent_.colorButton_   = ui->hoverColorButton;
 
    p->SetDefaults();
+
+   auto font =
+      manager::FontManager::Instance().GetQFont(types::FontCategory::Default);
+   p->button_->setFont(font);
+   p->button_->setText(tr("BUTTON TEXT"));
+
+   p->UpdateSampleButton();
+
+   auto buttonContainerLayout =
+      static_cast<QHBoxLayout*>(ui->buttonContainer->layout());
+   buttonContainerLayout->insertWidget(1, p->button_);
 
    p->activeComponent_.ConnectSignals(this);
    p->buttonComponent_.ConnectSignals(this);
@@ -157,10 +175,15 @@ void EditButtonDialog::Impl::set_color(EditComponent& component,
                                        const boost::gil::rgba8_pixel_t& color,
                                        bool updateLineEdit)
 {
+   // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
+   static const boost::gil::rgba8_pixel_t kBlack {0, 0, 0, 255};
+
    const std::string argbString {util::color::ToArgbString(color)};
+   const std::string blendedString {
+      util::color::ToArgbString(util::color::Blend(color, kBlack))};
 
    component.color_ = color;
-   SetBackgroundColor(argbString, component.colorFrame_);
+   SetBackgroundColor(blendedString, component.colorFrame_);
 
    if (updateLineEdit)
    {
@@ -172,22 +195,8 @@ void EditButtonDialog::Impl::set_color(EditComponent& component,
 
 void EditButtonDialog::Impl::UpdateSampleButton()
 {
-   self_->ui->sampleButton->setStyleSheet(QString::fromStdString(
-      fmt::format("QPushButton {{"
-                  "  border: 1px solid #806e6e80;"
-                  "  background-color: {};"
-                  "  color: #fcffffff;"
-                  "  padding: 4px 3px;"
-                  "}}"
-                  "QPushButton:hover {{"
-                  "  background-color: {};"
-                  "}}"
-                  "QPushButton:pressed {{"
-                  "  background-color: {};"
-                  "}}",
-                  util::color::ToArgbString(buttonComponent_.color_),
-                  util::color::ToArgbString(hoverComponent_.color_),
-                  util::color::ToArgbString(activeComponent_.color_))));
+   button_->SetStyle(
+      buttonComponent_.color_, hoverComponent_.color_, activeComponent_.color_);
 }
 
 void EditButtonDialog::Initialize(const boost::gil::rgba8_pixel_t& activeColor,

@@ -70,6 +70,21 @@ SettingsVariable<std::string>& ButtonSettings::active_color() const
    return p->activeColor_;
 }
 
+boost::gil::rgba8_pixel_t ButtonSettings::GetButtonColorRgba8() const
+{
+   return util::color::ToRgba8PixelT(p->buttonColor_.GetValue());
+}
+
+boost::gil::rgba8_pixel_t ButtonSettings::GetHoverColorRgba8() const
+{
+   return util::color::ToRgba8PixelT(p->hoverColor_.GetValue());
+}
+
+boost::gil::rgba8_pixel_t ButtonSettings::GetActiveColorRgba8() const
+{
+   return util::color::ToRgba8PixelT(p->activeColor_.GetValue());
+}
+
 boost::gil::rgba32f_pixel_t ButtonSettings::GetButtonColorRgba32f() const
 {
    return util::color::ToRgba32fPixelT(p->buttonColor_.GetValue());

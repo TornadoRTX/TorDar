@@ -21,5 +21,7 @@ using RadarSiteStatusIterator = scwx::util::
 
 RadarSiteStatus    GetRadarSiteStatus(const std::string& name);
 const std::string& GetRadarSiteStatusName(RadarSiteStatus status);
+const std::string& GetRadarSiteStatusLongName(RadarSiteStatus status);
+const std::string& GetRadarSiteStatusDescription(RadarSiteStatus status);
 
 } // namespace scwx::qt::types

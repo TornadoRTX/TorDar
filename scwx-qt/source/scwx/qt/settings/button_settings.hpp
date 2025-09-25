@@ -27,6 +27,10 @@ public:
    [[nodiscard]] SettingsVariable<std::string>& hover_color() const;
    [[nodiscard]] SettingsVariable<std::string>& active_color() const;
 
+   [[nodiscard]] boost::gil::rgba8_pixel_t GetButtonColorRgba8() const;
+   [[nodiscard]] boost::gil::rgba8_pixel_t GetHoverColorRgba8() const;
+   [[nodiscard]] boost::gil::rgba8_pixel_t GetActiveColorRgba8() const;
+
    [[nodiscard]] boost::gil::rgba32f_pixel_t GetButtonColorRgba32f() const;
    [[nodiscard]] boost::gil::rgba32f_pixel_t GetHoverColorRgba32f() const;
    [[nodiscard]] boost::gil::rgba32f_pixel_t GetActiveColorRgba32f() const;

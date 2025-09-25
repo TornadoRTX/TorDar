@@ -7,6 +7,30 @@
 namespace scwx::qt::util::color
 {
 
+boost::gil::rgba8_pixel_t Blend(const boost::gil::rgba8_pixel_t& foreground,
+                                const boost::gil::rgba8_pixel_t& background)
+{
+   boost::gil::rgba8_pixel_t color {};
+
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+   float fgAlpha = static_cast<float>(foreground[3]) / 255.0f;
+   float bgAlpha = 1.0f - fgAlpha;
+
+   color[0] =
+      static_cast<std::uint8_t>(static_cast<float>(foreground[0]) * fgAlpha +
+                                static_cast<float>(background[0]) * bgAlpha);
+   color[1] =
+      static_cast<std::uint8_t>(static_cast<float>(foreground[1]) * fgAlpha +
+                                static_cast<float>(background[1]) * bgAlpha);
+   color[2] =
+      static_cast<std::uint8_t>(static_cast<float>(foreground[2]) * fgAlpha +
+                                static_cast<float>(background[2]) * bgAlpha);
+   color[3] = 255;
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+
+   return color;
+}
+
 std::string ToArgbString(const boost::gil::rgba8_pixel_t& color)
 {
    return fmt::format(
