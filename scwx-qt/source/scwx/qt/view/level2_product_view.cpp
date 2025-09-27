@@ -8,9 +8,6 @@
 #include <scwx/util/threads.hpp>
 #include <scwx/util/time.hpp>
 
-#include <atomic>
-#include <mutex>
-
 #include <boost/range/irange.hpp>
 #include <boost/timer/timer.hpp>
 
@@ -163,12 +160,10 @@ public:
 
    float                    latitude_;
    float                    longitude_;
-   std::atomic<float>       elevationCut_;
+   float                    elevationCut_;
    std::vector<float>       elevationCuts_;
    units::kilometers<float> range_;
    uint16_t                 vcp_;
-
-   std::mutex elevationCutsMutex_ {};
 
    std::chrono::system_clock::time_point sweepTime_;
 
@@ -373,7 +368,6 @@ std::string Level2ProductView::GetRadarProductName() const
 
 std::vector<float> Level2ProductView::GetElevationCuts() const
 {
-   const std::unique_lock lock {p->elevationCutsMutex_};
    return p->elevationCuts_;
 }
 
@@ -571,16 +565,10 @@ void Level2ProductView::ComputeSweep()
    std::shared_ptr<wsr88d::rda::ElevationScan> radarData;
    std::chrono::system_clock::time_point       requestedTime {selected_time()};
    types::RadarProductLoadStatus               loadStatus {};
-
-   std::vector<float> newElevationCuts {};
    std::tie(
-      radarData, p->elevationCut_, newElevationCuts, std::ignore, loadStatus) =
+      radarData, p->elevationCut_, p->elevationCuts_, std::ignore, loadStatus) =
       radarProductManager->GetLevel2Data(
          p->dataBlockType_, p->selectedElevation_, requestedTime);
-
-   std::unique_lock elevationCutsLock {p->elevationCutsMutex_};
-   p->elevationCuts_ = newElevationCuts;
-   elevationCutsLock.unlock();
 
    set_load_status(loadStatus);
 
