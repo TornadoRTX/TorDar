@@ -67,7 +67,7 @@ void RadarSiteStatusPaletteSettingsWidget::Impl::SetupUi()
    auto& paletteSettings = settings::PaletteSettings::Instance();
 
    // Setup phenomenon index pane
-   auto radarSiteStatusLabel = new QLabel(tr("RadarSiteStatus:"), self_);
+   auto radarSiteStatusLabel = new QLabel(tr("Radar Site Status:"), self_);
 
    int row = 0;
 
