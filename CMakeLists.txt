@@ -36,6 +36,12 @@ set(SCWX_VERSION "0.5.2")
 
 option(SCWX_ADDRESS_SANITIZER "Build with Address Sanitizer" OFF)
 
+# Supercell WX depends on MapLibre Native
+# Force MapLibre to use its bundled SQLite to avoid vcpkg/system conflicts
+# Change if using vcpkg/system SQLite.
+set(MLN_WITH_SQLITE bundled CACHE STRING "Use bundled SQLite" FORCE)
+
+
 add_subdirectory(external)
 add_subdirectory(wxdata)
 add_subdirectory(scwx-qt)
