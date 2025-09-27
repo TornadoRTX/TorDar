@@ -8,7 +8,7 @@ class SupercellWxConan(ConanFile):
     requires   = ("boost/1.88.0",
                   "cpr/1.12.0",
                   "fontconfig/2.15.0",
-                  "freetype/2.13.2",
+                  "freetype/2.13.3",
                   "geographiclib/2.4",
                   "geos/3.13.0",
                   "glm/1.0.1",
