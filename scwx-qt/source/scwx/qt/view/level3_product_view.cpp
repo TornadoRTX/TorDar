@@ -11,17 +11,12 @@
 #include <scwx/wsr88d/rpg/radial_data_packet.hpp>
 
 #include <limits>
-#include <unordered_set>
 
 #include <boost/range/irange.hpp>
 #include <boost/timer/timer.hpp>
 #include <fmt/format.h>
 
-namespace scwx
-{
-namespace qt
-{
-namespace view
+namespace scwx::qt::view
 {
 
 static const std::string logPrefix_ = "scwx::qt::view::level3_product_view";
@@ -145,6 +140,22 @@ void Level3ProductView::ConnectRadarProductManager()
                      common::RadarProductGroup::Level3 &&
                   record->radar_product() == p->product_ &&
                   record->time() == selected_time())
+              {
+                 // If the data associated with the currently selected time is
+                 // reloaded, update the view
+                 Update();
+              }
+           });
+
+   connect(radar_product_manager().get(),
+           &manager::RadarProductManager::ProductTimesPopulated,
+           this,
+           [this](common::RadarProductGroup             group,
+                  const std::string&                    product,
+                  std::chrono::system_clock::time_point queryTime)
+           {
+              if (group == common::RadarProductGroup::Level3 &&
+                  product == p->product_ && queryTime == selected_time())
               {
                  // If the data associated with the currently selected time is
                  // reloaded, update the view
@@ -596,6 +607,4 @@ bool Level3ProductView::IgnoreUnits() const
    return false;
 }
 
-} // namespace view
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::view

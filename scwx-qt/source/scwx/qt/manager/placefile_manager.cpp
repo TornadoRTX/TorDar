@@ -52,8 +52,7 @@ public:
    void ReadPlacefileSettings();
    void WritePlacefileSettings();
 
-   static boost::unordered_flat_map<std::size_t,
-                                    std::shared_ptr<types::ImGuiFont>>
+   static FontMap
    LoadFontResources(const std::shared_ptr<gr::Placefile>& placefile);
    static std::vector<std::shared_ptr<boost::gil::rgba8_image_t>>
    LoadImageResources(const std::shared_ptr<gr::Placefile>& placefile);
@@ -147,8 +146,7 @@ public:
    std::mutex                     refreshMutex_ {};
    std::mutex                     timerMutex_ {};
 
-   boost::unordered_flat_map<std::size_t, std::shared_ptr<types::ImGuiFont>>
-              fonts_ {};
+   FontMap    fonts_ {};
    std::mutex fontsMutex_ {};
 
    std::vector<std::shared_ptr<boost::gil::rgba8_image_t>> images_ {};
@@ -235,7 +233,7 @@ PlacefileManager::placefile(const std::string& name)
    return nullptr;
 }
 
-boost::unordered_flat_map<std::size_t, std::shared_ptr<types::ImGuiFont>>
+PlacefileManager::FontMap
 PlacefileManager::placefile_fonts(const std::string& name)
 {
    std::shared_lock lock(p->placefileRecordLock_);
@@ -775,13 +773,11 @@ std::shared_ptr<PlacefileManager> PlacefileManager::Instance()
    return placefileManager;
 }
 
-boost::unordered_flat_map<std::size_t, std::shared_ptr<types::ImGuiFont>>
-PlacefileManager::Impl::LoadFontResources(
+PlacefileManager::FontMap PlacefileManager::Impl::LoadFontResources(
    const std::shared_ptr<gr::Placefile>& placefile)
 {
-   boost::unordered_flat_map<std::size_t, std::shared_ptr<types::ImGuiFont>>
-        imGuiFonts {};
-   auto fonts = placefile->fonts();
+   FontMap imGuiFonts {};
+   auto    fonts = placefile->fonts();
 
    for (auto& font : fonts)
    {
@@ -797,9 +793,11 @@ PlacefileManager::Impl::LoadFontResources(
          styles.push_back("italic");
       }
 
-      auto imGuiFont = FontManager::Instance().LoadImGuiFont(
-         font.second->face_, styles, size);
-      imGuiFonts.emplace(font.first, std::move(imGuiFont));
+      auto imGuiFont =
+         FontManager::Instance().LoadImGuiFont(font.second->face_, styles);
+      imGuiFonts.emplace(
+         font.first,
+         std::make_pair(std::move(imGuiFont), FontManager::ImFontSize(size)));
    }
 
    return imGuiFonts;

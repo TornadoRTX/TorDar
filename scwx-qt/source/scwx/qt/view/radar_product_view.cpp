@@ -58,6 +58,8 @@ public:
    std::chrono::system_clock::time_point selectedTime_;
    bool                                  showSmoothedRangeFolding_ {false};
    bool                                  smoothingEnabled_ {false};
+   types::RadarProductLoadStatus         loadStatus_ {
+      types::RadarProductLoadStatus::ProductNotLoaded};
 
    std::shared_ptr<manager::RadarProductManager> radarProductManager_;
 
@@ -88,6 +90,11 @@ std::uint16_t RadarProductView::color_table_max() const
 std::optional<float> RadarProductView::elevation() const
 {
    return {};
+}
+
+types::RadarProductLoadStatus RadarProductView::load_status() const
+{
+   return p->loadStatus_;
 }
 
 std::shared_ptr<manager::RadarProductManager>
@@ -124,6 +131,11 @@ std::chrono::system_clock::time_point RadarProductView::sweep_time() const
 std::mutex& RadarProductView::sweep_mutex()
 {
    return p->sweepMutex_;
+}
+
+void RadarProductView::set_load_status(types::RadarProductLoadStatus loadStatus)
+{
+   p->loadStatus_ = loadStatus;
 }
 
 void RadarProductView::set_radar_product_manager(

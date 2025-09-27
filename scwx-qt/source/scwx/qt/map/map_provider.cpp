@@ -73,7 +73,7 @@ static const std::unordered_map<MapProvider, MapProviderInfo> mapProviderInfo_ {
            .drawBelow_ {mapboxDrawBelow_}},
           {.name_ {"Mineral"},
            .url_ {"mapbox://styles/mapbox/cjtep62gq54l21frr1whf27ak"},
-           .drawBelow_ {mapboxDrawBelow_}},
+           .drawBelow_ {"tunnel"}},
           {.name_ {"Minimo"},
            .url_ {
               "mapbox://styles/mapbox-map-design/cksjc2nsq1bg117pnekb655h1"},

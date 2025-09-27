@@ -30,7 +30,7 @@ jobs:
             ldflags: ''
             msvc_arch: x64
             msvc_version: 2022
-            qt_version: 6.8.3
+            qt_version: 6.9.2
             qt_arch_aqt: win64_msvc2022_64
             qt_arch_dir: msvc2022_64
             qt_modules: qtimageformats qtmultimedia qtpositioning qtserialport
@@ -47,7 +47,7 @@ jobs:
             compiler: gcc
             cppflags: ''
             ldflags: ''
-            qt_version: 6.8.3
+            qt_version: 6.9.2
             qt_arch_aqt: linux_gcc_64
             qt_arch_dir: gcc_64
             qt_modules: qtimageformats qtmultimedia qtpositioning qtserialport
@@ -65,7 +65,7 @@ jobs:
             compiler: clang
             cppflags: ''
             ldflags: ''
-            qt_version: 6.8.3
+            qt_version: 6.9.2
             qt_arch_aqt: linux_gcc_64
             qt_arch_dir: gcc_64
             qt_modules: qtimageformats qtmultimedia qtpositioning qtserialport
@@ -83,7 +83,7 @@ jobs:
             compiler: gcc
             cppflags: ''
             ldflags: ''
-            qt_version: 6.8.3
+            qt_version: 6.9.2
             qt_arch_aqt: linux_gcc_arm64
             qt_arch_dir: gcc_arm64
             qt_modules: qtimageformats qtmultimedia qtpositioning qtserialport
@@ -99,7 +99,7 @@ jobs:
             env_cc: clang
             env_cxx: clang++
             compiler: clang
-            qt_version: 6.8.3
+            qt_version: 6.9.2
             qt_arch_aqt: clang_64
             qt_arch_dir: macos
             qt_modules: qtimageformats qtmultimedia qtpositioning qtserialport
@@ -114,7 +114,7 @@ jobs:
             env_cc: clang
             env_cxx: clang++
             compiler: clang
-            qt_version: 6.8.3
+            qt_version: 6.9.2
             qt_arch_aqt: clang_64
             qt_arch_dir: macos
             qt_modules: qtimageformats qtmultimedia qtpositioning qtserialport
@@ -127,7 +127,7 @@ jobs:
     env:
       CC: ${{ matrix.env_cc }}
       CXX: ${{ matrix.env_cxx }}
-      SCWX_VERSION: v0.5.1
+      SCWX_VERSION: v0.5.2
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -135,7 +135,7 @@ jobs:
       run: git config --global core.longpaths true
 
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         path: source
         submodules: recursive
@@ -393,7 +393,7 @@ jobs:
       env:
         MAPBOX_API_KEY:   ${{ secrets.MAPBOX_API_KEY }}
         MAPTILER_API_KEY: ${{ secrets.MAPTILER_API_KEY }}
-      run: ctest -C ${{ matrix.build_type }} --exclude-regex "test_mln.*|UpdateManager.*"
+      run: ctest -C ${{ matrix.build_type }} --exclude-regex "test_mln.*|NtpClient.*|UpdateManager.*"
 
     - name: Upload Test Logs
       if: ${{ !cancelled() }}

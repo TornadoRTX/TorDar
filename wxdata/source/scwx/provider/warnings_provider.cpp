@@ -108,7 +108,7 @@ WarningsProvider::LoadUpdatedFiles(
    std::vector<std::shared_ptr<awips::TextProductFile>> updatedFiles;
 
    const std::chrono::sys_time<std::chrono::hours> now =
-      std::chrono::floor<std::chrono::hours>(std::chrono::system_clock::now());
+      std::chrono::floor<std::chrono::hours>(util::time::now());
    std::chrono::sys_time<std::chrono::hours> currentHour =
       (startTime != std::chrono::sys_time<std::chrono::hours> {}) ?
          startTime :

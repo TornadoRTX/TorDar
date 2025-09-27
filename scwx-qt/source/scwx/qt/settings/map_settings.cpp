@@ -86,8 +86,10 @@ public:
                }
                else
                {
-                  // TODO: Validate level 3 product
-                  return true;
+                  // Validate level 3 product
+                  const auto level3Product =
+                     common::GetLevel3ProductByAwipsId(value);
+                  return !level3Product.empty() && level3Product != "?";
                }
             });
 

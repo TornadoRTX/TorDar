@@ -10,9 +10,7 @@
 #   include <date/tz.h>
 #endif
 
-namespace scwx
-{
-namespace util
+namespace scwx::util::time
 {
 
 #if (__cpp_lib_chrono >= 201907L)
@@ -34,6 +32,9 @@ typedef scwx::util::
 ClockFormat        GetClockFormat(const std::string& name);
 const std::string& GetClockFormatName(ClockFormat clockFormat);
 
+template<typename Clock = std::chrono::system_clock>
+std::chrono::time_point<Clock> now();
+
 std::chrono::system_clock::time_point TimePoint(uint32_t modifiedJulianDate,
                                                 uint32_t milliseconds);
 
@@ -46,5 +47,17 @@ template<typename T>
 std::optional<std::chrono::sys_time<T>>
 TryParseDateTime(const std::string& dateTimeFormat, const std::string& str);
 
-} // namespace util
-} // namespace scwx
+} // namespace scwx::util::time
+
+namespace scwx::util
+{
+// Add types and functions to scwx::util for compatibility
+using time::ClockFormat;
+using time::ClockFormatIterator;
+using time::GetClockFormat;
+using time::GetClockFormatName;
+using time::time_zone;
+using time::TimePoint;
+using time::TimeString;
+using time::TryParseDateTime;
+} // namespace scwx::util

@@ -463,18 +463,28 @@ void MainWindow::keyReleaseEvent(QKeyEvent* ev)
 void MainWindow::showEvent(QShowEvent* event)
 {
    QMainWindow::showEvent(event);
-   auto& uiSettings = settings::UiSettings::Instance();
 
-   // restore the geometry state
-   std::string uiGeometry = uiSettings.main_ui_geometry().GetValue();
-   restoreGeometry(
-      QByteArray::fromBase64(QByteArray::fromStdString(uiGeometry)));
+   static bool firstShowEvent = true;
+   bool        restored       = false;
 
-   // restore the UI state
-   std::string uiState = uiSettings.main_ui_state().GetValue();
+   if (firstShowEvent)
+   {
+      auto& uiSettings = settings::UiSettings::Instance();
 
-   bool restored =
-      restoreState(QByteArray::fromBase64(QByteArray::fromStdString(uiState)));
+      // restore the geometry state
+      const std::string uiGeometry = uiSettings.main_ui_geometry().GetValue();
+      restoreGeometry(
+         QByteArray::fromBase64(QByteArray::fromStdString(uiGeometry)));
+
+      // restore the UI state
+      const std::string uiState = uiSettings.main_ui_state().GetValue();
+
+      restored = restoreState(
+         QByteArray::fromBase64(QByteArray::fromStdString(uiState)));
+
+      firstShowEvent = false;
+   }
+
    if (!restored)
    {
       resizeDocks({ui->radarToolboxDock}, {194}, Qt::Horizontal);
@@ -1300,8 +1310,8 @@ void MainWindowImpl::ConnectOtherSignals()
            this,
            [this]()
            {
-              timeLabel_->setText(QString::fromStdString(
-                 util::TimeString(std::chrono::system_clock::now())));
+              timeLabel_->setText(
+                 QString::fromStdString(util::TimeString(util::time::now())));
               timeLabel_->setVisible(true);
            });
    clockTimer_.start(1000);

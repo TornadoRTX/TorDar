@@ -9,6 +9,7 @@
 #include <scwx/qt/manager/radar_product_manager.hpp>
 #include <scwx/qt/manager/resource_manager.hpp>
 #include <scwx/qt/manager/settings_manager.hpp>
+#include <scwx/qt/manager/task_manager.hpp>
 #include <scwx/qt/manager/thread_manager.hpp>
 #include <scwx/qt/settings/general_settings.hpp>
 #include <scwx/qt/types/qt_types.hpp>
@@ -26,6 +27,7 @@
 #include <boost/asio.hpp>
 #include <fmt/format.h>
 #include <QApplication>
+#include <QLibraryInfo>
 #include <QStandardPaths>
 #include <QStyleHints>
 #include <QSurfaceFormat>
@@ -53,20 +55,30 @@ int main(int argc, char* argv[])
       args.push_back(argv[i]);
    }
 
+   if (!scwx::util::GetEnvironment("SCWX_TEST").empty())
+   {
+      QStandardPaths::setTestModeEnabled(true);
+   }
+
    // Initialize logger
    auto& logManager = scwx::qt::manager::LogManager::Instance();
    logManager.Initialize();
+
+   QCoreApplication::setApplicationName("Supercell Wx");
+
+   logManager.InitializeLogFile();
 
    logger_->info("Supercell Wx v{}.{} ({})",
                  scwx::qt::main::kVersionString_,
                  scwx::qt::main::kBuildNumber_,
                  scwx::qt::main::kCommitString_);
+   logger_->info("Qt version {}",
+                 QLibraryInfo::version().toString().toStdString());
 
    InitializeOpenGL();
 
    QApplication a(argc, argv);
 
-   QCoreApplication::setApplicationName("Supercell Wx");
    scwx::network::cpr::SetUserAgent(
       fmt::format("SupercellWx/{}", scwx::qt::main::kVersionString_));
 
@@ -75,11 +87,6 @@ int main(int argc, char* argv[])
    if (translator.load(QLocale(), "scwx", "_", ":/i18n"))
    {
       QCoreApplication::installTranslator(&translator);
-   }
-
-   if (!scwx::util::GetEnvironment("SCWX_TEST").empty())
-   {
-      QStandardPaths::setTestModeEnabled(true);
    }
 
    // Test to see if scwx was run with high privilege
@@ -116,9 +123,9 @@ int main(int argc, char* argv[])
    Aws::InitAPI(awsSdkOptions);
 
    // Initialize application
-   logManager.InitializeLogFile();
    scwx::qt::config::RadarSite::Initialize();
    scwx::qt::config::CountyDatabase::Initialize();
+   scwx::qt::manager::TaskManager::Initialize();
    scwx::qt::manager::SettingsManager::Instance().Initialize();
    scwx::qt::manager::ResourceManager::Initialize();
 
@@ -179,6 +186,7 @@ int main(int argc, char* argv[])
    // Shutdown application
    scwx::qt::manager::ResourceManager::Shutdown();
    scwx::qt::manager::SettingsManager::Instance().Shutdown();
+   scwx::qt::manager::TaskManager::Shutdown();
 
    // Shutdown AWS SDK
    Aws::ShutdownAPI(awsSdkOptions);

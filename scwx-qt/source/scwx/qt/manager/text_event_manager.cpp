@@ -678,7 +678,7 @@ void TextEventManager::Impl::Refresh()
    // If the time jumps, we should attempt to load from no later than the
    // previous load time
    auto loadTime =
-      std::chrono::floor<std::chrono::hours>(std::chrono::system_clock::now());
+      std::chrono::floor<std::chrono::hours>(scwx::util::time::now());
    auto startTime = loadTime - loadHistoryDuration_;
 
    if (prevLoadTime_ != std::chrono::sys_time<std::chrono::hours> {})
