@@ -22,6 +22,7 @@ public:
    GeneralSettings& operator=(GeneralSettings&&) noexcept;
 
    [[nodiscard]] SettingsVariable<bool>& anti_aliasing_enabled() const;
+   [[nodiscard]] SettingsVariable<bool>& auto_navigate_to_wsr88d_only() const;
    [[nodiscard]] SettingsVariable<bool>& center_on_radar_selection() const;
    [[nodiscard]] SettingsVariable<std::string>& clock_format() const;
    [[nodiscard]] SettingsVariable<std::string>& custom_style_draw_layer() const;

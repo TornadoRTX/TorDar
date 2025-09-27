@@ -145,6 +145,7 @@ public:
           &warningsProvider_,
           &radarSiteThreshold_,
           &antiAliasingEnabled_,
+          &autoNavigateToWsr88dOnly_,
           &centerOnRadarSelection_,
           &showMapAttribution_,
           &showMapCenter_,
@@ -270,6 +271,7 @@ public:
    settings::SettingsInterface<std::string>  warningsProvider_ {};
    settings::SettingsInterface<double>       radarSiteThreshold_ {};
    settings::SettingsInterface<bool>         antiAliasingEnabled_ {};
+   settings::SettingsInterface<bool>         autoNavigateToWsr88dOnly_ {};
    settings::SettingsInterface<bool>         centerOnRadarSelection_ {};
    settings::SettingsInterface<bool>         showMapAttribution_ {};
    settings::SettingsInterface<bool>         showMapCenter_ {};
@@ -851,6 +853,11 @@ void SettingsDialogImpl::SetupGeneralTab()
    antiAliasingEnabled_.SetSettingsVariable(
       generalSettings.anti_aliasing_enabled());
    antiAliasingEnabled_.SetEditWidget(self_->ui->antiAliasingEnabledCheckBox);
+
+   autoNavigateToWsr88dOnly_.SetSettingsVariable(
+      generalSettings.auto_navigate_to_wsr88d_only());
+   autoNavigateToWsr88dOnly_.SetEditWidget(
+      self_->ui->autoNavigateToWsr88dOnlyCheckBox);
 
    centerOnRadarSelection_.SetSettingsVariable(
       generalSettings.center_on_radar_selection());

@@ -131,7 +131,7 @@
                 <x>0</x>
                 <y>0</y>
                 <width>515</width>
-                <height>784</height>
+                <height>810</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout">
@@ -702,6 +702,13 @@
                 </widget>
                </item>
                <item>
+                <widget class="QCheckBox" name="autoNavigateToWsr88dOnlyCheckBox">
+                 <property name="text">
+                  <string>Auto-Navigate to WSR-88D Only</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
                 <widget class="QCheckBox" name="centerOnRadarSelectionCheckBox">
                  <property name="text">
                   <string>Center Map on Radar Selection</string>
@@ -804,8 +811,8 @@
                    <rect>
                     <x>0</x>
                     <y>0</y>
-                    <width>508</width>
-                    <height>385</height>
+                    <width>98</width>
+                    <height>28</height>
                    </rect>
                   </property>
                   <layout class="QGridLayout" name="gridLayout_3">
