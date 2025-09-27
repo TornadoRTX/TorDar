@@ -19,7 +19,7 @@ class EditButtonDialog : public QDialog
 
 public:
    explicit EditButtonDialog(QWidget* parent = nullptr);
-   ~EditButtonDialog();
+   ~EditButtonDialog() override;
 
    [[nodiscard]] boost::gil::rgba8_pixel_t active_color() const;
    [[nodiscard]] boost::gil::rgba8_pixel_t button_color() const;

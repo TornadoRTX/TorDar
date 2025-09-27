@@ -17,7 +17,7 @@ class ImGuiButton : public QPushButton
 
 public:
    explicit ImGuiButton(QWidget* parent = nullptr);
-   ~ImGuiButton();
+   ~ImGuiButton() override;
 
    void set_button_settings(settings::ButtonSettings& buttonSettings);
 

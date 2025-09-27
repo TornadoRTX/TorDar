@@ -108,9 +108,12 @@ EditButtonDialog::EditButtonDialog(QWidget* parent) :
 
    p->UpdateSampleButton();
 
+   // Type is known at compile-time
+   // NOLINTBEGIN(cppcoreguidelines-pro-type-static-cast-downcast)
    auto buttonContainerLayout =
       static_cast<QHBoxLayout*>(ui->buttonContainer->layout());
    buttonContainerLayout->insertWidget(1, p->button_);
+   // NOLINTEND(cppcoreguidelines-pro-type-static-cast-downcast)
 
    p->activeComponent_.ConnectSignals(this);
    p->buttonComponent_.ConnectSignals(this);
@@ -225,7 +228,7 @@ void EditButtonDialog::Impl::ShowColorDialog(EditComponent& component)
    dialog->setAttribute(Qt::WA_DeleteOnClose);
    dialog->setOption(QColorDialog::ColorDialogOption::ShowAlphaChannel);
 
-   QColor initialColor(component.colorLineEdit_->text());
+   const QColor initialColor(component.colorLineEdit_->text());
    if (initialColor.isValid())
    {
       dialog->setCurrentColor(initialColor);

@@ -31,8 +31,8 @@ public:
    Impl(const Impl&&)            = delete;
    Impl& operator=(const Impl&&) = delete;
 
-   void
-   TrackAsyncResponse(std::shared_ptr<network::cpr::AsyncResponseC> response);
+   void TrackAsyncResponse(
+      const std::shared_ptr<network::cpr::AsyncResponseC>& response);
    void UntrackAsyncResponse(
       const std::shared_ptr<network::cpr::AsyncResponseC>& response);
    void CancelAsyncResponses();
@@ -171,7 +171,7 @@ NwsApiProvider::Impl::RequestData(std::string_view       endpointUrl,
 }
 
 void NwsApiProvider::Impl::TrackAsyncResponse(
-   std::shared_ptr<network::cpr::AsyncResponseC> response)
+   const std::shared_ptr<network::cpr::AsyncResponseC>& response)
 {
    const std::unique_lock lock {responseMutex_};
    responsePool_.emplace_back(response);

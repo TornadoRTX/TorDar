@@ -12,7 +12,7 @@ class RadarSiteStatusPaletteSettingsWidget : public SettingsPageWidget
 
 public:
    explicit RadarSiteStatusPaletteSettingsWidget(QWidget* parent = nullptr);
-   ~RadarSiteStatusPaletteSettingsWidget();
+   ~RadarSiteStatusPaletteSettingsWidget() override;
 
 private:
    class Impl;

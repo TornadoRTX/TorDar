@@ -13,8 +13,8 @@ boost::gil::rgba8_pixel_t Blend(const boost::gil::rgba8_pixel_t& foreground,
    boost::gil::rgba8_pixel_t color {};
 
    // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
-   float fgAlpha = static_cast<float>(foreground[3]) / 255.0f;
-   float bgAlpha = 1.0f - fgAlpha;
+   const float fgAlpha = static_cast<float>(foreground[3]) / 255.0f;
+   const float bgAlpha = 1.0f - fgAlpha;
 
    color[0] =
       static_cast<std::uint8_t>(static_cast<float>(foreground[0]) * fgAlpha +
@@ -50,7 +50,7 @@ ImVec4 ToImVec4(const boost::gil::rgba8_pixel_t& color)
 ImVec4 ToImVec4(const std::string& argbString)
 {
    // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
-   QRgb color = QColor(QString::fromStdString(argbString)).rgba();
+   const QRgb color = QColor(QString::fromStdString(argbString)).rgba();
    return ImVec4 {static_cast<float>(qRed(color)) / 255.0f,
                   static_cast<float>(qGreen(color)) / 255.0f,
                   static_cast<float>(qBlue(color)) / 255.0f,
