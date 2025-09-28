@@ -13,6 +13,9 @@ project(${PROJECT_NAME}
         HOMEPAGE_URL "https://github.com/dpaulat/supercell-wx"
         LANGUAGES    C CXX)
 
+# Fixes Boost defaulting to Windows 7, Forces Windows 10 as minimum target.
+add_compile_definitions(_WIN32_WINNT=0x0A00)
+
 set(CMAKE_POLICY_DEFAULT_CMP0054 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0079 NEW)
