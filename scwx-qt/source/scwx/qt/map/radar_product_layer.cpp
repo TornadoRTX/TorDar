@@ -4,7 +4,6 @@
 #include <scwx/qt/settings/unit_settings.hpp>
 #include <scwx/qt/types/unit_types.hpp>
 #include <scwx/qt/util/geographic_lib.hpp>
-#include <scwx/qt/util/maplibre.hpp>
 #include <scwx/qt/util/tooltip.hpp>
 #include <scwx/qt/view/radar_product_view.hpp>
 #include <scwx/util/logger.hpp>
@@ -46,7 +45,7 @@ public:
    std::shared_ptr<gl::ShaderProgram> shaderProgram_ {nullptr};
 
    GLint uMVPMatrixLocation_ {static_cast<GLint>(GL_INVALID_INDEX)};
-   GLint uMapScreenCoordLocation_ {static_cast<GLint>(GL_INVALID_INDEX)};
+   GLint uOriginLatLongLocation_ {static_cast<GLint>(GL_INVALID_INDEX)};
    GLint uDataMomentOffsetLocation_ {static_cast<GLint>(GL_INVALID_INDEX)};
    GLint uDataMomentScaleLocation_ {static_cast<GLint>(GL_INVALID_INDEX)};
    GLint uCFPEnabledLocation_ {static_cast<GLint>(GL_INVALID_INDEX)};
@@ -92,11 +91,11 @@ void RadarProductLayer::Initialize(
       logger_->warn("Could not find uMVPMatrix");
    }
 
-   p->uMapScreenCoordLocation_ =
-      glGetUniformLocation(p->shaderProgram_->id(), "uMapScreenCoord");
-   if (p->uMapScreenCoordLocation_ == -1)
+   p->uOriginLatLongLocation_ =
+      glGetUniformLocation(p->shaderProgram_->id(), "uOriginLatLong");
+   if (p->uOriginLatLongLocation_ == -1)
    {
-      logger_->warn("Could not find uMapScreenCoord");
+      logger_->warn("Could not find uOriginLatLong");
    }
 
    p->uDataMomentOffsetLocation_ =
@@ -343,10 +342,10 @@ void RadarProductLayer::Render(
                                glm::radians(static_cast<float>(params.bearing)),
                                glm::vec3(0.0f, 0.0f, 1.0f));
 
-      glUniform2fv(p->uMapScreenCoordLocation_,
-                   1,
-                   glm::value_ptr(util::maplibre::LatLongToScreenCoordinate(
-                      {params.latitude, params.longitude})));
+      glUniform2fv(
+         p->uOriginLatLongLocation_,
+         1,
+         glm::value_ptr(glm::vec2 {params.latitude, params.longitude}));
 
       glUniformMatrix4fv(
          p->uMVPMatrixLocation_, 1, GL_FALSE, glm::value_ptr(uMVPMatrix));
@@ -390,7 +389,7 @@ void RadarProductLayer::Deinitialize()
    glDeleteBuffers(3, p->vbo_.data());
 
    p->uMVPMatrixLocation_        = GL_INVALID_INDEX;
-   p->uMapScreenCoordLocation_   = GL_INVALID_INDEX;
+   p->uOriginLatLongLocation_    = GL_INVALID_INDEX;
    p->uDataMomentOffsetLocation_ = GL_INVALID_INDEX;
    p->uDataMomentScaleLocation_  = GL_INVALID_INDEX;
    p->uCFPEnabledLocation_       = GL_INVALID_INDEX;

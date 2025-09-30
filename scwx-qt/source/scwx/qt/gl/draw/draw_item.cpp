@@ -96,6 +96,21 @@ void DrawItem::UseRotationProjection(
 void DrawItem::UseMapProjection(
    const QMapLibre::CustomLayerRenderParameters& params,
    GLint                                         uMVPMatrixLocation,
+   GLint                                         uOriginLatLongLocation)
+{
+   const glm::mat4 uMVPMatrix = util::maplibre::GetMapMatrix(params);
+
+   glUniform2fv(uOriginLatLongLocation,
+                1,
+                glm::value_ptr(glm::vec2 {params.latitude, params.longitude}));
+
+   glUniformMatrix4fv(
+      uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(uMVPMatrix));
+}
+
+void DrawItem::UseMapScreenProjection(
+   const QMapLibre::CustomLayerRenderParameters& params,
+   GLint                                         uMVPMatrixLocation,
    GLint                                         uMapScreenCoordLocation)
 {
    const glm::mat4 uMVPMatrix = util::maplibre::GetMapMatrix(params);
