@@ -241,7 +241,7 @@ void PlacefilePolygons::Render(
       p->Update();
       p->shaderProgram_->Use();
       UseRotationProjection(params, p->uMVPMatrixLocation_);
-      UseMapProjection(
+      UseMapScreenProjection(
          params, p->uMapMatrixLocation_, p->uMapScreenCoordLocation_);
 
       if (p->thresholded_)

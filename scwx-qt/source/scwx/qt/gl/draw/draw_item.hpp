@@ -65,7 +65,11 @@ protected:
                          GLint uMVPMatrixLocation);
    void UseMapProjection(const QMapLibre::CustomLayerRenderParameters& params,
                          GLint uMVPMatrixLocation,
-                         GLint uMapScreenCoordLocation);
+                         GLint uOriginLatLongLocation);
+   void
+   UseMapScreenProjection(const QMapLibre::CustomLayerRenderParameters& params,
+                          GLint uMVPMatrixLocation,
+                          GLint uMapScreenCoordLocation);
 
 private:
    class Impl;
