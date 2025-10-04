@@ -24,7 +24,7 @@ class RadarSiteStatusManager::Impl
 {
 public:
    explicit Impl(RadarSiteStatusManager* self) : self_ {self} {}
-   ~Impl() { Stop(); }
+   ~Impl()                       = default;
    Impl(const Impl&)             = delete;
    Impl& operator=(const Impl&)  = delete;
    Impl(const Impl&&)            = delete;

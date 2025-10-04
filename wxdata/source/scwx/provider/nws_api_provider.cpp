@@ -162,7 +162,7 @@ NwsApiProvider::Impl::RequestData(std::string_view       endpointUrl,
    return data;
 }
 
-void NwsApiProvider::Shutdown()
+void NwsApiProvider::Shutdown() noexcept
 {
    p->running_ = false;
 }

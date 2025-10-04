@@ -44,7 +44,7 @@ public:
    /**
     * @brief Shuts down the provider and stops any in-progress network requests.
     */
-   void Shutdown();
+   void Shutdown() noexcept;
 
 private:
    class Impl;
