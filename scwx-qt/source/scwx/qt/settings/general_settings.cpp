@@ -47,6 +47,7 @@ public:
       // SetDefault, SetMinimum, and SetMaximum are descriptive
       // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
       antiAliasingEnabled_.SetDefault(true);
+      autoNavigateToWsr88dOnly_.SetDefault(true);
       centerOnRadarSelection_.SetDefault(false);
       clockFormat_.SetDefault(defaultClockFormatValue);
       customStyleDrawLayer_.SetDefault(".*\\.annotations\\.points");
@@ -153,6 +154,8 @@ public:
    Impl& operator=(const Impl&&) = delete;
 
    SettingsVariable<bool> antiAliasingEnabled_ {"anti_aliasing_enabled"};
+   SettingsVariable<bool> autoNavigateToWsr88dOnly_ {
+      "auto_navigate_to_wsr88d_only"};
    SettingsVariable<bool> centerOnRadarSelection_ {"center_on_radar_selection"};
    SettingsVariable<std::string> clockFormat_ {"clock_format"};
    SettingsVariable<std::string> customStyleDrawLayer_ {
@@ -195,6 +198,7 @@ GeneralSettings::GeneralSettings() :
     SettingsCategory("general"), p(std::make_unique<Impl>())
 {
    RegisterVariables({&p->antiAliasingEnabled_,
+                      &p->autoNavigateToWsr88dOnly_,
                       &p->centerOnRadarSelection_,
                       &p->clockFormat_,
                       &p->customStyleDrawLayer_,
@@ -239,6 +243,11 @@ GeneralSettings::operator=(GeneralSettings&&) noexcept = default;
 SettingsVariable<bool>& GeneralSettings::anti_aliasing_enabled() const
 {
    return p->antiAliasingEnabled_;
+}
+
+SettingsVariable<bool>& GeneralSettings::auto_navigate_to_wsr88d_only() const
+{
+   return p->autoNavigateToWsr88dOnly_;
 }
 
 SettingsVariable<bool>& GeneralSettings::center_on_radar_selection() const
@@ -431,6 +440,8 @@ GeneralSettings& GeneralSettings::Instance()
 bool operator==(const GeneralSettings& lhs, const GeneralSettings& rhs)
 {
    return (lhs.p->antiAliasingEnabled_ == rhs.p->antiAliasingEnabled_ &&
+           lhs.p->autoNavigateToWsr88dOnly_ ==
+              rhs.p->autoNavigateToWsr88dOnly_ &&
            lhs.p->centerOnRadarSelection_ == rhs.p->centerOnRadarSelection_ &&
            lhs.p->clockFormat_ == rhs.p->clockFormat_ &&
            lhs.p->customStyleDrawLayer_ == rhs.p->customStyleDrawLayer_ &&

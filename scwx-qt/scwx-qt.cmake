@@ -107,6 +107,7 @@ set(HDR_MANAGER source/scwx/qt/manager/alert_manager.hpp
                 source/scwx/qt/manager/position_manager.hpp
                 source/scwx/qt/manager/radar_product_manager.hpp
                 source/scwx/qt/manager/radar_product_manager_notifier.hpp
+                source/scwx/qt/manager/radar_site_status_manager.hpp
                 source/scwx/qt/manager/resource_manager.hpp
                 source/scwx/qt/manager/settings_manager.hpp
                 source/scwx/qt/manager/task_manager.hpp
@@ -125,6 +126,7 @@ set(SRC_MANAGER source/scwx/qt/manager/alert_manager.cpp
                 source/scwx/qt/manager/position_manager.cpp
                 source/scwx/qt/manager/radar_product_manager.cpp
                 source/scwx/qt/manager/radar_product_manager_notifier.cpp
+                source/scwx/qt/manager/radar_site_status_manager.cpp
                 source/scwx/qt/manager/resource_manager.cpp
                 source/scwx/qt/manager/settings_manager.cpp
                 source/scwx/qt/manager/task_manager.cpp
@@ -187,12 +189,14 @@ set(SRC_REQUEST source/scwx/qt/request/download_request.cpp
                 source/scwx/qt/request/nexrad_file_request.cpp)
 set(HDR_SETTINGS source/scwx/qt/settings/alert_palette_settings.hpp
                  source/scwx/qt/settings/audio_settings.hpp
+                 source/scwx/qt/settings/button_settings.hpp
                  source/scwx/qt/settings/general_settings.hpp
                  source/scwx/qt/settings/hotkey_settings.hpp
                  source/scwx/qt/settings/line_settings.hpp
                  source/scwx/qt/settings/map_settings.hpp
                  source/scwx/qt/settings/palette_settings.hpp
                  source/scwx/qt/settings/product_settings.hpp
+                 source/scwx/qt/settings/radar_site_status_palette_settings.hpp
                  source/scwx/qt/settings/settings_category.hpp
                  source/scwx/qt/settings/settings_container.hpp
                  source/scwx/qt/settings/settings_definitions.hpp
@@ -205,12 +209,14 @@ set(HDR_SETTINGS source/scwx/qt/settings/alert_palette_settings.hpp
                  source/scwx/qt/settings/unit_settings.hpp)
 set(SRC_SETTINGS source/scwx/qt/settings/alert_palette_settings.cpp
                  source/scwx/qt/settings/audio_settings.cpp
+                 source/scwx/qt/settings/button_settings.cpp
                  source/scwx/qt/settings/general_settings.cpp
                  source/scwx/qt/settings/hotkey_settings.cpp
                  source/scwx/qt/settings/line_settings.cpp
                  source/scwx/qt/settings/map_settings.cpp
                  source/scwx/qt/settings/palette_settings.cpp
                  source/scwx/qt/settings/product_settings.cpp
+                 source/scwx/qt/settings/radar_site_status_palette_settings.cpp
                  source/scwx/qt/settings/settings_category.cpp
                  source/scwx/qt/settings/settings_container.cpp
                  source/scwx/qt/settings/settings_interface.cpp
@@ -235,6 +241,7 @@ set(HDR_TYPES source/scwx/qt/types/alert_types.hpp
               source/scwx/qt/types/qt_types.hpp
               source/scwx/qt/types/radar_product_record.hpp
               source/scwx/qt/types/radar_product_types.hpp
+              source/scwx/qt/types/radar_site_types.hpp
               source/scwx/qt/types/text_event_key.hpp
               source/scwx/qt/types/text_types.hpp
               source/scwx/qt/types/texture_types.hpp
@@ -251,6 +258,7 @@ set(SRC_TYPES source/scwx/qt/types/alert_types.cpp
               source/scwx/qt/types/media_types.cpp
               source/scwx/qt/types/qt_types.cpp
               source/scwx/qt/types/radar_product_record.cpp
+              source/scwx/qt/types/radar_site_types.cpp
               source/scwx/qt/types/text_event_key.cpp
               source/scwx/qt/types/text_types.cpp
               source/scwx/qt/types/texture_types.cpp
@@ -265,6 +273,7 @@ set(HDR_UI source/scwx/qt/ui/about_dialog.hpp
            source/scwx/qt/ui/county_dialog.hpp
            source/scwx/qt/ui/custom_layer_dialog.hpp
            source/scwx/qt/ui/download_dialog.hpp
+           source/scwx/qt/ui/edit_button_dialog.hpp
            source/scwx/qt/ui/edit_line_dialog.hpp
            source/scwx/qt/ui/edit_marker_dialog.hpp
            source/scwx/qt/ui/flow_layout.hpp
@@ -298,6 +307,7 @@ set(SRC_UI source/scwx/qt/ui/about_dialog.cpp
            source/scwx/qt/ui/county_dialog.cpp
            source/scwx/qt/ui/custom_layer_dialog.cpp
            source/scwx/qt/ui/download_dialog.cpp
+           source/scwx/qt/ui/edit_button_dialog.cpp
            source/scwx/qt/ui/edit_line_dialog.cpp
            source/scwx/qt/ui/edit_marker_dialog.cpp
            source/scwx/qt/ui/flow_layout.cpp
@@ -329,6 +339,7 @@ set(UI_UI  source/scwx/qt/ui/about_dialog.ui
            source/scwx/qt/ui/collapsible_group.ui
            source/scwx/qt/ui/county_dialog.ui
            source/scwx/qt/ui/custom_layer_dialog.ui
+           source/scwx/qt/ui/edit_button_dialog.ui
            source/scwx/qt/ui/edit_line_dialog.ui
            source/scwx/qt/ui/edit_marker_dialog.ui
            source/scwx/qt/ui/gps_info_dialog.ui
@@ -347,10 +358,12 @@ set(UI_UI  source/scwx/qt/ui/about_dialog.ui
            source/scwx/qt/ui/wfo_dialog.ui)
 set(HDR_UI_SETTINGS source/scwx/qt/ui/settings/alert_palette_settings_widget.hpp
                     source/scwx/qt/ui/settings/hotkey_settings_widget.hpp
+                    source/scwx/qt/ui/settings/radar_site_status_palette_settings_widget.hpp
                     source/scwx/qt/ui/settings/settings_page_widget.hpp
                     source/scwx/qt/ui/settings/unit_settings_widget.hpp)
 set(SRC_UI_SETTINGS source/scwx/qt/ui/settings/alert_palette_settings_widget.cpp
                     source/scwx/qt/ui/settings/hotkey_settings_widget.cpp
+                    source/scwx/qt/ui/settings/radar_site_status_palette_settings_widget.cpp
                     source/scwx/qt/ui/settings/settings_page_widget.cpp
                     source/scwx/qt/ui/settings/unit_settings_widget.cpp)
 set(HDR_UI_SETUP source/scwx/qt/ui/setup/audio_codec_page.hpp
@@ -367,7 +380,9 @@ set(SRC_UI_SETUP source/scwx/qt/ui/setup/audio_codec_page.cpp
                  source/scwx/qt/ui/setup/welcome_page.cpp)
 set(HDR_UI_WIDGETS source/scwx/qt/ui/widgets/focused_combo_box.hpp
                    source/scwx/qt/ui/widgets/focused_double_spin_box.hpp
-                   source/scwx/qt/ui/widgets/focused_spin_box.hpp)
+                   source/scwx/qt/ui/widgets/focused_spin_box.hpp
+                   source/scwx/qt/ui/widgets/imgui_button.hpp)
+set(SRC_UI_WIDGETS source/scwx/qt/ui/widgets/imgui_button.cpp)
 set(HDR_UTIL source/scwx/qt/util/color.hpp
              source/scwx/qt/util/file.hpp
              source/scwx/qt/util/geographic_lib.hpp
@@ -480,6 +495,7 @@ set(PROJECT_SOURCES ${HDR_MAIN}
                     ${HDR_UI_SETUP}
                     ${SRC_UI_SETUP}
                     ${HDR_UI_WIDGETS}
+                    ${SRC_UI_WIDGETS}
                     ${HDR_UTIL}
                     ${SRC_UTIL}
                     ${HDR_VIEW}
@@ -521,6 +537,7 @@ source_group("Source Files\\ui\\settings" FILES ${SRC_UI_SETTINGS})
 source_group("Header Files\\ui\\setup"    FILES ${HDR_UI_SETUP})
 source_group("Source Files\\ui\\setup"    FILES ${SRC_UI_SETUP})
 source_group("Header Files\\ui\\widgets"  FILES ${HDR_UI_WIDGETS})
+source_group("Source Files\\ui\\widgets"  FILES ${SRC_UI_WIDGETS})
 source_group("UI Files\\ui"               FILES ${UI_UI})
 source_group("Header Files\\util"         FILES ${HDR_UTIL})
 source_group("Source Files\\util"         FILES ${SRC_UTIL})

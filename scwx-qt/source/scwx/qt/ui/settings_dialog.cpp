@@ -29,6 +29,7 @@
 #include <scwx/qt/ui/serial_port_dialog.hpp>
 #include <scwx/qt/ui/settings/alert_palette_settings_widget.hpp>
 #include <scwx/qt/ui/settings/hotkey_settings_widget.hpp>
+#include <scwx/qt/ui/settings/radar_site_status_palette_settings_widget.hpp>
 #include <scwx/qt/ui/settings/unit_settings_widget.hpp>
 #include <scwx/qt/ui/wfo_dialog.hpp>
 #include <scwx/qt/util/color.hpp>
@@ -54,12 +55,11 @@
 #include <qt6ct/paletteeditdialog.h>
 #undef QT6CT_LIBRARY
 
-namespace scwx
+namespace scwx::qt::ui
 {
-namespace qt
-{
-namespace ui
-{
+
+// Extensive usage of "new" with Qt-managed objects
+// NOLINTBEGIN(cppcoreguidelines-owning-memory)
 
 static const std::string logPrefix_ = "scwx::qt::ui::settings_dialog";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
@@ -145,6 +145,7 @@ public:
           &warningsProvider_,
           &radarSiteThreshold_,
           &antiAliasingEnabled_,
+          &autoNavigateToWsr88dOnly_,
           &centerOnRadarSelection_,
           &showMapAttribution_,
           &showMapCenter_,
@@ -195,6 +196,7 @@ public:
    void SetupGeneralTab();
    void SetupPalettesColorTablesTab();
    void SetupPalettesAlertsTab();
+   void SetupPalettesRadarSiteStatusTab();
    void SetupUnitsTab();
    void SetupAudioTab();
    void SetupTextTab();
@@ -247,6 +249,9 @@ public:
    HotkeySettingsWidget*            hotkeySettingsWidget_ {};
    UnitSettingsWidget*              unitSettingsWidget_ {};
 
+   RadarSiteStatusPaletteSettingsWidget*
+      radarSiteStatusPaletteSettingsWidget_ {};
+
    settings::SettingsInterface<std::string>  defaultRadarSite_ {};
    settings::SettingsInterface<std::int64_t> gridWidth_ {};
    settings::SettingsInterface<std::int64_t> gridHeight_ {};
@@ -266,6 +271,7 @@ public:
    settings::SettingsInterface<std::string>  warningsProvider_ {};
    settings::SettingsInterface<double>       radarSiteThreshold_ {};
    settings::SettingsInterface<bool>         antiAliasingEnabled_ {};
+   settings::SettingsInterface<bool>         autoNavigateToWsr88dOnly_ {};
    settings::SettingsInterface<bool>         centerOnRadarSelection_ {};
    settings::SettingsInterface<bool>         showMapAttribution_ {};
    settings::SettingsInterface<bool>         showMapCenter_ {};
@@ -328,6 +334,9 @@ SettingsDialog::SettingsDialog(QMapLibre::Settings& mapSettings,
 
    // Palettes > Alerts
    p->SetupPalettesAlertsTab();
+
+   // Palettes > Radar Site Status
+   p->SetupPalettesRadarSiteStatusTab();
 
    // Units
    p->SetupUnitsTab();
@@ -845,6 +854,11 @@ void SettingsDialogImpl::SetupGeneralTab()
       generalSettings.anti_aliasing_enabled());
    antiAliasingEnabled_.SetEditWidget(self_->ui->antiAliasingEnabledCheckBox);
 
+   autoNavigateToWsr88dOnly_.SetSettingsVariable(
+      generalSettings.auto_navigate_to_wsr88d_only());
+   autoNavigateToWsr88dOnly_.SetEditWidget(
+      self_->ui->autoNavigateToWsr88dOnlyCheckBox);
+
    centerOnRadarSelection_.SetSettingsVariable(
       generalSettings.center_on_radar_selection());
    centerOnRadarSelection_.SetEditWidget(
@@ -979,10 +993,23 @@ void SettingsDialogImpl::SetupPalettesAlertsTab()
    QVBoxLayout* layout = new QVBoxLayout(self_->ui->alertsPalette);
 
    alertPaletteSettingsWidget_ =
-      new AlertPaletteSettingsWidget(self_->ui->hotkeys);
+      new AlertPaletteSettingsWidget(self_->ui->alertsPalette);
    layout->addWidget(alertPaletteSettingsWidget_);
 
    settingsPages_.push_back(alertPaletteSettingsWidget_);
+}
+
+void SettingsDialogImpl::SetupPalettesRadarSiteStatusTab()
+{
+   // Palettes > Radar Site Status
+   auto layout = new QVBoxLayout(self_->ui->radarSiteStatusPalette);
+
+   radarSiteStatusPaletteSettingsWidget_ =
+      new RadarSiteStatusPaletteSettingsWidget(
+         self_->ui->radarSiteStatusPalette);
+   layout->addWidget(radarSiteStatusPaletteSettingsWidget_);
+
+   settingsPages_.push_back(radarSiteStatusPaletteSettingsWidget_);
 }
 
 void SettingsDialogImpl::SetupUnitsTab()
@@ -1479,6 +1506,7 @@ QFont SettingsDialogImpl::GetSelectedFont()
                                     QString::fromStdString(fontStyle),
                                     static_cast<int>(fontSize.value()));
    font.setPointSizeF(fontSize.value());
+   font.setHintingPreference(QFont::HintingPreference::PreferNoHinting);
 
    return font;
 }
@@ -1574,6 +1602,6 @@ std::string SettingsDialogImpl::RadarSiteLabel(
    return fmt::format("{} ({})", radarSite->id(), radarSite->location_name());
 }
 
-} // namespace ui
-} // namespace qt
-} // namespace scwx
+// NOLINTEND(cppcoreguidelines-owning-memory)
+
+} // namespace scwx::qt::ui

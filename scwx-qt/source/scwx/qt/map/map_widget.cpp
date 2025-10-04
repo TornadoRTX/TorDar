@@ -1059,9 +1059,20 @@ void MapWidget::SetMapLocation(double latitude,
       // If the radar site should be updated based on the new location
       if (updateRadarSite)
       {
-         // Find the nearest WSR-88D radar
-         std::shared_ptr<config::RadarSite> nearestRadarSite =
-            config::RadarSite::FindNearest(latitude, longitude, "wsr88d");
+         auto& generalSettings = settings::GeneralSettings::Instance();
+
+         // Find the nearest radar
+         std::optional<std::string> type = std::nullopt;
+
+         if (generalSettings.auto_navigate_to_wsr88d_only().GetValue())
+         {
+            // Find the nearest WSR-88D radar
+            type = "wsr88d";
+         }
+
+         // Find the nearest radar
+         const std::shared_ptr<config::RadarSite> nearestRadarSite =
+            config::RadarSite::FindNearest(latitude, longitude, type);
 
          // If found, select it
          if (nearestRadarSite != nullptr)
@@ -1496,10 +1507,19 @@ void MapWidget::mousePressEvent(QMouseEvent* ev)
       }
       else if (ev->buttons() == Qt::MouseButton::MiddleButton)
       {
-         // Select nearest WSR-88D radar on middle click
+         auto& generalSettings = settings::GeneralSettings::Instance();
+
+         // Select nearest radar on middle click
+         std::optional<std::string> type = std::nullopt;
+
+         if (generalSettings.auto_navigate_to_wsr88d_only().GetValue())
+         {
+            // Select nearest WSR-88D radar on middle click
+            type = "wsr88d";
+         }
+
          auto coordinate = p->map_->coordinateForPixel(p->lastPos_);
-         p->SelectNearestRadarSite(
-            coordinate.first, coordinate.second, "wsr88d");
+         p->SelectNearestRadarSite(coordinate.first, coordinate.second, type);
       }
    }
 
