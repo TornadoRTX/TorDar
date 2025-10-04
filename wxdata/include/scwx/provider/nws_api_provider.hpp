@@ -41,6 +41,11 @@ public:
       std::optional<std::string_view> reportingHost = std::nullopt,
       std::optional<std::string_view> host          = std::nullopt);
 
+   /**
+    * @brief Shuts down the provider and stops any in-progress network requests.
+    */
+   void Shutdown();
+
 private:
    class Impl;
    std::unique_ptr<Impl> p;

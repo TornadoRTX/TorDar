@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <memory>
 
 #include <cpr/api.h>
@@ -23,7 +24,9 @@ std::shared_ptr<AsyncResponseC> GetAsyncC(Ts... ts)
 ::cpr::ConnectTimeout GetDefaultConnectTimeout();
 ::cpr::Timeout        GetDefaultTimeout();
 ::cpr::LowSpeed       GetDefaultLowSpeed();
-::cpr::Header         GetHeader();
-void                  SetUserAgent(const std::string& userAgent);
+::cpr::ProgressCallback
+              GetDefaultProgressCallback(const std::atomic<bool>& isRunning);
+::cpr::Header GetHeader();
+void          SetUserAgent(const std::string& userAgent);
 
 } // namespace scwx::network::cpr

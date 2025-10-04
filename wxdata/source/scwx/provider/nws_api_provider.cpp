@@ -25,17 +25,11 @@ public:
       // Request JSON-LD instead of GeoJSON
       header_.insert({"accept", "application/ld+json"});
    }
-   ~Impl() { CancelAsyncResponses(); }
+   ~Impl() { running_ = false; }
    Impl(const Impl&)             = delete;
    Impl& operator=(const Impl&)  = delete;
    Impl(const Impl&&)            = delete;
    Impl& operator=(const Impl&&) = delete;
-
-   void TrackAsyncResponse(
-      const std::shared_ptr<network::cpr::AsyncResponseC>& response);
-   void UntrackAsyncResponse(
-      const std::shared_ptr<network::cpr::AsyncResponseC>& response);
-   void CancelAsyncResponses();
 
    template<typename T>
    boost::outcome_v2::result<T> RequestData(std::string_view       endpointUrl,
@@ -43,8 +37,7 @@ public:
 
    cpr::Header header_ {network::cpr::GetHeader()};
 
-   std::mutex                                                responseMutex_ {};
-   std::deque<std::shared_ptr<network::cpr::AsyncResponseC>> responsePool_ {};
+   std::atomic<bool> running_ {true};
 };
 
 NwsApiProvider::NwsApiProvider() : p(std::make_unique<Impl>()) {}
@@ -99,16 +92,15 @@ NwsApiProvider::Impl::RequestData(std::string_view       endpointUrl,
    T data;
 
    auto asyncResponse =
-      network::cpr::GetAsyncC(cpr::Url {endpointUrl},
-                              header_,
-                              parameters,
-                              network::cpr::GetDefaultTimeout(),
-                              network::cpr::GetDefaultConnectTimeout(),
-                              network::cpr::GetDefaultLowSpeed());
+      cpr::GetAsync(cpr::Url {endpointUrl},
+                    header_,
+                    parameters,
+                    network::cpr::GetDefaultTimeout(),
+                    network::cpr::GetDefaultConnectTimeout(),
+                    network::cpr::GetDefaultLowSpeed(),
+                    network::cpr::GetDefaultProgressCallback(running_));
 
-   TrackAsyncResponse(asyncResponse);
-   const auto response = asyncResponse->get();
-   UntrackAsyncResponse(asyncResponse);
+   const auto response = asyncResponse.get();
 
    const boost::json::value json = util::json::ReadJsonString(response.text);
 
@@ -159,7 +151,7 @@ NwsApiProvider::Impl::RequestData(std::string_view       endpointUrl,
             boost::system::errc::no_message);
       }
    }
-   else
+   else if (running_)
    {
       logger_->warn("Could not get radar stations: {}", response.status_code);
 
@@ -170,33 +162,9 @@ NwsApiProvider::Impl::RequestData(std::string_view       endpointUrl,
    return data;
 }
 
-void NwsApiProvider::Impl::TrackAsyncResponse(
-   const std::shared_ptr<network::cpr::AsyncResponseC>& response)
+void NwsApiProvider::Shutdown()
 {
-   const std::unique_lock lock {responseMutex_};
-   responsePool_.emplace_back(response);
-}
-
-void NwsApiProvider::Impl::UntrackAsyncResponse(
-   const std::shared_ptr<network::cpr::AsyncResponseC>& response)
-{
-   const std::unique_lock lock {responseMutex_};
-
-   auto it = std::ranges::find(responsePool_, response);
-   if (it != responsePool_.end())
-   {
-      responsePool_.erase(it);
-   }
-}
-
-void NwsApiProvider::Impl::CancelAsyncResponses()
-{
-   const std::unique_lock lock {responseMutex_};
-   for (auto& response : responsePool_)
-   {
-      auto result = response->Cancel();
-      (void) result;
-   }
+   p->running_ = false;
 }
 
 } // namespace scwx::provider

@@ -24,7 +24,7 @@ class RadarSiteStatusManager::Impl
 {
 public:
    explicit Impl(RadarSiteStatusManager* self) : self_ {self} {}
-   ~Impl()                       = default;
+   ~Impl() { Stop(); }
    Impl(const Impl&)             = delete;
    Impl& operator=(const Impl&)  = delete;
    Impl(const Impl&&)            = delete;
@@ -74,13 +74,17 @@ void RadarSiteStatusManager::Stop()
 
 void RadarSiteStatusManager::Impl::Stop()
 {
-   const std::unique_lock lock {scheduleMutex_};
+   std::unique_lock lock {scheduleMutex_};
    if (scheduled_)
    {
       scheduled_ = false;
       scheduleTimer_.cancel();
    }
+   lock.unlock();
 
+   nwsApiProvider_->Shutdown();
+
+   threadPool_.stop();
    threadPool_.join();
 }
 

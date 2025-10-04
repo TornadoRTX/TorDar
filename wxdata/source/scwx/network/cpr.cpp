@@ -29,6 +29,17 @@ static ::cpr::Header header_ {};
    return ::cpr::LowSpeed {kLowSpeedLimit_, kLowSpeedTime_};
 }
 
+::cpr::ProgressCallback
+GetDefaultProgressCallback(const std::atomic<bool>& isRunning)
+{
+   return ::cpr::ProgressCallback([&](::cpr::cpr_off_t /* downloadTotal */,
+                                      ::cpr::cpr_off_t /* downloadNow */,
+                                      ::cpr::cpr_off_t /* uploadTotal */,
+                                      ::cpr::cpr_off_t /* uploadNow */,
+                                      std::intptr_t /* userdata */)
+                                  { return isRunning.load(); });
+}
+
 ::cpr::Header GetHeader()
 {
    return header_;
