@@ -10,6 +10,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <fmt/chrono.h>
+#include <QDir>
 #include <QStandardPaths>
 #include <QUrl>
 
@@ -40,9 +41,10 @@ public:
          types::GetUiStyleName(types::UiStyle::Default);
 
       const std::string defaultScreenCaptureFolder =
-         QStandardPaths::writableLocation(QStandardPaths::PicturesLocation)
-            .toStdString()
-            .append("/Supercell Wx");
+         QDir::toNativeSeparators(
+            QStandardPaths::writableLocation(QStandardPaths::PicturesLocation)
+               .append("/Supercell Wx"))
+            .toStdString();
       const std::string defaultScreenCaptureName =
          "{site}_{product}_{timestamp:%Y%m%dT%H%M%SZ}_{lat}_{lon}_{zoom}_{"
          "width}x{height}";
