@@ -1945,6 +1945,16 @@ void MapWidgetImpl::RadarProductManagerConnect()
                               {
                                  widget_->SelectRadarProduct(record);
                               }
+
+                              // Determine if a screen capture should be
+                              // performed
+                              auto& generalSettings =
+                                 settings::GeneralSettings::Instance();
+                              if (generalSettings.screen_capture_on_refresh()
+                                     .GetValue())
+                              {
+                                 widget_->ScreenCapture();
+                              }
                            }
                         });
                   }
