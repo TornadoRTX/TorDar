@@ -138,6 +138,8 @@ public:
           &clockFormat_,
           &customStyleDrawLayer_,
           &customStyleUrl_,
+          &screenCaptureFolder_,
+          &screenCaptureName_,
           &defaultTimeZone_,
           &positioningPlugin_,
           &nmeaBaudRate_,
@@ -147,6 +149,7 @@ public:
           &antiAliasingEnabled_,
           &autoNavigateToWsr88dOnly_,
           &centerOnRadarSelection_,
+          &screenCaptureOnRefresh_,
           &showMapAttribution_,
           &showMapCenter_,
           &showMapLogo_,
@@ -266,6 +269,8 @@ public:
    settings::SettingsInterface<std::string>  positioningPlugin_ {};
    settings::SettingsInterface<std::int64_t> nmeaBaudRate_ {};
    settings::SettingsInterface<std::string>  nmeaSource_ {};
+   settings::SettingsInterface<std::string>  screenCaptureFolder_ {};
+   settings::SettingsInterface<std::string>  screenCaptureName_ {};
    settings::SettingsInterface<std::string>  theme_ {};
    settings::SettingsInterface<std::string>  themeFile_ {};
    settings::SettingsInterface<std::string>  warningsProvider_ {};
@@ -273,6 +278,7 @@ public:
    settings::SettingsInterface<bool>         antiAliasingEnabled_ {};
    settings::SettingsInterface<bool>         autoNavigateToWsr88dOnly_ {};
    settings::SettingsInterface<bool>         centerOnRadarSelection_ {};
+   settings::SettingsInterface<bool>         screenCaptureOnRefresh_ {};
    settings::SettingsInterface<bool>         showMapAttribution_ {};
    settings::SettingsInterface<bool>         showMapCenter_ {};
    settings::SettingsInterface<bool>         showMapLogo_ {};
@@ -763,6 +769,47 @@ void SettingsDialogImpl::SetupGeneralTab()
          customLayerDialog->open();
       });
 
+   screenCaptureFolder_.SetSettingsVariable(
+      generalSettings.screen_capture_folder());
+   screenCaptureFolder_.SetEditWidget(self_->ui->screenCaptureFolderLineEdit);
+   screenCaptureFolder_.SetResetButton(
+      self_->ui->resetScreenCaptureFolderButton);
+   QObject::connect(
+      self_->ui->screenCaptureFolderButton,
+      &QAbstractButton::clicked,
+      self_,
+      [this]()
+      {
+         // WA_DeleteOnClose manages memory
+         // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
+         auto dialog = new QFileDialog(self_);
+         dialog->setAttribute(Qt::WA_DeleteOnClose);
+         dialog->setFileMode(QFileDialog::FileMode::Directory);
+
+         QObject::connect(
+            dialog,
+            &QFileDialog::fileSelected,
+            self_,
+            [this](const QString& file)
+            {
+               const QString path = QDir::toNativeSeparators(file);
+
+               logger_->info("Selected screen capture folder: {}",
+                             path.toStdString());
+               self_->ui->screenCaptureFolderLineEdit->setText(path);
+
+               // setText does not emit the textEdited signal
+               Q_EMIT self_->ui->screenCaptureFolderLineEdit->textEdited(path);
+            });
+
+         dialog->open();
+      });
+
+   screenCaptureName_.SetSettingsVariable(
+      generalSettings.screen_capture_name());
+   screenCaptureName_.SetEditWidget(self_->ui->screenCaptureNameLineEdit);
+   screenCaptureName_.SetResetButton(self_->ui->resetScreenCaptureNameButton);
+
    defaultAlertAction_.SetSettingsVariable(
       generalSettings.default_alert_action());
    SCWX_SETTINGS_COMBO_BOX(defaultAlertAction_,
@@ -863,6 +910,11 @@ void SettingsDialogImpl::SetupGeneralTab()
       generalSettings.center_on_radar_selection());
    centerOnRadarSelection_.SetEditWidget(
       self_->ui->centerOnRadarSelectionCheckBox);
+
+   screenCaptureOnRefresh_.SetSettingsVariable(
+      generalSettings.screen_capture_on_refresh());
+   screenCaptureOnRefresh_.SetEditWidget(
+      self_->ui->screenCaptureOnRefreshCheckBox);
 
    showMapAttribution_.SetSettingsVariable(
       generalSettings.show_map_attribution());

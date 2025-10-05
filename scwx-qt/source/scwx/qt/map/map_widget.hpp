@@ -4,6 +4,7 @@
 #include <scwx/common/products.hpp>
 #include <scwx/qt/config/radar_site.hpp>
 #include <scwx/qt/gl/gl.hpp>
+#include <scwx/qt/types/capture_types.hpp>
 #include <scwx/qt/types/map_types.hpp>
 #include <scwx/qt/types/radar_product_record.hpp>
 #include <scwx/qt/types/text_event_key.hpp>
@@ -60,6 +61,8 @@ public:
    [[nodiscard]] std::chrono::system_clock::time_point GetSelectedTime() const;
    [[nodiscard]] bool          GetSmoothingEnabled() const;
    [[nodiscard]] std::uint16_t GetVcp() const;
+
+   void ScreenCapture(types::CaptureType captureType);
 
    void SelectElevation(float elevation);
 
@@ -189,6 +192,12 @@ signals:
    void RadarSiteUpdated(std::shared_ptr<config::RadarSite> radarSite);
    void RadarSweepUpdated();
    void RadarSweepNotUpdated(types::NoUpdateReason reason);
+
+   /**
+    * This signal is emitted when the screen capture hotkey was pressed.
+    */
+   void ScreenCaptureRequested(types::CaptureType captureType);
+
    void WidgetPainted();
    void IncomingLevel2ElevationChanged(std::optional<float> incomingElevation);
 };

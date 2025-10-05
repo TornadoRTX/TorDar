@@ -9,6 +9,9 @@
 #include <scwx/util/time.hpp>
 
 #include <boost/algorithm/string.hpp>
+#include <fmt/chrono.h>
+#include <QDir>
+#include <QStandardPaths>
 #include <QUrl>
 
 namespace scwx::qt::settings
@@ -36,6 +39,15 @@ public:
          types::GetPositioningPluginName(types::PositioningPlugin::Default);
       std::string defaultThemeValue =
          types::GetUiStyleName(types::UiStyle::Default);
+
+      const std::string defaultScreenCaptureFolder =
+         QDir::toNativeSeparators(
+            QStandardPaths::writableLocation(QStandardPaths::PicturesLocation)
+               .append("/Supercell Wx"))
+            .toStdString();
+      const std::string defaultScreenCaptureName =
+         "{site}_{product}_{timestamp:%Y%m%dT%H%M%SZ}_{lat}_{lon}_{zoom}_{"
+         "width}x{height}";
 
       boost::to_lower(defaultClockFormatValue);
       boost::to_lower(defaultDefaultAlertActionValue);
@@ -68,6 +80,9 @@ public:
       nmeaSource_.SetDefault("");
       positioningPlugin_.SetDefault(defaultPositioningPlugin);
       processModuleWarningsEnabled_.SetDefault(true);
+      screenCaptureFolder_.SetDefault(defaultScreenCaptureFolder);
+      screenCaptureName_.SetDefault(defaultScreenCaptureName);
+      screenCaptureOnRefresh_.SetDefault(false);
       showMapAttribution_.SetDefault(true);
       showMapCenter_.SetDefault(false);
       showMapLogo_.SetDefault(true);
@@ -138,6 +153,38 @@ public:
          SCWX_SETTINGS_ENUM_VALIDATOR(types::PositioningPlugin,
                                       types::PositioningPluginIterator(),
                                       types::GetPositioningPluginName));
+      screenCaptureFolder_.SetValidator(
+         [](const std::string& value)
+         {
+            // Assume any non-empty path is valid
+            return !value.empty();
+         });
+      screenCaptureName_.SetValidator(
+         [](const std::string& value)
+         {
+            bool valid = true;
+            try
+            {
+               const std::string name = fmt::format(
+                  fmt::runtime(value),
+                  fmt::arg("site", "?"),
+                  fmt::arg("product", "?"),
+                  fmt::arg("timestamp",
+                           std::chrono::system_clock::time_point {}),
+                  fmt::arg("lat", 30.123),
+                  fmt::arg("lon", -100.123),
+                  fmt::arg("zoom", 1.1),
+                  fmt::arg("width", 1),
+                  fmt::arg("height", 1));
+               (void) name;
+            }
+            catch (const fmt::format_error&)
+            {
+               valid = false;
+            }
+
+            return valid;
+         });
       theme_.SetValidator(                            //
          SCWX_SETTINGS_ENUM_VALIDATOR(types::UiStyle, //
                                       types::UiStyleIterator(),
@@ -179,9 +226,12 @@ public:
    SettingsVariable<std::string>  positioningPlugin_ {"positioning_plugin"};
    SettingsVariable<bool>         processModuleWarningsEnabled_ {
       "process_module_warnings_enabled"};
-   SettingsVariable<bool>        showMapAttribution_ {"show_map_attribution"};
-   SettingsVariable<bool>        showMapCenter_ {"show_map_center"};
-   SettingsVariable<bool>        showMapLogo_ {"show_map_logo"};
+   SettingsVariable<std::string> screenCaptureFolder_ {"screen_capture_folder"};
+   SettingsVariable<std::string> screenCaptureName_ {"screen_capture_name"};
+   SettingsVariable<bool> screenCaptureOnRefresh_ {"screen_capture_on_refresh"};
+   SettingsVariable<bool> showMapAttribution_ {"show_map_attribution"};
+   SettingsVariable<bool> showMapCenter_ {"show_map_center"};
+   SettingsVariable<bool> showMapLogo_ {"show_map_logo"};
    SettingsVariable<std::string> theme_ {"theme"};
    SettingsVariable<std::string> themeFile_ {"theme_file"};
    SettingsVariable<bool>        trackLocation_ {"track_location"};
@@ -220,6 +270,9 @@ GeneralSettings::GeneralSettings() :
                       &p->nmeaSource_,
                       &p->positioningPlugin_,
                       &p->processModuleWarningsEnabled_,
+                      &p->screenCaptureFolder_,
+                      &p->screenCaptureName_,
+                      &p->screenCaptureOnRefresh_,
                       &p->showMapAttribution_,
                       &p->showMapCenter_,
                       &p->showMapLogo_,
@@ -356,6 +409,21 @@ SettingsVariable<bool>& GeneralSettings::process_module_warnings_enabled() const
    return p->processModuleWarningsEnabled_;
 }
 
+SettingsVariable<std::string>& GeneralSettings::screen_capture_folder() const
+{
+   return p->screenCaptureFolder_;
+}
+
+SettingsVariable<std::string>& GeneralSettings::screen_capture_name() const
+{
+   return p->screenCaptureName_;
+}
+
+SettingsVariable<bool>& GeneralSettings::screen_capture_on_refresh() const
+{
+   return p->screenCaptureOnRefresh_;
+}
+
 SettingsVariable<bool>& GeneralSettings::show_map_attribution() const
 {
    return p->showMapAttribution_;
@@ -464,6 +532,9 @@ bool operator==(const GeneralSettings& lhs, const GeneralSettings& rhs)
            lhs.p->positioningPlugin_ == rhs.p->positioningPlugin_ &&
            lhs.p->processModuleWarningsEnabled_ ==
               rhs.p->processModuleWarningsEnabled_ &&
+           lhs.p->screenCaptureFolder_ == rhs.p->screenCaptureFolder_ &&
+           lhs.p->screenCaptureName_ == rhs.p->screenCaptureName_ &&
+           lhs.p->screenCaptureOnRefresh_ == rhs.p->screenCaptureOnRefresh_ &&
            lhs.p->showMapAttribution_ == rhs.p->showMapAttribution_ &&
            lhs.p->showMapCenter_ == rhs.p->showMapCenter_ &&
            lhs.p->showMapLogo_ == rhs.p->showMapLogo_ &&

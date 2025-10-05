@@ -227,6 +227,7 @@ set(SRC_SETTINGS source/scwx/qt/settings/alert_palette_settings.cpp
                  source/scwx/qt/settings/ui_settings.cpp
                  source/scwx/qt/settings/unit_settings.cpp)
 set(HDR_TYPES source/scwx/qt/types/alert_types.hpp
+              source/scwx/qt/types/capture_types.hpp
               source/scwx/qt/types/event_types.hpp
               source/scwx/qt/types/font_types.hpp
               source/scwx/qt/types/github_types.hpp

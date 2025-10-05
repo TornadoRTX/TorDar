@@ -39,7 +39,7 @@
      <x>0</x>
      <y>0</y>
      <width>1024</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -53,7 +53,16 @@
      <addaction name="actionOpenNexrad"/>
      <addaction name="actionOpenTextEvent"/>
     </widget>
+    <widget class="QMenu" name="menuScreenCapture">
+     <property name="title">
+      <string>Screen &amp;Capture</string>
+     </property>
+     <addaction name="actionScreenCaptureCopy"/>
+     <addaction name="actionScreenCaptureSaveImage"/>
+    </widget>
     <addaction name="menu_Open"/>
+    <addaction name="separator"/>
+    <addaction name="menuScreenCapture"/>
     <addaction name="separator"/>
     <addaction name="actionSettings"/>
     <addaction name="separator"/>
@@ -155,8 +164,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>191</width>
-          <height>703</height>
+          <width>188</width>
+          <height>680</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -513,6 +522,16 @@
    </property>
    <property name="text">
     <string>Radar &amp;Wireframe</string>
+   </property>
+  </action>
+  <action name="actionScreenCaptureCopy">
+   <property name="text">
+    <string>&amp;Copy</string>
+   </property>
+  </action>
+  <action name="actionScreenCaptureSaveImage">
+   <property name="text">
+    <string>&amp;Save Image</string>
    </property>
   </action>
  </widget>

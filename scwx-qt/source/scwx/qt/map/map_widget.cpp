@@ -43,6 +43,7 @@
 #include <boost/asio/thread_pool.hpp>
 #include <boost/range/join.hpp>
 #include <boost/uuid/random_generator.hpp>
+#include <fmt/chrono.h>
 #include <fmt/format.h>
 #include <imgui.h>
 #include <re2/re2.h>
@@ -179,6 +180,8 @@ public:
    void RadarProductViewConnect();
    void RadarProductViewDisconnect();
    void RunMousePicking();
+   void ScreenCaptureCopy();
+   void ScreenCaptureSaveImage();
    void SelectNearestRadarSite(double                     latitude,
                                double                     longitude,
                                std::optional<std::string> type);
@@ -194,7 +197,7 @@ public:
 
    static std::string GetPlacefileLayerName(const std::string& placefileName);
 
-   boost::asio::thread_pool threadPool_ {1u};
+   boost::asio::thread_pool threadPool_ {2u};
 
    std::size_t        id_;
    boost::uuids::uuid uuid_;
@@ -271,6 +274,8 @@ public:
    double prevZoom_;
    double prevBearing_;
    double prevPitch_;
+
+   types::CaptureType screenCaptureRequested_ {types::CaptureType::None};
 
    std::set<types::Hotkey>               activeHotkeys_ {};
    std::chrono::system_clock::time_point prevHotkeyTime_ {};
@@ -500,6 +505,14 @@ void MapWidgetImpl::HandleHotkeyPressed(types::Hotkey hotkey, bool isAutoRepeat)
             fmt::format("{}, {}", coordinate.first, coordinate.second);
          clipboard->setText(QString::fromStdString(text));
       }
+      break;
+
+   case types::Hotkey::ScreenCaptureCopy:
+      Q_EMIT widget_->ScreenCaptureRequested(types::CaptureType::Copy);
+      break;
+
+   case types::Hotkey::ScreenCaptureSaveImage:
+      Q_EMIT widget_->ScreenCaptureRequested(types::CaptureType::SaveImage);
       break;
 
    default:
@@ -822,6 +835,13 @@ void MapWidget::SetSmoothingEnabled(bool smoothingEnabled)
 const scwx::util::time_zone* MapWidget::GetDefaultTimeZone() const
 {
    return p->radarProductManager_->default_time_zone();
+}
+
+void MapWidget::ScreenCapture(types::CaptureType captureType)
+{
+   p->screenCaptureRequested_ = captureType;
+   QMetaObject::invokeMethod(
+      this, static_cast<void (QWidget::*)()>(&QWidget::update));
 }
 
 void MapWidget::SelectElevation(float elevation)
@@ -1628,6 +1648,14 @@ void MapWidget::initializeGL()
 
 void MapWidget::paintGL()
 {
+   // Check for screen capture
+   const types::CaptureType currentCaptureType = p->screenCaptureRequested_;
+   if (p->screenCaptureRequested_ != types::CaptureType::None)
+   {
+      p->screenCaptureRequested_ = types::CaptureType::None;
+      p->context_->set_screen_capture(true);
+   }
+
    p->isPainting_ = true;
 
    auto defaultFont = manager::FontManager::Instance().GetImGuiFont(
@@ -1693,6 +1721,30 @@ void MapWidget::paintGL()
    Q_EMIT WidgetPainted();
 
    p->isPainting_ = false;
+
+   // Screen capture post-processing
+   if (currentCaptureType != types::CaptureType::None)
+   {
+      switch (currentCaptureType)
+      {
+      case types::CaptureType::Copy:
+         p->ScreenCaptureCopy();
+         break;
+
+      case types::CaptureType::SaveImage:
+         p->ScreenCaptureSaveImage();
+         break;
+
+      default:
+         break;
+      }
+
+      // Clear screen capture
+      p->context_->set_screen_capture(false);
+
+      // Queue another update
+      update();
+   }
 }
 
 void MapWidgetImpl::RunMousePicking()
@@ -1908,6 +1960,17 @@ void MapWidgetImpl::RadarProductManagerConnect()
                               {
                                  widget_->SelectRadarProduct(record);
                               }
+
+                              // Determine if a screen capture should be
+                              // performed
+                              auto& generalSettings =
+                                 settings::GeneralSettings::Instance();
+                              if (generalSettings.screen_capture_on_refresh()
+                                     .GetValue())
+                              {
+                                 widget_->ScreenCapture(
+                                    types::CaptureType::SaveImage);
+                              }
                            }
                         });
                   }
@@ -2038,6 +2101,100 @@ void MapWidgetImpl::RadarProductViewDisconnect()
                  widget_,
                  nullptr);
    }
+}
+
+void MapWidgetImpl::ScreenCaptureCopy()
+{
+   const QImage image     = widget_->grabFramebuffer();
+   QClipboard*  clipboard = QGuiApplication::clipboard();
+   clipboard->setImage(image);
+
+   logger_->info("Map captured to clipboard");
+}
+
+void MapWidgetImpl::ScreenCaptureSaveImage()
+{
+   const QImage image     = widget_->grabFramebuffer();
+   const QSize  size      = widget_->size();
+   const double latitude  = map_->latitude();
+   const double longitude = map_->longitude();
+   const double zoom      = map_->zoom();
+
+   std::string                           radarSiteId {"?"};
+   std::string                           productName {"?"};
+   std::chrono::system_clock::time_point timestamp {};
+
+   auto radarSite = context_->radar_site();
+   if (radarSite != nullptr)
+   {
+      radarSiteId = radarSite->id();
+   }
+
+   auto radarProductView = context_->radar_product_view();
+   if (radarProductView != nullptr)
+   {
+      productName = radarProductView->GetRadarProductName();
+      timestamp   = radarProductView->selected_time();
+   }
+
+   boost::asio::post(
+      threadPool_,
+      [image,
+       size,
+       radarSiteId,
+       productName,
+       timestamp,
+       latitude,
+       longitude,
+       zoom]()
+      {
+         auto& generalSettings = settings::GeneralSettings::Instance();
+
+         const std::string screenCaptureFolder =
+            generalSettings.screen_capture_folder().GetValue();
+         const std::string screenCaptureName =
+            generalSettings.screen_capture_name().GetValue();
+
+         // Create directory if it doesn't exist
+         if (!std::filesystem::exists(screenCaptureFolder))
+         {
+            if (!std::filesystem::create_directories(screenCaptureFolder))
+            {
+               logger_->error(
+                  "Unable to create screen capture directory: \"{}\"",
+                  screenCaptureFolder);
+               return;
+            }
+         }
+
+         // Format filename
+         const std::string screenCaptureFilename = fmt::format(
+            fmt::runtime(screenCaptureName),
+            fmt::arg("site", radarSiteId),
+            fmt::arg("product", productName),
+            fmt::arg(
+               "timestamp",
+               std::chrono::time_point_cast<std::chrono::seconds>(timestamp)),
+            fmt::arg("lat", latitude),
+            fmt::arg("lon", longitude),
+            fmt::arg("zoom", zoom),
+            fmt::arg("width", size.width()),
+            fmt::arg("height", size.height()));
+
+         // Format path
+         const std::string path = fmt::format(
+            "{}/{}.png", screenCaptureFolder, screenCaptureFilename);
+
+         // Save image
+         if (!image.save(QString::fromStdString(path)))
+         {
+            logger_->error("Unable to save image: {}", path);
+         }
+         else
+         {
+            logger_->info("Map captured to file: {}", path);
+         }
+      });
 }
 
 void MapWidgetImpl::SelectNearestRadarSite(double                     latitude,

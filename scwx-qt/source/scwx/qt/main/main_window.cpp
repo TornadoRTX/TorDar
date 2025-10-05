@@ -169,6 +169,7 @@ public:
    void InitializeLayerDisplayActions();
    void PopulateCustomMapStyle();
    void PopulateMapStyles();
+   void ScreenCapture(types::CaptureType captureType);
    void SelectElevation(map::MapWidget* mapWidget, float elevation);
    void SelectRadarProduct(map::MapWidget*           mapWidget,
                            common::RadarProductGroup group,
@@ -602,6 +603,16 @@ void MainWindow::on_actionOpenTextEvent_triggered()
    dialog->open();
 }
 
+void MainWindow::on_actionScreenCaptureCopy_triggered()
+{
+   p->ScreenCapture(types::CaptureType::Copy);
+}
+
+void MainWindow::on_actionScreenCaptureSaveImage_triggered()
+{
+   p->ScreenCapture(types::CaptureType::SaveImage);
+}
+
 void MainWindow::on_actionSettings_triggered()
 {
    p->settingsDialog_->show();
@@ -970,6 +981,11 @@ void MainWindowImpl::ConnectMapSignals()
             }
          },
          Qt::QueuedConnection);
+
+      connect(mapWidget,
+              &map::MapWidget::ScreenCaptureRequested,
+              this,
+              &MainWindowImpl::ScreenCapture);
 
       connect(
          mapWidget,
@@ -1474,6 +1490,17 @@ void MainWindowImpl::PopulateMapStyles()
          { PopulateCustomMapStyle(); });
 
    PopulateCustomMapStyle();
+}
+
+void MainWindowImpl::ScreenCapture(types::CaptureType captureType)
+{
+   for (auto& map : maps_)
+   {
+      if (map == activeMap_ || captureType == types::CaptureType::SaveImage)
+      {
+         map->ScreenCapture(captureType);
+      }
+   }
 }
 
 void MainWindowImpl::SelectElevation(map::MapWidget* mapWidget, float elevation)

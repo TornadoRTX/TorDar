@@ -371,8 +371,10 @@ void OverlayLayer::Render(const std::shared_ptr<MapContext>& mapContext,
    }
 
    // Active Box
-   p->activeBoxOuter_->SetVisible(settings.isActive_);
-   p->activeBoxInner_->SetVisible(settings.isActive_);
+   p->activeBoxOuter_->SetVisible(settings.isActive_ &&
+                                  !mapContext->screen_capture());
+   p->activeBoxInner_->SetVisible(settings.isActive_ &&
+                                  !mapContext->screen_capture());
    if (settings.isActive_)
    {
       p->activeBoxOuter_->SetSize(params.width, params.height);

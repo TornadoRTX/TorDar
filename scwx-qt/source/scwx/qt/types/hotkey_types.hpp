@@ -29,6 +29,8 @@ enum class Hotkey
    ProductCategoryNext,
    ProductTiltDecrease,
    ProductTiltIncrease,
+   ScreenCaptureCopy,
+   ScreenCaptureSaveImage,
    SelectLevel2Ref,
    SelectLevel2Vel,
    SelectLevel2SW,
