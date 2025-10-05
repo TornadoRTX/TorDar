@@ -61,6 +61,8 @@ public:
    [[nodiscard]] bool          GetSmoothingEnabled() const;
    [[nodiscard]] std::uint16_t GetVcp() const;
 
+   void ScreenCapture();
+
    void SelectElevation(float elevation);
 
    /**
@@ -189,6 +191,12 @@ signals:
    void RadarSiteUpdated(std::shared_ptr<config::RadarSite> radarSite);
    void RadarSweepUpdated();
    void RadarSweepNotUpdated(types::NoUpdateReason reason);
+
+   /**
+    * This signal is emitted when the screen capture hotkey was pressed.
+    */
+   void ScreenCaptureRequested();
+
    void WidgetPainted();
    void IncomingLevel2ElevationChanged(std::optional<float> incomingElevation);
 };

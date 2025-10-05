@@ -169,6 +169,7 @@ public:
    void InitializeLayerDisplayActions();
    void PopulateCustomMapStyle();
    void PopulateMapStyles();
+   void ScreenCapture();
    void SelectElevation(map::MapWidget* mapWidget, float elevation);
    void SelectRadarProduct(map::MapWidget*           mapWidget,
                            common::RadarProductGroup group,
@@ -971,6 +972,11 @@ void MainWindowImpl::ConnectMapSignals()
          },
          Qt::QueuedConnection);
 
+      connect(mapWidget,
+              &map::MapWidget::ScreenCaptureRequested,
+              this,
+              &MainWindowImpl::ScreenCapture);
+
       connect(
          mapWidget,
          &map::MapWidget::Level3ProductsChanged,
@@ -1474,6 +1480,14 @@ void MainWindowImpl::PopulateMapStyles()
          { PopulateCustomMapStyle(); });
 
    PopulateCustomMapStyle();
+}
+
+void MainWindowImpl::ScreenCapture()
+{
+   for (auto& map : maps_)
+   {
+      map->ScreenCapture();
+   }
 }
 
 void MainWindowImpl::SelectElevation(map::MapWidget* mapWidget, float elevation)
