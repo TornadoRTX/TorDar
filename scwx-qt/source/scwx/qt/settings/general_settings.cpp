@@ -44,7 +44,8 @@ public:
             .toStdString()
             .append("/Supercell Wx");
       const std::string defaultScreenCaptureName =
-         "{product}_{timestamp:%Y%m%dT%H%M%SZ}_{lat}_{lon}_{zoom}";
+         "{site}_{product}_{timestamp:%Y%m%dT%H%M%SZ}_{lat}_{lon}_{zoom}_{"
+         "width}x{height}";
 
       boost::to_lower(defaultClockFormatValue);
       boost::to_lower(defaultDefaultAlertActionValue);
@@ -164,12 +165,15 @@ public:
             {
                const std::string name = fmt::format(
                   fmt::runtime(value),
+                  fmt::arg("site", "?"),
                   fmt::arg("product", "?"),
                   fmt::arg("timestamp",
                            std::chrono::system_clock::time_point {}),
                   fmt::arg("lat", 30.123),
                   fmt::arg("lon", -100.123),
-                  fmt::arg("zoom", 1.1));
+                  fmt::arg("zoom", 1.1),
+                  fmt::arg("width", 1),
+                  fmt::arg("height", 1));
                (void) name;
             }
             catch (const fmt::format_error&)

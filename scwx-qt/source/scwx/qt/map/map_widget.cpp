@@ -2080,12 +2080,20 @@ void MapWidgetImpl::RadarProductViewDisconnect()
 void MapWidgetImpl::SaveScreenCapture()
 {
    const QImage image     = widget_->grabFramebuffer();
+   QSize        size      = widget_->size();
    const double latitude  = map_->latitude();
    const double longitude = map_->longitude();
    const double zoom      = map_->zoom();
 
+   std::string                           radarSiteId {"?"};
    std::string                           productName {"?"};
    std::chrono::system_clock::time_point timestamp {};
+
+   auto radarSite = context_->radar_site();
+   if (radarSite != nullptr)
+   {
+      radarSiteId = radarSite->id();
+   }
 
    auto radarProductView = context_->radar_product_view();
    if (radarProductView != nullptr)
@@ -2096,7 +2104,14 @@ void MapWidgetImpl::SaveScreenCapture()
 
    boost::asio::post(
       threadPool_,
-      [image, productName, timestamp, latitude, longitude, zoom]()
+      [image,
+       size,
+       radarSiteId,
+       productName,
+       timestamp,
+       latitude,
+       longitude,
+       zoom]()
       {
          auto& generalSettings = settings::GeneralSettings::Instance();
 
@@ -2120,13 +2135,16 @@ void MapWidgetImpl::SaveScreenCapture()
          // Format filename
          const std::string screenCaptureFilename = fmt::format(
             fmt::runtime(screenCaptureName),
+            fmt::arg("site", radarSiteId),
             fmt::arg("product", productName),
             fmt::arg(
                "timestamp",
                std::chrono::time_point_cast<std::chrono::seconds>(timestamp)),
             fmt::arg("lat", latitude),
             fmt::arg("lon", longitude),
-            fmt::arg("zoom", zoom));
+            fmt::arg("zoom", zoom),
+            fmt::arg("width", size.width()),
+            fmt::arg("height", size.height()));
 
          // Format path
          const std::string path = fmt::format(
