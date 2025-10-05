@@ -180,7 +180,8 @@ public:
    void RadarProductViewConnect();
    void RadarProductViewDisconnect();
    void RunMousePicking();
-   void SaveScreenCapture();
+   void ScreenCaptureCopy();
+   void ScreenCaptureSaveImage();
    void SelectNearestRadarSite(double                     latitude,
                                double                     longitude,
                                std::optional<std::string> type);
@@ -274,7 +275,7 @@ public:
    double prevBearing_;
    double prevPitch_;
 
-   bool screenCaptureRequested_ {false};
+   types::CaptureType screenCaptureRequested_ {types::CaptureType::None};
 
    std::set<types::Hotkey>               activeHotkeys_ {};
    std::chrono::system_clock::time_point prevHotkeyTime_ {};
@@ -506,8 +507,12 @@ void MapWidgetImpl::HandleHotkeyPressed(types::Hotkey hotkey, bool isAutoRepeat)
       }
       break;
 
-   case types::Hotkey::ScreenCapture:
-      Q_EMIT widget_->ScreenCaptureRequested();
+   case types::Hotkey::ScreenCaptureCopy:
+      Q_EMIT widget_->ScreenCaptureRequested(types::CaptureType::Copy);
+      break;
+
+   case types::Hotkey::ScreenCaptureSaveImage:
+      Q_EMIT widget_->ScreenCaptureRequested(types::CaptureType::SaveImage);
       break;
 
    default:
@@ -832,9 +837,9 @@ const scwx::util::time_zone* MapWidget::GetDefaultTimeZone() const
    return p->radarProductManager_->default_time_zone();
 }
 
-void MapWidget::ScreenCapture()
+void MapWidget::ScreenCapture(types::CaptureType captureType)
 {
-   p->screenCaptureRequested_ = true;
+   p->screenCaptureRequested_ = captureType;
    QMetaObject::invokeMethod(
       this, static_cast<void (QWidget::*)()>(&QWidget::update));
 }
@@ -1644,11 +1649,10 @@ void MapWidget::initializeGL()
 void MapWidget::paintGL()
 {
    // Check for screen capture
-   bool renderingForScreenCapture = false;
-   if (p->screenCaptureRequested_)
+   types::CaptureType currentCaptureType = p->screenCaptureRequested_;
+   if (p->screenCaptureRequested_ != types::CaptureType::None)
    {
-      p->screenCaptureRequested_ = false;
-      renderingForScreenCapture  = true;
+      p->screenCaptureRequested_ = types::CaptureType::None;
       p->context_->set_screen_capture(true);
    }
 
@@ -1719,10 +1723,21 @@ void MapWidget::paintGL()
    p->isPainting_ = false;
 
    // Screen capture post-processing
-   if (renderingForScreenCapture)
+   if (currentCaptureType != types::CaptureType::None)
    {
-      // Save image
-      p->SaveScreenCapture();
+      switch (currentCaptureType)
+      {
+      case types::CaptureType::Copy:
+         p->ScreenCaptureCopy();
+         break;
+
+      case types::CaptureType::SaveImage:
+         p->ScreenCaptureSaveImage();
+         break;
+
+      default:
+         break;
+      }
 
       // Clear screen capture
       p->context_->set_screen_capture(false);
@@ -1953,7 +1968,8 @@ void MapWidgetImpl::RadarProductManagerConnect()
                               if (generalSettings.screen_capture_on_refresh()
                                      .GetValue())
                               {
-                                 widget_->ScreenCapture();
+                                 widget_->ScreenCapture(
+                                    types::CaptureType::SaveImage);
                               }
                            }
                         });
@@ -2087,7 +2103,14 @@ void MapWidgetImpl::RadarProductViewDisconnect()
    }
 }
 
-void MapWidgetImpl::SaveScreenCapture()
+void MapWidgetImpl::ScreenCaptureCopy()
+{
+   const QImage image     = widget_->grabFramebuffer();
+   QClipboard*  clipboard = QGuiApplication::clipboard();
+   clipboard->setImage(image);
+}
+
+void MapWidgetImpl::ScreenCaptureSaveImage()
 {
    const QImage image     = widget_->grabFramebuffer();
    const QSize  size      = widget_->size();
