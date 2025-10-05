@@ -1649,7 +1649,7 @@ void MapWidget::initializeGL()
 void MapWidget::paintGL()
 {
    // Check for screen capture
-   types::CaptureType currentCaptureType = p->screenCaptureRequested_;
+   const types::CaptureType currentCaptureType = p->screenCaptureRequested_;
    if (p->screenCaptureRequested_ != types::CaptureType::None)
    {
       p->screenCaptureRequested_ = types::CaptureType::None;
@@ -2108,6 +2108,8 @@ void MapWidgetImpl::ScreenCaptureCopy()
    const QImage image     = widget_->grabFramebuffer();
    QClipboard*  clipboard = QGuiApplication::clipboard();
    clipboard->setImage(image);
+
+   logger_->info("Map captured to clipboard");
 }
 
 void MapWidgetImpl::ScreenCaptureSaveImage()
@@ -2187,6 +2189,10 @@ void MapWidgetImpl::ScreenCaptureSaveImage()
          if (!image.save(QString::fromStdString(path)))
          {
             logger_->error("Unable to save image: {}", path);
+         }
+         else
+         {
+            logger_->info("Map captured to file: {}", path);
          }
       });
 }
