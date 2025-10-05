@@ -603,6 +603,11 @@ void MainWindow::on_actionOpenTextEvent_triggered()
    dialog->open();
 }
 
+void MainWindow::on_actionScreenCapture_triggered()
+{
+   p->ScreenCapture();
+}
+
 void MainWindow::on_actionSettings_triggered()
 {
    p->settingsDialog_->show();
