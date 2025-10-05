@@ -792,7 +792,7 @@ void SettingsDialogImpl::SetupGeneralTab()
             self_,
             [this](const QString& file)
             {
-               QString path = QDir::toNativeSeparators(file);
+               const QString path = QDir::toNativeSeparators(file);
 
                logger_->info("Selected screen capture folder: {}",
                              path.toStdString());

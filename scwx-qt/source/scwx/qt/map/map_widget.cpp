@@ -2090,7 +2090,7 @@ void MapWidgetImpl::RadarProductViewDisconnect()
 void MapWidgetImpl::SaveScreenCapture()
 {
    const QImage image     = widget_->grabFramebuffer();
-   QSize        size      = widget_->size();
+   const QSize  size      = widget_->size();
    const double latitude  = map_->latitude();
    const double longitude = map_->longitude();
    const double zoom      = map_->zoom();
