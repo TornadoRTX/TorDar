@@ -177,6 +177,8 @@ public:
       {
          double x_ {};
          double y_ {};
+         double anchorX_ {};
+         double anchorY_ {};
          double tu_ {};
          double tv_ {};
       };

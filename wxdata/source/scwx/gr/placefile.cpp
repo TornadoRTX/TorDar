@@ -693,7 +693,7 @@ void Placefile::Impl::ProcessLine(const std::string& line)
    else if (boost::istarts_with(line, scwxImageXYKey_))
    {
       // scwx-ImageXY: image_file
-      //    x, y, Tu [, Tv ]
+      //    x, y, ax, ay, Tu [, Tv ]
       //    ...
       // End:
       std::vector<std::string> tokenList =
@@ -754,6 +754,8 @@ void Placefile::Impl::ProcessLine(const std::string& line)
 
 void Placefile::Impl::ProcessElement(const std::string& line)
 {
+   // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+
    if (currentStatement_ == DrawingStatement::Line)
    {
       // Line: width, flags [, hover_text]
@@ -859,31 +861,33 @@ void Placefile::Impl::ProcessElement(const std::string& line)
    else if (currentStatement_ == DrawingStatement::ImageXY)
    {
       // scwx-ImageXY: image_file
-      //    x, y, Tu [, Tv ]
+      //    x, y, ax, ay, Tu [, Tv ]
       //    ...
       // End:
       const std::vector<std::string> tokenList =
-         util::ParseTokens(line, {",", ",", ",", ","});
+         util::ParseTokens(line, {",", ",", ",", ",", ",", ","});
 
       ImageXYDrawItem::Element element;
 
-      if (tokenList.size() >= 3)
+      if (tokenList.size() >= 5)
       {
-         element.x_  = std::stod(tokenList[0]);
-         element.y_  = std::stod(tokenList[1]);
-         element.tu_ = std::stod(tokenList[2]);
+         element.x_       = std::stod(tokenList[0]);
+         element.y_       = std::stod(tokenList[1]);
+         element.anchorX_ = std::stod(tokenList[2]);
+         element.anchorY_ = std::stod(tokenList[3]);
+         element.tu_      = std::stod(tokenList[4]);
       }
 
-      if (tokenList.size() >= 4)
+      if (tokenList.size() >= 6)
       {
-         element.tv_ = std::stod(tokenList[3]);
+         element.tv_ = std::stod(tokenList[5]);
       }
       else
       {
          element.tv_ = element.tu_;
       }
 
-      if (tokenList.size() >= 3)
+      if (tokenList.size() >= 5)
       {
          std::static_pointer_cast<ImageXYDrawItem>(currentDrawItem_)
             ->elements_.emplace_back(element);
@@ -952,6 +956,8 @@ void Placefile::Impl::ProcessElement(const std::string& line)
          logger_->warn("Polygon sub-statement malformed: {}", line);
       }
    }
+
+   // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 }
 
 void Placefile::Impl::ProcessElementEnd()

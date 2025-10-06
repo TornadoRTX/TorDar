@@ -106,7 +106,7 @@ void PlacefileImagesXY::Initialize()
    // NOLINTBEGIN(performance-no-int-to-ptr)
    // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
 
-   // aLatLong - TODO: aVertex
+   // aVertex
    glVertexAttribPointer(0,
                          2,
                          GL_FLOAT,
@@ -115,14 +115,14 @@ void PlacefileImagesXY::Initialize()
                          static_cast<void*>(0));
    glEnableVertexAttribArray(0);
 
-   // aXYOffset
-   glVertexAttribPointer(1,
+   // aAnchor
+   glVertexAttribPointer(6,
                          2,
                          GL_FLOAT,
                          GL_FALSE,
                          kPointsPerVertex * sizeof(float),
                          reinterpret_cast<void*>(2 * sizeof(float)));
-   glEnableVertexAttribArray(1);
+   glEnableVertexAttribArray(6);
 
    // aModulate
    glVertexAttribPointer(3,
@@ -159,7 +159,7 @@ void PlacefileImagesXY::Render(
    const QMapLibre::CustomLayerRenderParameters& params,
    bool                                          textureAtlasChanged)
 {
-   std::unique_lock lock {p->imageMutex_};
+   const std::unique_lock lock {p->imageMutex_};
 
    if (!p->currentImageList_.empty())
    {
@@ -183,7 +183,7 @@ void PlacefileImagesXY::Deinitialize()
    glDeleteVertexArrays(1, &p->vao_);
    glDeleteBuffers(static_cast<GLsizei>(p->vbo_.size()), p->vbo_.data());
 
-   std::unique_lock lock {p->imageMutex_};
+   const std::unique_lock lock {p->imageMutex_};
 
    p->currentImageList_.clear();
    p->currentImageFiles_.clear();
@@ -215,7 +215,7 @@ void PlacefileImagesXY::FinishImagesXY()
    // Update buffers
    p->UpdateBuffers();
 
-   std::unique_lock lock {p->imageMutex_};
+   const std::unique_lock lock {p->imageMutex_};
 
    // Swap buffers
    p->currentImageList_.swap(p->newImageList_);
@@ -238,13 +238,10 @@ void PlacefileImagesXY::Impl::UpdateBuffers()
    newImageFiles_.clear();
 
    // Fixed modulate color
-   static const float mc0 = 1.0f;
-   static const float mc1 = 1.0f;
-   static const float mc2 = 1.0f;
-   static const float mc3 = 1.0f;
-
-   static constexpr float xOffset = 0.0f;
-   static constexpr float yOffset = 0.0f;
+   static constexpr float mc0 = 1.0f;
+   static constexpr float mc1 = 1.0f;
+   static constexpr float mc2 = 1.0f;
+   static constexpr float mc3 = 1.0f;
 
    for (auto& di : newImageList_)
    {
@@ -255,17 +252,20 @@ void PlacefileImagesXY::Impl::UpdateBuffers()
                                 di->imageFile_, baseUrl_}));
 
       // Limit processing to groups of 3 (triangles)
-      std::size_t numElements = di->elements_.size() - di->elements_.size() % 3;
+      const std::size_t numElements =
+         di->elements_.size() - di->elements_.size() % 3;
       for (std::size_t i = 0; i < numElements; ++i)
       {
-         auto& element = di->elements_[i];
+         const auto& element = di->elements_[i];
 
          // X and Y coordinates in pixels
-         const auto x = static_cast<float>(element.x_);
-         const auto y = static_cast<float>(element.y_);
+         const auto x  = static_cast<float>(element.x_);
+         const auto y  = static_cast<float>(element.y_);
+         const auto ax = static_cast<float>(element.anchorX_ + 1.0);
+         const auto ay = static_cast<float>(element.anchorY_ + 1.0);
 
          newImageBuffer_.insert(newImageBuffer_.end(),
-                                {x, y, xOffset, yOffset, mc0, mc1, mc2, mc3});
+                                {x, y, ax, ay, mc0, mc1, mc2, mc3});
       }
    }
 }
@@ -275,11 +275,11 @@ void PlacefileImagesXY::Impl::UpdateTextureBuffer()
    textureBuffer_.clear();
    textureBuffer_.reserve(currentImageList_.size() * kTextureBufferLength);
 
-   for (auto& di : currentImageList_)
+   for (const auto& di : currentImageList_)
    {
       // Get placefile image info. The key should always be found in the map, as
       // it is populated when the placefile is updated.
-      auto it = currentImageFiles_.find(di->imageFile_);
+      const auto it = currentImageFiles_.find(di->imageFile_);
       const types::PlacefileImageInfo& image =
          (it == currentImageFiles_.cend()) ?
             currentImageFiles_.cbegin()->second :
@@ -288,10 +288,11 @@ void PlacefileImagesXY::Impl::UpdateTextureBuffer()
       const auto r = static_cast<float>(image.texture_.layerId_);
 
       // Limit processing to groups of 3 (triangles)
-      std::size_t numElements = di->elements_.size() - di->elements_.size() % 3;
+      const std::size_t numElements =
+         di->elements_.size() - di->elements_.size() % 3;
       for (std::size_t i = 0; i < numElements; ++i)
       {
-         auto& element = di->elements_[i];
+         const auto& element = di->elements_[i];
 
          // Texture coordinates
          const auto s = static_cast<float>(image.texture_.sLeft_ +
