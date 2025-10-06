@@ -837,9 +837,10 @@ PlacefileManager::Impl::LoadImageResources(
       switch (di->itemType_)
       {
       case gr::Placefile::ItemType::Image:
+      case gr::Placefile::ItemType::ImageXY:
       {
          const std::string& imageFile =
-            std::static_pointer_cast<gr::Placefile::ImageDrawItem>(di)
+            std::static_pointer_cast<gr::Placefile::ImageBaseDrawItem>(di)
                ->imageFile_;
 
          QString     filePath    = QString::fromStdString(imageFile);

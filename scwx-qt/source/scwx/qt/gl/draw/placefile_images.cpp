@@ -1,4 +1,5 @@
 #include <scwx/qt/gl/draw/placefile_images.hpp>
+#include <scwx/qt/types/placefile_types.hpp>
 #include <scwx/qt/util/maplibre.hpp>
 #include <scwx/qt/util/texture_atlas.hpp>
 #include <scwx/util/logger.hpp>
@@ -34,26 +35,6 @@ static constexpr std::size_t kTextureBufferLength =
 // Threshold, start time, end time
 static constexpr std::size_t kIntegersPerVertex_ = 3;
 
-struct PlacefileImageInfo
-{
-   PlacefileImageInfo(const std::string& imageFile,
-                      const std::string& baseUrlString)
-   {
-      // Resolve using base URL
-      auto baseUrl = QUrl::fromUserInput(QString::fromStdString(baseUrlString));
-      auto relativeUrl =
-         QUrl(QDir::fromNativeSeparators(QString::fromStdString(imageFile)));
-      resolvedUrl_ = baseUrl.resolved(relativeUrl).toString().toStdString();
-   }
-
-   void UpdateTextureInfo();
-
-   std::string             resolvedUrl_;
-   util::TextureAttributes texture_ {};
-   float                   scaledWidth_ {};
-   float                   scaledHeight_ {};
-};
-
 class PlacefileImages::Impl
 {
 public:
@@ -83,9 +64,10 @@ public:
 
    std::mutex imageMutex_;
 
-   boost::unordered_flat_map<std::string, PlacefileImageInfo>
+   boost::unordered_flat_map<std::string, types::PlacefileImageInfo>
       currentImageFiles_ {};
-   boost::unordered_flat_map<std::string, PlacefileImageInfo> newImageFiles_ {};
+   boost::unordered_flat_map<std::string, types::PlacefileImageInfo>
+      newImageFiles_ {};
 
    std::vector<std::shared_ptr<const gr::Placefile::ImageDrawItem>>
       currentImageList_ {};
@@ -292,14 +274,6 @@ void PlacefileImages::Deinitialize()
    p->textureBuffer_.clear();
 }
 
-void PlacefileImageInfo::UpdateTextureInfo()
-{
-   texture_ = util::TextureAtlas::Instance().GetTextureAttributes(resolvedUrl_);
-
-   scaledWidth_  = texture_.sRight_ - texture_.sLeft_;
-   scaledHeight_ = texture_.tBottom_ - texture_.tTop_;
-}
-
 void PlacefileImages::StartImages(const std::string& baseUrl)
 {
    p->baseUrl_ = baseUrl;
@@ -361,10 +335,10 @@ void PlacefileImages::Impl::UpdateBuffers()
    for (auto& di : newImageList_)
    {
       // Populate image file map
-      newImageFiles_.emplace(
-         std::piecewise_construct,
-         std::tuple {di->imageFile_},
-         std::forward_as_tuple(PlacefileImageInfo {di->imageFile_, baseUrl_}));
+      newImageFiles_.emplace(std::piecewise_construct,
+                             std::tuple {di->imageFile_},
+                             std::forward_as_tuple(types::PlacefileImageInfo {
+                                di->imageFile_, baseUrl_}));
 
       // Threshold value
       units::length::nautical_miles<double> threshold = di->threshold_;
@@ -411,10 +385,11 @@ void PlacefileImages::Impl::UpdateTextureBuffer()
    {
       // Get placefile image info. The key should always be found in the map, as
       // it is populated when the placefile is updated.
-      auto                      it    = currentImageFiles_.find(di->imageFile_);
-      const PlacefileImageInfo& image = (it == currentImageFiles_.cend()) ?
-                                           currentImageFiles_.cbegin()->second :
-                                           it->second;
+      auto it = currentImageFiles_.find(di->imageFile_);
+      const types::PlacefileImageInfo& image =
+         (it == currentImageFiles_.cend()) ?
+            currentImageFiles_.cbegin()->second :
+            it->second;
 
       const float r = static_cast<float>(image.texture_.layerId_);
 

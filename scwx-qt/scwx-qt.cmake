@@ -79,6 +79,7 @@ set(HDR_GL_DRAW source/scwx/qt/gl/draw/draw_item.hpp
                 source/scwx/qt/gl/draw/linked_vectors.hpp
                 source/scwx/qt/gl/draw/placefile_icons.hpp
                 source/scwx/qt/gl/draw/placefile_images.hpp
+                source/scwx/qt/gl/draw/placefile_images_xy.hpp
                 source/scwx/qt/gl/draw/placefile_lines.hpp
                 source/scwx/qt/gl/draw/placefile_polygons.hpp
                 source/scwx/qt/gl/draw/placefile_text.hpp
@@ -91,6 +92,7 @@ set(SRC_GL_DRAW source/scwx/qt/gl/draw/draw_item.cpp
                 source/scwx/qt/gl/draw/linked_vectors.cpp
                 source/scwx/qt/gl/draw/placefile_icons.cpp
                 source/scwx/qt/gl/draw/placefile_images.cpp
+                source/scwx/qt/gl/draw/placefile_images_xy.cpp
                 source/scwx/qt/gl/draw/placefile_lines.cpp
                 source/scwx/qt/gl/draw/placefile_polygons.cpp
                 source/scwx/qt/gl/draw/placefile_text.cpp
@@ -239,6 +241,7 @@ set(HDR_TYPES source/scwx/qt/types/alert_types.hpp
               source/scwx/qt/types/map_types.hpp
               source/scwx/qt/types/marker_types.hpp
               source/scwx/qt/types/media_types.hpp
+              source/scwx/qt/types/placefile_types.hpp
               source/scwx/qt/types/qt_types.hpp
               source/scwx/qt/types/radar_product_record.hpp
               source/scwx/qt/types/radar_product_types.hpp
@@ -257,6 +260,7 @@ set(SRC_TYPES source/scwx/qt/types/alert_types.cpp
               source/scwx/qt/types/location_types.cpp
               source/scwx/qt/types/map_types.cpp
               source/scwx/qt/types/media_types.cpp
+              source/scwx/qt/types/placefile_types.cpp
               source/scwx/qt/types/qt_types.cpp
               source/scwx/qt/types/radar_product_record.cpp
               source/scwx/qt/types/radar_site_types.cpp
