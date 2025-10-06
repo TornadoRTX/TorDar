@@ -11,7 +11,7 @@ class PlacefileImagesXY : public DrawItem
 {
 public:
    explicit PlacefileImagesXY(const std::shared_ptr<GlContext>& context);
-   ~PlacefileImagesXY();
+   ~PlacefileImagesXY() override;
 
    PlacefileImagesXY(const PlacefileImagesXY&)            = delete;
    PlacefileImagesXY& operator=(const PlacefileImagesXY&) = delete;
