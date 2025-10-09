@@ -479,9 +479,9 @@ TextureAtlas::Impl::ReadPngFile(const QString& imagePath)
 {
    QFile imageFile(imagePath);
 
-   imageFile.open(QIODevice::ReadOnly);
+   bool isOpen = imageFile.open(QIODevice::ReadOnly);
 
-   if (!imageFile.isOpen())
+   if (!isOpen || !imageFile.isOpen())
    {
       logger_->error("Could not open image: {}", imagePath.toStdString());
       return nullptr;

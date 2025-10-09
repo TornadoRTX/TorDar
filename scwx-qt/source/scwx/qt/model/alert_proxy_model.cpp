@@ -45,8 +45,9 @@ AlertProxyModel::~AlertProxyModel() = default;
 
 void AlertProxyModel::SetAlertActiveFilter(bool enabled)
 {
+   beginFilterChange();
    p->alertActiveFilterEnabled_ = enabled;
-   invalidateRowsFilter();
+   endFilterChange(Direction::Rows);
 }
 
 bool AlertProxyModel::filterAcceptsRow(int                sourceRow,
