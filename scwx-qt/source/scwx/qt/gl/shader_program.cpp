@@ -95,7 +95,8 @@ bool ShaderProgram::Load(
                      shader.second);
 
       QFile file(shader.second.c_str());
-      bool  isOpen = file.open(QIODevice::ReadOnly | QIODevice::Text);
+
+      const bool isOpen = file.open(QIODevice::ReadOnly | QIODevice::Text);
 
       if (!isOpen || !file.isOpen())
       {
