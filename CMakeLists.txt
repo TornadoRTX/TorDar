@@ -32,7 +32,8 @@ set_property(DIRECTORY
              PROPERTY CMAKE_CONFIGURE_DEPENDS
              conanfile.py)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_ALL_NO_LIB")
+# Removed BOOST_ALL_NO_LIB flag to allow automatic Boost library linking
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_ALL_NO_LIB")
 
 set(SCWX_DIR ${PROJECT_SOURCE_DIR})
 set(SCWX_VERSION "0.5.2")
