@@ -44,7 +44,7 @@ void main()
    float angle   = aAngleDeg * DEG2RAD;
    mat2  rotate  = mat2(cos(angle), -sin(angle),
                         sin(angle), cos(angle));
-   vec2 pos      = aVertex + rotate * aXYOffset;
+   vec2 pos      = floor(aVertex + 0.5f) + rotate * aXYOffset;
    vec4 worldPos = uMVPMatrix * vec4(pos, 0.0f, 1.0f);
 
    worldPos.xy += aAnchor;
