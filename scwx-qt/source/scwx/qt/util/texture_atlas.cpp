@@ -170,8 +170,8 @@ void TextureAtlas::BuildAtlas(std::size_t width, std::size_t height)
             // we request the exact size (no padding possible).
             // Only add padding if the padded image will still fit in the
             // atlas dimensions.
-            const std::size_t paddedW = image->width() + 2 * pad;
-            const std::size_t paddedH = image->height() + 2 * pad;
+            const std::size_t paddedW = image->width() + 2LL * pad;
+            const std::size_t paddedH = image->height() + 2LL * pad;
 
             const auto reqW = static_cast<stbrp_coord>(
                (paddedW <= width) ? paddedW : image->width());
@@ -230,6 +230,8 @@ void TextureAtlas::BuildAtlas(std::size_t width, std::size_t height)
       boost::gil::rgba8_image_t atlas(
          static_cast<boost::gil::rgba8_image_t::x_coord_t>(width),
          static_cast<boost::gil::rgba8_image_t::y_coord_t>(height));
+
+      // NOLINTNEXTLINE(misc-const-correctness): Image is modified
       boost::gil::rgba8_view_t atlasView = boost::gil::view(atlas);
       boost::gil::fill_pixels(atlasView, kMagenta_);
 
@@ -265,6 +267,7 @@ void TextureAtlas::BuildAtlas(std::size_t width, std::size_t height)
             {
                // Create a subview for the inner region where the image will
                // be copied (offset by pad).
+               // NOLINTNEXTLINE(misc-const-correctness): Image is modified
                boost::gil::rgba8_view_t atlasInnerView =
                   boost::gil::subimage_view(atlasView,
                                             packedX + pad,
@@ -316,6 +319,7 @@ void TextureAtlas::BuildAtlas(std::size_t width, std::size_t height)
             else
             {
                // No padding used (image may be same size as atlas). Copy as-is
+               // NOLINTNEXTLINE(misc-const-correctness): Image is modified
                boost::gil::rgba8_view_t atlasSubView =
                   boost::gil::subimage_view(atlasView,
                                             packedX,
