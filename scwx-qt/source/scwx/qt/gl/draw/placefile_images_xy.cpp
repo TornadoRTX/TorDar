@@ -167,7 +167,7 @@ void PlacefileImagesXY::Render(
 
       p->Update(textureAtlasChanged);
       p->shaderProgram_->Use();
-      UseRotationProjection(params, p->uMVPMatrixLocation_);
+      UseDefaultProjection(params, p->uMVPMatrixLocation_);
 
       // Interpolate texture coordinates
       glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
