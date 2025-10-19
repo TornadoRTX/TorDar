@@ -24,8 +24,8 @@ struct WriteStreamState
 class ZipStreamWriter::Impl
 {
 public:
-   explicit Impl();
-   ~Impl();
+   explicit Impl()              = default;
+   ~Impl()                      = default;
    Impl(const Impl&)            = delete;
    Impl& operator=(const Impl&) = delete;
    Impl(Impl&&)                 = delete;
@@ -222,11 +222,6 @@ zip_t* ZipStreamWriter::Impl::OpenFromOstream(std::ostream& stream,
                                               int           flags,
                                               zip_error_t*  error)
 {
-   if (!stream)
-   {
-      return nullptr;
-   }
-
    state_ = std::make_unique<WriteStreamState>(&stream);
    zip_source_t* src =
       zip_source_function_create(Impl::WriteCallback, this, nullptr);

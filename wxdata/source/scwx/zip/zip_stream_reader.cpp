@@ -33,8 +33,8 @@ struct ReadStreamState
 class ZipStreamReader::Impl
 {
 public:
-   explicit Impl();
-   ~Impl();
+   explicit Impl()              = default;
+   ~Impl()                      = default;
    Impl(const Impl&)            = delete;
    Impl& operator=(const Impl&) = delete;
    Impl(Impl&&)                 = delete;
