@@ -1599,6 +1599,7 @@ void MainWindowImpl::UpdateRadarProductSettings()
 {
    if (activeMap_->GetRadarProductGroup() == common::RadarProductGroup::Level2)
    {
+      level2SettingsWidget_->setEnabled(true);
       level2SettingsGroup_->setVisible(true);
       // This should be done after setting visible for correct sizing
       level2SettingsWidget_->UpdateSettings(activeMap_);
@@ -1606,6 +1607,7 @@ void MainWindowImpl::UpdateRadarProductSettings()
    else
    {
       level2SettingsGroup_->setVisible(false);
+      level2SettingsWidget_->setEnabled(false);
    }
 
    mainWindow_->ui->smoothRadarDataCheckBox->setCheckState(

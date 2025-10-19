@@ -129,7 +129,7 @@ void Level2SettingsWidgetImpl::HandleHotkeyPressed(types::Hotkey hotkey,
                   types::GetHotkeyShortName(hotkey),
                   isAutoRepeat);
 
-   if (!self_->isVisible() || currentElevationButton_ == nullptr)
+   if (!self_->isEnabled() || currentElevationButton_ == nullptr)
    {
       // Level 2 product is not selected
       return;
