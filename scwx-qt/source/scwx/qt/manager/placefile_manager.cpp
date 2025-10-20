@@ -49,8 +49,9 @@ public:
    ~Impl() { threadPool_.join(); }
 
    void InitializePlacefileSettings();
+   void ApplyPlacefileSettings(const boost::json::value& placefileJson);
    void ReadPlacefileSettings();
-   void WritePlacefileSettings();
+   void SavePlacefileSettings();
 
    static FontMap
    LoadFontResources(const std::shared_ptr<gr::Placefile>& placefile);
@@ -180,8 +181,8 @@ PlacefileManager::PlacefileManager() : p(std::make_unique<Impl>(this))
 
 PlacefileManager::~PlacefileManager()
 {
-   // Write placefile settings on shutdown
-   p->WritePlacefileSettings();
+   // Save placefile settings on shutdown
+   p->SavePlacefileSettings();
 };
 
 bool PlacefileManager::placefile_enabled(const std::string& name)
@@ -386,6 +387,25 @@ void PlacefileManager::Impl::ReadPlacefileSettings()
       placefileJson = scwx::util::json::ReadJsonFile(placefileSettingsPath_);
    }
 
+   ApplyPlacefileSettings(placefileJson);
+
+   placefileSettingsRead_ = true;
+}
+
+void PlacefileManager::ReadPlacefileSettings(std::istream& is)
+{
+   logger_->info("Reading placefile settings from stream");
+
+   boost::json::value placefileJson = scwx::util::json::ReadJsonStream(is);
+
+   p->ApplyPlacefileSettings(placefileJson);
+
+   // Don't set placefileSettingsRead_ when reading from a non-default stream
+}
+
+void PlacefileManager::Impl::ApplyPlacefileSettings(
+   const boost::json::value& placefileJson)
+{
    // If placefile settings was successfully read
    if (placefileJson != nullptr && placefileJson.is_array())
    {
@@ -413,10 +433,9 @@ void PlacefileManager::Impl::ReadPlacefileSettings()
          }
       }
    }
-   placefileSettingsRead_ = true;
 }
 
-void PlacefileManager::Impl::WritePlacefileSettings()
+void PlacefileManager::Impl::SavePlacefileSettings()
 {
    if (!placefileSettingsRead_)
    {
@@ -427,6 +446,13 @@ void PlacefileManager::Impl::WritePlacefileSettings()
    std::shared_lock lock {placefileRecordLock_};
    auto             placefileJson = boost::json::value_from(placefileRecords_);
    scwx::util::json::WriteJsonFile(placefileSettingsPath_, placefileJson);
+}
+
+void PlacefileManager::WritePlacefileSettings(std::ostream& os)
+{
+   std::shared_lock lock {p->placefileRecordLock_};
+   auto placefileJson = boost::json::value_from(p->placefileRecords_);
+   scwx::util::json::WriteJsonStream(os, placefileJson);
 }
 
 void PlacefileManager::SetRadarSite(

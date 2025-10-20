@@ -53,9 +53,10 @@ public:
    }
    ~RadarSiteModelImpl() = default;
 
+   void ApplyPresets(const boost::json::value& presetsJson);
    void InitializePresets();
    void ReadPresets();
-   void WritePresets();
+   void SavePresets();
 
    QList<std::shared_ptr<config::RadarSite>> radarSites_;
    std::unordered_set<std::string>           presets_ {};
@@ -82,7 +83,7 @@ RadarSiteModel::RadarSiteModel(QObject* parent) :
 RadarSiteModel::~RadarSiteModel()
 {
    // Write presets on shutdown
-   p->WritePresets();
+   p->SavePresets();
 };
 
 std::unordered_set<std::string> RadarSiteModel::presets() const
@@ -120,6 +121,24 @@ void RadarSiteModelImpl::ReadPresets()
       presetsJson = scwx::util::json::ReadJsonFile(presetsPath_);
    }
 
+   ApplyPresets(presetsJson);
+
+   presetsRead_ = true;
+}
+
+void RadarSiteModel::ReadPresets(std::istream& is)
+{
+   logger_->info("Reading presets from stream");
+
+   boost::json::value presetsJson = scwx::util::json::ReadJsonStream(is);
+
+   p->ApplyPresets(presetsJson);
+
+   // Don't set presetsRead_ when reading from a non-default stream
+}
+
+void RadarSiteModelImpl::ApplyPresets(const boost::json::value& presetsJson)
+{
    // If presets was successfully read
    if (presetsJson != nullptr && presetsJson.is_array())
    {
@@ -148,10 +167,9 @@ void RadarSiteModelImpl::ReadPresets()
          }
       }
    }
-   presetsRead_ = true;
 }
 
-void RadarSiteModelImpl::WritePresets()
+void RadarSiteModelImpl::SavePresets()
 {
    if (!presetsRead_)
    {
@@ -161,6 +179,12 @@ void RadarSiteModelImpl::WritePresets()
 
    auto presetsJson = boost::json::value_from(presets_);
    scwx::util::json::WriteJsonFile(presetsPath_, presetsJson);
+}
+
+void RadarSiteModel::WritePresets(std::ostream& os)
+{
+   auto presetsJson = boost::json::value_from(p->presets_);
+   scwx::util::json::WriteJsonStream(os, presetsJson);
 }
 
 int RadarSiteModel::rowCount(const QModelIndex& parent) const

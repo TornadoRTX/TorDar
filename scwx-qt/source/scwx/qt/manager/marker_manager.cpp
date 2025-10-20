@@ -56,14 +56,15 @@ public:
    std::shared_mutex        markerRecordLock_ {};
    std::shared_mutex        markerIconsLock_ {};
 
-   void                          InitializeMarkerSettings();
-   void                          ReadMarkerSettings();
-   void                          WriteMarkerSettings();
+   void ApplyMarkerSettings(const boost::json::value& markerJson);
+   void InitializeMarkerSettings();
+   void ReadMarkerSettings();
+   void SaveMarkerSettings();
    std::shared_ptr<MarkerRecord> GetMarkerByName(const std::string& name);
 
    bool markerFileRead_ {false};
 
-   void            InitalizeIds();
+   void            InitializeIds();
    types::MarkerId NewId();
    types::MarkerId lastId_ {0};
 };
@@ -130,7 +131,7 @@ public:
    }
 };
 
-void MarkerManager::Impl::InitalizeIds()
+void MarkerManager::Impl::InitializeIds()
 {
    lastId_ = 0;
 }
@@ -161,20 +162,38 @@ void MarkerManager::Impl::InitializeMarkerSettings()
 void MarkerManager::Impl::ReadMarkerSettings()
 {
    logger_->info("Reading location marker settings");
-   InitalizeIds();
+   InitializeIds();
 
    boost::json::value markerJson = nullptr;
+
+   // Determine if marker settings exists
+   if (std::filesystem::exists(markerSettingsPath_))
    {
-      const std::unique_lock lock(markerRecordLock_);
+      markerJson = scwx::util::json::ReadJsonFile(markerSettingsPath_);
+   }
 
-      // Determine if marker settings exists
-      if (std::filesystem::exists(markerSettingsPath_))
-      {
-         markerJson = scwx::util::json::ReadJsonFile(markerSettingsPath_);
-      }
+   ApplyMarkerSettings(markerJson);
 
-      if (markerJson != nullptr && markerJson.is_array())
+   markerFileRead_ = true;
+}
+
+void MarkerManager::ReadMarkerSettings(std::istream& is)
+{
+   logger_->info("Reading location marker settings from stream");
+
+   boost::json::value markerJson = scwx::util::json::ReadJsonStream(is);
+
+   // Don't set markerFileRead_ when reading from a non-default stream
+}
+
+void MarkerManager::Impl::ApplyMarkerSettings(
+   const boost::json::value& markerJson)
+{
+   if (markerJson != nullptr && markerJson.is_array())
+   {
       {
+         const std::unique_lock lock(markerRecordLock_);
+
          // For each marker entry
          auto& markerArray = markerJson.as_array();
          markerRecords_.reserve(markerArray.size());
@@ -200,17 +219,16 @@ void MarkerManager::Impl::ReadMarkerSettings()
             }
          }
 
-         ResourceManager::BuildAtlas();
-
          logger_->debug("{} location marker entries", markerRecords_.size());
-      }
-   }
 
-   markerFileRead_ = true;
-   Q_EMIT self_->MarkersUpdated();
+         ResourceManager::BuildAtlas();
+      }
+
+      Q_EMIT self_->MarkersUpdated();
+   }
 }
 
-void MarkerManager::Impl::WriteMarkerSettings()
+void MarkerManager::Impl::SaveMarkerSettings()
 {
    if (!markerFileRead_)
    {
@@ -221,6 +239,13 @@ void MarkerManager::Impl::WriteMarkerSettings()
    const std::shared_lock lock(markerRecordLock_);
    auto                   markerJson = boost::json::value_from(markerRecords_);
    scwx::util::json::WriteJsonFile(markerSettingsPath_, markerJson);
+}
+
+void MarkerManager::WriteMarkerSettings(std::ostream& os)
+{
+   const std::shared_lock lock(p->markerRecordLock_);
+   auto markerJson = boost::json::value_from(p->markerRecords_);
+   scwx::util::json::WriteJsonStream(os, markerJson);
 }
 
 std::shared_ptr<MarkerManager::Impl::MarkerRecord>
@@ -285,7 +310,7 @@ MarkerManager::MarkerManager() : p(std::make_unique<Impl>(this))
 
 MarkerManager::~MarkerManager()
 {
-   p->WriteMarkerSettings();
+   p->SaveMarkerSettings();
 }
 
 size_t MarkerManager::marker_count()

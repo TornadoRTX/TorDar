@@ -5,6 +5,9 @@
 #include <scwx/qt/types/font_types.hpp>
 #include <scwx/qt/types/imgui_font.hpp>
 
+#include <istream>
+#include <ostream>
+
 #include <QObject>
 #include <boost/unordered/unordered_flat_map.hpp>
 
@@ -45,6 +48,8 @@ public:
                bool               enabled     = false,
                bool               thresholded = false);
    void RemoveUrl(const std::string& urlString);
+   void ReadPlacefileSettings(std::istream& is);
+   void WritePlacefileSettings(std::ostream& os);
 
    void Refresh(const std::string& name);
 
