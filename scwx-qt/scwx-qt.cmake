@@ -246,6 +246,7 @@ set(HDR_TYPES source/scwx/qt/types/alert_types.hpp
               source/scwx/qt/types/radar_product_record.hpp
               source/scwx/qt/types/radar_product_types.hpp
               source/scwx/qt/types/radar_site_types.hpp
+              source/scwx/qt/types/settings_types.hpp
               source/scwx/qt/types/text_event_key.hpp
               source/scwx/qt/types/text_types.hpp
               source/scwx/qt/types/texture_types.hpp
@@ -264,6 +265,7 @@ set(SRC_TYPES source/scwx/qt/types/alert_types.cpp
               source/scwx/qt/types/qt_types.cpp
               source/scwx/qt/types/radar_product_record.cpp
               source/scwx/qt/types/radar_site_types.cpp
+              source/scwx/qt/types/settings_types.cpp
               source/scwx/qt/types/text_event_key.cpp
               source/scwx/qt/types/text_types.cpp
               source/scwx/qt/types/texture_types.cpp
@@ -280,6 +282,7 @@ set(HDR_UI source/scwx/qt/ui/about_dialog.hpp
            source/scwx/qt/ui/download_dialog.hpp
            source/scwx/qt/ui/edit_button_dialog.hpp
            source/scwx/qt/ui/edit_line_dialog.hpp
+           source/scwx/qt/ui/export_settings_dialog.hpp
            source/scwx/qt/ui/edit_marker_dialog.hpp
            source/scwx/qt/ui/flow_layout.hpp
            source/scwx/qt/ui/gps_info_dialog.hpp
@@ -315,6 +318,7 @@ set(SRC_UI source/scwx/qt/ui/about_dialog.cpp
            source/scwx/qt/ui/edit_button_dialog.cpp
            source/scwx/qt/ui/edit_line_dialog.cpp
            source/scwx/qt/ui/edit_marker_dialog.cpp
+           source/scwx/qt/ui/export_settings_dialog.cpp
            source/scwx/qt/ui/flow_layout.cpp
            source/scwx/qt/ui/gps_info_dialog.cpp
            source/scwx/qt/ui/hotkey_edit.cpp
@@ -347,6 +351,7 @@ set(UI_UI  source/scwx/qt/ui/about_dialog.ui
            source/scwx/qt/ui/edit_button_dialog.ui
            source/scwx/qt/ui/edit_line_dialog.ui
            source/scwx/qt/ui/edit_marker_dialog.ui
+           source/scwx/qt/ui/export_settings_dialog.ui
            source/scwx/qt/ui/gps_info_dialog.ui
            source/scwx/qt/ui/imgui_debug_dialog.ui
            source/scwx/qt/ui/layer_dialog.ui
