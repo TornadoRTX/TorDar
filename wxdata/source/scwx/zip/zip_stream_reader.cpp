@@ -142,6 +142,15 @@ bool ZipStreamReader::ReadFile(const std::string&         filename,
    return p->archive_ ? p->ReadFile(filename, output) : false;
 }
 
+void ZipStreamReader::Close()
+{
+   if (p->archive_)
+   {
+      zip_close(p->archive_);
+      p->archive_ = nullptr;
+   }
+}
+
 // Callback function for reading from an istream
 zip_int64_t
 ZipStreamReader::Impl::Read(void* data, zip_uint64_t len, zip_source_cmd_t cmd)

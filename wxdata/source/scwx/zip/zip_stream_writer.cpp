@@ -12,13 +12,22 @@ static const std::string logPrefix_ = "scwx::zip::zip_stream_writer";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 
 // Stream state for writing to an ostream
-struct WriteStreamState
+struct ReadWriteStreamState
 {
-   std::ostream* stream;
-   zip_int64_t   offset {0};
-   bool          error {false};
+   std::iostream* stream;
+   zip_int64_t    offset {0};
+   zip_int64_t    length {-1};
+   bool           error {false};
 
-   WriteStreamState(std::ostream* s) : stream {s} {}
+   ReadWriteStreamState(std::iostream* s) : stream {s}
+   {
+      if (stream)
+      {
+         stream->seekg(0, std::ios::end);
+         length = stream->tellg();
+         stream->seekg(0, std::ios::beg);
+      }
+   }
 };
 
 class ZipStreamWriter::Impl
@@ -31,30 +40,33 @@ public:
    Impl(Impl&&)                 = delete;
    Impl& operator=(Impl&&)      = delete;
 
-   void Initialize(std::ostream& stream);
+   void Initialize(std::iostream& stream);
 
    template<typename T>
-   bool   AddFile(const std::string& filename,
-                  const T&           content,
-                  zip_flags_t        flags = ZIP_FL_OVERWRITE);
-   zip_t* OpenFromOstream(std::ostream& stream, int flags, zip_error_t* error);
+   bool AddFile(const std::string& filename,
+                const T&           content,
+                zip_flags_t        flags = ZIP_FL_OVERWRITE);
+   zip_t*
+   OpenFromIostream(std::iostream& stream, int flags, zip_error_t* error);
    zip_int64_t Write(void* data, zip_uint64_t len, zip_source_cmd_t cmd);
 
-   static zip_int64_t WriteCallback(void*            userdata,
-                                    void*            data,
-                                    zip_uint64_t     len,
-                                    zip_source_cmd_t cmd);
+   static zip_int64_t ReadWriteCallback(void*            userdata,
+                                        void*            data,
+                                        zip_uint64_t     len,
+                                        zip_source_cmd_t cmd);
 
-   zip_t*                            archive_ {nullptr};
-   std::unique_ptr<WriteStreamState> state_ {nullptr};
+   zip_t*                                archive_ {nullptr};
+   std::unique_ptr<ReadWriteStreamState> state_ {nullptr};
 
-   std::ofstream fstream_;
+   std::fstream fstream_;
 };
 
 ZipStreamWriter::ZipStreamWriter(const std::string& filename) :
     p(std::make_unique<Impl>())
 {
-   p->fstream_ = std::ofstream {filename, std::ios_base::binary};
+   p->fstream_ = std::fstream {filename,
+                               std::ios_base::in | std::ios_base::out |
+                                  std::ios_base::trunc | std::ios_base::binary};
 
    if (p->fstream_.is_open())
    {
@@ -62,7 +74,7 @@ ZipStreamWriter::ZipStreamWriter(const std::string& filename) :
    }
 }
 
-ZipStreamWriter::ZipStreamWriter(std::ostream& stream) :
+ZipStreamWriter::ZipStreamWriter(std::iostream& stream) :
     p(std::make_unique<Impl>())
 {
    p->Initialize(stream);
@@ -80,10 +92,12 @@ ZipStreamWriter::ZipStreamWriter(ZipStreamWriter&&) noexcept = default;
 ZipStreamWriter&
 ZipStreamWriter::operator=(ZipStreamWriter&&) noexcept = default;
 
-void ZipStreamWriter::Impl::Initialize(std::ostream& stream)
+void ZipStreamWriter::Impl::Initialize(std::iostream& stream)
 {
    zip_error_t error;
-   archive_ = OpenFromOstream(stream, ZIP_CREATE | ZIP_TRUNCATE, &error);
+   zip_error_init(&error);
+
+   archive_ = OpenFromIostream(stream, ZIP_CREATE | ZIP_TRUNCATE, &error);
 
    if (!archive_)
    {
@@ -108,47 +122,63 @@ bool ZipStreamWriter::AddFile(const std::string&               filename,
    return p->archive_ ? p->AddFile(filename, content) : false;
 }
 
+void ZipStreamWriter::Close()
+{
+   if (p->archive_)
+   {
+      zip_close(p->archive_);
+      p->archive_ = nullptr;
+   }
+}
+
 // Callback function for writing to an ostream
 zip_int64_t
 ZipStreamWriter::Impl::Write(void* data, zip_uint64_t len, zip_source_cmd_t cmd)
 {
-   auto& ws = state_;
+   auto& rws = state_;
 
    switch (cmd)
    {
-   case ZIP_SOURCE_BEGIN_WRITE:
-      ws->stream->clear();
-      ws->offset = 0;
+   case ZIP_SOURCE_OPEN:
+      rws->stream->clear();
+      rws->stream->seekg(0, std::ios::beg);
+      rws->offset = 0;
       return 0;
 
-   case ZIP_SOURCE_COMMIT_WRITE:
-      ws->stream->flush();
-      return ws->stream->good() ? 0 : -1;
-
-   case ZIP_SOURCE_ROLLBACK_WRITE:
-      return 0;
-
-   case ZIP_SOURCE_WRITE:
+   case ZIP_SOURCE_READ:
    {
-      if (ws->error)
+      if (rws->error)
       {
          return -1;
       }
 
-      ws->stream->write(static_cast<const char*>(data),
+      rws->stream->read(static_cast<char*>(data),
                         static_cast<std::streamsize>(len));
+      const zip_int64_t bytes_read = rws->stream->gcount();
 
-      if (!ws->stream->good())
+      if (rws->stream->bad())
       {
-         ws->error = true;
+         rws->error = true;
          return -1;
       }
 
-      ws->offset += static_cast<zip_int64_t>(len);
-      return static_cast<zip_int64_t>(len);
+      rws->offset += bytes_read;
+      return bytes_read;
    }
 
-   case ZIP_SOURCE_SEEK_WRITE:
+   case ZIP_SOURCE_CLOSE:
+      return 0;
+
+   case ZIP_SOURCE_STAT:
+   {
+      auto* st = static_cast<zip_stat_t*>(data);
+      zip_stat_init(st);
+      st->valid = ZIP_STAT_SIZE;
+      st->size  = rws->length;
+      return sizeof(zip_stat_t);
+   }
+
+   case ZIP_SOURCE_SEEK:
    {
       auto*       args       = static_cast<zip_source_args_seek_t*>(data);
       zip_int64_t new_offset = 0;
@@ -159,11 +189,85 @@ ZipStreamWriter::Impl::Write(void* data, zip_uint64_t len, zip_source_cmd_t cmd)
          new_offset = args->offset;
          break;
       case SEEK_CUR:
-         new_offset = ws->offset + args->offset;
+         new_offset = rws->offset + args->offset;
          break;
       case SEEK_END:
-         ws->stream->seekp(0, std::ios::end);
-         new_offset = ws->stream->tellp() + args->offset;
+         new_offset = rws->length + args->offset;
+         break;
+      default:
+         return -1;
+      }
+
+      if (new_offset < 0 || new_offset > rws->length)
+      {
+         return -1;
+      }
+
+      rws->stream->clear();
+      rws->stream->seekg(new_offset, std::ios::beg);
+      rws->offset = new_offset;
+      return 0;
+   }
+
+   case ZIP_SOURCE_TELL:
+      return rws->offset;
+
+   case ZIP_SOURCE_BEGIN_WRITE:
+      rws->stream->clear();
+      rws->stream->seekp(0, std::ios::beg);
+      rws->offset = 0;
+      return 0;
+
+   case ZIP_SOURCE_COMMIT_WRITE:
+      rws->stream->flush();
+      if (!rws->stream->good())
+      {
+         return -1;
+      }
+      // Update length after write
+      rws->stream->seekp(0, std::ios::end);
+      rws->length = rws->stream->tellp();
+      return 0;
+
+   case ZIP_SOURCE_ROLLBACK_WRITE:
+      return 0;
+
+   case ZIP_SOURCE_WRITE:
+   {
+      if (rws->error)
+      {
+         return -1;
+      }
+
+      rws->stream->write(static_cast<const char*>(data),
+                         static_cast<std::streamsize>(len));
+
+      if (!rws->stream->good())
+      {
+         rws->error = true;
+         return -1;
+      }
+
+      rws->offset += static_cast<zip_int64_t>(len);
+      return static_cast<zip_int64_t>(len);
+   }
+
+   case ZIP_SOURCE_SEEK_WRITE:
+   {
+      const auto* args       = static_cast<zip_source_args_seek_t*>(data);
+      zip_int64_t new_offset = 0;
+
+      switch (args->whence)
+      {
+      case SEEK_SET:
+         new_offset = args->offset;
+         break;
+      case SEEK_CUR:
+         new_offset = rws->offset + args->offset;
+         break;
+      case SEEK_END:
+         rws->stream->seekp(0, std::ios::end);
+         new_offset = rws->stream->tellp() + args->offset;
          break;
       default:
          return -1;
@@ -174,34 +278,40 @@ ZipStreamWriter::Impl::Write(void* data, zip_uint64_t len, zip_source_cmd_t cmd)
          return -1;
       }
 
-      ws->stream->seekp(new_offset, std::ios::beg);
-      ws->offset = new_offset;
+      rws->stream->seekp(new_offset, std::ios::beg);
+      rws->offset = new_offset;
       return 0;
    }
 
    case ZIP_SOURCE_TELL_WRITE:
-      return ws->offset;
+      return rws->offset;
 
    case ZIP_SOURCE_REMOVE:
       return 0;
 
    case ZIP_SOURCE_FREE:
-      ws.reset();
+      rws.reset();
       return 0;
 
    case ZIP_SOURCE_ERROR:
    {
       auto* err = static_cast<zip_error_t*>(data);
       zip_error_init(err);
-      if (ws->error)
+      if (rws->error)
       {
-         zip_error_set(err, ZIP_ER_WRITE, 0);
+         zip_error_set(err, ZIP_ER_READ, 0);
       }
       return sizeof(zip_error_t);
    }
 
    case ZIP_SOURCE_SUPPORTS:
-      return zip_source_make_command_bitmap(ZIP_SOURCE_BEGIN_WRITE,
+      return zip_source_make_command_bitmap(ZIP_SOURCE_OPEN,
+                                            ZIP_SOURCE_READ,
+                                            ZIP_SOURCE_CLOSE,
+                                            ZIP_SOURCE_STAT,
+                                            ZIP_SOURCE_SEEK,
+                                            ZIP_SOURCE_TELL,
+                                            ZIP_SOURCE_BEGIN_WRITE,
                                             ZIP_SOURCE_COMMIT_WRITE,
                                             ZIP_SOURCE_ROLLBACK_WRITE,
                                             ZIP_SOURCE_WRITE,
@@ -218,13 +328,13 @@ ZipStreamWriter::Impl::Write(void* data, zip_uint64_t len, zip_source_cmd_t cmd)
 }
 
 // Create a zip archive from an output stream (for writing)
-zip_t* ZipStreamWriter::Impl::OpenFromOstream(std::ostream& stream,
-                                              int           flags,
-                                              zip_error_t*  error)
+zip_t* ZipStreamWriter::Impl::OpenFromIostream(std::iostream& stream,
+                                               int            flags,
+                                               zip_error_t*   error)
 {
-   state_ = std::make_unique<WriteStreamState>(&stream);
+   state_ = std::make_unique<ReadWriteStreamState>(&stream);
    zip_source_t* src =
-      zip_source_function_create(Impl::WriteCallback, this, nullptr);
+      zip_source_function_create(Impl::ReadWriteCallback, this, error);
 
    if (!src)
    {
@@ -265,10 +375,10 @@ bool ZipStreamWriter::Impl::AddFile(const std::string& filename,
    return true;
 }
 
-zip_int64_t ZipStreamWriter::Impl::WriteCallback(void*            userdata,
-                                                 void*            data,
-                                                 zip_uint64_t     len,
-                                                 zip_source_cmd_t cmd)
+zip_int64_t ZipStreamWriter::Impl::ReadWriteCallback(void*            userdata,
+                                                     void*            data,
+                                                     zip_uint64_t     len,
+                                                     zip_source_cmd_t cmd)
 {
 
    auto* obj = static_cast<Impl*>(userdata);

@@ -24,6 +24,7 @@ public:
    bool ReadFile(const std::string& filename, std::string& output);
    bool ReadFile(const std::string&         filename,
                  std::vector<std::uint8_t>& output);
+   void Close();
 
 private:
    class Impl;
