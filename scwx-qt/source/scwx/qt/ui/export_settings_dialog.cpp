@@ -3,6 +3,7 @@
 
 #include <scwx/qt/types/settings_types.hpp>
 #include <scwx/util/logger.hpp>
+#include <scwx/zip/zip_stream_writer.hpp>
 
 #include <QFileDialog>
 #include <QFileInfo>
@@ -27,7 +28,7 @@ public:
    Impl& operator=(const Impl&&) = delete;
 
    void ConnectSignals();
-   void ExportSettings();
+   void ExportSettings(const std::string& destination);
    void SelectFile();
 
    ExportSettingsDialog* self_;
@@ -116,7 +117,7 @@ void ExportSettingsDialog::Impl::ConnectSignals()
             if (result == QMessageBox::Yes)
             {
                // Proceed and close dialog
-               ExportSettings();
+               ExportSettings(destination.toStdString());
             }
             else
             {
@@ -128,7 +129,7 @@ void ExportSettingsDialog::Impl::ConnectSignals()
          else
          {
             // File doesn't exist, proceed
-            ExportSettings();
+            ExportSettings(destination.toStdString());
          }
       });
 }
@@ -167,8 +168,21 @@ void ExportSettingsDialog::Impl::SelectFile()
    dialog->open();
 }
 
-void ExportSettingsDialog::Impl::ExportSettings()
+void ExportSettingsDialog::Impl::ExportSettings(const std::string& destination)
 {
+   zip::ZipStreamWriter zipStreamWriter(destination);
+   if (!zipStreamWriter.IsOpen())
+   {
+      logger_->error("Unable to export settings");
+
+      QMessageBox::critical(self_,
+                            tr("Export Error"),
+                            tr("Unable to export settings to \"%1\".")
+                               .arg(QString::fromStdString(destination)),
+                            QMessageBox::StandardButton::Ok,
+                            QMessageBox::StandardButton::Ok);
+   }
+
    const QListWidget* listWidget = self_->ui->settingsListWidget;
 
    for (int i = 0; i < listWidget->count(); ++i)
@@ -182,11 +196,18 @@ void ExportSettingsDialog::Impl::ExportSettings()
       {
          const auto settingsType = static_cast<types::SettingsType>(
             item->data(Qt::ItemDataRole::UserRole).toInt());
-         (void) settingsType;
 
-         // TODO: Save settings
+         // Write settings to stream
+         std::stringstream ss {};
+         types::WriteSettingsFile(settingsType, ss);
+
+         // Save settings
+         const std::string& filename = types::SettingsFilename(settingsType);
+         zipStreamWriter.AddFile(filename, ss.str());
       }
    }
+
+   zipStreamWriter.Close();
 
    self_->accept();
 }

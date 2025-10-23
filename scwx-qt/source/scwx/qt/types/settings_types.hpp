@@ -3,6 +3,8 @@
 #include <scwx/util/iterator.hpp>
 
 #include <cstdint>
+#include <istream>
+#include <ostream>
 #include <string>
 
 namespace scwx::qt::types
@@ -23,5 +25,8 @@ using SettingsTypeIterator =
 
 const std::string& SettingsName(SettingsType type);
 const std::string& SettingsFilename(SettingsType type);
+
+void ReadSettingsFile(SettingsType type, std::istream& is);
+void WriteSettingsFile(SettingsType type, std::ostream& os);
 
 } // namespace scwx::qt::types
