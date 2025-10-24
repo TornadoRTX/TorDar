@@ -31,6 +31,7 @@ Supercell Wx uses code from the following dependencies:
 | [libiconv](https://www.gnu.org/software/libiconv/) | [GNU Lesser General Public License v2.1 or later](https://spdx.org/licenses/LGPL-2.1-or-later.html) |
 | [libpng](http://libpng.org/pub/png/libpng.html) | [PNG Reference Library version 2](https://spdx.org/licenses/libpng-2.0.html) |
 | [libxml2](http://xmlsoft.org/) | [MIT License](https://spdx.org/licenses/MIT.html) |
+| [libzip](https://libzip.org/) | [BSD 3-Clause "New" or "Revised" License](https://spdx.org/licenses/BSD-3-Clause.html) |
 | [MapLibre Native](https://maplibre.org/projects/maplibre-native/) | [BSD 2-Clause "Simplified" License](https://spdx.org/licenses/BSD-2-Clause.html) |
 | [Mesa 3D](https://mesa3d.org/) | [MIT License](https://spdx.org/licenses/MIT.html) |
 | [nunicode](https://bitbucket.org/alekseyt/nunicode/src/master/) | [MIT License](https://spdx.org/licenses/MIT.html) | Modified for MapLibre Native |
