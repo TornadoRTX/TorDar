@@ -267,28 +267,28 @@ jobs:
 
     - name: Upload Artifacts (Windows)
       if: matrix.os == 'windows-2022'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: supercell-wx-${{ matrix.artifact_suffix }}
         path: ${{ github.workspace }}/supercell-wx/
 
     - name: Upload Debug Artifacts (Windows)
       if: matrix.os == 'windows-2022'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: supercell-wx-debug-${{ matrix.artifact_suffix }}
         path: ${{ github.workspace }}/build/Release/bin/*.pdb
 
     - name: Upload Artifacts (Linux)
       if: ${{ startsWith(matrix.os, 'ubuntu') }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: supercell-wx-${{ matrix.artifact_suffix }}
         path: ${{ github.workspace }}/supercell-wx-${{ matrix.artifact_suffix }}.tar.gz
 
     - name: Upload Debug Artifacts (Linux)
       if: ${{ startsWith(matrix.os, 'ubuntu') }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: supercell-wx-debug-${{ matrix.artifact_suffix }}
         path: |
@@ -304,7 +304,7 @@ jobs:
 
     - name: Upload Installer (Windows)
       if: matrix.os == 'windows-2022'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: supercell-wx-installer-${{ matrix.artifact_suffix }}
         path: ${{ github.workspace }}/build/supercell-wx-*.msi*
@@ -337,7 +337,7 @@ jobs:
 
     - name: Upload AppImage (Linux)
       if: ${{ startsWith(matrix.os, 'ubuntu') }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: supercell-wx-appimage-${{ matrix.artifact_suffix }}
         path: ${{ github.workspace }}/*-${{ matrix.appimage_arch }}.AppImage*
@@ -369,7 +369,7 @@ jobs:
 
     - name: Upload FlatPak (Linux)
       if: ${{ startsWith(matrix.os, 'ubuntu') }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: supercell-wx-flatpak-${{ matrix.artifact_suffix }}
         path: ${{ github.workspace }}/supercell-wx.flatpak
@@ -383,7 +383,7 @@ jobs:
 
     - name: Upload Disk Image (macOS)
       if: ${{ startsWith(matrix.os, 'macos') }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: supercell-wx-${{ matrix.artifact_suffix }}
         path: ${{ github.workspace }}/build/supercell-wx-*.dmg*
@@ -397,7 +397,7 @@ jobs:
 
     - name: Upload Test Logs
       if: ${{ !cancelled() }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: supercell-wx-test-logs-${{ matrix.name }}
         path: ${{ github.workspace }}/build/Testing/
