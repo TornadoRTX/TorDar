@@ -29,7 +29,7 @@ Supercell Wx supports the following 64-bit operating systems:
   - NixOS 25.05+
   - Most distributions supporting the GCC Standard C++ Library 11+
 - macOS
-  - 13.6+ for Intel-based Macs
+  - 15.0+ for Intel-based Macs
   - 14.0+ for Apple silicon-based Macs
 
 ## Linux Dependencies
@@ -50,12 +50,6 @@ Frequently asked questions:
 - Q: Why is it that when I change my color table, API key, grid width/height settings, nothing happens after hitting apply?
 
   - A. As of right now, you must restart Supercell Wx in order to apply these changes. In future iterations, this will no longer be an issue.
-
-- Q. Is it possible to get dark mode?
-
-  - A. In Windows, make sure to set the flag `-style fusion` at the end of the target path of the .exe
-    - Example: `C:\Users\Administrator\Desktop\Supercell-Wx\bin\supercell-wx.exe -style fusion`
-  - A. In Linux, if you're using KDE, Supercell Wx should automatically follow your theme settings.
 
 - Q: How can I contribute?
   - A. Head to [Developer Setup](https://supercell-wx.readthedocs.io/en/stable/development/developer-setup.html) and [Contributing](CONTRIBUTING.md) to configure the Supercell Wx development environment for your IDE. Currently Visual Studio and Visual Studio Code are recommended, with other IDEs remaining untested at this time.

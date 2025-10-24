@@ -94,7 +94,7 @@ jobs:
             artifact_suffix: linux-arm64
             compiler_packages: g++-11
           - name: macos_clang18_x64
-            os: macos-13
+            os: macos-15-intel
             build_type: Release
             env_cc: clang
             env_cxx: clang++
