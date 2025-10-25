@@ -1,6 +1,7 @@
 #include <scwx/zip/zip_stream_writer.hpp>
 #include <scwx/util/logger.hpp>
 
+#include <cstdlib>
 #include <fstream>
 
 #include <zip.h>
@@ -358,8 +359,11 @@ bool ZipStreamWriter::Impl::AddFile(const std::string& filename,
                                     const T&           content,
                                     zip_flags_t        flags)
 {
-   // NOLINTNEXTLINE(cppcoreguidelines-owning-memory): libzip managed memory
-   auto* buffer = new std::uint8_t[content.size()];
+   // NOLINTBEGIN(cppcoreguidelines-owning-memory)
+   // NOLINTBEGIN(cppcoreguidelines-no-malloc)
+
+   // Memory is managed by libzip
+   void* buffer = std::malloc(content.size());
 
    // NOLINTNEXTLINE(bugprone-not-null-terminated-result): raw copy of data
    std::memcpy(buffer, content.data(), content.size());
@@ -367,8 +371,7 @@ bool ZipStreamWriter::Impl::AddFile(const std::string& filename,
    zip_source_t* src = zip_source_buffer(archive_, buffer, content.size(), 1);
    if (!src)
    {
-      // NOLINTNEXTLINE(cppcoreguidelines-owning-memory): libzip managed memory
-      delete[] buffer;
+      std::free(buffer);
       return false;
    }
 
@@ -378,6 +381,9 @@ bool ZipStreamWriter::Impl::AddFile(const std::string& filename,
       zip_source_free(src);
       return false;
    }
+
+   // NOLINTEND(cppcoreguidelines-no-malloc)
+   // NOLINTEND(cppcoreguidelines-owning-memory)
 
    return true;
 }
