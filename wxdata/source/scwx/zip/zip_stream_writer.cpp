@@ -358,10 +358,17 @@ bool ZipStreamWriter::Impl::AddFile(const std::string& filename,
                                     const T&           content,
                                     zip_flags_t        flags)
 {
-   zip_source_t* src =
-      zip_source_buffer(archive_, content.data(), content.size(), 0);
+   // NOLINTNEXTLINE(cppcoreguidelines-owning-memory): libzip managed memory
+   auto* buffer = new std::uint8_t[content.size()];
+
+   // NOLINTNEXTLINE(bugprone-not-null-terminated-result): raw copy of data
+   std::memcpy(buffer, content.data(), content.size());
+
+   zip_source_t* src = zip_source_buffer(archive_, buffer, content.size(), 1);
    if (!src)
    {
+      // NOLINTNEXTLINE(cppcoreguidelines-owning-memory): libzip managed memory
+      delete[] buffer;
       return false;
    }
 
