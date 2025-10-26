@@ -13,7 +13,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 OPTION(SCWX_DISABLE_CONSOLE "Disables the Windows console in release mode" ON)
 
-find_package(Boost REQUIRED COMPONENTS timer json atomic)
+find_package(Boost)
 find_package(Fontconfig)
 find_package(geographiclib)
 find_package(geos)
