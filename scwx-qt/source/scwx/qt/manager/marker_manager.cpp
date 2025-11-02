@@ -183,7 +183,12 @@ void MarkerManager::ReadMarkerSettings(std::istream& is)
 
    boost::json::value markerJson = scwx::util::json::ReadJsonStream(is);
 
+   p->ApplyMarkerSettings(markerJson);
+
    // Don't set markerFileRead_ when reading from a non-default stream
+
+   // Emit an initialized signal when reading from a non-default stream
+   Q_EMIT MarkersInitialized(p->markerRecords_.size());
 }
 
 void MarkerManager::Impl::ApplyMarkerSettings(
