@@ -28,6 +28,8 @@ public:
    Impl(const Impl&&)            = delete;
    Impl& operator=(const Impl&&) = delete;
 
+   void ImportSettings();
+
    ImportOptionsPage* self_;
 
    QLayout* layout_ {};
@@ -40,6 +42,8 @@ public:
    std::shared_ptr<zip::ZipStreamReader> settingsFile_ {};
    std::set<types::SettingsType>         selectedTypes_ {};
    std::set<types::SettingsType>         settingsTypes_ {};
+
+   bool ignoreItemChanged_ {false};
 };
 
 ImportOptionsPage::ImportOptionsPage(QWidget* parent) :
@@ -73,6 +77,11 @@ ImportOptionsPage::ImportOptionsPage(QWidget* parent) :
            this,
            [this](const QListWidgetItem* item)
            {
+              if (p->ignoreItemChanged_)
+              {
+                 return;
+              }
+
               const auto settingsType = static_cast<types::SettingsType>(
                  item->data(Qt::ItemDataRole::UserRole).toInt());
 
@@ -84,8 +93,6 @@ ImportOptionsPage::ImportOptionsPage(QWidget* parent) :
               {
                  p->selectedTypes_.erase(settingsType);
               }
-
-              logger_->error("Got here");
 
               // Inform the wizard that completion may have changed
               Q_EMIT completeChanged();
@@ -128,13 +135,18 @@ void ImportOptionsPage::set_settings_file(
       const QString name =
          QString::fromStdString(types::GetSettingsTypeName(settingsType));
 
+      // Don't trigger itemChanged for an incomplete item
+      p->ignoreItemChanged_ = true;
+
       // NOLINTNEXTLINE(cppcoreguidelines-owning-memory): Owned by parent
       auto item = new QListWidgetItem(name, p->optionsListWidget_);
       item->setFlags(item->flags() | Qt::ItemFlag::ItemIsUserCheckable);
-      item->setCheckState(Qt::CheckState::Checked);
       item->setData(Qt::ItemDataRole::UserRole, static_cast<int>(settingsType));
 
-      p->selectedTypes_.emplace(settingsType);
+      // Resume processing item changed for checkState
+      p->ignoreItemChanged_ = false;
+
+      item->setCheckState(Qt::CheckState::Checked);
    }
 }
 
@@ -145,7 +157,30 @@ bool ImportOptionsPage::isComplete() const
 
 bool ImportOptionsPage::validatePage()
 {
-   return false;
+   p->ImportSettings();
+   return true;
+}
+
+void ImportOptionsPage::Impl::ImportSettings()
+{
+   for (const auto& settingsType : selectedTypes_)
+   {
+      // Read the file from the settings archive
+      const auto& filename = types::GetSettingsTypeFilename(settingsType);
+      std::string output {};
+      const bool  success = settingsFile_->ReadFile(filename, output);
+
+      if (success)
+      {
+         // Import the settings
+         std::stringstream ss {output};
+         types::ReadSettingsFile(settingsType, ss);
+      }
+      else
+      {
+         logger_->error("Error reading from zip archive: {}", filename);
+      }
+   }
 }
 
 } // namespace scwx::qt::ui::import
