@@ -762,6 +762,11 @@ else()
     target_compile_options(supercell-wx PRIVATE "$<$<CONFIG:Release>:-g>")
 endif()
 
+if (MSVC)
+    # Suppress MSVC linker warnings due to missing debug program database
+    target_link_options(supercell-wx PRIVATE "/ignore:4099")
+endif()
+
 if (LINUX)
     # Add wayland client packages
     find_package(QT NAMES Qt6
