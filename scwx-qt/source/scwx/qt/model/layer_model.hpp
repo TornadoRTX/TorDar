@@ -3,7 +3,9 @@
 #include <scwx/qt/types/layer_types.hpp>
 #include <scwx/util/iterator.hpp>
 
+#include <istream>
 #include <memory>
+#include <ostream>
 
 #include <QAbstractTableModel>
 
@@ -36,6 +38,9 @@ public:
 
    explicit LayerModel(QObject* parent = nullptr);
    ~LayerModel();
+
+   void ReadLayerSettings(std::istream& is);
+   void WriteLayerSettings(std::ostream& os);
 
    types::LayerInfo   GetLayerInfo(types::LayerType        type,
                                    types::LayerDescription description) const;

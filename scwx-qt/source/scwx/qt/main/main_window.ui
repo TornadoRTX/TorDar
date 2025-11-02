@@ -39,7 +39,7 @@
      <x>0</x>
      <y>0</y>
      <width>1024</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -63,6 +63,9 @@
     <addaction name="menu_Open"/>
     <addaction name="separator"/>
     <addaction name="menuScreenCapture"/>
+    <addaction name="separator"/>
+    <addaction name="actionImport"/>
+    <addaction name="actionExport"/>
     <addaction name="separator"/>
     <addaction name="actionSettings"/>
     <addaction name="separator"/>
@@ -164,8 +167,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>188</width>
-          <height>680</height>
+          <width>191</width>
+          <height>689</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -532,6 +535,16 @@
   <action name="actionScreenCaptureSaveImage">
    <property name="text">
     <string>&amp;Save Image</string>
+   </property>
+  </action>
+  <action name="actionImport">
+   <property name="text">
+    <string>&amp;Import</string>
+   </property>
+  </action>
+  <action name="actionExport">
+   <property name="text">
+    <string>&amp;Export</string>
    </property>
   </action>
  </widget>

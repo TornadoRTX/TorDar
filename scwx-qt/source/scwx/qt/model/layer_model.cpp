@@ -74,14 +74,15 @@ public:
    ~Impl() = default;
 
    void AddPlacefile(const std::string& name);
+   void ApplyLayerSettings(const boost::json::value& layerJson);
    void HandlePlacefileRemoved(const std::string& name);
    void HandlePlacefileRenamed(const std::string& oldName,
                                const std::string& newName);
    void HandlePlacefileUpdate(const std::string& name, Column column);
    void InitializeLayerSettings();
    void ReadLayerSettings();
+   void SaveLayerSettings();
    void SynchronizePlacefileLayers();
-   void WriteLayerSettings();
 
    static void ValidateLayerSettings(types::LayerVector& layers);
 
@@ -143,8 +144,8 @@ LayerModel::LayerModel(QObject* parent) :
 
 LayerModel::~LayerModel()
 {
-   // Write layer settings on shutdown
-   p->WriteLayerSettings();
+   // Save layer settings on shutdown
+   p->SaveLayerSettings();
 };
 
 void LayerModel::Impl::InitializeLayerSettings()
@@ -170,13 +171,32 @@ void LayerModel::Impl::ReadLayerSettings()
    logger_->info("Reading layer settings");
 
    boost::json::value layerJson = nullptr;
-   types::LayerVector newLayers {};
 
    // Determine if layer settings exists
    if (std::filesystem::exists(layerSettingsPath_))
    {
       layerJson = util::json::ReadJsonFile(layerSettingsPath_);
    }
+
+   ApplyLayerSettings(layerJson);
+
+   fileRead_ = true;
+}
+
+void LayerModel::ReadLayerSettings(std::istream& is)
+{
+   logger_->info("Reading layer settings from stream");
+
+   const boost::json::value layerJson = scwx::util::json::ReadJsonStream(is);
+
+   p->ApplyLayerSettings(layerJson);
+
+   // Don't set fileRead_ when reading from a non-default stream
+}
+
+void LayerModel::Impl::ApplyLayerSettings(const boost::json::value& layerJson)
+{
+   types::LayerVector newLayers {};
 
    // If layer settings was successfully read
    if (layerJson != nullptr && layerJson.is_array())
@@ -203,8 +223,6 @@ void LayerModel::Impl::ReadLayerSettings()
       // Assign read layers
       layers_.swap(newLayers);
    }
-
-   fileRead_ = true;
 }
 
 void LayerModel::Impl::ValidateLayerSettings(types::LayerVector& layers)
@@ -316,7 +334,7 @@ void LayerModel::Impl::ValidateLayerSettings(types::LayerVector& layers)
    }
 }
 
-void LayerModel::Impl::WriteLayerSettings()
+void LayerModel::Impl::SaveLayerSettings()
 {
    if (!fileRead_)
    {
@@ -328,17 +346,22 @@ void LayerModel::Impl::WriteLayerSettings()
    util::json::WriteJsonFile(layerSettingsPath_, layerJson);
 }
 
+void LayerModel::WriteLayerSettings(std::ostream& os)
+{
+   auto layerJson = boost::json::value_from(p->layers_);
+   util::json::WriteJsonStream(os, layerJson);
+}
+
 types::LayerInfo
 LayerModel::GetLayerInfo(types::LayerType        type,
                          types::LayerDescription description) const
 {
    // Find the matching layer
-   auto it = std::find_if(p->layers_.begin(),
-                          p->layers_.end(),
-                          [&](const types::LayerInfo& layer) {
-                             return layer.type_ == type &&
-                                    layer.description_ == description;
-                          });
+   auto it = std::find_if(
+      p->layers_.begin(),
+      p->layers_.end(),
+      [&](const types::LayerInfo& layer)
+      { return layer.type_ == type && layer.description_ == description; });
    if (it != p->layers_.end())
    {
       // Return the layer info
@@ -358,12 +381,11 @@ void LayerModel::SetLayerDisplayed(types::LayerType        type,
                                    bool                    displayed)
 {
    // Find the matching layer
-   auto it = std::find_if(p->layers_.begin(),
-                          p->layers_.end(),
-                          [&](const types::LayerInfo& layer) {
-                             return layer.type_ == type &&
-                                    layer.description_ == description;
-                          });
+   auto it = std::find_if(
+      p->layers_.begin(),
+      p->layers_.end(),
+      [&](const types::LayerInfo& layer)
+      { return layer.type_ == type && layer.description_ == description; });
 
    if (it != p->layers_.end())
    {

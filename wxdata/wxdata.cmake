@@ -7,6 +7,7 @@ include(CheckCXXSymbolExists)
 find_package(Boost)
 find_package(cpr)
 find_package(LibXml2)
+find_package(libzip)
 find_package(OpenSSL)
 find_package(range-v3)
 find_package(re2)
@@ -237,6 +238,10 @@ set(SRC_WSR88D_RPG source/scwx/wsr88d/rpg/ccb_header.cpp
                    source/scwx/wsr88d/rpg/unlinked_vector_packet.cpp
                    source/scwx/wsr88d/rpg/vector_arrow_data_packet.cpp
                    source/scwx/wsr88d/rpg/wind_barb_data_packet.cpp)
+set(HDR_ZIP include/scwx/zip/zip_stream_reader.hpp
+            include/scwx/zip/zip_stream_writer.hpp)
+set(SRC_ZIP source/scwx/zip/zip_stream_reader.cpp
+            source/scwx/zip/zip_stream_writer.cpp)
 
 set(CMAKE_FILES wxdata.cmake)
 
@@ -260,6 +265,8 @@ add_library(wxdata OBJECT ${HDR_AWIPS}
                           ${SRC_WSR88D_RDA}
                           ${HDR_WSR88D_RPG}
                           ${SRC_WSR88D_RPG}
+                          ${HDR_ZIP}
+                          ${SRC_ZIP}
                           ${CMAKE_FILES})
 
 source_group("Header Files\\awips"       FILES ${HDR_AWIPS})
@@ -282,6 +289,8 @@ source_group("Header Files\\wsr88d\\rda" FILES ${HDR_WSR88D_RDA})
 source_group("Source Files\\wsr88d\\rda" FILES ${SRC_WSR88D_RDA})
 source_group("Header Files\\wsr88d\\rpg" FILES ${HDR_WSR88D_RPG})
 source_group("Source Files\\wsr88d\\rpg" FILES ${SRC_WSR88D_RPG})
+source_group("Header Files\\zip"         FILES ${HDR_ZIP})
+source_group("Source Files\\zip"         FILES ${SRC_ZIP})
 
 
 try_compile(CHRONO_HAS_TIMEZONES_AND_CALENDERS
@@ -322,6 +331,7 @@ target_link_libraries(wxdata PUBLIC aws-cpp-sdk-core
                                     aws-cpp-sdk-s3
                                     cpr::cpr
                                     LibXml2::LibXml2
+                                    libzip::zip
                                     OpenSSL::Crypto
                                     range-v3::range-v3
                                     re2::re2

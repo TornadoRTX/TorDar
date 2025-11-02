@@ -226,16 +226,16 @@ void MarkerModel::HandleMarkersInitialized(size_t count)
    {
       return;
    }
-   const int index = static_cast<int>(count - 1);
 
+   beginResetModel();
+   p->markerIds_.clear();
    p->markerIds_.reserve(count);
-   beginInsertRows(QModelIndex(), 0, index);
    p->markerManager_->for_each(
       [this](const types::MarkerInfo& info)
       {
          p->markerIds_.push_back(info.id);
       });
-   endInsertRows();
+   endResetModel();
 }
 
 void MarkerModel::HandleMarkerAdded(types::MarkerId id)

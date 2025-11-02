@@ -24,6 +24,7 @@
 #include <scwx/qt/ui/alert_dock_widget.hpp>
 #include <scwx/qt/ui/animation_dock_widget.hpp>
 #include <scwx/qt/ui/collapsible_group.hpp>
+#include <scwx/qt/ui/export_settings_dialog.hpp>
 #include <scwx/qt/ui/flow_layout.hpp>
 #include <scwx/qt/ui/gps_info_dialog.hpp>
 #include <scwx/qt/ui/imgui_debug_dialog.hpp>
@@ -36,6 +37,7 @@
 #include <scwx/qt/ui/radar_site_dialog.hpp>
 #include <scwx/qt/ui/settings_dialog.hpp>
 #include <scwx/qt/ui/update_dialog.hpp>
+#include <scwx/qt/ui/import/import_settings_wizard.hpp>
 #include <scwx/common/characters.hpp>
 #include <scwx/common/products.hpp>
 #include <scwx/common/vcp.hpp>
@@ -55,11 +57,7 @@
 #include <QTimer>
 #include <QToolButton>
 
-namespace scwx
-{
-namespace qt
-{
-namespace main
+namespace scwx::qt::main
 {
 
 static const std::string logPrefix_ = "scwx::qt::main::main_window";
@@ -82,17 +80,6 @@ public:
        level2ProductsWidget_ {nullptr},
        level2SettingsWidget_ {nullptr},
        level3ProductsWidget_ {nullptr},
-       alertDockWidget_ {nullptr},
-       animationDockWidget_ {nullptr},
-       aboutDialog_ {nullptr},
-       gpsInfoDialog_ {nullptr},
-       imGuiDebugDialog_ {nullptr},
-       layerDialog_ {nullptr},
-       placefileDialog_ {nullptr},
-       markerDialog_ {nullptr},
-       radarSiteDialog_ {nullptr},
-       settingsDialog_ {nullptr},
-       updateDialog_ {nullptr},
        alertManager_ {manager::AlertManager::Instance()},
        placefileManager_ {manager::PlacefileManager::Instance()},
        markerManager_ {manager::MarkerManager::Instance()},
@@ -207,17 +194,19 @@ public:
    QLabel* coordinateLabel_ {nullptr};
    QLabel* timeLabel_ {nullptr};
 
-   ui::AlertDockWidget*     alertDockWidget_;
-   ui::AnimationDockWidget* animationDockWidget_;
-   ui::AboutDialog*         aboutDialog_;
-   ui::GpsInfoDialog*       gpsInfoDialog_;
-   ui::ImGuiDebugDialog*    imGuiDebugDialog_;
-   ui::LayerDialog*         layerDialog_;
-   ui::PlacefileDialog*     placefileDialog_;
-   ui::MarkerDialog*        markerDialog_;
-   ui::RadarSiteDialog*     radarSiteDialog_;
-   ui::SettingsDialog*      settingsDialog_;
-   ui::UpdateDialog*        updateDialog_;
+   ui::AlertDockWidget*              alertDockWidget_ {};
+   ui::AnimationDockWidget*          animationDockWidget_ {};
+   ui::AboutDialog*                  aboutDialog_ {};
+   ui::ExportSettingsDialog*         exportSettingsDialog_ {};
+   ui::GpsInfoDialog*                gpsInfoDialog_ {};
+   ui::ImGuiDebugDialog*             imGuiDebugDialog_ {};
+   ui::import::ImportSettingsWizard* importSettingsWizard_ {};
+   ui::LayerDialog*                  layerDialog_ {};
+   ui::PlacefileDialog*              placefileDialog_ {};
+   ui::MarkerDialog*                 markerDialog_ {};
+   ui::RadarSiteDialog*              radarSiteDialog_ {};
+   ui::SettingsDialog*               settingsDialog_ {};
+   ui::UpdateDialog*                 updateDialog_ {};
 
    QTimer clockTimer_ {};
 
@@ -279,6 +268,9 @@ MainWindow::MainWindow(QWidget* parent) :
    ui->vcpDescriptionLabel->setVisible(false);
    ui->saveRadarProductsButton->setVisible(true);
 
+   // QObjects are managed by the parent
+   // NOLINTBEGIN(cppcoreguidelines-owning-memory)
+
    p->radarSitePresetsMenu_ = new QMenu(this);
    ui->radarSitePresetsButton->setMenu(p->radarSitePresetsMenu_);
 
@@ -325,6 +317,10 @@ MainWindow::MainWindow(QWidget* parent) :
 
    // Layer Dialog
    p->layerDialog_ = new ui::LayerDialog(this);
+
+   // Import/Export Dialogs
+   p->importSettingsWizard_ = new ui::import::ImportSettingsWizard(this);
+   p->exportSettingsDialog_ = new ui::ExportSettingsDialog(this);
 
    // Settings Dialog
    p->settingsDialog_ = new ui::SettingsDialog(p->settings_, this);
@@ -415,6 +411,8 @@ MainWindow::MainWindow(QWidget* parent) :
 
    // Update Dialog
    p->updateDialog_ = new ui::UpdateDialog(this);
+
+   // NOLINTEND(cppcoreguidelines-owning-memory)
 
    auto& mapSettings = settings::MapSettings::Instance();
    for (size_t i = 0; i < p->maps_.size(); i++)
@@ -611,6 +609,16 @@ void MainWindow::on_actionScreenCaptureCopy_triggered()
 void MainWindow::on_actionScreenCaptureSaveImage_triggered()
 {
    p->ScreenCapture(types::CaptureType::SaveImage);
+}
+
+void MainWindow::on_actionImport_triggered()
+{
+   p->importSettingsWizard_->show();
+}
+
+void MainWindow::on_actionExport_triggered()
+{
+   p->exportSettingsDialog_->show();
 }
 
 void MainWindow::on_actionSettings_triggered()
@@ -1680,8 +1688,6 @@ void MainWindowImpl::UpdateVcp()
    }
 }
 
-} // namespace main
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::main
 
 #include "main_window.moc"

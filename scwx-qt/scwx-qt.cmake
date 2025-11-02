@@ -103,9 +103,9 @@ set(HDR_MANAGER source/scwx/qt/manager/alert_manager.hpp
                 source/scwx/qt/manager/font_manager.hpp
                 source/scwx/qt/manager/hotkey_manager.hpp
                 source/scwx/qt/manager/log_manager.hpp
+                source/scwx/qt/manager/marker_manager.hpp
                 source/scwx/qt/manager/media_manager.hpp
                 source/scwx/qt/manager/placefile_manager.hpp
-                source/scwx/qt/manager/marker_manager.hpp
                 source/scwx/qt/manager/position_manager.hpp
                 source/scwx/qt/manager/radar_product_manager.hpp
                 source/scwx/qt/manager/radar_product_manager_notifier.hpp
@@ -122,9 +122,9 @@ set(SRC_MANAGER source/scwx/qt/manager/alert_manager.cpp
                 source/scwx/qt/manager/font_manager.cpp
                 source/scwx/qt/manager/hotkey_manager.cpp
                 source/scwx/qt/manager/log_manager.cpp
+                source/scwx/qt/manager/marker_manager.cpp
                 source/scwx/qt/manager/media_manager.cpp
                 source/scwx/qt/manager/placefile_manager.cpp
-                source/scwx/qt/manager/marker_manager.cpp
                 source/scwx/qt/manager/position_manager.cpp
                 source/scwx/qt/manager/radar_product_manager.cpp
                 source/scwx/qt/manager/radar_product_manager_notifier.cpp
@@ -246,6 +246,7 @@ set(HDR_TYPES source/scwx/qt/types/alert_types.hpp
               source/scwx/qt/types/radar_product_record.hpp
               source/scwx/qt/types/radar_product_types.hpp
               source/scwx/qt/types/radar_site_types.hpp
+              source/scwx/qt/types/settings_types.hpp
               source/scwx/qt/types/text_event_key.hpp
               source/scwx/qt/types/text_types.hpp
               source/scwx/qt/types/texture_types.hpp
@@ -264,6 +265,7 @@ set(SRC_TYPES source/scwx/qt/types/alert_types.cpp
               source/scwx/qt/types/qt_types.cpp
               source/scwx/qt/types/radar_product_record.cpp
               source/scwx/qt/types/radar_site_types.cpp
+              source/scwx/qt/types/settings_types.cpp
               source/scwx/qt/types/text_event_key.cpp
               source/scwx/qt/types/text_types.cpp
               source/scwx/qt/types/texture_types.cpp
@@ -280,6 +282,7 @@ set(HDR_UI source/scwx/qt/ui/about_dialog.hpp
            source/scwx/qt/ui/download_dialog.hpp
            source/scwx/qt/ui/edit_button_dialog.hpp
            source/scwx/qt/ui/edit_line_dialog.hpp
+           source/scwx/qt/ui/export_settings_dialog.hpp
            source/scwx/qt/ui/edit_marker_dialog.hpp
            source/scwx/qt/ui/flow_layout.hpp
            source/scwx/qt/ui/gps_info_dialog.hpp
@@ -315,6 +318,7 @@ set(SRC_UI source/scwx/qt/ui/about_dialog.cpp
            source/scwx/qt/ui/edit_button_dialog.cpp
            source/scwx/qt/ui/edit_line_dialog.cpp
            source/scwx/qt/ui/edit_marker_dialog.cpp
+           source/scwx/qt/ui/export_settings_dialog.cpp
            source/scwx/qt/ui/flow_layout.cpp
            source/scwx/qt/ui/gps_info_dialog.cpp
            source/scwx/qt/ui/hotkey_edit.cpp
@@ -347,6 +351,7 @@ set(UI_UI  source/scwx/qt/ui/about_dialog.ui
            source/scwx/qt/ui/edit_button_dialog.ui
            source/scwx/qt/ui/edit_line_dialog.ui
            source/scwx/qt/ui/edit_marker_dialog.ui
+           source/scwx/qt/ui/export_settings_dialog.ui
            source/scwx/qt/ui/gps_info_dialog.ui
            source/scwx/qt/ui/imgui_debug_dialog.ui
            source/scwx/qt/ui/layer_dialog.ui
@@ -361,6 +366,12 @@ set(UI_UI  source/scwx/qt/ui/about_dialog.ui
            source/scwx/qt/ui/serial_port_dialog.ui
            source/scwx/qt/ui/update_dialog.ui
            source/scwx/qt/ui/wfo_dialog.ui)
+set(HDR_UI_IMPORT source/scwx/qt/ui/import/import_options_page.hpp
+                  source/scwx/qt/ui/import/import_settings_wizard.hpp
+                  source/scwx/qt/ui/import/select_file_page.hpp)
+set(SRC_UI_IMPORT source/scwx/qt/ui/import/import_options_page.cpp
+                  source/scwx/qt/ui/import/import_settings_wizard.cpp
+                  source/scwx/qt/ui/import/select_file_page.cpp)
 set(HDR_UI_SETTINGS source/scwx/qt/ui/settings/alert_palette_settings_widget.hpp
                     source/scwx/qt/ui/settings/hotkey_settings_widget.hpp
                     source/scwx/qt/ui/settings/radar_site_status_palette_settings_widget.hpp
@@ -495,6 +506,8 @@ set(PROJECT_SOURCES ${HDR_MAIN}
                     ${HDR_UI}
                     ${SRC_UI}
                     ${UI_UI}
+                    ${HDR_UI_IMPORT}
+                    ${SRC_UI_IMPORT}
                     ${HDR_UI_SETTINGS}
                     ${SRC_UI_SETTINGS}
                     ${HDR_UI_SETUP}
@@ -537,6 +550,8 @@ source_group("Header Files\\types"        FILES ${HDR_TYPES})
 source_group("Source Files\\types"        FILES ${SRC_TYPES})
 source_group("Header Files\\ui"           FILES ${HDR_UI})
 source_group("Source Files\\ui"           FILES ${SRC_UI})
+source_group("Header Files\\ui\\import"   FILES ${HDR_UI_IMPORT})
+source_group("Source Files\\ui\\import"   FILES ${SRC_UI_IMPORT})
 source_group("Header Files\\ui\\settings" FILES ${HDR_UI_SETTINGS})
 source_group("Source Files\\ui\\settings" FILES ${SRC_UI_SETTINGS})
 source_group("Header Files\\ui\\setup"    FILES ${HDR_UI_SETUP})
@@ -745,6 +760,11 @@ if (MSVC)
 else()
     target_compile_options(scwx-qt PRIVATE "$<$<CONFIG:Release>:-g>")
     target_compile_options(supercell-wx PRIVATE "$<$<CONFIG:Release>:-g>")
+endif()
+
+if (MSVC)
+    # Suppress MSVC linker warnings due to missing debug program database
+    target_link_options(supercell-wx PRIVATE "/ignore:4099")
 endif()
 
 if (LINUX)

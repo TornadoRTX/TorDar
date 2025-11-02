@@ -39,6 +39,8 @@ private slots:
    void on_actionOpenTextEvent_triggered();
    void on_actionScreenCaptureCopy_triggered();
    void on_actionScreenCaptureSaveImage_triggered();
+   void on_actionImport_triggered();
+   void on_actionExport_triggered();
    void on_actionSettings_triggered();
    void on_actionExit_triggered();
    void on_actionGpsInfo_triggered();
