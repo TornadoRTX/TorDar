@@ -8,6 +8,7 @@
 #include <scwx/util/time.hpp>
 
 #include <algorithm>
+#include <atomic>
 #include <list>
 #include <map>
 #include <shared_mutex>
@@ -103,10 +104,18 @@ public:
          .warnings_provider()
          .UnregisterValueChangedCallback(warningsProviderChangedCallbackUuid_);
 
+      // Indicate we are stopping so no new timers/tasks are scheduled
+      stopping_ = true;
+
+      // Cancel the refresh timer while holding the mutex so Refresh() can't
+      // create a new timer concurrently.
       std::unique_lock lock(refreshMutex_);
       refreshTimer_.cancel();
       lock.unlock();
 
+      // Stop the thread pool so no further posted handlers will be executed,
+      // then join to wait for workers to exit.
+      threadPool_.stop();
       threadPool_.join();
    }
 
@@ -136,6 +145,8 @@ public:
    boost::asio::thread_pool threadPool_ {2u};
 
    TextEventManager* self_;
+
+   std::atomic<bool> stopping_ {false};
 
    boost::asio::steady_timer refreshTimer_;
    std::mutex                refreshMutex_;
@@ -704,6 +715,12 @@ void TextEventManager::Impl::Refresh()
       {
          HandleMessage(message);
       }
+   }
+
+   // Check for shutdown
+   if (stopping_)
+   {
+      return;
    }
 
    // Schedule another update in 15 seconds
