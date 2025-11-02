@@ -9,6 +9,7 @@
 #include <QListWidget>
 #include <QMessageBox>
 #include <QVBoxLayout>
+#include <vector>
 
 namespace scwx::qt::ui::import
 {
@@ -29,6 +30,7 @@ public:
    Impl& operator=(const Impl&&) = delete;
 
    void ImportSettings();
+   void ImportSettingsType(types::SettingsType settingsType);
 
    ImportOptionsPage* self_;
 
@@ -163,23 +165,44 @@ bool ImportOptionsPage::validatePage()
 
 void ImportOptionsPage::Impl::ImportSettings()
 {
+   std::vector<types::SettingsType> deferredImports {};
+
    for (const auto& settingsType : selectedTypes_)
    {
-      // Read the file from the settings archive
-      const auto& filename = types::GetSettingsTypeFilename(settingsType);
-      std::string output {};
-      const bool  success = settingsFile_->ReadFile(filename, output);
-
-      if (success)
+      if (settingsType == types::SettingsType::Layers)
       {
-         // Import the settings
-         std::stringstream ss {output};
-         types::ReadSettingsFile(settingsType, ss);
+         // Layers needs to be imported after other settings
+         deferredImports.push_back(settingsType);
       }
       else
       {
-         logger_->error("Error reading from zip archive: {}", filename);
+         ImportSettingsType(settingsType);
       }
+   }
+
+   for (const auto& settingsType : deferredImports)
+   {
+      ImportSettingsType(settingsType);
+   }
+}
+
+void ImportOptionsPage::Impl::ImportSettingsType(
+   types::SettingsType settingsType)
+{
+   // Read the file from the settings archive
+   const auto& filename = types::GetSettingsTypeFilename(settingsType);
+   std::string output {};
+   const bool  success = settingsFile_->ReadFile(filename, output);
+
+   if (success)
+   {
+      // Import the settings
+      std::stringstream ss {output};
+      types::ReadSettingsFile(settingsType, ss);
+   }
+   else
+   {
+      logger_->error("Error reading from zip archive: {}", filename);
    }
 }
 
