@@ -23,7 +23,7 @@ public:
 
 private:
    class Impl;
-   std::unique_ptr<Impl> p;
+   std::unique_ptr<Impl>     p;
    Ui::ExportSettingsDialog* ui;
 };
 
