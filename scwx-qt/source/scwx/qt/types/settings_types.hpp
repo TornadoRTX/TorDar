@@ -16,15 +16,17 @@ enum class SettingsType : std::uint8_t
    Layers,
    LocationMarkers,
    Placefiles,
-   RadarSitePresets
+   RadarSitePresets,
+   Unknown
 };
 using SettingsTypeIterator =
    scwx::util::Iterator<SettingsType,
                         SettingsType::Settings,
                         SettingsType::RadarSitePresets>;
 
-const std::string& SettingsName(SettingsType type);
-const std::string& SettingsFilename(SettingsType type);
+SettingsType       GetSettingsTypeFromFilename(const std::string& filename);
+const std::string& GetSettingsTypeName(SettingsType type);
+const std::string& GetSettingsTypeFilename(SettingsType type);
 
 void ReadSettingsFile(SettingsType type, std::istream& is);
 void WriteSettingsFile(SettingsType type, std::ostream& os);

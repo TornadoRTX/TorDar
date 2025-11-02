@@ -4,6 +4,7 @@
 #include <scwx/qt/manager/settings_manager.hpp>
 #include <scwx/qt/model/layer_model.hpp>
 #include <scwx/qt/model/radar_site_model.hpp>
+#include <scwx/util/enum.hpp>
 
 #include <map>
 
@@ -15,21 +16,25 @@ static const std::map<SettingsType, std::string> kSettingsName_ {
    {SettingsType::Layers, "Layers"},
    {SettingsType::LocationMarkers, "Location Markers"},
    {SettingsType::Placefiles, "Placefiles"},
-   {SettingsType::RadarSitePresets, "Radar Site Presets"}};
+   {SettingsType::RadarSitePresets, "Radar Site Presets"},
+   {SettingsType::Unknown, "?"}};
 
 static const std::map<SettingsType, std::string> kSettingsFilename_ {
    {SettingsType::Settings, "settings.json"},
    {SettingsType::Layers, "layers.json"},
    {SettingsType::LocationMarkers, "location-markers.json"},
    {SettingsType::Placefiles, "placefiles.json"},
-   {SettingsType::RadarSitePresets, "radar-presets.json"}};
+   {SettingsType::RadarSitePresets, "radar-presets.json"},
+   {SettingsType::Unknown, "?"}};
 
-const std::string& SettingsName(SettingsType type)
+SCWX_GET_ENUM(SettingsType, GetSettingsTypeFromFilename, kSettingsFilename_)
+
+const std::string& GetSettingsTypeName(SettingsType type)
 {
    return kSettingsName_.at(type);
 }
 
-const std::string& SettingsFilename(SettingsType type)
+const std::string& GetSettingsTypeFilename(SettingsType type)
 {
    return kSettingsFilename_.at(type);
 }
@@ -57,6 +62,9 @@ void ReadSettingsFile(SettingsType type, std::istream& is)
    case SettingsType::RadarSitePresets:
       model::RadarSiteModel::Instance()->ReadPresets(is);
       break;
+
+   case SettingsType::Unknown:
+      break;
    }
 }
 
@@ -82,6 +90,9 @@ void WriteSettingsFile(SettingsType type, std::ostream& os)
 
    case SettingsType::RadarSitePresets:
       model::RadarSiteModel::Instance()->WritePresets(os);
+      break;
+
+   case SettingsType::Unknown:
       break;
    }
 }

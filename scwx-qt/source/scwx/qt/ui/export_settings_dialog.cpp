@@ -43,7 +43,8 @@ ExportSettingsDialog::ExportSettingsDialog(QWidget* parent) :
 
    for (const auto type : types::SettingsTypeIterator())
    {
-      const QString name = QString::fromStdString(types::SettingsName(type));
+      const QString name =
+         QString::fromStdString(types::GetSettingsTypeName(type));
 
       // NOLINTNEXTLINE(cppcoreguidelines-owning-memory): Owned by parent
       auto item = new QListWidgetItem(name, ui->settingsListWidget);
@@ -80,58 +81,59 @@ void ExportSettingsDialog::Impl::ConnectSignals()
                     self_,
                     [this]() { SelectFile(); });
 
-   QObject::connect(
-      self_->ui->buttonBox,
-      &QDialogButtonBox::clicked,
-      self_,
-      [this](QAbstractButton* button)
-      {
-         const QDialogButtonBox::ButtonRole role =
-            self_->ui->buttonBox->buttonRole(button);
+   QObject::connect(self_->ui->buttonBox,
+                    &QDialogButtonBox::clicked,
+                    self_,
+                    [this](QAbstractButton* button)
+                    {
+                       const QDialogButtonBox::ButtonRole role =
+                          self_->ui->buttonBox->buttonRole(button);
 
-         if (role != QDialogButtonBox::ButtonRole::AcceptRole)
-         {
-            // Not handling
-            return;
-         }
+                       if (role != QDialogButtonBox::ButtonRole::AcceptRole)
+                       {
+                          // Not handling
+                          return;
+                       }
 
-         const QString destination =
-            self_->ui->destinationLineEdit->text().trimmed();
-         if (destination.isEmpty())
-         {
-            return;
-         }
+                       const QString destination =
+                          self_->ui->destinationLineEdit->text().trimmed();
+                       if (destination.isEmpty())
+                       {
+                          return;
+                       }
 
-         QFileInfo fileInfo {destination};
-         if (fileInfo.exists())
-         {
-            const auto result = QMessageBox::question(
-               self_,
-               tr("Overwrite File?"),
-               tr("The file \"%1\" already exists.\n\nOverwite it?")
-                  .arg(destination),
-               QMessageBox::StandardButton::Yes |
-                  QMessageBox::StandardButton::No,
-               QMessageBox::StandardButton::No);
+                       QFileInfo fileInfo {destination};
+                       if (fileInfo.exists())
+                       {
+                          logger_->error("Overwrite file?");
+                          const auto result = QMessageBox::question(
+                             self_,
+                             tr("Overwrite File?"),
+                             tr("The file %1 already exists.\n\nOverwite it?")
+                                .arg(destination),
+                             QMessageBox::StandardButton::Yes |
+                                QMessageBox::StandardButton::No,
+                             QMessageBox::StandardButton::No);
+                          logger_->error("Result");
 
-            if (result == QMessageBox::Yes)
-            {
-               // Proceed and close dialog
-               ExportSettings(destination.toStdString());
-            }
-            else
-            {
-               // Let the user change the destination
-               self_->ui->destinationLineEdit->setFocus();
-               self_->ui->destinationLineEdit->selectAll();
-            }
-         }
-         else
-         {
-            // File doesn't exist, proceed
-            ExportSettings(destination.toStdString());
-         }
-      });
+                          if (result == QMessageBox::Yes)
+                          {
+                             // Proceed and close dialog
+                             ExportSettings(destination.toStdString());
+                          }
+                          else
+                          {
+                             // Let the user change the destination
+                             self_->ui->destinationLineEdit->setFocus();
+                             self_->ui->destinationLineEdit->selectAll();
+                          }
+                       }
+                       else
+                       {
+                          // File doesn't exist, proceed
+                          ExportSettings(destination.toStdString());
+                       }
+                    });
 }
 
 void ExportSettingsDialog::Impl::SelectFile()
@@ -177,7 +179,7 @@ void ExportSettingsDialog::Impl::ExportSettings(const std::string& destination)
 
       QMessageBox::critical(self_,
                             tr("Export Error"),
-                            tr("Unable to export settings to \"%1\".")
+                            tr("Unable to export settings to %1.")
                                .arg(QString::fromStdString(destination)),
                             QMessageBox::StandardButton::Ok,
                             QMessageBox::StandardButton::Ok);
@@ -202,7 +204,8 @@ void ExportSettingsDialog::Impl::ExportSettings(const std::string& destination)
          types::WriteSettingsFile(settingsType, ss);
 
          // Save settings
-         const std::string& filename = types::SettingsFilename(settingsType);
+         const std::string& filename =
+            types::GetSettingsTypeFilename(settingsType);
          zipStreamWriter.AddFile(filename, ss.str());
       }
    }

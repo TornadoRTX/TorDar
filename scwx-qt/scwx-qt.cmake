@@ -366,6 +366,12 @@ set(UI_UI  source/scwx/qt/ui/about_dialog.ui
            source/scwx/qt/ui/serial_port_dialog.ui
            source/scwx/qt/ui/update_dialog.ui
            source/scwx/qt/ui/wfo_dialog.ui)
+set(HDR_UI_IMPORT source/scwx/qt/ui/import/import_options_page.hpp
+                  source/scwx/qt/ui/import/import_settings_wizard.hpp
+                  source/scwx/qt/ui/import/select_file_page.hpp)
+set(SRC_UI_IMPORT source/scwx/qt/ui/import/import_options_page.cpp
+                  source/scwx/qt/ui/import/import_settings_wizard.cpp
+                  source/scwx/qt/ui/import/select_file_page.cpp)
 set(HDR_UI_SETTINGS source/scwx/qt/ui/settings/alert_palette_settings_widget.hpp
                     source/scwx/qt/ui/settings/hotkey_settings_widget.hpp
                     source/scwx/qt/ui/settings/radar_site_status_palette_settings_widget.hpp
@@ -500,6 +506,8 @@ set(PROJECT_SOURCES ${HDR_MAIN}
                     ${HDR_UI}
                     ${SRC_UI}
                     ${UI_UI}
+                    ${HDR_UI_IMPORT}
+                    ${SRC_UI_IMPORT}
                     ${HDR_UI_SETTINGS}
                     ${SRC_UI_SETTINGS}
                     ${HDR_UI_SETUP}
@@ -542,6 +550,8 @@ source_group("Header Files\\types"        FILES ${HDR_TYPES})
 source_group("Source Files\\types"        FILES ${SRC_TYPES})
 source_group("Header Files\\ui"           FILES ${HDR_UI})
 source_group("Source Files\\ui"           FILES ${SRC_UI})
+source_group("Header Files\\ui\\import"   FILES ${HDR_UI_IMPORT})
+source_group("Source Files\\ui\\import"   FILES ${SRC_UI_IMPORT})
 source_group("Header Files\\ui\\settings" FILES ${HDR_UI_SETTINGS})
 source_group("Source Files\\ui\\settings" FILES ${SRC_UI_SETTINGS})
 source_group("Header Files\\ui\\setup"    FILES ${HDR_UI_SETUP})
