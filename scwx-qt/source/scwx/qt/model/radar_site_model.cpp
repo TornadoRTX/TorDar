@@ -34,7 +34,8 @@ static constexpr int kNumColumns = kLastColumn - kFirstColumn + 1;
 class RadarSiteModelImpl
 {
 public:
-   explicit RadarSiteModelImpl() :
+   explicit RadarSiteModelImpl(RadarSiteModel* self) :
+       self_ {self},
        radarSites_ {},
        geodesic_(util::GeographicLib::DefaultGeodesic()),
        distanceMap_ {},
@@ -58,6 +59,8 @@ public:
    void ReadPresets();
    void SavePresets();
 
+   RadarSiteModel* self_;
+
    QList<std::shared_ptr<config::RadarSite>> radarSites_;
    std::unordered_set<std::string>           presets_ {};
 
@@ -74,7 +77,7 @@ public:
 };
 
 RadarSiteModel::RadarSiteModel(QObject* parent) :
-    QAbstractTableModel(parent), p(std::make_unique<RadarSiteModelImpl>())
+    QAbstractTableModel(parent), p(std::make_unique<RadarSiteModelImpl>(this))
 {
    p->InitializePresets();
    p->ReadPresets();
@@ -162,7 +165,11 @@ void RadarSiteModelImpl::ApplyPresets(const boost::json::value& presetsJson)
             // If a match, add to the presets
             if (it != radarSites_.cend())
             {
-               presets_.insert(preset);
+               const auto result = presets_.insert(preset);
+               if (result.second)
+               {
+                  Q_EMIT self_->PresetToggled(preset, true);
+               }
             }
          }
       }
