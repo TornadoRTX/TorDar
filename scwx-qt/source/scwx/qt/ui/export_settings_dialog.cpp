@@ -102,7 +102,7 @@ void ExportSettingsDialog::Impl::ConnectSignals()
                           return;
                        }
 
-                       QFileInfo fileInfo {destination};
+                       const QFileInfo fileInfo {destination};
                        if (fileInfo.exists())
                        {
                           logger_->error("Overwrite file?");
@@ -154,7 +154,7 @@ void ExportSettingsDialog::Impl::SelectFile()
                        QString filePath = file;
 
                        // If no extension is provided, append .zip
-                       QFileInfo fileInfo {filePath};
+                       const QFileInfo fileInfo {filePath};
                        if (fileInfo.suffix().isEmpty())
                        {
                           filePath += ".zip";

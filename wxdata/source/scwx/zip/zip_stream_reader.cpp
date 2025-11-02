@@ -174,7 +174,7 @@ ZipStreamReader::Impl::Read(void* data, zip_uint64_t len, zip_source_cmd_t cmd)
 
       rs->stream->read(static_cast<char*>(data),
                        static_cast<std::streamsize>(len));
-      zip_int64_t bytes_read = rs->stream->gcount();
+      const zip_int64_t bytes_read = rs->stream->gcount();
 
       if (rs->stream->bad())
       {

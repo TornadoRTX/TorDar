@@ -133,7 +133,7 @@ void RadarSiteModel::ReadPresets(std::istream& is)
 {
    logger_->info("Reading presets from stream");
 
-   boost::json::value presetsJson = scwx::util::json::ReadJsonStream(is);
+   const boost::json::value presetsJson = scwx::util::json::ReadJsonStream(is);
 
    p->ApplyPresets(presetsJson);
 

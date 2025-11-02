@@ -1,6 +1,8 @@
 #pragma once
 
+#include <cstdint>
 #include <istream>
+#include <memory>
 #include <vector>
 
 namespace scwx::zip

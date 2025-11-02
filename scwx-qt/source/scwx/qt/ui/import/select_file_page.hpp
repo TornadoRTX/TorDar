@@ -16,7 +16,7 @@ class SelectFilePage : public QWizardPage
 
 public:
    explicit SelectFilePage(QWidget* parent = nullptr);
-   ~SelectFilePage();
+   ~SelectFilePage() override;
 
    [[nodiscard]] bool isComplete() const override;
    bool               validatePage() override;

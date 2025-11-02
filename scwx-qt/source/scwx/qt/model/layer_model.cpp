@@ -187,7 +187,7 @@ void LayerModel::ReadLayerSettings(std::istream& is)
 {
    logger_->info("Reading layer settings from stream");
 
-   boost::json::value layerJson = scwx::util::json::ReadJsonStream(is);
+   const boost::json::value layerJson = scwx::util::json::ReadJsonStream(is);
 
    p->ApplyLayerSettings(layerJson);
 

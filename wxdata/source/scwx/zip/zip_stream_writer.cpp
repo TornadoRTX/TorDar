@@ -375,7 +375,7 @@ bool ZipStreamWriter::Impl::AddFile(const std::string& filename,
       return false;
    }
 
-   zip_int64_t idx = zip_file_add(archive_, filename.c_str(), src, flags);
+   const zip_int64_t idx = zip_file_add(archive_, filename.c_str(), src, flags);
    if (idx < 0)
    {
       zip_source_free(src);

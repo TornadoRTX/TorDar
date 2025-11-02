@@ -396,7 +396,8 @@ void PlacefileManager::ReadPlacefileSettings(std::istream& is)
 {
    logger_->info("Reading placefile settings from stream");
 
-   boost::json::value placefileJson = scwx::util::json::ReadJsonStream(is);
+   const boost::json::value placefileJson =
+      scwx::util::json::ReadJsonStream(is);
 
    p->ApplyPlacefileSettings(placefileJson);
 
@@ -450,7 +451,7 @@ void PlacefileManager::Impl::SavePlacefileSettings()
 
 void PlacefileManager::WritePlacefileSettings(std::ostream& os)
 {
-   std::shared_lock lock {p->placefileRecordLock_};
+   const std::shared_lock lock {p->placefileRecordLock_};
    auto placefileJson = boost::json::value_from(p->placefileRecords_);
    scwx::util::json::WriteJsonStream(os, placefileJson);
 }

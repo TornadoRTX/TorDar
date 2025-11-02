@@ -90,7 +90,7 @@ void SettingsManager::ReadSettings(const std::string& settingsPath)
    }
    else
    {
-      bool jsonDirty = Impl::LoadSettings(settingsJson.as_object());
+      const bool jsonDirty = Impl::LoadSettings(settingsJson.as_object());
 
       if (jsonDirty)
       {
@@ -109,7 +109,7 @@ void SettingsManager::ReadSettings(std::istream& is)
    // Don't reset settings to default when reading from a non-default stream
    if (settingsJson != nullptr && settingsJson.is_object())
    {
-      bool jsonDirty = Impl::LoadSettings(settingsJson.as_object());
+      const bool jsonDirty = Impl::LoadSettings(settingsJson.as_object());
 
       if (jsonDirty)
       {
@@ -135,7 +135,7 @@ void SettingsManager::WriteSettings(std::ostream& os)
 {
    if (p->initialized_)
    {
-      boost::json::value settingsJson = Impl::ConvertSettingsToJson();
+      const boost::json::value settingsJson = Impl::ConvertSettingsToJson();
       util::json::WriteJsonStream(os, settingsJson);
 
       // Don't emit SettingsSaved() when writing to a non-default stream

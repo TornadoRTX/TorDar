@@ -15,7 +15,7 @@ class ImportOptionsPage : public QWizardPage
 
 public:
    explicit ImportOptionsPage(QWidget* parent = nullptr);
-   ~ImportOptionsPage();
+   ~ImportOptionsPage() override;
 
    [[nodiscard]] bool isComplete() const override;
    bool               validatePage() override;

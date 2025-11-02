@@ -181,7 +181,7 @@ void MarkerManager::ReadMarkerSettings(std::istream& is)
 {
    logger_->info("Reading location marker settings from stream");
 
-   boost::json::value markerJson = scwx::util::json::ReadJsonStream(is);
+   const boost::json::value markerJson = scwx::util::json::ReadJsonStream(is);
 
    p->ApplyMarkerSettings(markerJson);
 
