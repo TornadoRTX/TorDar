@@ -361,6 +361,7 @@ bool ZipStreamWriter::Impl::AddFile(const std::string& filename,
 {
    // NOLINTBEGIN(cppcoreguidelines-owning-memory)
    // NOLINTBEGIN(cppcoreguidelines-no-malloc)
+   // NOLINTBEGIN(clang-analyzer-unix.Malloc)
 
    // Memory is managed by libzip
    void* buffer = std::malloc(content.size());
@@ -382,6 +383,7 @@ bool ZipStreamWriter::Impl::AddFile(const std::string& filename,
       return false;
    }
 
+   // NOLINTEND(clang-analyzer-unix.Malloc)
    // NOLINTEND(cppcoreguidelines-no-malloc)
    // NOLINTEND(cppcoreguidelines-owning-memory)
 

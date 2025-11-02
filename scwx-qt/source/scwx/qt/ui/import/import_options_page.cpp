@@ -3,13 +3,14 @@
 #include <scwx/util/logger.hpp>
 
 #include <set>
+#include <sstream>
+#include <vector>
 
 #include <QGroupBox>
 #include <QLabel>
 #include <QListWidget>
 #include <QMessageBox>
 #include <QVBoxLayout>
-#include <vector>
 
 namespace scwx::qt::ui::import
 {

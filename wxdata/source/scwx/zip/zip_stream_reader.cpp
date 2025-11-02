@@ -116,7 +116,7 @@ std::vector<std::string> ZipStreamReader::ListFiles()
 
    if (p->archive_)
    {
-      zip_int64_t num_entries = zip_get_num_entries(p->archive_, 0);
+      const zip_int64_t num_entries = zip_get_num_entries(p->archive_, 0);
 
       for (zip_int64_t i = 0; i < num_entries; i++)
       {
@@ -279,7 +279,7 @@ bool ZipStreamReader::Impl::ReadFile(const std::string& filename, T& output)
    }
 
    output.resize(st.size);
-   zip_int64_t bytes_read = zip_fread(file, output.data(), st.size);
+   const zip_int64_t bytes_read = zip_fread(file, output.data(), st.size);
    zip_fclose(file);
 
    return bytes_read == static_cast<zip_int64_t>(st.size);
