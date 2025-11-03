@@ -299,12 +299,16 @@ void AnimationDockWidgetImpl::ConnectSignals()
    QObject::connect(hotkeyManager_.get(),
                     &manager::HotkeyManager::HotkeyPressed,
                     self_,
-                    [this](types::Hotkey hotkey, bool /* isAutoRepeat */)
+                    [this](types::Hotkey hotkey, bool isAutoRepeat)
                     {
                        switch (hotkey)
                        {
                        case types::Hotkey::TimelineStepBegin:
-                          Q_EMIT self_->AnimationStepBeginSelected();
+                          // Only handle step begin on an initial key press
+                          if (!isAutoRepeat)
+                          {
+                             Q_EMIT self_->AnimationStepBeginSelected();
+                          }
                           break;
 
                        case types::Hotkey::TimelineStepBack:
@@ -312,7 +316,11 @@ void AnimationDockWidgetImpl::ConnectSignals()
                           break;
 
                        case types::Hotkey::TimelinePlay:
-                          Q_EMIT self_->AnimationPlaySelected();
+                          // Only handle play on an initial key press
+                          if (!isAutoRepeat)
+                          {
+                             Q_EMIT self_->AnimationPlaySelected();
+                          }
                           break;
 
                        case types::Hotkey::TimelineStepNext:
@@ -320,7 +328,11 @@ void AnimationDockWidgetImpl::ConnectSignals()
                           break;
 
                        case types::Hotkey::TimelineStepEnd:
-                          Q_EMIT self_->AnimationStepEndSelected();
+                          // Only handle step end on an initial key press
+                          if (!isAutoRepeat)
+                          {
+                             Q_EMIT self_->AnimationStepEndSelected();
+                          }
                           break;
 
                        default:
