@@ -67,15 +67,19 @@ void DrawItem::UseDefaultProjection(
    const QMapLibre::CustomLayerRenderParameters& params,
    GLint                                         uMVPMatrixLocation)
 {
-   static constexpr float xOffset = -0.5f;
-   static constexpr float yOffset = -0.5f;
+   static constexpr float xOffset = 0.0f;
+   static constexpr float yOffset = 0.0f;
 
    glm::mat4 projection = glm::ortho(0.0f,
                                      static_cast<float>(params.width),
                                      0.0f,
                                      static_cast<float>(params.height));
 
-   projection = glm::translate(projection, glm::vec3(xOffset, yOffset, 0.0f));
+   if constexpr (xOffset != 0.0f || yOffset != 0.0f)
+   {
+      projection =
+         glm::translate(projection, glm::vec3(xOffset, yOffset, 0.0f));
+   }
 
    glUniformMatrix4fv(
       uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(projection));
@@ -85,15 +89,19 @@ void DrawItem::UseRotationProjection(
    const QMapLibre::CustomLayerRenderParameters& params,
    GLint                                         uMVPMatrixLocation)
 {
-   static constexpr float xOffset = -0.5f;
-   static constexpr float yOffset = -0.5f;
+   static constexpr float xOffset = 0.0f;
+   static constexpr float yOffset = 0.0f;
 
    glm::mat4 projection = glm::ortho(0.0f,
                                      static_cast<float>(params.width),
                                      0.0f,
                                      static_cast<float>(params.height));
 
-   projection = glm::translate(projection, glm::vec3(xOffset, yOffset, 0.0f));
+   if constexpr (xOffset != 0.0f || yOffset != 0.0f)
+   {
+      projection =
+         glm::translate(projection, glm::vec3(xOffset, yOffset, 0.0f));
+   }
 
    projection = glm::rotate(projection,
                             glm::radians<float>(params.bearing),
