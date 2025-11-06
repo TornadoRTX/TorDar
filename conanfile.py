@@ -45,7 +45,7 @@ class SupercellWxConan(ConanFile):
             self.requires("onetbb/2022.3.0")
 
         # Force dependency graph (fontconfig) to use a newer version of freetype
-        self.requires("freetype/2.13.3", force=True)
+        self.requires("freetype/2.14.1", force=True)
 
     def generate(self):
         build_folder = os.path.join(self.build_folder,
