@@ -170,6 +170,14 @@ jobs:
                              flatpak \
                              flatpak-builder \
                              ${{ matrix.compiler_packages }}
+        # Remove unneeded items to free disk space
+        sudo apt-get clean
+        sudo rm -rf /home/runner/.rustup \
+                    /usr/local/.ghcup \
+                    /usr/local/lib/android \
+                    /usr/share/dotnet \
+                    /usr/share/swift
+        df -h
 
     - name: Setup macOS Environment
       if: ${{ startsWith(matrix.os, 'macos') }}
