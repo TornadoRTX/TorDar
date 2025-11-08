@@ -18,7 +18,7 @@ find_package(Fontconfig)
 find_package(geographiclib)
 find_package(geos)
 find_package(glm)
-find_package(OpenGL)
+find_package(OpenGL REQUIRED)
 find_package(Python COMPONENTS Interpreter)
 find_package(SQLite3)
 
@@ -779,13 +779,6 @@ if (LINUX)
     target_link_libraries(scwx-qt PUBLIC Qt${QT_VERSION_MAJOR}::WaylandClient)
 endif()
 
-if (LINUX)
-    find_package(mesa-glu REQUIRED)
-    target_link_libraries(scwx-qt PUBLIC mesa-glu::mesa-glu)
-else()
-    target_link_libraries(scwx-qt PUBLIC OpenGL::GLU)
-endif()
-
 target_link_libraries(scwx-qt PUBLIC Qt${QT_VERSION_MAJOR}::Widgets
                                      Qt${QT_VERSION_MAJOR}::OpenGLWidgets
                                      Qt${QT_VERSION_MAJOR}::Multimedia
@@ -796,6 +789,7 @@ target_link_libraries(scwx-qt PUBLIC Qt${QT_VERSION_MAJOR}::Widgets
                                      Boost::timer
                                      Boost::atomic
                                      QMapLibre::Core
+                                     OpenGL::GLU
                                      $<$<CXX_COMPILER_ID:MSVC>:opengl32>
                                      $<$<CXX_COMPILER_ID:MSVC>:SetupAPI>
                                      Fontconfig::Fontconfig
