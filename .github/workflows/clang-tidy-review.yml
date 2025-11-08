@@ -69,6 +69,14 @@ jobs:
                              libwayland-dev \
                              libwayland-egl-backend-dev \
                              ${{ matrix.compiler_packages }}
+        # Remove unneeded items to free disk space
+        sudo apt-get clean
+        sudo rm -rf /home/runner/.rustup \
+                    /usr/local/.ghcup \
+                    /usr/local/lib/android \
+                    /usr/share/dotnet \
+                    /usr/share/swift
+        df -h
 
     - name: Setup Python Environment
       shell: pwsh
