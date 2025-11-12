@@ -262,6 +262,7 @@ jobs:
         ln -s libssl.so.3 libssl.so
         rm -f libGLX.so*
         rm -f libOpenGL.so*
+        cp -p ${RUNNER_WORKSPACE}/Qt/${{ matrix.qt_version }}/${{ matrix.qt_arch_dir }}/lib/libQt6WaylandClient.so* .
         cd ..
         mkdir -p plugins/
         cd plugins/
