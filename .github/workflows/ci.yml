@@ -262,13 +262,17 @@ jobs:
         ln -s libssl.so.3 libssl.so
         rm -f libGLX.so*
         rm -f libOpenGL.so*
+        cp -p ${RUNNER_WORKSPACE}/Qt/${{ matrix.qt_version }}/${{ matrix.qt_arch_dir }}/lib/libQt6WaylandClient.so* .
         cd ..
         mkdir -p plugins/
         cd plugins/
         mkdir -p sqldrivers/
-        cp "${RUNNER_WORKSPACE}/Qt/${{ matrix.qt_version }}/${{ matrix.qt_arch_dir }}/plugins/sqldrivers/libqsqlite.so" sqldrivers/
+        cp -p "${RUNNER_WORKSPACE}/Qt/${{ matrix.qt_version }}/${{ matrix.qt_arch_dir }}/plugins/sqldrivers/libqsqlite.so" sqldrivers/
         mkdir -p platforms/
-        cp ${RUNNER_WORKSPACE}/Qt/${{ matrix.qt_version }}/${{ matrix.qt_arch_dir }}/plugins/platforms/libqwayland* platforms/
+        cp -p "${RUNNER_WORKSPACE}/Qt/${{ matrix.qt_version }}/${{ matrix.qt_arch_dir }}/plugins/platforms/libqwayland.so" platforms/
+        cp -rp "${RUNNER_WORKSPACE}/Qt/${{ matrix.qt_version }}/${{ matrix.qt_arch_dir }}/plugins/wayland-decoration-client" .
+        cp -rp "${RUNNER_WORKSPACE}/Qt/${{ matrix.qt_version }}/${{ matrix.qt_arch_dir }}/plugins/wayland-graphics-integration-client" .
+        cp -rp "${RUNNER_WORKSPACE}/Qt/${{ matrix.qt_version }}/${{ matrix.qt_arch_dir }}/plugins/wayland-shell-integration" .
         cd ..
         popd
         tar -czf supercell-wx-${{ matrix.artifact_suffix }}.tar.gz supercell-wx/
