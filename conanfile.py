@@ -20,7 +20,7 @@ class SupercellWxConan(ConanFile):
                   "range-v3/cci.20240905",
                   "re2/20251105",
                   "spdlog/1.16.0",
-                  "sqlite3/3.50.4",
+                  "sqlite3/3.51.0",
                   "vulkan-loader/1.4.313.0",
                   "zlib/1.3.1")
     generators = ("CMakeDeps")
