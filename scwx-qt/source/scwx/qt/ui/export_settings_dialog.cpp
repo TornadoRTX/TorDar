@@ -142,6 +142,7 @@ void ExportSettingsDialog::Impl::SelectFile()
 
    auto dialog = new QFileDialog(self_);
 
+   dialog->setAcceptMode(QFileDialog::AcceptMode::AcceptSave);
    dialog->setFileMode(QFileDialog::FileMode::AnyFile);
    dialog->setNameFilter(QObject::tr(zipFilter.c_str()));
    dialog->setAttribute(Qt::WA_DeleteOnClose);
