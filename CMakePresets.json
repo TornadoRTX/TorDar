@@ -54,7 +54,7 @@
       "inherits": "windows-x64-base",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_PREFIX_PATH": "C:/Qt/6.10.0/msvc2022_64"
+        "CMAKE_PREFIX_PATH": "C:/Qt/6.10.1/msvc2022_64"
       }
     },
     {
@@ -63,7 +63,7 @@
       "hidden": true,
       "generator": "Ninja",
       "cacheVariables": {
-        "CMAKE_PREFIX_PATH": "C:/Qt/6.10.0/msvc2022_64"
+        "CMAKE_PREFIX_PATH": "C:/Qt/6.10.1/msvc2022_64"
       }
     },
     {
@@ -71,7 +71,7 @@
       "inherits": "linux-base",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_PREFIX_PATH": "/opt/Qt/6.10.0/gcc_64"
+        "CMAKE_PREFIX_PATH": "/opt/Qt/6.10.1/gcc_64"
       },
       "environment": {
         "CC": "gcc-11",
@@ -212,7 +212,7 @@
       "displayName": "CI Linux GCC ARM64",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_PREFIX_PATH": "/opt/Qt/6.10.0/gcc_arm64",
+        "CMAKE_PREFIX_PATH": "/opt/Qt/6.10.1/gcc_arm64",
         "CONAN_HOST_PROFILE": "scwx-linux_gcc-11_armv8",
         "CONAN_BUILD_PROFILE": "scwx-linux_gcc-11_armv8"
       },
@@ -226,7 +226,7 @@
       "inherits": "base",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_PREFIX_PATH": "$env{HOME}/Qt/6.10.0/macos"
+        "CMAKE_PREFIX_PATH": "$env{HOME}/Qt/6.10.1/macos"
       },
       "condition": {
         "type": "equals",
