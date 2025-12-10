@@ -6,7 +6,7 @@ import os
 class SupercellWxConan(ConanFile):
     settings   = ("os", "compiler", "build_type", "arch")
     requires   = ("boost/1.89.0",
-                  "cpr/1.12.0",
+                  "cpr/1.14.1",
                   "fontconfig/2.15.0",
                   "geographiclib/2.6",
                   "geos/3.13.0",
