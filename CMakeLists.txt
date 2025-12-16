@@ -32,8 +32,8 @@ set_property(DIRECTORY
              PROPERTY CMAKE_CONFIGURE_DEPENDS
              conanfile.py)
 
-# Removed BOOST_ALL_NO_LIB flag to allow automatic Boost library linking
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_ALL_NO_LIB")
+# Added BOOST_ALL_NO_LIB flag to allow automatic Boost library linking
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_ALL_NO_LIB")
 
 set(SCWX_DIR ${PROJECT_SOURCE_DIR})
 set(SCWX_VERSION "0.5.2")
@@ -45,6 +45,10 @@ option(SCWX_ADDRESS_SANITIZER "Build with Address Sanitizer" OFF)
 # Change if using vcpkg/system SQLite.
 set(MLN_WITH_SQLITE bundled CACHE STRING "Use bundled SQLite" FORCE)
 
+# Disables MapLibre GL assertions in Debug
+add_compile_definitions(
+    MBGL_DISABLE_ASSERTIONS
+)
 
 add_subdirectory(external)
 add_subdirectory(wxdata)
