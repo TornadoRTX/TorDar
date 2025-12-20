@@ -13,7 +13,6 @@
 #include <scwx/util/logger.hpp>
 
 #include <filesystem>
-#include <fstream>
 
 #include <boost/algorithm/string.hpp>
 #include <QDir>
@@ -91,7 +90,7 @@ void SettingsManager::ReadSettings(const std::string& settingsPath)
    }
    else
    {
-      bool jsonDirty = Impl::LoadSettings(settingsJson.as_object());
+      const bool jsonDirty = Impl::LoadSettings(settingsJson.as_object());
 
       if (jsonDirty)
       {
@@ -99,6 +98,24 @@ void SettingsManager::ReadSettings(const std::string& settingsPath)
          util::json::WriteJsonFile(settingsPath, settingsJson);
       }
    };
+}
+
+void SettingsManager::ReadSettings(std::istream& is)
+{
+   logger_->info("Reading settings from stream");
+
+   boost::json::value settingsJson = util::json::ReadJsonStream(is);
+
+   // Don't reset settings to default when reading from a non-default stream
+   if (settingsJson != nullptr && settingsJson.is_object())
+   {
+      const bool jsonDirty = Impl::LoadSettings(settingsJson.as_object());
+
+      if (jsonDirty)
+      {
+         SaveSettings();
+      }
+   }
 }
 
 void SettingsManager::SaveSettings()
@@ -111,6 +128,17 @@ void SettingsManager::SaveSettings()
       util::json::WriteJsonFile(p->settingsPath_, settingsJson);
 
       Q_EMIT SettingsSaved();
+   }
+}
+
+void SettingsManager::WriteSettings(std::ostream& os)
+{
+   if (p->initialized_)
+   {
+      const boost::json::value settingsJson = Impl::ConvertSettingsToJson();
+      util::json::WriteJsonStream(os, settingsJson);
+
+      // Don't emit SettingsSaved() when writing to a non-default stream
    }
 }
 
