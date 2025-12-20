@@ -1,1 +1,1 @@
-@set qt_version=6.9.1
+@set qt_version=6.9.2
