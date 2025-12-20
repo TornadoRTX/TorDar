@@ -30,7 +30,7 @@ jobs:
             ldflags: ''
             msvc_arch: x64
             msvc_version: 2022
-            qt_version: 6.9.2
+            qt_version: 6.9.1
             qt_arch_aqt: win64_msvc2022_64
             qt_arch_dir: msvc2022_64
             qt_modules: qtimageformats qtmultimedia qtpositioning qtserialport
