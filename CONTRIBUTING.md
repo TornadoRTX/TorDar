@@ -1,6 +1,6 @@
-# Supercell Wx Contribution Guidelines
+# TorDar Contribution Guidelines
 
-Thank you for considering contributing to Supercell Wx! We welcome all kinds of contributions, from bug reports to feature requests to code contributions.
+Thank you for considering contributing to TorDar! We welcome all kinds of contributions, from bug reports to feature requests to code contributions.
 
 ## Code of Conduct
 
@@ -8,7 +8,7 @@ Before contributing, please read and adhere to the [code of conduct](CODE_OF_CON
 
 ## Contributing
 
-To contribute to Supercell Wx, please follow these steps:
+To contribute to TorDar, please follow these steps:
 
 1. Fork the repository.
 2. Create a new branch for your changes.
