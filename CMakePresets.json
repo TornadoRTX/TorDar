@@ -89,7 +89,8 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CONAN_HOST_PROFILE": "scwx-windows_msvc2022_x64-debug",
-        "CONAN_BUILD_PROFILE": "scwx-windows_msvc2022_x64-debug"
+        "CONAN_BUILD_PROFILE": "scwx-windows_msvc2022_x64-debug",
+        "CONAN_INSTALL_ARGS": "--build=missing --build=spdlog"
       }
     },
     {
@@ -103,7 +104,8 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CONAN_HOST_PROFILE": "scwx-windows_msvc2022_x64",
-        "CONAN_BUILD_PROFILE": "scwx-windows_msvc2022_x64"
+        "CONAN_BUILD_PROFILE": "scwx-windows_msvc2022_x64",
+        "CONAN_INSTALL_ARGS": "--build=missing --build=spdlog"
       }
     },
     {
@@ -113,7 +115,8 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CONAN_HOST_PROFILE": "scwx-windows_msvc2022_x64-debug",
-        "CONAN_BUILD_PROFILE": "scwx-windows_msvc2022_x64-debug"
+        "CONAN_BUILD_PROFILE": "scwx-windows_msvc2022_x64-debug",
+        "CONAN_INSTALL_ARGS": "--build=missing --build=spdlog"
       }
     },
     {
@@ -123,7 +126,8 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CONAN_HOST_PROFILE": "scwx-windows_msvc2022_x64",
-        "CONAN_BUILD_PROFILE": "scwx-windows_msvc2022_x64"
+        "CONAN_BUILD_PROFILE": "scwx-windows_msvc2022_x64",
+        "CONAN_INSTALL_ARGS": "--build=missing --build=spdlog"
       }
     },
     {
