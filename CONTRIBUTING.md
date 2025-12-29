@@ -40,4 +40,4 @@ When contributing code, please follow these guidelines:
 
 Please note that code contributions may be subject to modifications of the license by the project maintainer.
 
-Thank you for considering contributing to Supercell Wx!
+Thank you for considering contributing to TorDar.
