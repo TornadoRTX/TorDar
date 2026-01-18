@@ -17,12 +17,13 @@ This is the current vision and blueprint for TorDar, and also the full version o
 
 # Uncollapsed Blueprint
 
-![TorDar Blueprint uncollapsed](https://github.com/user-attachments/assets/7224a71d-d69a-460f-979f-d96b92ee1aff)
+<img width="1922" height="922" alt="tordar_mockup_revamp_uc" src="https://github.com/user-attachments/assets/c8a69d2c-912c-4d85-9f0d-f1cbe1a9cbf9"/>
+
 
 
 # Collapsed Blueprint
 
-![TorDar Blueprint Collapsed](https://github.com/user-attachments/assets/afe5dca0-72f7-4517-84a1-80446c4581c2)
+]<img width="1922" height="922" alt="tordar_mockup_revamp_c" src="https://github.com/user-attachments/assets/1e87fb69-072a-4946-a2e5-e158699fd38f" />
 
 
 
