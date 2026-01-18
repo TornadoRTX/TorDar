@@ -23,7 +23,7 @@ This is the current vision and blueprint for TorDar, and also the full version o
 
 # Collapsed Blueprint
 
-]<img width="1922" height="922" alt="tordar_mockup_revamp_c" src="https://github.com/user-attachments/assets/1e87fb69-072a-4946-a2e5-e158699fd38f" />
+<img width="1922" height="922" alt="tordar_mockup_revamp_c" src="https://github.com/user-attachments/assets/1e87fb69-072a-4946-a2e5-e158699fd38f" />
 
 
 
