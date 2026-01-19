@@ -834,17 +834,16 @@ void MainWindowImpl::ConfigureMapLayout()
    }
 
 // Create overlay container.
-QWidget* mapOverlayContainer = new QWidget(mainWindow_->ui->centralwidget);
-QGridLayout* overlayLayout = new QGridLayout(mapOverlayContainer);
-overlayLayout->setContentsMargins(0, 0, 0, 0);
-overlayLayout->setSpacing(0);
+QWidget* map_overlay_container = new QWidget(mainWindow_->ui->centralwidget);
+QGridLayout* overlay_layout = new QGridLayout(map_overlay_container);
+overlay_layout->setContentsMargins(0, 0, 0, 0);
+overlay_layout->setSpacing(0);
 
 // Add map splitter (the maps themselves).
-overlayLayout->addWidget(vs, 0, 0);
+overlay_layout->addWidget(vs, 0, 0);
 
 // Add overlay container to central widget.
-mainWindow_->ui->centralwidget->layout()->addWidget(mapOverlayContainer);
-
+mainWindow_->ui->centralwidget->layout()->addWidget(map_overlay_container);
 
    if (mapCount > 0)
    {  
