@@ -361,10 +361,10 @@ MainWindow::MainWindow(QWidget* parent) :
       p->level3ProductsGroup_);
 
    // Radar Toolbox Panel
-   p->radarToolboxPanel_ = new ui::CollapsibleGroup(tr("Radar Toolbox"), this);
-
+   p->radarToolboxContainer_ =
+      new ui::CollapsibleGroup(tr("Radar Toolbox"), this);
    ui->radarToolboxScrollAreaContents->layout()->addWidget(
-      p->radarToolboxPanel_);
+      p->radarToolboxContainer_);
 
    // Add Level 2 Settings
    p->level2SettingsGroup_ =
