@@ -366,6 +366,10 @@ MainWindow::MainWindow(QWidget* parent) :
    ui->radarToolboxScrollAreaContents->layout()->addWidget(
       p->radarToolboxContainer_);
 
+   // TEMP: visibility test
+   QLabel* testLabel = new QLabel(tr("Radar Toolbox (WIP)"), this);
+   p->radarToolboxContainer_->GetContentsLayout()->addWidget(testLabel);
+
    // Add Level 2 Settings
    p->level2SettingsGroup_ =
       new ui::CollapsibleGroup(tr("Level 2 Settings"), this);
