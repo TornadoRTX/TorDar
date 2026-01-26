@@ -256,12 +256,6 @@ MainWindow::MainWindow(QWidget* parent) :
     ui(new Ui::MainWindow)
 {
    ui->setupUi(this);
-   // Force Radar Toolbox to bottom-left
-   addDockWidget(Qt::LeftDockWidgetArea, ui->radarToolboxDock);
-   setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
-
-   // Optional safety
-   ui->radarToolboxDock->setFloating(false);
 
    p->InitializeLayerDisplayActions();
 
@@ -364,6 +358,17 @@ MainWindow::MainWindow(QWidget* parent) :
       p->level3ProductsWidget_);
    ui->radarToolboxScrollAreaContents->layout()->addWidget(
       p->level3ProductsGroup_);
+
+   // === TEMP: Radar Toolbox Canary ===
+   auto* canaryGroup =
+      new ui::CollapsibleGroup(tr("Radar Toolbox Canary"), this);
+
+   auto* canaryLabel = new QLabel(
+      tr("If you can see this, the radar toolbox layout works."), this);
+
+   canaryGroup->GetContentsLayout()->addWidget(canaryLabel);
+
+   ui->radarToolboxScrollAreaContents->layout()->addWidget(canaryGroup);
 
    // Add Level 2 Settings
    p->level2SettingsGroup_ =
