@@ -13,7 +13,9 @@ class SupercellWxConan(ConanFile):
                   "glm/1.0.1",
                   "gtest/1.17.0",
                   "libcurl/8.17.0",
+                  "libjpeg/9f",
                   "libpng/1.6.54",
+                  "libtiff/4.7.1",
                   "libxml2/2.15.0",
                   "libzip/1.11.4",
                   "openssl/3.6.0",
@@ -34,6 +36,8 @@ class SupercellWxConan(ConanFile):
             self.options["openssl"].shared    = True
             self.options["libcurl"].ca_bundle = "none"
             self.options["libcurl"].ca_path   = "none"
+            # onetbb requires option hwloc/*:shared=True
+            self.options["hwloc"].shared      = True
         elif self.settings.os == "Macos":
             self.options["openssl"].shared    = True
             self.options["libcurl"].ca_bundle = "none"
