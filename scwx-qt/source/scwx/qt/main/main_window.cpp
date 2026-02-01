@@ -390,7 +390,7 @@ MainWindow::MainWindow(QWidget* parent) :
 
    // TEMP: Replace toolbox contents with new Radar Toolbox UI
    auto* radarToolboxWidget =
-       new scwx::qt::ui::RadarToolboxWidget(ui->radarToolboxDock);
+      new scwx::qt::ui::RadarToolboxWidget(ui->radarToolboxDock);
 
    ui->radarToolboxDock->setWidget(radarToolboxWidget);
 
