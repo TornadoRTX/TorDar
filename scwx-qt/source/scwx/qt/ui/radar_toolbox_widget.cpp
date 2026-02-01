@@ -44,4 +44,3 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 }
 
 } // namespace ui
-
