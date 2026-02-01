@@ -33,7 +33,7 @@
 #include <scwx/qt/ui/level2_settings_widget.hpp>
 #include <scwx/qt/ui/level3_products_widget.hpp>
 #include <scwx/qt/ui/placefile_dialog.hpp>
-#include <scwx/qt/ui/radar_toolbox_widget.hpp>
+#include <scwx/qt/ui/radar_toolbox_widget/radar_toolbox_widget.hpp>
 #include <scwx/qt/ui/marker_dialog.hpp>
 #include <scwx/qt/ui/radar_site_dialog.hpp>
 #include <scwx/qt/ui/settings_dialog.hpp>
