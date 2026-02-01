@@ -1,4 +1,4 @@
-#include "ui/radar_toolbox_widget.h"
+#include "radar_toolbox_widget.hpp"
 
 #include <QLabel>
 #include <QPushButton>
@@ -44,3 +44,4 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 }
 
 } // namespace ui
+
