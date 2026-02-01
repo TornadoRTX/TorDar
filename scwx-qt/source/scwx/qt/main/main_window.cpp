@@ -33,6 +33,7 @@
 #include <scwx/qt/ui/level2_settings_widget.hpp>
 #include <scwx/qt/ui/level3_products_widget.hpp>
 #include <scwx/qt/ui/placefile_dialog.hpp>
+#include <scwx/qt/ui/radar_toolbox_widget.hpp>
 #include <scwx/qt/ui/marker_dialog.hpp>
 #include <scwx/qt/ui/radar_site_dialog.hpp>
 #include <scwx/qt/ui/settings_dialog.hpp>
@@ -386,6 +387,12 @@ MainWindow::MainWindow(QWidget* parent) :
       ui->radarToolboxSpacer);
    ui->radarToolboxScrollAreaContents->layout()->addItem(
       ui->radarToolboxSpacer);
+
+   // TEMP: Replace toolbox contents with new Radar Toolbox UI
+   auto* radarToolboxWidget =
+       new scwx::qt::ui::RadarToolboxWidget(ui->radarToolboxDock);
+
+   ui->radarToolboxDock->setWidget(radarToolboxWidget);
 
    // Status Bar
    QWidget* statusBarWidget = new QWidget(this);
