@@ -1,5 +1,6 @@
 #include "radar_toolbox_widget.hpp"
 
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
 #include <QScrollArea>
@@ -15,9 +16,24 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    rootLayout_->setContentsMargins(8, 8, 8, 8);
    rootLayout_->setSpacing(8);
 
-   // Header
-   header_ = new QLabel(tr("RADAR TOOLBOX"), this);
-   rootLayout_->addWidget(header_);
+   // Header container
+   headerContainer_   = new QWidget(this);
+   auto* headerLayout = new QHBoxLayout(headerContainer_);
+   headerLayout->setContentsMargins(0, 0, 0, 0);
+   headerLayout->setSpacing(6);
+
+   titleLabel_ = new QLabel(tr("RADAR TOOLBOX"), headerContainer_);
+   titleLabel_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+
+   collapseButton_ = new QPushButton("▼", headerContainer_);
+   collapseButton_->setFixedSize(24, 24);
+   collapseButton_->setFlat(true);
+
+   headerLayout->addWidget(titleLabel_);
+   headerLayout->addStretch();
+   headerLayout->addWidget(collapseButton_);
+
+   rootLayout_->addWidget(headerContainer_);
 
    // Playback row (placeholder)
    playbackRow_ = new QWidget(this);
@@ -32,7 +48,6 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    auto* scrollLayout = new QVBoxLayout(scrollContents_);
    scrollLayout->setSpacing(6);
 
-   // Placeholder product buttons
    scrollLayout->addWidget(new QPushButton(tr("Reflectivity"), this));
    scrollLayout->addWidget(new QPushButton(tr("Velocity"), this));
    scrollLayout->addWidget(
@@ -41,6 +56,17 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 
    scrollArea_->setWidget(scrollContents_);
    rootLayout_->addWidget(scrollArea_);
+
+   // Collapse behavior (no animation yet)
+   connect(collapseButton_,
+           &QPushButton::clicked,
+           this,
+           [this]()
+           {
+              collapsed_ = !collapsed_;
+              scrollArea_->setVisible(!collapsed_);
+              collapseButton_->setText(collapsed_ ? "▲" : "▼");
+           });
 }
 
 } // namespace scwx::qt::ui
