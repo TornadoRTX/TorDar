@@ -35,9 +35,25 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 
    rootLayout_->addWidget(headerContainer_);
 
-   // Playback row (placeholder)
-   playbackRow_ = new QWidget(this);
-   playbackRow_->setFixedHeight(32);
+   // Playback row
+   playbackRow_         = new QWidget(this);
+   auto* playbackLayout = new QHBoxLayout(playbackRow_);
+   playbackLayout->setContentsMargins(0, 0, 0, 0);
+   playbackLayout->setSpacing(6);
+
+   // Buttons (placeholders for now)
+   auto* backBtn  = new QPushButton(tr("⏮"), playbackRow_);
+   auto* playBtn  = new QPushButton(tr("▶"), playbackRow_);
+   auto* pauseBtn = new QPushButton(tr("⏸"), playbackRow_);
+   auto* fwdBtn   = new QPushButton(tr("⏭"), playbackRow_);
+
+   for (auto* btn : {backBtn, playBtn, pauseBtn, fwdBtn})
+   {
+      btn->setFixedSize(28, 28);
+      playbackLayout->addWidget(btn);
+   }
+
+   playbackLayout->addStretch();
    rootLayout_->addWidget(playbackRow_);
 
    // Scroll area
