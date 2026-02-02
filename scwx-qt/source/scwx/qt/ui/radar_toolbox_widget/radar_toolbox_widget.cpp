@@ -81,7 +81,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
            {
               collapsed_ = !collapsed_;
               scrollArea_->setVisible(!collapsed_);
-              collapseButton_->setText(collapsed_ ? "▲" : "▼");
+              collapseButton_->setText(collapsed_ ? "▼" : "▲");
            });
 }
 
