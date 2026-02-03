@@ -28,13 +28,18 @@ private:
    QPushButton* collapseButton_;
 
    // Playback row
-   QWidget* playbackRow_;
+   QWidget*     playbackRow_;
+   QPushButton* backBtn_;
+   QPushButton* playPauseBtn_;
+   QPushButton* forwardBtn_;
+   QPushButton* stopBtn_;
 
    // Scrollable content
    QScrollArea* scrollArea_;
    QWidget*     scrollContents_;
 
    bool collapsed_ = false;
+   bool isPlaying_ = false;
 };
 
 } // namespace scwx::qt::ui

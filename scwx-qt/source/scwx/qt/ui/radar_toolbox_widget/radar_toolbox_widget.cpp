@@ -16,7 +16,9 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    rootLayout_->setContentsMargins(8, 8, 8, 8);
    rootLayout_->setSpacing(8);
 
-   // Header container
+   // -------------------------
+   // Header
+   // -------------------------
    headerContainer_   = new QWidget(this);
    auto* headerLayout = new QHBoxLayout(headerContainer_);
    headerLayout->setContentsMargins(0, 0, 0, 0);
@@ -35,28 +37,32 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 
    rootLayout_->addWidget(headerContainer_);
 
+   // -------------------------
    // Playback row
+   // -------------------------
    playbackRow_         = new QWidget(this);
    auto* playbackLayout = new QHBoxLayout(playbackRow_);
    playbackLayout->setContentsMargins(0, 0, 0, 0);
    playbackLayout->setSpacing(6);
 
-   // Buttons (placeholders for now)
-   auto* backBtn  = new QPushButton(tr("⏮"), playbackRow_);
-   auto* playBtn  = new QPushButton(tr("▶"), playbackRow_);
-   auto* pauseBtn = new QPushButton(tr("⏸"), playbackRow_);
-   auto* fwdBtn   = new QPushButton(tr("⏭"), playbackRow_);
+   backBtn_      = new QPushButton(tr("⏮"), playbackRow_);
+   playPauseBtn_ = new QPushButton(tr("▶"), playbackRow_);
+   forwardBtn_   = new QPushButton(tr("⏭"), playbackRow_);
+   stopBtn_      = new QPushButton(tr("⏹"), playbackRow_);
 
-   for (auto* btn : {backBtn, playBtn, pauseBtn, fwdBtn})
+   for (auto* btn : {backBtn_, playPauseBtn_, forwardBtn_, stopBtn_})
    {
       btn->setFixedSize(28, 28);
+      btn->setFlat(true);
       playbackLayout->addWidget(btn);
    }
 
    playbackLayout->addStretch();
    rootLayout_->addWidget(playbackRow_);
 
-   // Scroll area
+   // -------------------------
+   // Scroll area (products)
+   // -------------------------
    scrollArea_ = new QScrollArea(this);
    scrollArea_->setWidgetResizable(true);
 
@@ -74,7 +80,9 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    scrollArea_->setWidget(scrollContents_);
    rootLayout_->addWidget(scrollArea_);
 
-   // Collapse behavior (no animation yet)
+   // -------------------------
+   // Collapse behavior
+   // -------------------------
    connect(collapseButton_,
            &QPushButton::clicked,
            this,
@@ -82,7 +90,33 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
            {
               collapsed_ = !collapsed_;
               scrollArea_->setVisible(!collapsed_);
-              collapseButton_->setText(collapsed_ ? "▼" : "▲");
+              playbackRow_->setVisible(!collapsed_);
+              collapseButton_->setText(collapsed_ ? "▲" : "▼");
+           });
+
+   // -------------------------
+   // Play / Pause toggle
+   // -------------------------
+   connect(playPauseBtn_,
+           &QPushButton::clicked,
+           this,
+           [this]()
+           {
+              isPlaying_ = !isPlaying_;
+              playPauseBtn_->setText(isPlaying_ ? "⏸" : "▶");
+           });
+
+   // -------------------------
+   // Stop / Live (UI reset only)
+   // -------------------------
+   connect(stopBtn_,
+           &QPushButton::clicked,
+           this,
+           [this]()
+           {
+              isPlaying_ = false;
+              playPauseBtn_->setText("▶");
+              // Future: jump to latest frame + re-enable auto-update
            });
 }
 
