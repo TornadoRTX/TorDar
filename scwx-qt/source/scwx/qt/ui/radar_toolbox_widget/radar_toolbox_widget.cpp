@@ -90,7 +90,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
            {
               collapsed_ = !collapsed_;
               scrollArea_->setVisible(!collapsed_);
-              // playbackRow should NOT be collapsed. Change the next line if you want to collapse it.
+              // playbackRow should NOT be collapsed.
               // playbackRow_->setVisible(!collapsed_);
               collapseButton_->setText(collapsed_ ? "▲" : "▼");
            });
