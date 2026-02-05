@@ -393,6 +393,8 @@ MainWindow::MainWindow(QWidget* parent) :
       new scwx::qt::ui::RadarToolboxWidget(ui->radarToolboxDock);
 
    ui->radarToolboxDock->setWidget(radarToolboxWidget);
+   radarToolboxWidget->SetLevel2ProductsWidget(p->level2ProductsGroup_);
+   radarToolboxWidget->SetLevel3ProductsWidget(p->level3ProductsGroup_);
 
    // Status Bar
    QWidget* statusBarWidget = new QWidget(this);
