@@ -68,14 +68,11 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 
    scrollContents_    = new QWidget(scrollArea_);
    auto* scrollLayout = new QVBoxLayout(scrollContents_);
-   scrollLayout->setSpacing(6);
+   productsLayout_    = new QVBoxLayout(scrollContents_);
+   productsLayout_->setSpacing(6);
+   productsLayout_->setContentsMargins(0, 0, 0, 0);
 
-   scrollLayout->addWidget(
-      new QPushButton(tr("Reflectivity"), scrollContents_));
-   scrollLayout->addWidget(new QPushButton(tr("Velocity"), scrollContents_));
-   scrollLayout->addWidget(
-      new QPushButton(tr("Correlation Coefficient"), scrollContents_));
-   scrollLayout->addStretch();
+   productsLayout_->addStretch();
 
    scrollArea_->setWidget(scrollContents_);
    rootLayout_->addWidget(scrollArea_);
