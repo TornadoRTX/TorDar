@@ -9,7 +9,7 @@
 
 namespace scwx::qt::ui
 {
-   void RadarToolboxWidget::SetLevel2ProductsWidget(QWidget* widget)
+void RadarToolboxWidget::SetLevel2ProductsWidget(QWidget* widget)
 {
    if (widget == nullptr)
    {
@@ -17,10 +17,7 @@ namespace scwx::qt::ui
    }
 
    widget->setParent(scrollContents_);
-   productsLayout_->insertWidget(
-      productsLayout_->count() - 1,
-      widget
-   );
+   productsLayout_->insertWidget(productsLayout_->count() - 1, widget);
 }
 
 void RadarToolboxWidget::SetLevel3ProductsWidget(QWidget* widget)
@@ -31,10 +28,7 @@ void RadarToolboxWidget::SetLevel3ProductsWidget(QWidget* widget)
    }
 
    widget->setParent(scrollContents_);
-   productsLayout_->insertWidget(
-      productsLayout_->count() - 1,
-      widget
-   );
+   productsLayout_->insertWidget(productsLayout_->count() - 1, widget);
 }
 
 RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
