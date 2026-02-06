@@ -66,9 +66,9 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    scrollArea_ = new QScrollArea(this);
    scrollArea_->setWidgetResizable(true);
 
-   scrollContents_    = new QWidget(scrollArea_);
-   auto* scrollLayout = new QVBoxLayout(scrollContents_);
-   productsLayout_    = new QVBoxLayout(scrollContents_);
+   scrollContents_ = new QWidget(scrollArea_);
+
+   productsLayout_ = new QVBoxLayout(scrollContents_);
    productsLayout_->setSpacing(6);
    productsLayout_->setContentsMargins(0, 0, 0, 0);
 
