@@ -16,8 +16,8 @@ class RadarProductCard : public QWidget
 
 public:
    explicit RadarProductCard(const QString& title,
-                             const QString& subtitle = QString(),
-                             QWidget*       parent   = nullptr);
+                             const QString& iconPath,
+                             QWidget*       parent = nullptr);
 
 signals:
    void Clicked();
@@ -30,8 +30,8 @@ protected:
 private:
    void UpdateStyle();
 
+   QLabel* imageLabel_;
    QLabel* titleLabel_;
-   QLabel* subtitleLabel_;
 
    bool hovered_ = false;
 };

@@ -94,14 +94,13 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    productsLayout_->setSpacing(6);
    productsLayout_->setContentsMargins(0, 0, 0, 0);
    productsLayout_->addWidget(new RadarProductCard(
-      "Reflectivity", "Base reflectivity", scrollContents_));
+      tr("Reflectivity"), ":/icons/radar/reflectivity.svg", scrollContents_));
 
-   productsLayout_->addWidget(
-      new RadarProductCard("Velocity", "Radial velocity", scrollContents_));
+   productsLayout_->addWidget(new RadarProductCard(
+      tr("Velocity"), ":/icons/radar/velocity.svg", scrollContents_));
 
-   productsLayout_->addWidget(
-      new RadarProductCard("Correlation Coefficient", "CC", scrollContents_));
-   productsLayout_->addStretch();
+   productsLayout_->addWidget(new RadarProductCard(
+      tr("Correlation Coefficient"), ":/icons/radar/cc.svg", scrollContents_));
 
    scrollArea_->setWidget(scrollContents_);
    rootLayout_->addWidget(scrollArea_);
