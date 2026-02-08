@@ -1,4 +1,5 @@
 #include "radar_toolbox_widget.hpp"
+#include "RadarProductCard.hpp"
 
 #include <QHBoxLayout>
 #include <QLabel>
@@ -92,7 +93,14 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    productsLayout_ = new QVBoxLayout(scrollContents_);
    productsLayout_->setSpacing(6);
    productsLayout_->setContentsMargins(0, 0, 0, 0);
+   productsLayout_->addWidget(new RadarProductCard(
+      "Reflectivity", "Base reflectivity", scrollContents_));
 
+   productsLayout_->addWidget(
+      new RadarProductCard("Velocity", "Radial velocity", scrollContents_));
+
+   productsLayout_->addWidget(
+      new RadarProductCard("Correlation Coefficient", "CC", scrollContents_));
    productsLayout_->addStretch();
 
    scrollArea_->setWidget(scrollContents_);
