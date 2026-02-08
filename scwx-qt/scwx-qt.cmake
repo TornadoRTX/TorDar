@@ -297,7 +297,7 @@ set(HDR_UI source/scwx/qt/ui/about_dialog.hpp
            source/scwx/qt/ui/level2_settings_widget.hpp
            source/scwx/qt/ui/level3_products_widget.hpp
            source/scwx/qt/ui/radar_toolbox_widget/radar_toolbox_widget.hpp
-           source/scwx/qt/ui/radar_toolbox_widget/RadarProductCard.cpp
+           source/scwx/qt/ui/radar_toolbox_widget/RadarProductCard.hpp
            source/scwx/qt/ui/line_label.hpp
            source/scwx/qt/ui/open_url_dialog.hpp
            source/scwx/qt/ui/placefile_dialog.hpp
