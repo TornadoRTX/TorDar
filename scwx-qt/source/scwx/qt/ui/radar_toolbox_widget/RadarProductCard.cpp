@@ -41,7 +41,7 @@ void RadarProductCard::mousePressEvent(QMouseEvent* event)
 {
    if (event->button() == Qt::LeftButton)
    {
-      emit Clicked();
+      Clicked();
    }
 
    QWidget::mousePressEvent(event);
