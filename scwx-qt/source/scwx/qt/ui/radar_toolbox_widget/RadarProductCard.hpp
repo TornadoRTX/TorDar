@@ -1,6 +1,9 @@
 #pragma once
 
 #include <QWidget>
+#include <QEvent>
+#include <QMouseEvent>
+#include <QEnterEvent>
 
 class QLabel;
 
