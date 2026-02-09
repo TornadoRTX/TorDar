@@ -93,24 +93,16 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    productsLayout_ = new QVBoxLayout(scrollContents_);
    productsLayout_->setSpacing(6);
    productsLayout_->setContentsMargins(0, 0, 0, 0);
+   productsLayout_->addWidget(new RadarProductCard(
+      "Reflectivity", ":/res/icons/radar/reflectivity.png", scrollContents_));
+
+   productsLayout_->addWidget(new RadarProductCard(
+      "Velocity", ":/res/icons/radar/velocity.png", scrollContents_));
+
    productsLayout_->addWidget(
-      new RadarProductCard(
-         "Reflectivity",
-         ":/res/icons/radar/reflectivity.png",
-         scrollContents_));
-   
-   productsLayout_->addWidget(
-      new RadarProductCard(
-         "Velocity",
-         ":/res/icons/radar/velocity.png",
-         scrollContents_));
-   
-   productsLayout_->addWidget(
-      new RadarProductCard(
-         "Correlation Coefficient",
-         ":/res/icons/radar/correlation.png",
-         scrollContents_));
-   
+      new RadarProductCard("Correlation Coefficient",
+                           ":/res/icons/radar/correlation.png",
+                           scrollContents_));
 
    // -------------------------
    // Collapse behavior
