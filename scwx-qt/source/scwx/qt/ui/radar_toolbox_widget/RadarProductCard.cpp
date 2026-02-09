@@ -4,6 +4,7 @@
 #include <QMouseEvent>
 #include <QPixmap>
 #include <QVBoxLayout>
+#include <QDebug>
 
 namespace scwx::qt::ui
 {
@@ -15,23 +16,38 @@ RadarProductCard::RadarProductCard(const QString& title,
 {
    setCursor(Qt::PointingHandCursor);
    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-   setMinimumHeight(110); // optional polish (explained below)
+   setMinimumHeight(110);
 
    auto* layout = new QVBoxLayout(this);
    layout->setContentsMargins(8, 10, 8, 10);
    layout->setSpacing(6);
 
+   // -------------------------
+   // Icon
+   // -------------------------
    imageLabel_ = new QLabel(this);
    imageLabel_->setFixedSize(36, 36);
    imageLabel_->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
    imageLabel_->setScaledContents(true);
-   imageLabel_->setPixmap(QPixmap(iconPath));
 
+   QPixmap pixmap(iconPath);
+   if (pixmap.isNull())
+   {
+      qWarning() << "RadarProductCard: failed to load icon:" << iconPath;
+   }
+   imageLabel_->setPixmap(pixmap);
+
+   // -------------------------
+   // Title
+   // -------------------------
    titleLabel_ = new QLabel(title, this);
    titleLabel_->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
    titleLabel_->setWordWrap(true);
    titleLabel_->setStyleSheet("font-weight: 600; font-size: 12px;");
 
+   // -------------------------
+   // Layout
+   // -------------------------
    layout->addWidget(imageLabel_, 0, Qt::AlignHCenter);
    layout->addWidget(titleLabel_, 0, Qt::AlignHCenter);
    layout->addStretch();
