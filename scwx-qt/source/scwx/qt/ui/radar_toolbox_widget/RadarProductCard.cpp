@@ -8,36 +8,37 @@
 namespace scwx::qt::ui
 {
 
-RadarProductCard::RadarProductCard(const QString& title,
-                                   const QString& iconPath,
-                                   QWidget*       parent) :
-    QWidget(parent)
+   RadarProductCard::RadarProductCard(const QString& title,
+      const QString& iconPath,
+      QWidget*       parent) :
+QWidget(parent)
 {
-   setCursor(Qt::PointingHandCursor);
-   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-   setMinimumHeight(96);
+setCursor(Qt::PointingHandCursor);
+setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+setMinimumHeight(110); // optional polish (explained below)
 
-   auto* layout = new QVBoxLayout(this);
-   layout->setContentsMargins(8, 10, 8, 10);
-   layout->setSpacing(6);
-   layout->setAlignment(Qt::AlignCenter);
+auto* layout = new QVBoxLayout(this);
+layout->setContentsMargins(8, 10, 8, 10);
+layout->setSpacing(6);
 
-   imageLabel_ = new QLabel(this);
-   imageLabel_->setFixedSize(36, 36);
-   imageLabel_->setAlignment(Qt::AlignCenter);
-   imageLabel_->setScaledContents(true);
-   imageLabel_->setPixmap(QPixmap(iconPath));
+imageLabel_ = new QLabel(this);
+imageLabel_->setFixedSize(36, 36);
+imageLabel_->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
+imageLabel_->setScaledContents(true);
+imageLabel_->setPixmap(QPixmap(iconPath));
 
-   titleLabel_ = new QLabel(title, this);
-   titleLabel_->setAlignment(Qt::AlignCenter);
-   titleLabel_->setWordWrap(true);
-   titleLabel_->setStyleSheet("font-weight: 600; font-size: 12px;");
+titleLabel_ = new QLabel(title, this);
+titleLabel_->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
+titleLabel_->setWordWrap(true);
+titleLabel_->setStyleSheet("font-weight: 600; font-size: 12px;");
 
-   layout->addWidget(imageLabel_);
-   layout->addWidget(titleLabel_);
+layout->addWidget(imageLabel_, 0, Qt::AlignHCenter);
+layout->addWidget(titleLabel_, 0, Qt::AlignHCenter);
+layout->addStretch();
 
-   UpdateStyle();
+UpdateStyle();
 }
+
 
 void RadarProductCard::mousePressEvent(QMouseEvent* event)
 {
