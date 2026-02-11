@@ -2,7 +2,7 @@
 
 #include <QLabel>
 #include <QMouseEvent>
-#include <QPixmap>
+#include <QIcon>
 #include <QVBoxLayout>
 #include <QDebug>
 
@@ -30,12 +30,14 @@ RadarProductCard::RadarProductCard(const QString& title,
    imageLabel_->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
    imageLabel_->setScaledContents(true);
 
-   QPixmap pixmap(iconPath);
-   if (pixmap.isNull())
+   QIcon icon(iconPath);
+
+   if (icon.isNull())
    {
       qWarning() << "RadarProductCard: failed to load icon:" << iconPath;
    }
-   imageLabel_->setPixmap(pixmap);
+
+   imageLabel_->setPixmap(icon.pixmap(36, 36));
 
    // -------------------------
    // Title
