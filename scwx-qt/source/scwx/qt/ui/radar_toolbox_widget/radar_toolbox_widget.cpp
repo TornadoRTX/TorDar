@@ -102,10 +102,8 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    productsLayout_->addWidget(new RadarProductCard(
       "Velocity", ":/res/icons/radar/velocity.svg", scrollContents_));
 
-   productsLayout_->addWidget(
-      new RadarProductCard("Correlation Coefficient",
-                           ":/res/icons/radar/cc.svg",
-                           scrollContents_));
+   productsLayout_->addWidget(new RadarProductCard(
+      "Correlation Coefficient", ":/res/icons/radar/cc.svg", scrollContents_));
 
    productsLayout_->addStretch();
 
