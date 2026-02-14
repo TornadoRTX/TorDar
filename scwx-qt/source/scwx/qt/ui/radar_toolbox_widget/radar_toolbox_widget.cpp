@@ -7,6 +7,18 @@
 #include <QScrollArea>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <vector>
+
+namespace
+{
+
+struct ProductInfo
+{
+   QString name;
+   QString icon;
+};
+
+} // namespace
 
 namespace scwx::qt::ui
 {
@@ -96,14 +108,29 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    productsLayout_->setSpacing(6);
    productsLayout_->setContentsMargins(0, 0, 0, 0);
 
-   productsLayout_->addWidget(new RadarProductCard(
-      "Reflectivity", ":/res/icons/radar/reflectivity.svg", scrollContents_));
+   const std::vector<ProductInfo> products = {
+      {"Reflectivity", ":/res/icons/radar/reflectivity.svg"},
+      {"Velocity", ":/res/icons/radar/velocity.svg"},
+      {"Correlation Coefficient", ":/res/icons/radar/cc.svg"},
+      {"Differential Reflectivity", ":/res/icons/radar/ZDR.svg"},
+      {"Spectrum Width", ":/res/icons/radar/SW.svg"},
+      {"Precipitation Type", ":/res/icons/radar/PRT.svg"},
+      {"Differential Phase", ":/res/icons/radar/placeholder.svg"},
+      {"Specific Differential Phase", ":/res/icons/radar/KDP.svg"},
+      {"Hydrometeor Classification", ":/res/icons/radar/HCA.svg"},
+      {"Enhanced Echo Tops", ":/res/icons/radar/ETT.svg"},
+      {"Echo Tops", ":/res/icons/radar/placeholder.svg"},
+      {"Storm Relative Velocity", ":/res/icons/radar/SRV-SRM.svg"},
+      {"Vertical Integrated Liquid", ":/res/icons/radar/VIL.svg"},
+      {"One Hour Precip. Accum.", ":/res/icons/radar/OHPA.svg"},
+      {"Storm Total Precip. Accum.", ":/res/icons/radar/STPA.svg"},
+      {"Clutter Filter Power Removed", ":/res/icons/radar/placeholder.svg"}};
 
-   productsLayout_->addWidget(new RadarProductCard(
-      "Velocity", ":/res/icons/radar/velocity.svg", scrollContents_));
-
-   productsLayout_->addWidget(new RadarProductCard(
-      "Correlation Coefficient", ":/res/icons/radar/cc.svg", scrollContents_));
+   for (const auto& product : products)
+   {
+      productsLayout_->addWidget(
+         new RadarProductCard(product.name, product.icon, scrollContents_));
+   }
 
    productsLayout_->addStretch();
 

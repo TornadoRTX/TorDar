@@ -99,5 +99,16 @@
     <file>res/icons/radar/cc.svg</file>
     <file>res/icons/radar/velocity.svg</file>
     <file>res/icons/radar/reflectivity.svg</file>
+    <file>res/icons/radar/EET.svg</file>
+    <file>res/icons/radar/KDP.svg</file>
+    <file>res/icons/radar/OHPA.svg</file>
+    <file>res/icons/radar/PRT.svg</file>
+    <file>res/icons/radar/HCA.svg</file>
+    <file>res/icons/radar/SRV-SRM.svg</file>
+    <file>res/icons/radar/SW.svg</file>
+    <file>res/icons/radar/VIL.svg</file>
+    <file>res/icons/radar/STPA.svg</file>
+    <file>res/icons/radar/ZDR.svg</file>
+    <file>res/icons/radar/placeholder.svg</file>
   </qresource>
 </RCC>
