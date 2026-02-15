@@ -60,6 +60,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 
    titleLabel_ = new QLabel(tr("RADAR TOOLBOX"), headerContainer_);
    titleLabel_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+   titleLabel_->setWordWrap(true);
 
    collapseButton_ = new QPushButton("▼", headerContainer_);
    collapseButton_->setFixedSize(24, 24);
@@ -102,11 +103,14 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    scrollArea_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
    scrollContents_ = new QWidget(scrollArea_);
-   scrollContents_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+   scrollContents_->setSizePolicy(QSizePolicy::Expanding,
+                                  QSizePolicy::Preferred);
 
    productsLayout_ = new QVBoxLayout(scrollContents_);
    productsLayout_->setSpacing(6);
    productsLayout_->setContentsMargins(0, 0, 0, 0);
+   productsLayout_->setSizeConstraint(QLayout::SetMinAndMaxSize);
+   productsLayout_->setAlignment(Qt::AlignTop);
 
    const std::vector<ProductInfo> products = {
       {"Reflectivity", ":/res/icons/radar/reflectivity.svg"},
