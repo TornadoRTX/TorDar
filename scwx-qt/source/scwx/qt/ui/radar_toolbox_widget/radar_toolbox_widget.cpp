@@ -118,7 +118,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
       {"Differential Phase", ":/res/icons/radar/placeholder.svg"},
       {"Specific Differential Phase", ":/res/icons/radar/KDP.svg"},
       {"Hydrometeor Classification", ":/res/icons/radar/HCA.svg"},
-      {"Enhanced Echo Tops", ":/res/icons/radar/ETT.svg"},
+      {"Enhanced Echo Tops", ":/res/icons/radar/EET.svg"},
       {"Echo Tops", ":/res/icons/radar/placeholder.svg"},
       {"Storm Relative Velocity", ":/res/icons/radar/SRV-SRM.svg"},
       {"Vertical Integrated Liquid", ":/res/icons/radar/VIL.svg"},

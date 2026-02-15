@@ -15,8 +15,8 @@ RadarProductCard::RadarProductCard(const QString& title,
     QWidget(parent)
 {
    setCursor(Qt::PointingHandCursor);
-   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-
+   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+   setMinimumHeight(80);
    auto* layout = new QVBoxLayout(this);
    layout->setContentsMargins(8, 10, 8, 10);
    layout->setSpacing(6);
