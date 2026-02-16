@@ -16,7 +16,6 @@ RadarProductCard::RadarProductCard(const QString& title,
 {
    setCursor(Qt::PointingHandCursor);
    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-   setMinimumHeight(80);
    auto* layout = new QVBoxLayout(this);
    layout->setContentsMargins(8, 10, 8, 10);
    layout->setSpacing(6);
@@ -44,16 +43,23 @@ RadarProductCard::RadarProductCard(const QString& title,
    titleLabel_ = new QLabel(title, this);
    titleLabel_->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
    titleLabel_->setWordWrap(true);
+   titleLabel_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
    titleLabel_->setStyleSheet("font-weight: 600; font-size: 12px;");
+   titleLabel_->setMinimumWidth(0);
 
    // -------------------------
    // Layout
    // -------------------------
    layout->addWidget(imageLabel_, 0, Qt::AlignHCenter);
-   layout->addWidget(titleLabel_, 0, Qt::AlignHCenter);
-   layout->addStretch();
+   layout->addWidget(titleLabel_);
+   
 
    UpdateStyle();
+}
+
+QSize RadarProductCard::sizeHint() const
+{
+   return layout()->sizeHint();
 }
 
 void RadarProductCard::mousePressEvent(QMouseEvent* event)
