@@ -17,7 +17,6 @@ RadarProductCard::RadarProductCard(const QString& title,
    setCursor(Qt::PointingHandCursor);
    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
    setMinimumHeight(80);
-   titleLabel_->setWordWrap(true);
    auto* layout = new QVBoxLayout(this);
    layout->setContentsMargins(8, 10, 8, 10);
    layout->setSpacing(6);
