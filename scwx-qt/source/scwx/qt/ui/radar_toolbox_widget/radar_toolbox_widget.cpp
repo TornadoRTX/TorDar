@@ -100,9 +100,10 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    // -------------------------
    scrollArea_ = new QScrollArea(this);
    scrollArea_->setWidgetResizable(true);
+   scrollArea_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
    scrollArea_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-   scrollContents_ = new QWidget(scrollArea_);
+   scrollContents_ = new QWidget();
    scrollContents_->setSizePolicy(QSizePolicy::Expanding,
                                   QSizePolicy::Preferred);
 
