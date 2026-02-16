@@ -18,7 +18,6 @@ public:
    explicit RadarProductCard(const QString& title,
                              const QString& iconPath,
                              QWidget*       parent = nullptr);
-   QSize sizeHint() const override;
 
 signals:
    void Clicked();
