@@ -52,7 +52,6 @@ RadarProductCard::RadarProductCard(const QString& title,
    // -------------------------
    layout->addWidget(imageLabel_, 0, Qt::AlignHCenter);
    layout->addWidget(titleLabel_);
-   
 
    UpdateStyle();
 }
