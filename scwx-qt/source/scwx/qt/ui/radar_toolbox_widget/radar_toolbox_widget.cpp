@@ -134,26 +134,25 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    {
       auto* card =
          new RadarProductCard(product.name, product.icon, scrollContents_);
-      
+
       connect(card,
-               &RadarProductCard::Clicked,
-               this,
-               [this, card]()
-               {
-                  auto cards =
-                     scrollContents_->findChildren<RadarProductCard*>();
-      
-                  for (auto* c : cards)
-                  {
-                     c->SetSelected(false);
-                  }
-      
-                  card->SetSelected(true);
-               });
-      
+              &RadarProductCard::Clicked,
+              this,
+              [this, card]()
+              {
+                 auto cards =
+                    scrollContents_->findChildren<RadarProductCard*>();
+
+                 for (auto* c : cards)
+                 {
+                    c->SetSelected(false);
+                 }
+
+                 card->SetSelected(true);
+              });
+
       productsLayout_->addWidget(card);
    }
-      
 
    productsLayout_->addStretch();
 

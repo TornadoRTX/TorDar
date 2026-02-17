@@ -19,7 +19,7 @@ public:
                              const QString& iconPath,
                              QWidget*       parent = nullptr);
    QSize sizeHint() const override;
-   void SetSelected(bool selected);
+   void  SetSelected(bool selected);
 
 signals:
    void Clicked();
@@ -32,12 +32,12 @@ protected:
 private:
    void UpdateStyle();
 
-   QLabel* imageLabel_;
-   QLabel* titleLabel_;
+   QLabel*  imageLabel_;
+   QLabel*  titleLabel_;
    QWidget* iconContainer_;
 
-   bool hovered_ = false;
-   bool selected_ = false; 
+   bool hovered_  = false;
+   bool selected_ = false;
 };
 
 } // namespace scwx::qt::ui

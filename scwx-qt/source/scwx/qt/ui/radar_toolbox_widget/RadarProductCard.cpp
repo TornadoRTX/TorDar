@@ -26,7 +26,7 @@ RadarProductCard::RadarProductCard(const QString& title,
    iconContainer_ = new QWidget(this);
    iconContainer_->setFixedSize(44, 44);
    iconContainer_->setProperty("selected", false);
-   
+
    QVBoxLayout* iconLayout = new QVBoxLayout(iconContainer_);
    iconLayout->setContentsMargins(4, 4, 4, 4);
    iconLayout->setAlignment(Qt::AlignCenter);
@@ -70,9 +70,8 @@ RadarProductCard::RadarProductCard(const QString& title,
       "}"
       "QWidget[selected='true'] {"
       "  border: 2px solid #2979FF;"
-      "}"
-   );
-   
+      "}");
+
    titleLabel_->setStyleSheet(
       "QLabel {"
       "  font-weight: 600;"
@@ -81,9 +80,8 @@ RadarProductCard::RadarProductCard(const QString& title,
       "}"
       "QLabel[selected='true'] {"
       "  color: #2979FF;"
-      "}"
-   );
-   
+      "}");
+
    UpdateStyle();
 }
 
@@ -143,6 +141,5 @@ void RadarProductCard::SetSelected(bool selected)
    titleLabel_->style()->unpolish(titleLabel_);
    titleLabel_->style()->polish(titleLabel_);
 }
-
 
 } // namespace scwx::qt::ui
