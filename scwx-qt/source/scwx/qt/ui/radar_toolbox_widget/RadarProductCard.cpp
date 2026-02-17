@@ -85,7 +85,13 @@ void RadarProductCard::leaveEvent(QEvent*)
 
 void RadarProductCard::UpdateStyle()
 {
-   if (hovered_)
+   if (selected_)
+   {
+      setStyleSheet(
+         "background-color: rgba(100, 180, 255, 0.25);"
+         "border-radius: 10px;");
+   }
+   else if (hovered_)
    {
       setStyleSheet(
          "background-color: rgba(255, 255, 255, 0.08);"
@@ -97,6 +103,20 @@ void RadarProductCard::UpdateStyle()
          "background-color: rgba(255, 255, 255, 0.03);"
          "border-radius: 10px;");
    }
+}
+
+void RadarProductCard::SetSelected(bool selected)
+{
+   if (selected_ == selected)
+      return;
+
+   selected_ = selected;
+   UpdateStyle();
+}
+
+bool RadarProductCard::IsSelected() const
+{
+   return selected_;
 }
 
 } // namespace scwx::qt::ui

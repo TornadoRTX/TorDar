@@ -102,7 +102,8 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    scrollArea_->setWidgetResizable(true);
    scrollArea_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-   scrollContents_ = new QWidget(scrollArea_);
+   scrollContents_ = new QWidget();
+   scrollArea_->setWidget(scrollContents_);
    scrollContents_->setSizePolicy(QSizePolicy::Expanding,
                                   QSizePolicy::Preferred);
 
@@ -132,8 +133,26 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 
    for (const auto& product : products)
    {
-      productsLayout_->addWidget(
-         new RadarProductCard(product.name, product.icon, scrollContents_));
+      auto* card =
+         new RadarProductCard(product.name, product.icon, scrollContents_);
+
+      connect(card,
+              &RadarProductCard::Clicked,
+              this,
+              [this, card]()
+              {
+                 if (selectedCard_ && selectedCard_ != card)
+                 {
+                    selectedCard_->SetSelected(false);
+                 }
+
+                 selectedCard_ = card;
+                 selectedCard_->SetSelected(true);
+
+                 // Future: emit product selected signal here
+              });
+
+      productsLayout_->addWidget(card);
    }
 
    productsLayout_->addStretch();

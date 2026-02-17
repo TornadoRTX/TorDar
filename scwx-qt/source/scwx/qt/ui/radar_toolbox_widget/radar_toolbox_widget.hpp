@@ -30,7 +30,8 @@ private:
    QPushButton* collapseButton_;
 
    // Products Layout
-   QVBoxLayout* productsLayout_;
+   QVBoxLayout*      productsLayout_;
+   RadarProductCard* selectedCard_ = nullptr;
 
    // Playback row
    QWidget*     playbackRow_;
