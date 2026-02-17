@@ -11,6 +11,8 @@ class QPushButton;
 namespace scwx::qt::ui
 {
 
+class RadarProductCard;
+
 class RadarToolboxWidget : public QWidget
 {
    Q_OBJECT
