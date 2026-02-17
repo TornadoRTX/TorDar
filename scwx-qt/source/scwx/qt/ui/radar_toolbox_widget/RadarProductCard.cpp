@@ -55,7 +55,6 @@ RadarProductCard::RadarProductCard(const QString& title,
    titleLabel_->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
    titleLabel_->setWordWrap(true);
    titleLabel_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-   titleLabel_->setStyleSheet("font-weight: 600; font-size: 12px;");
    titleLabel_->setMinimumWidth(0);
    titleLabel_->setProperty("selected", false);
 
@@ -64,26 +63,31 @@ RadarProductCard::RadarProductCard(const QString& title,
    // -------------------------
    layout->addWidget(iconContainer_, 0, Qt::AlignHCenter);
    layout->addWidget(titleLabel_);
+   iconContainer_->setAttribute(Qt::WA_TranslucentBackground);
+   iconContainer_->setAutoFillBackground(false);
 
    iconContainer_->setStyleSheet(
       "QWidget {"
+      "  background: transparent;"
       "  border-radius: 8px;"
       "}"
       "QWidget[selected='true'] {"
       "  border: 2px solid #2979FF;"
-      "}");
+      "}"
+   );
+   
 
    titleLabel_->setStyleSheet(
       "QLabel {"
+      "  background: transparent;"
       "  font-weight: 600;"
       "  font-size: 12px;"
       "  color: white;"
       "}"
       "QLabel[selected='true'] {"
       "  color: #2979FF;"
-      "}");
-
-   UpdateStyle();
+      "}"
+   );
 }
 
 QSize RadarProductCard::sizeHint() const
