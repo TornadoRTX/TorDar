@@ -11,8 +11,6 @@ class QPushButton;
 namespace scwx::qt::ui
 {
 
-class RadarProductCard;
-
 class RadarToolboxWidget : public QWidget
 {
    Q_OBJECT
@@ -32,8 +30,7 @@ private:
    QPushButton* collapseButton_;
 
    // Products Layout
-   QVBoxLayout*      productsLayout_;
-   RadarProductCard* selectedCard_ = nullptr;
+   QVBoxLayout* productsLayout_;
 
    // Playback row
    QWidget*     playbackRow_;

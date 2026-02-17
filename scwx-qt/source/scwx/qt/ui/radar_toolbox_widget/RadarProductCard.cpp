@@ -23,10 +23,20 @@ RadarProductCard::RadarProductCard(const QString& title,
    // -------------------------
    // Icon
    // -------------------------
-   imageLabel_ = new QLabel(this);
+   iconContainer_ = new QWidget(this);
+   iconContainer_->setFixedSize(44, 44);
+   iconContainer_->setProperty("selected", false);
+   
+   QVBoxLayout* iconLayout = new QVBoxLayout(iconContainer_);
+   iconLayout->setContentsMargins(4, 4, 4, 4);
+   iconLayout->setAlignment(Qt::AlignCenter);
+
+   imageLabel_ = new QLabel(iconContainer_);
    imageLabel_->setFixedSize(36, 36);
-   imageLabel_->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
+   imageLabel_->setAlignment(Qt::AlignCenter);
    imageLabel_->setScaledContents(true);
+
+   iconLayout->addWidget(imageLabel_);
 
    QIcon icon(iconPath);
 
@@ -46,13 +56,34 @@ RadarProductCard::RadarProductCard(const QString& title,
    titleLabel_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
    titleLabel_->setStyleSheet("font-weight: 600; font-size: 12px;");
    titleLabel_->setMinimumWidth(0);
+   titleLabel_->setProperty("selected", false);
 
    // -------------------------
    // Layout
    // -------------------------
-   layout->addWidget(imageLabel_, 0, Qt::AlignHCenter);
+   layout->addWidget(iconContainer_, 0, Qt::AlignHCenter);
    layout->addWidget(titleLabel_);
 
+   iconContainer_->setStyleSheet(
+      "QWidget {"
+      "  border-radius: 8px;"
+      "}"
+      "QWidget[selected='true'] {"
+      "  border: 2px solid #2979FF;"
+      "}"
+   );
+   
+   titleLabel_->setStyleSheet(
+      "QLabel {"
+      "  font-weight: 600;"
+      "  font-size: 12px;"
+      "  color: white;"
+      "}"
+      "QLabel[selected='true'] {"
+      "  color: #2979FF;"
+      "}"
+   );
+   
    UpdateStyle();
 }
 
@@ -85,13 +116,7 @@ void RadarProductCard::leaveEvent(QEvent*)
 
 void RadarProductCard::UpdateStyle()
 {
-   if (selected_)
-   {
-      setStyleSheet(
-         "background-color: rgba(100, 180, 255, 0.25);"
-         "border-radius: 10px;");
-   }
-   else if (hovered_)
+   if (hovered_)
    {
       setStyleSheet(
          "background-color: rgba(255, 255, 255, 0.08);"
@@ -107,16 +132,17 @@ void RadarProductCard::UpdateStyle()
 
 void RadarProductCard::SetSelected(bool selected)
 {
-   if (selected_ == selected)
-      return;
-
    selected_ = selected;
-   UpdateStyle();
+
+   iconContainer_->setProperty("selected", selected_);
+   titleLabel_->setProperty("selected", selected_);
+
+   iconContainer_->style()->unpolish(iconContainer_);
+   iconContainer_->style()->polish(iconContainer_);
+
+   titleLabel_->style()->unpolish(titleLabel_);
+   titleLabel_->style()->polish(titleLabel_);
 }
 
-bool RadarProductCard::IsSelected() const
-{
-   return selected_;
-}
 
 } // namespace scwx::qt::ui
