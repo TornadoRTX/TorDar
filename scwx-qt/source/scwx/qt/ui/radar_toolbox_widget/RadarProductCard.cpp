@@ -73,9 +73,7 @@ RadarProductCard::RadarProductCard(const QString& title,
       "}"
       "QWidget[selected='true'] {"
       "  border: 2px solid #2979FF;"
-      "}"
-   );
-   
+      "}");
 
    titleLabel_->setStyleSheet(
       "QLabel {"
@@ -86,8 +84,7 @@ RadarProductCard::RadarProductCard(const QString& title,
       "}"
       "QLabel[selected='true'] {"
       "  color: #2979FF;"
-      "}"
-   );
+      "}");
 }
 
 QSize RadarProductCard::sizeHint() const
