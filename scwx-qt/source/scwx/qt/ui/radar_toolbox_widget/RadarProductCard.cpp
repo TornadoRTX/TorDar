@@ -5,6 +5,7 @@
 #include <QIcon>
 #include <QVBoxLayout>
 #include <QDebug>
+#include <QStyles>
 
 namespace scwx::qt::ui
 {
