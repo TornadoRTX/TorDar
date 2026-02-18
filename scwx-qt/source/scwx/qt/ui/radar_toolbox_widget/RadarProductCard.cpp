@@ -40,12 +40,12 @@ RadarProductCard::RadarProductCard(const QString& title,
    iconLayout->addWidget(imageLabel_);
    imageLabel_->setObjectName("iconImage");
    imageLabel_->setAttribute(Qt::WA_StyledBackground, true);
-   
+
    imageLabel_->setStyleSheet(
       "#iconImage {"
       "  border-radius: 6px;"
       "}");
-   
+
    QIcon icon(iconPath);
 
    if (icon.isNull())
