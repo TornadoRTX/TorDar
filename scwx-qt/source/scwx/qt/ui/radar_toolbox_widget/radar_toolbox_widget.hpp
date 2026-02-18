@@ -17,8 +17,6 @@ class RadarToolboxWidget : public QWidget
 
 public:
    explicit RadarToolboxWidget(QWidget* parent = nullptr);
-   void SetLevel2ProductsWidget(QWidget* widget);
-   void SetLevel3ProductsWidget(QWidget* widget);
 
 private:
    // Root layout

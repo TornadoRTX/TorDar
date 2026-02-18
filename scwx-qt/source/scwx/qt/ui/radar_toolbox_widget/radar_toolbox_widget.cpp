@@ -22,27 +22,6 @@ struct ProductInfo
 
 namespace scwx::qt::ui
 {
-void RadarToolboxWidget::SetLevel2ProductsWidget(QWidget* widget)
-{
-   if (widget == nullptr)
-   {
-      return;
-   }
-
-   widget->setParent(scrollContents_);
-   productsLayout_->insertWidget(productsLayout_->count() - 1, widget);
-}
-
-void RadarToolboxWidget::SetLevel3ProductsWidget(QWidget* widget)
-{
-   if (widget == nullptr)
-   {
-      return;
-   }
-
-   widget->setParent(scrollContents_);
-   productsLayout_->insertWidget(productsLayout_->count() - 1, widget);
-}
 
 RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 {
