@@ -63,13 +63,11 @@ RadarProductCard::RadarProductCard(const QString& title,
    // -------------------------
    layout->addWidget(iconContainer_, 0, Qt::AlignHCenter);
    layout->addWidget(titleLabel_);
-   iconContainer_->setAttribute(Qt::WA_TranslucentBackground);
-   iconContainer_->setAutoFillBackground(false);
    iconContainer_->setObjectName("iconContainer");
+   titleLabel_->setObjectName("titleLabel");
 
    iconContainer_->setStyleSheet(
       "#iconContainer {"
-      "  background: transparent;"
       "  border-radius: 8px;"
       "}"
       "#iconContainer[selected='true'] {"
@@ -77,15 +75,16 @@ RadarProductCard::RadarProductCard(const QString& title,
       "}");
 
    titleLabel_->setStyleSheet(
-      "QLabel {"
-      "  background: transparent;"
+      "#titleLabel {"
       "  font-weight: 600;"
       "  font-size: 12px;"
       "  color: white;"
       "}"
-      "QLabel[selected='true'] {"
+      "#titleLabel[selected='true'] {"
       "  color: #2979FF;"
       "}");
+
+   UpdateStyle();
 }
 
 QSize RadarProductCard::sizeHint() const
@@ -143,6 +142,9 @@ void RadarProductCard::SetSelected(bool selected)
 
    titleLabel_->style()->unpolish(titleLabel_);
    titleLabel_->style()->polish(titleLabel_);
+
+   iconContainer_->update();
+   titleLabel_->update();
 }
 
 } // namespace scwx::qt::ui
