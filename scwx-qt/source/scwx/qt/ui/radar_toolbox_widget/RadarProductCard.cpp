@@ -76,6 +76,7 @@ RadarProductCard::RadarProductCard(const QString& title,
 
    titleLabel_->setStyleSheet(
       "#titleLabel {"
+      "  background: transparent;"
       "  font-weight: 600;"
       "  font-size: 12px;"
       "  color: white;"
