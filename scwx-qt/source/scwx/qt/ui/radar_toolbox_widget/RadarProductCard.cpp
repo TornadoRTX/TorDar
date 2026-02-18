@@ -65,13 +65,14 @@ RadarProductCard::RadarProductCard(const QString& title,
    layout->addWidget(titleLabel_);
    iconContainer_->setAttribute(Qt::WA_TranslucentBackground);
    iconContainer_->setAutoFillBackground(false);
+   iconContainer_->setObjectName("iconContainer");
 
    iconContainer_->setStyleSheet(
-      "QWidget {"
+      "#iconContainer {"
       "  background: transparent;"
       "  border-radius: 8px;"
       "}"
-      "QWidget[selected='true'] {"
+      "#iconContainer[selected='true'] {"
       "  border: 2px solid #2979FF;"
       "}");
 
