@@ -12,16 +12,20 @@
 
 #include <fmt/format.h>
 
-#include <QCloseEvent>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QScrollArea>
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <QFrame>
 
 #include <algorithm>
-#include <sstream>
+#include <array>
+#include <cctype>
+#include <initializer_list>
+#include <string_view>
+#include <unordered_map>
 
 namespace scwx
 {
@@ -56,6 +60,25 @@ public:
 
    void PopulateFromWarning(const types::TextEventKey& key);
    void UpdateCountdown();
+   void ApplyTheme(const types::TextEventKey&                   key,
+                   const std::shared_ptr<const awips::Segment>& segment);
+   void AddDetailRow(const std::string& label, const std::string& value);
+   static std::string ToUpper(std::string_view value);
+   static std::string Trim(std::string_view value);
+   static std::string NormalizeLabel(std::string_view label);
+   static bool        IsLabelLine(std::string_view line);
+   static std::unordered_map<std::string, std::string>
+   ParseProductFields(const std::shared_ptr<const awips::Segment>& segment);
+   static std::string
+   GetFieldValue(const std::unordered_map<std::string, std::string>& fields,
+                 const std::initializer_list<std::string_view>&      keys);
+   void
+        AddSummaryField(const std::string& summaryLabel,
+                        const std::unordered_map<std::string, std::string>& fields,
+                        const std::initializer_list<std::string_view>&      keys);
+   void AddPhenomenonSpecificFields(
+      awips::Phenomenon                                   phenomenon,
+      const std::unordered_map<std::string, std::string>& fields);
 
    WarningBoxWidget*                          self_;
    std::shared_ptr<manager::TextEventManager> textEventManager_;
@@ -75,7 +98,21 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
 
    setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);
    setAttribute(Qt::WA_TranslucentBackground, false);
-   setStyleSheet("WarningBoxWidget { background-color: rgba(0, 0, 0, 0.85); }");
+   setAttribute(Qt::WA_StyledBackground, true);
+   setAutoFillBackground(true);
+
+   ui->warningTypeLabel->setTextInteractionFlags(Qt::NoTextInteraction);
+   ui->warningTypeLabel->setStyleSheet(
+      "font-size: 24px; font-weight: 800; letter-spacing: 1px;");
+   ui->expirationLabel->setStyleSheet(
+      "font-size: 15px; font-weight: 700; letter-spacing: 0.5px;");
+   ui->viewEasTextButton->setText("VIEW FULL EAS TEXT");
+   ui->closeButton->setText("x");
+   ui->closeButton->setFixedSize(34, 34);
+   ui->buttonsLayout->setContentsMargins(0, 0, 0, 0);
+   ui->buttonsLayout->setSpacing(8);
+   ui->verticalLayout->setContentsMargins(12, 12, 12, 12);
+   ui->verticalLayout->setSpacing(8);
 
    hide();
 
@@ -141,11 +178,12 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
       return;
 
    auto& segment = segments.back();
+   ApplyTheme(key, segment);
 
    // Title: from phenomenon and significance (e.g. "Tornado Warning")
    std::string phenText = awips::GetPhenomenonText(key.phenomenon_);
    std::string sigText  = awips::GetSignificanceText(key.significance_);
-   std::string title    = fmt::format("{} {}", phenText, sigText);
+   std::string title    = ToUpper(fmt::format("{} {}", phenText, sigText));
    self_->ui->warningTypeLabel->setText(QString::fromStdString(title));
 
    // Expiration: from event end
@@ -181,7 +219,7 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
       {
          self_->ui->areasLabel->setVisible(true);
          self_->ui->areasLabel->setText(
-            QString::fromStdString(fmt::format("AREAS: {}", countiesStr)));
+            QString::fromStdString(fmt::format("AREAS  {}", countiesStr)));
       }
       else
          self_->ui->areasLabel->setVisible(false);
@@ -206,83 +244,327 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
       delete item;
    }
 
-   // Build detail rows from the actual message content (labels match the
-   // warning)
-   std::string        content = message->message_content();
-   std::string        line;
-   std::istringstream iss(content);
-   while (std::getline(iss, line))
+   const auto fields = ParseProductFields(segment);
+
+   AddSummaryField("Hazard", fields, {"HAZARD"});
+   AddSummaryField("Source", fields, {"SOURCE"});
+   AddSummaryField("Impact", fields, {"IMPACT"});
+   AddPhenomenonSpecificFields(key.phenomenon_, fields);
+
+   detailsLayout_->addStretch();
+}
+
+void WarningBoxWidgetImpl::AddDetailRow(const std::string& label,
+                                        const std::string& value)
+{
+   QFrame* rowFrame = new QFrame(self_);
+   rowFrame->setObjectName("detailRow");
+   rowFrame->setProperty("highlight", label == "Source");
+
+   QLabel* labelW = new QLabel(QString::fromStdString(ToUpper(label)));
+   labelW->setObjectName("detailLabel");
+
+   QLabel* valueW = new QLabel(QString::fromStdString(value));
+   valueW->setObjectName("detailValue");
+   valueW->setWordWrap(true);
+
+   QHBoxLayout* row = new QHBoxLayout(rowFrame);
+   row->setContentsMargins(10, 8, 10, 8);
+   row->setSpacing(8);
+   row->addWidget(labelW, 0);
+   row->addWidget(valueW, 1);
+
+   detailsLayout_->addWidget(rowFrame);
+}
+
+void WarningBoxWidgetImpl::ApplyTheme(
+   const types::TextEventKey&                   key,
+   const std::shared_ptr<const awips::Segment>& segment)
+{
+   std::string accentColor = "197, 37, 48";
+
+   if (key.phenomenon_ == awips::Phenomenon::SevereThunderstorm)
    {
-      // Trim
-      auto start = line.find_first_not_of(" \t\r\n*");
-      if (start == std::string::npos)
-         continue;
-      auto end = line.find_last_not_of(" \t\r\n");
-      line     = line.substr(
-         start, end == std::string::npos ? std::string::npos : end - start + 1);
-      if (line.empty())
-         continue;
+      accentColor = "214, 163, 0";
+   }
+   else if (key.phenomenon_ == awips::Phenomenon::Tornado &&
+            (segment->threatCategory_ ==
+                awips::ibw::ThreatCategory::Destructive ||
+             segment->threatCategory_ ==
+                awips::ibw::ThreatCategory::Catastrophic))
+   {
+      accentColor = "116, 61, 194";
+   }
+   else if (key.phenomenon_ == awips::Phenomenon::Tornado)
+   {
+      accentColor = "197, 37, 48";
+   }
 
-      // NWS format often has "LABEL...VALUE" or "LABEL: VALUE"
-      std::string label, value;
-      size_t      sep = line.find("...");
-      if (sep != std::string::npos)
+   self_->setStyleSheet(QString::fromStdString(
+      fmt::format(
+         "QWidget#WarningBoxWidget {{"
+         "  background-color: rgba(12, 16, 26, 191);"
+         "  border: 2px solid rgba({}, 220);"
+         "  border-radius: 6px;"
+         "}}"
+         "QWidget#WarningBoxWidget QLabel {{"
+         "  color: rgb(236, 240, 255);"
+         "}}"
+         "QWidget#WarningBoxWidget QScrollArea {{"
+         "  background: transparent;"
+         "  border: none;"
+         "}}"
+         "QWidget#WarningBoxWidget QScrollArea > QWidget > QWidget {{"
+         "  background: transparent;"
+         "}}"
+         "QWidget#WarningBoxWidget QFrame#areasFrame {{"
+         "  border: 1px solid rgba({}, 170);"
+         "  background-color: rgba(9, 15, 30, 180);"
+         "}}"
+         "QWidget#WarningBoxWidget QLabel#areasLabel {{"
+         "  font-size: 13px;"
+         "  font-weight: 700;"
+         "  letter-spacing: 0.5px;"
+         "}}"
+         "QWidget#WarningBoxWidget QLabel#statesLabel {{"
+         "  font-size: 16px;"
+         "  font-weight: 700;"
+         "  letter-spacing: 0.8px;"
+         "}}"
+         "QWidget#WarningBoxWidget QFrame#detailRow {{"
+         "  border: 1px solid rgba({}, 140);"
+         "  background-color: rgba(6, 11, 24, 220);"
+         "}}"
+         "QWidget#WarningBoxWidget QFrame#detailRow[highlight=\"true\"] {{"
+         "  background-color: rgba(27, 67, 92, 220);"
+         "}}"
+         "QWidget#WarningBoxWidget QLabel#detailLabel {{"
+         "  font-size: 12px;"
+         "  font-weight: 700;"
+         "  letter-spacing: 0.8px;"
+         "  color: rgba(220, 226, 242, 220);"
+         "}}"
+         "QWidget#WarningBoxWidget QLabel#detailValue {{"
+         "  font-size: 14px;"
+         "  font-weight: 700;"
+         "  letter-spacing: 0.5px;"
+         "  color: rgb(236, 240, 255);"
+         "}}"
+         "QWidget#WarningBoxWidget QPushButton#viewEasTextButton {{"
+         "  border: 1px solid rgba({}, 200);"
+         "  background-color: rgba(2, 6, 14, 235);"
+         "  color: rgb(248, 251, 255);"
+         "  font-size: 16px;"
+         "  font-weight: 800;"
+         "  letter-spacing: 0.8px;"
+         "  padding: 8px;"
+         "}}"
+         "QWidget#WarningBoxWidget QPushButton#closeButton {{"
+         "  border-radius: 17px;"
+         "  border: 1px solid rgba(160, 170, 194, 190);"
+         "  background-color: rgba(5, 9, 20, 210);"
+         "  color: rgba(235, 240, 255, 230);"
+         "  font-size: 18px;"
+         "  font-weight: 700;"
+         "}}"
+         "QWidget#WarningBoxWidget QPushButton#closeButton:hover {{"
+         "  background-color: rgba({}, 72);"
+         "}}"),
+      accentColor,
+      accentColor,
+      accentColor,
+      accentColor,
+      accentColor));
+}
+
+std::string WarningBoxWidgetImpl::ToUpper(std::string_view value)
+{
+   std::string result(value);
+   std::transform(result.begin(),
+                  result.end(),
+                  result.begin(),
+                  [](unsigned char c)
+                  { return static_cast<char>(std::toupper(c)); });
+   return result;
+}
+
+std::string WarningBoxWidgetImpl::Trim(std::string_view value)
+{
+   const size_t start = value.find_first_not_of(" \t\r\n*");
+   if (start == std::string_view::npos)
+   {
+      return {};
+   }
+
+   const size_t end = value.find_last_not_of(" \t\r\n");
+   return std::string(value.substr(start,
+                                   end == std::string_view::npos ?
+                                      std::string_view::npos :
+                                      (end - start + 1)));
+}
+
+std::string WarningBoxWidgetImpl::NormalizeLabel(std::string_view label)
+{
+   std::string normalized;
+   normalized.reserve(label.size());
+
+   bool previousSpace = false;
+   for (char c : label)
+   {
+      const unsigned char uc = static_cast<unsigned char>(c);
+      if (std::isalnum(uc))
       {
-         label = line.substr(0, sep);
-         value = line.substr(sep + 3);
+         normalized.push_back(static_cast<char>(std::toupper(uc)));
+         previousSpace = false;
       }
-      else
+      else if (!previousSpace)
       {
-         sep = line.find(": ");
-         if (sep != std::string::npos)
-         {
-            label = line.substr(0, sep);
-            value = line.substr(sep + 2);
-         }
-         else
-         {
-            value = line;
-            label.clear();
-         }
-      }
-
-      // Trim label/value
-      auto trim = [](std::string& s)
-      {
-         auto a = s.find_first_not_of(" \t");
-         auto b = s.find_last_not_of(" \t");
-         if (a == std::string::npos)
-            s.clear();
-         else
-            s = s.substr(
-               a, b == std::string::npos ? std::string::npos : b - a + 1);
-      };
-      trim(label);
-      trim(value);
-      if (value.empty())
-         continue;
-
-      QLabel* labelW = new QLabel(QString::fromStdString(label + ":"));
-      labelW->setStyleSheet(
-         "color: rgba(255,255,255,0.85); font-weight: bold;");
-      QLabel* valueW = new QLabel(QString::fromStdString(value));
-      valueW->setStyleSheet("color: white;");
-      valueW->setWordWrap(true);
-
-      if (!label.empty())
-      {
-         QHBoxLayout* row = new QHBoxLayout();
-         row->addWidget(labelW, 0);
-         row->addWidget(valueW, 1);
-         detailsLayout_->addLayout(row);
-      }
-      else
-      {
-         detailsLayout_->addWidget(valueW);
+         normalized.push_back(' ');
+         previousSpace = true;
       }
    }
 
-   detailsLayout_->addStretch();
+   return Trim(normalized);
+}
+
+bool WarningBoxWidgetImpl::IsLabelLine(std::string_view line)
+{
+   bool hasAlpha = false;
+
+   for (char c : line)
+   {
+      const unsigned char uc = static_cast<unsigned char>(c);
+      if (std::isalpha(uc))
+      {
+         hasAlpha = true;
+      }
+      else if (!(std::isdigit(uc) || std::isspace(uc) || c == '/' || c == '-'))
+      {
+         return false;
+      }
+   }
+
+   return hasAlpha;
+}
+
+std::unordered_map<std::string, std::string>
+WarningBoxWidgetImpl::ParseProductFields(
+   const std::shared_ptr<const awips::Segment>& segment)
+{
+   std::unordered_map<std::string, std::string> fields {};
+   std::string                                  currentLabel {};
+
+   for (const std::string& rawLine : segment->productContent_)
+   {
+      const std::string line = Trim(rawLine);
+      if (line.empty())
+      {
+         currentLabel.clear();
+         continue;
+      }
+
+      if (line.starts_with("LAT...LON") ||
+          line.starts_with("TIME...MOT...LOC") || line.starts_with("$$"))
+      {
+         continue;
+      }
+
+      if (!line.empty() &&
+          std::isdigit(static_cast<unsigned char>(line.front())) &&
+          line.find_first_not_of(" 0123456789") == std::string::npos)
+      {
+         continue;
+      }
+
+      const size_t dottedSep = line.find("...");
+      if (dottedSep != std::string::npos)
+      {
+         const std::string label = Trim(line.substr(0, dottedSep));
+         if (!label.empty() && IsLabelLine(label))
+         {
+            currentLabel         = NormalizeLabel(label);
+            fields[currentLabel] = Trim(line.substr(dottedSep + 3));
+            continue;
+         }
+      }
+
+      const size_t colonSep = line.find(": ");
+      if (colonSep != std::string::npos)
+      {
+         const std::string label = Trim(line.substr(0, colonSep));
+         if (!label.empty() && IsLabelLine(label))
+         {
+            currentLabel         = NormalizeLabel(label);
+            fields[currentLabel] = Trim(line.substr(colonSep + 2));
+            continue;
+         }
+      }
+
+      if (!currentLabel.empty())
+      {
+         std::string& value = fields[currentLabel];
+         if (!value.empty())
+         {
+            value += ' ';
+         }
+         value += line;
+      }
+   }
+
+   return fields;
+}
+
+std::string WarningBoxWidgetImpl::GetFieldValue(
+   const std::unordered_map<std::string, std::string>& fields,
+   const std::initializer_list<std::string_view>&      keys)
+{
+   for (std::string_view key : keys)
+   {
+      const auto it = fields.find(NormalizeLabel(key));
+      if (it != fields.cend() && !it->second.empty())
+      {
+         return it->second;
+      }
+   }
+
+   return {};
+}
+
+void WarningBoxWidgetImpl::AddSummaryField(
+   const std::string&                                  summaryLabel,
+   const std::unordered_map<std::string, std::string>& fields,
+   const std::initializer_list<std::string_view>&      keys)
+{
+   const std::string value = GetFieldValue(fields, keys);
+   if (!value.empty())
+   {
+      AddDetailRow(summaryLabel, value);
+   }
+}
+
+void WarningBoxWidgetImpl::AddPhenomenonSpecificFields(
+   awips::Phenomenon                                   phenomenon,
+   const std::unordered_map<std::string, std::string>& fields)
+{
+   if (phenomenon == awips::Phenomenon::SevereThunderstorm)
+   {
+      AddSummaryField("Hail Threat", fields, {"HAIL THREAT"});
+      AddSummaryField("Max Hail Size", fields, {"MAX HAIL SIZE"});
+      AddSummaryField("Wind Threat", fields, {"WIND THREAT"});
+      AddSummaryField("Max Wind Gust", fields, {"MAX WIND GUST"});
+      AddSummaryField(
+         "Damage", fields, {"THUNDERSTORM DAMAGE THREAT", "DAMAGE THREAT"});
+   }
+   else if (phenomenon == awips::Phenomenon::Tornado)
+   {
+      AddSummaryField("Hail Threat", fields, {"HAIL THREAT"});
+      AddSummaryField("Max Hail Size", fields, {"MAX HAIL SIZE"});
+      AddSummaryField("Wind Threat", fields, {"WIND THREAT"});
+      AddSummaryField("Max Wind Gust", fields, {"MAX WIND GUST"});
+      AddSummaryField(
+         "Damage Threat", fields, {"TORNADO DAMAGE THREAT", "DAMAGE THREAT"});
+      AddSummaryField("Tornado Threat", fields, {"TORNADO THREAT"});
+   }
 }
 
 void WarningBoxWidgetImpl::UpdateCountdown()
