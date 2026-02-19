@@ -46,7 +46,7 @@ RadarProductCard::RadarProductCard(const QString& title,
    iconLayout->addWidget(imageLabel_);
 
    // Load icon
-   QIcon icon(iconPath);
+   QIcon   icon(iconPath);
    QPixmap pixmap = icon.pixmap(QSize(36, 36), QIcon::Normal, QIcon::Off);
 
    QPixmap rounded(36, 36);
@@ -116,22 +116,20 @@ void RadarProductCard::UpdateStyle()
    QColor hoverColor(textColor);
    hoverColor.setAlpha(hovered_ ? 30 : 16);
 
-   titleLabel_->setStyleSheet(QString(
-      "#titleLabel {"
-      "  background: transparent;"
-      "  font-weight: 600;"
-      "  font-size: 12px;"
-      "  color: %1;"
-      "}"
-      "#titleLabel[selected='true'] {"
-      "  color: #2979FF;"
-      "}")
-      .arg(textColor.name()));
+   titleLabel_->setStyleSheet(QString("#titleLabel {"
+                                      "  background: transparent;"
+                                      "  font-weight: 600;"
+                                      "  font-size: 12px;"
+                                      "  color: %1;"
+                                      "}"
+                                      "#titleLabel[selected='true'] {"
+                                      "  color: #2979FF;"
+                                      "}")
+                                 .arg(textColor.name()));
 
-   setStyleSheet(QString(
-      "background-color: %1;"
-      "border-radius: 10px;")
-      .arg(hoverColor.name(QColor::HexArgb)));
+   setStyleSheet(QString("background-color: %1;"
+                         "border-radius: 10px;")
+                    .arg(hoverColor.name(QColor::HexArgb)));
 }
 
 void RadarProductCard::SetSelected(bool selected)

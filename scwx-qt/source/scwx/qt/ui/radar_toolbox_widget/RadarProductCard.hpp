@@ -32,9 +32,9 @@ protected:
 private:
    void UpdateStyle();
 
-   QLabel*  imageLabel_     {nullptr};
-   QLabel*  titleLabel_     {nullptr};
-   QWidget* iconContainer_  {nullptr};
+   QLabel*  imageLabel_ {nullptr};
+   QLabel*  titleLabel_ {nullptr};
+   QWidget* iconContainer_ {nullptr};
 
    bool hovered_  = false;
    bool selected_ = false;
