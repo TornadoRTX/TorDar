@@ -6,6 +6,8 @@
 #include <QVBoxLayout>
 #include <QDebug>
 #include <QStyle>
+#include <QPainter>
+#include <QPainterPath>
 
 namespace scwx::qt::ui
 {
@@ -39,12 +41,6 @@ RadarProductCard::RadarProductCard(const QString& title,
 
    iconLayout->addWidget(imageLabel_);
    imageLabel_->setObjectName("iconImage");
-   imageLabel_->setAttribute(Qt::WA_StyledBackground, true);
-
-   imageLabel_->setStyleSheet(
-      "#iconImage {"
-      "  border-radius: 6px;"
-      "}");
 
    QIcon icon(iconPath);
 
@@ -53,7 +49,22 @@ RadarProductCard::RadarProductCard(const QString& title,
       qWarning() << "RadarProductCard: failed to load icon:" << iconPath;
    }
 
-   imageLabel_->setPixmap(icon.pixmap(36, 36));
+   QPixmap pixmap = icon.pixmap(36, 36);
+
+   QPixmap rounded(36, 36);
+   rounded.fill(Qt::transparent);
+
+   QPainter painter(&rounded);
+   painter.setRenderHint(QPainter::Antialiasing);
+
+   QPainterPath path;
+   path.addRoundedRect(0, 0, 36, 36, 6, 6); // 6px corner radius
+
+   painter.setClipPath(path);
+   painter.drawPixmap(0, 0, pixmap);
+
+   painter.end();
+   imageLabel_->setPixmap(rounded);
 
    // -------------------------
    // Title
