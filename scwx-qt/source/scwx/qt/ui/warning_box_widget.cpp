@@ -300,81 +300,78 @@ void WarningBoxWidgetImpl::ApplyTheme(
       accentColor = "197, 37, 48";
    }
 
-   self_->setStyleSheet(QString::fromStdString(
-      fmt::format(
-         "QWidget#WarningBoxWidget {{"
-         "  background-color: rgba(12, 16, 26, 191);"
-         "  border: 2px solid rgba({}, 220);"
-         "  border-radius: 6px;"
-         "}}"
-         "QWidget#WarningBoxWidget QLabel {{"
-         "  color: rgb(236, 240, 255);"
-         "}}"
-         "QWidget#WarningBoxWidget QScrollArea {{"
-         "  background: transparent;"
-         "  border: none;"
-         "}}"
-         "QWidget#WarningBoxWidget QScrollArea > QWidget > QWidget {{"
-         "  background: transparent;"
-         "}}"
-         "QWidget#WarningBoxWidget QFrame#areasFrame {{"
-         "  border: 1px solid rgba({}, 170);"
-         "  background-color: rgba(9, 15, 30, 180);"
-         "}}"
-         "QWidget#WarningBoxWidget QLabel#areasLabel {{"
-         "  font-size: 13px;"
-         "  font-weight: 700;"
-         "  letter-spacing: 0.5px;"
-         "}}"
-         "QWidget#WarningBoxWidget QLabel#statesLabel {{"
-         "  font-size: 16px;"
-         "  font-weight: 700;"
-         "  letter-spacing: 0.8px;"
-         "}}"
-         "QWidget#WarningBoxWidget QFrame#detailRow {{"
-         "  border: 1px solid rgba({}, 140);"
-         "  background-color: rgba(6, 11, 24, 220);"
-         "}}"
-         "QWidget#WarningBoxWidget QFrame#detailRow[highlight=\"true\"] {{"
-         "  background-color: rgba(27, 67, 92, 220);"
-         "}}"
-         "QWidget#WarningBoxWidget QLabel#detailLabel {{"
-         "  font-size: 12px;"
-         "  font-weight: 700;"
-         "  letter-spacing: 0.8px;"
-         "  color: rgba(220, 226, 242, 220);"
-         "}}"
-         "QWidget#WarningBoxWidget QLabel#detailValue {{"
-         "  font-size: 14px;"
-         "  font-weight: 700;"
-         "  letter-spacing: 0.5px;"
-         "  color: rgb(236, 240, 255);"
-         "}}"
-         "QWidget#WarningBoxWidget QPushButton#viewEasTextButton {{"
-         "  border: 1px solid rgba({}, 200);"
-         "  background-color: rgba(2, 6, 14, 235);"
-         "  color: rgb(248, 251, 255);"
-         "  font-size: 16px;"
-         "  font-weight: 800;"
-         "  letter-spacing: 0.8px;"
-         "  padding: 8px;"
-         "}}"
-         "QWidget#WarningBoxWidget QPushButton#closeButton {{"
-         "  border-radius: 17px;"
-         "  border: 1px solid rgba(160, 170, 194, 190);"
-         "  background-color: rgba(5, 9, 20, 210);"
-         "  color: rgba(235, 240, 255, 230);"
-         "  font-size: 18px;"
-         "  font-weight: 700;"
-         "}}"
-         "QWidget#WarningBoxWidget QPushButton#closeButton:hover {{"
-         "  background-color: rgba({}, 72);"
-         "}}"),
-      accentColor,
-      accentColor,
-      accentColor,
-      accentColor,
-      accentColor));
+   std::string styleSheet;
+   styleSheet += "QWidget#WarningBoxWidget {";
+   styleSheet += "  background-color: rgba(12, 16, 26, 191);";
+   styleSheet += "  border: 2px solid rgba(" + accentColor + ", 220);";
+   styleSheet += "  border-radius: 6px;";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QLabel {";
+   styleSheet += "  color: rgb(236, 240, 255);";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QScrollArea {";
+   styleSheet += "  background: transparent;";
+   styleSheet += "  border: none;";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QScrollArea > QWidget > QWidget {";
+   styleSheet += "  background: transparent;";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QFrame#areasFrame {";
+   styleSheet += "  border: 1px solid rgba(" + accentColor + ", 170);";
+   styleSheet += "  background-color: rgba(9, 15, 30, 180);";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QLabel#areasLabel {";
+   styleSheet += "  font-size: 13px;";
+   styleSheet += "  font-weight: 700;";
+   styleSheet += "  letter-spacing: 0.5px;";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QLabel#statesLabel {";
+   styleSheet += "  font-size: 16px;";
+   styleSheet += "  font-weight: 700;";
+   styleSheet += "  letter-spacing: 0.8px;";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QFrame#detailRow {";
+   styleSheet += "  border: 1px solid rgba(" + accentColor + ", 140);";
+   styleSheet += "  background-color: rgba(6, 11, 24, 220);";
+   styleSheet += "}";
+   styleSheet +=
+      "QWidget#WarningBoxWidget QFrame#detailRow[highlight=\"true\"] {";
+   styleSheet += "  background-color: rgba(27, 67, 92, 220);";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QLabel#detailLabel {";
+   styleSheet += "  font-size: 12px;";
+   styleSheet += "  font-weight: 700;";
+   styleSheet += "  letter-spacing: 0.8px;";
+   styleSheet += "  color: rgba(220, 226, 242, 220);";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QLabel#detailValue {";
+   styleSheet += "  font-size: 14px;";
+   styleSheet += "  font-weight: 700;";
+   styleSheet += "  letter-spacing: 0.5px;";
+   styleSheet += "  color: rgb(236, 240, 255);";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QPushButton#viewEasTextButton {";
+   styleSheet += "  border: 1px solid rgba(" + accentColor + ", 200);";
+   styleSheet += "  background-color: rgba(2, 6, 14, 235);";
+   styleSheet += "  color: rgb(248, 251, 255);";
+   styleSheet += "  font-size: 16px;";
+   styleSheet += "  font-weight: 800;";
+   styleSheet += "  letter-spacing: 0.8px;";
+   styleSheet += "  padding: 8px;";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QPushButton#closeButton {";
+   styleSheet += "  border-radius: 17px;";
+   styleSheet += "  border: 1px solid rgba(160, 170, 194, 190);";
+   styleSheet += "  background-color: rgba(5, 9, 20, 210);";
+   styleSheet += "  color: rgba(235, 240, 255, 230);";
+   styleSheet += "  font-size: 18px;";
+   styleSheet += "  font-weight: 700;";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QPushButton#closeButton:hover {";
+   styleSheet += "  background-color: rgba(" + accentColor + ", 72);";
+   styleSheet += "}";
+
+   self_->setStyleSheet(QString::fromStdString(styleSheet));
 }
 
 std::string WarningBoxWidgetImpl::ToUpper(std::string_view value)
