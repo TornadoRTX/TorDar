@@ -22,6 +22,7 @@
 #include <scwx/qt/settings/map_settings.hpp>
 #include <scwx/qt/settings/palette_settings.hpp>
 #include <scwx/qt/ui/edit_marker_dialog.hpp>
+#include <scwx/qt/ui/warning_box_widget.hpp>
 #include <scwx/qt/util/file.hpp>
 #include <scwx/qt/util/maplibre.hpp>
 #include <scwx/qt/util/tooltip.hpp>
@@ -229,7 +230,8 @@ public:
    std::shared_ptr<model::LayerModel> layerModel_ {
       model::LayerModel::Instance()};
 
-   ui::EditMarkerDialog* editMarkerDialog_ {nullptr};
+   ui::EditMarkerDialog*   editMarkerDialog_ {nullptr};
+   ui::WarningBoxWidget*  warningBoxWidget_ {nullptr};
 
    std::shared_ptr<manager::HotkeyManager> hotkeyManager_ {
       manager::HotkeyManager::Instance()};
@@ -313,6 +315,10 @@ MapWidget::MapWidget(std::size_t                    id,
    // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
    p->editMarkerDialog_ = new ui::EditMarkerDialog(this);
 
+   // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
+   p->warningBoxWidget_ = new ui::WarningBoxWidget(this);
+   p->warningBoxWidget_->setGeometry(12, 12, 360, 320);
+
    p->ConnectSignals();
 }
 
@@ -390,6 +396,11 @@ void MapWidgetImpl::ConnectMapSignals()
 
 void MapWidgetImpl::ConnectSignals()
 {
+   connect(widget_,
+           &MapWidget::AlertSelected,
+           warningBoxWidget_,
+           &ui::WarningBoxWidget::ShowWarning);
+
    connect(placefileManager_.get(),
            &manager::PlacefileManager::PlacefileUpdated,
            widget_,

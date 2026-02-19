@@ -309,6 +309,7 @@ set(HDR_UI source/scwx/qt/ui/about_dialog.hpp
            source/scwx/qt/ui/serial_port_dialog.hpp
            source/scwx/qt/ui/settings_dialog.hpp
            source/scwx/qt/ui/update_dialog.hpp
+           source/scwx/qt/ui/warning_box_widget.hpp
            source/scwx/qt/ui/wfo_dialog.hpp)
 set(SRC_UI source/scwx/qt/ui/about_dialog.cpp
            source/scwx/qt/ui/alert_dialog.cpp
@@ -335,6 +336,7 @@ set(SRC_UI source/scwx/qt/ui/about_dialog.cpp
            source/scwx/qt/ui/level3_products_widget.cpp
            source/scwx/qt/ui/radar_toolbox_widget/radar_toolbox_widget.cpp
            source/scwx/qt/ui/radar_toolbox_widget/RadarProductCard.cpp
+           source/scwx/qt/ui/warning_box_widget.cpp
            source/scwx/qt/ui/line_label.cpp
            source/scwx/qt/ui/open_url_dialog.cpp
            source/scwx/qt/ui/placefile_dialog.cpp
@@ -346,6 +348,7 @@ set(SRC_UI source/scwx/qt/ui/about_dialog.cpp
            source/scwx/qt/ui/settings_dialog.cpp
            source/scwx/qt/ui/serial_port_dialog.cpp
            source/scwx/qt/ui/update_dialog.cpp
+           source/scwx/qt/ui/warning_box_widget.cpp
            source/scwx/qt/ui/wfo_dialog.cpp)
 set(UI_UI  source/scwx/qt/ui/about_dialog.ui
            source/scwx/qt/ui/alert_dialog.ui
@@ -371,6 +374,7 @@ set(UI_UI  source/scwx/qt/ui/about_dialog.ui
            source/scwx/qt/ui/settings_dialog.ui
            source/scwx/qt/ui/serial_port_dialog.ui
            source/scwx/qt/ui/update_dialog.ui
+           source/scwx/qt/ui/warning_box_widget.ui
            source/scwx/qt/ui/wfo_dialog.ui)
 set(HDR_UI_IMPORT source/scwx/qt/ui/import/import_options_page.hpp
                   source/scwx/qt/ui/import/import_settings_wizard.hpp
