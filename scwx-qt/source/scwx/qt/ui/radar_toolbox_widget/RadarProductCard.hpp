@@ -28,6 +28,7 @@ protected:
    void mousePressEvent(QMouseEvent* event) override;
    void enterEvent(QEnterEvent* event) override;
    void leaveEvent(QEvent* event) override;
+   void changeEvent(QEvent* event) override;
 
 private:
    void UpdateStyle();

@@ -8,6 +8,7 @@
 #include <QStyle>
 #include <QPainter>
 #include <QPainterPath>
+#include <QPalette>
 
 namespace scwx::qt::ui
 {
@@ -104,7 +105,6 @@ RadarProductCard::RadarProductCard(const QString& title,
       "  background: transparent;"
       "  font-weight: 600;"
       "  font-size: 12px;"
-      "  color: white;"
       "}"
       "#titleLabel[selected='true'] {"
       "  color: #2979FF;"
@@ -140,20 +140,43 @@ void RadarProductCard::leaveEvent(QEvent*)
    UpdateStyle();
 }
 
+void RadarProductCard::changeEvent(QEvent* event)
+{
+   if (event->type() == QEvent::PaletteChange ||
+       event->type() == QEvent::ApplicationPaletteChange ||
+       event->type() == QEvent::StyleChange)
+   {
+      UpdateStyle();
+
+      titleLabel_->style()->unpolish(titleLabel_);
+      titleLabel_->style()->polish(titleLabel_);
+      titleLabel_->update();
+   }
+
+   QWidget::changeEvent(event);
+}
+
 void RadarProductCard::UpdateStyle()
 {
-   if (hovered_)
-   {
-      setStyleSheet(
-         "background-color: rgba(255, 255, 255, 0.08);"
-         "border-radius: 10px;");
-   }
-   else
-   {
-      setStyleSheet(
-         "background-color: rgba(255, 255, 255, 0.03);"
-         "border-radius: 10px;");
-   }
+   const QColor textColor = palette().color(QPalette::WindowText);
+   const int    alpha     = hovered_ ? 30 : 16;
+   QColor       hoverColor(textColor);
+   hoverColor.setAlpha(alpha);
+
+   titleLabel_->setStyleSheet(QString("#titleLabel {"
+                                      "  background: transparent;"
+                                      "  font-weight: 600;"
+                                      "  font-size: 12px;"
+                                      "  color: %1;"
+                                      "}"
+                                      "#titleLabel[selected='true'] {"
+                                      "  color: #2979FF;"
+                                      "}")
+                                 .arg(textColor.name(QColor::HexRgb)));
+
+   setStyleSheet(QString("background-color: %1;"
+                         "border-radius: 10px;")
+                    .arg(hoverColor.name(QColor::HexArgb)));
 }
 
 void RadarProductCard::SetSelected(bool selected)
