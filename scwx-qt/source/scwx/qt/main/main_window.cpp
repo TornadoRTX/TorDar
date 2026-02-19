@@ -45,6 +45,7 @@
 #include <scwx/util/logger.hpp>
 #include <scwx/util/time.hpp>
 
+#include <algorithm>
 #include <set>
 
 #include <boost/asio/post.hpp>
@@ -882,10 +883,10 @@ void MainWindowImpl::ConfigureMapStyles()
       std::string styleName = mapSettings.map_style(i).GetValue();
 
       if ((customStyleAvailable_ && styleName == "Custom") ||
-          std::find_if(mapProviderInfo.mapStyles_.cbegin(),
-                       mapProviderInfo.mapStyles_.cend(),
-                       [&](const auto& mapStyle)
-                       { return mapStyle.name_ == styleName; }) !=
+          styleName == "None" ||
+          std::ranges::find_if(mapProviderInfo.mapStyles_,
+                               [&](const auto& mapStyle)
+                               { return mapStyle.name_ == styleName; }) !=
              mapProviderInfo.mapStyles_.cend())
       {
          // Initialize map style from settings
@@ -1520,6 +1521,9 @@ void MainWindowImpl::PopulateMapStyles()
       mainWindow_->ui->mapStyleComboBox->addItem(
          QString::fromStdString(mapStyle.name_));
    }
+
+   const std::string kNone = "None";
+   mainWindow_->ui->mapStyleComboBox->addItem(QString::fromStdString(kNone));
 
    auto& generalSettings = settings::GeneralSettings::Instance();
 
