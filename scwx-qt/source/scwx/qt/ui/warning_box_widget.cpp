@@ -57,13 +57,13 @@ public:
    void PopulateFromWarning(const types::TextEventKey& key);
    void UpdateCountdown();
 
-   WarningBoxWidget* self_;
+   WarningBoxWidget*                          self_;
    std::shared_ptr<manager::TextEventManager> textEventManager_;
-   AlertDialog*                                alertDialog_;
-   QTimer*                                     updateTimer_;
-   types::TextEventKey                         currentKey_;
-   QWidget*                                    detailsContainer_ {nullptr};
-   QVBoxLayout*                                detailsLayout_ {nullptr};
+   AlertDialog*                               alertDialog_;
+   QTimer*                                    updateTimer_;
+   types::TextEventKey                        currentKey_;
+   QWidget*                                   detailsContainer_ {nullptr};
+   QVBoxLayout*                               detailsLayout_ {nullptr};
 };
 
 WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
@@ -75,12 +75,14 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
 
    setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);
    setAttribute(Qt::WA_TranslucentBackground, false);
-   setStyleSheet(
-      "WarningBoxWidget { background-color: rgba(0, 0, 0, 0.85); }");
+   setStyleSheet("WarningBoxWidget { background-color: rgba(0, 0, 0, 0.85); }");
 
    hide();
 
-   connect(ui->closeButton, &QPushButton::clicked, this, &WarningBoxWidget::on_closeButton_clicked);
+   connect(ui->closeButton,
+           &QPushButton::clicked,
+           this,
+           &WarningBoxWidget::on_closeButton_clicked);
    connect(ui->viewEasTextButton,
            &QPushButton::clicked,
            this,
@@ -133,8 +135,8 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
    if (messages.empty())
       return;
 
-   auto&  message = messages.back();
-   auto   segments = message->segments();
+   auto& message  = messages.back();
+   auto  segments = message->segments();
    if (segments.empty())
       return;
 
@@ -143,16 +145,18 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
    // Title: from phenomenon and significance (e.g. "Tornado Warning")
    std::string phenText = awips::GetPhenomenonText(key.phenomenon_);
    std::string sigText  = awips::GetSignificanceText(key.significance_);
-   std::string title   = fmt::format("{} {}", phenText, sigText);
+   std::string title    = fmt::format("{} {}", phenText, sigText);
    self_->ui->warningTypeLabel->setText(QString::fromStdString(title));
 
    // Expiration: from event end
    auto eventEnd = segment->event_end();
    auto now      = std::chrono::system_clock::now();
-   auto minutes  = std::chrono::duration_cast<std::chrono::minutes>(eventEnd - now).count();
+   auto minutes =
+      std::chrono::duration_cast<std::chrono::minutes>(eventEnd - now).count();
    std::string expirationStr;
    if (minutes > 0)
-      expirationStr = fmt::format("EXPIRES IN {} MIN{}", minutes, minutes == 1 ? "" : "S");
+      expirationStr =
+         fmt::format("EXPIRES IN {} MIN{}", minutes, minutes == 1 ? "" : "S");
    else
       expirationStr = "EXPIRED";
    self_->ui->expirationLabel->setText(QString::fromStdString(expirationStr));
@@ -162,7 +166,7 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
    std::string statesStr;
    if (segment->header_.has_value())
    {
-      auto fipsIds = segment->header_->ugc_.fips_ids();
+      auto                     fipsIds = segment->header_->ugc_.fips_ids();
       std::vector<std::string> countyNames;
       for (auto& id : fipsIds)
          countyNames.push_back(config::CountyDatabase::GetCountyName(id));
@@ -202,9 +206,10 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
       delete item;
    }
 
-   // Build detail rows from the actual message content (labels match the warning)
-   std::string content = message->message_content();
-   std::string line;
+   // Build detail rows from the actual message content (labels match the
+   // warning)
+   std::string        content = message->message_content();
+   std::string        line;
    std::istringstream iss(content);
    while (std::getline(iss, line))
    {
@@ -213,13 +218,14 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
       if (start == std::string::npos)
          continue;
       auto end = line.find_last_not_of(" \t\r\n");
-      line = line.substr(start, end == std::string::npos ? std::string::npos : end - start + 1);
+      line     = line.substr(
+         start, end == std::string::npos ? std::string::npos : end - start + 1);
       if (line.empty())
          continue;
 
       // NWS format often has "LABEL...VALUE" or "LABEL: VALUE"
       std::string label, value;
-      size_t sep = line.find("...");
+      size_t      sep = line.find("...");
       if (sep != std::string::npos)
       {
          label = line.substr(0, sep);
@@ -241,11 +247,15 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
       }
 
       // Trim label/value
-      auto trim = [](std::string& s) {
+      auto trim = [](std::string& s)
+      {
          auto a = s.find_first_not_of(" \t");
          auto b = s.find_last_not_of(" \t");
-         if (a == std::string::npos) s.clear();
-         else s = s.substr(a, b == std::string::npos ? std::string::npos : b - a + 1);
+         if (a == std::string::npos)
+            s.clear();
+         else
+            s = s.substr(
+               a, b == std::string::npos ? std::string::npos : b - a + 1);
       };
       trim(label);
       trim(value);
@@ -253,7 +263,8 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
          continue;
 
       QLabel* labelW = new QLabel(QString::fromStdString(label + ":"));
-      labelW->setStyleSheet("color: rgba(255,255,255,0.85); font-weight: bold;");
+      labelW->setStyleSheet(
+         "color: rgba(255,255,255,0.85); font-weight: bold;");
       QLabel* valueW = new QLabel(QString::fromStdString(value));
       valueW->setStyleSheet("color: white;");
       valueW->setWordWrap(true);
@@ -282,10 +293,11 @@ void WarningBoxWidgetImpl::UpdateCountdown()
    auto messages = textEventManager_->message_list(currentKey_);
    if (messages.empty())
       return;
-   auto& segment = messages.back()->segments().back();
-   auto eventEnd = segment->event_end();
-   auto now      = std::chrono::system_clock::now();
-   if (std::chrono::duration_cast<std::chrono::minutes>(eventEnd - now).count() <= 0)
+   auto& segment  = messages.back()->segments().back();
+   auto  eventEnd = segment->event_end();
+   auto  now      = std::chrono::system_clock::now();
+   if (std::chrono::duration_cast<std::chrono::minutes>(eventEnd - now)
+          .count() <= 0)
       updateTimer_->stop();
 }
 

@@ -36,7 +36,7 @@ private slots:
 private:
    friend class WarningBoxWidgetImpl;
    std::unique_ptr<WarningBoxWidgetImpl> p;
-   Ui::WarningBoxWidget*                   ui;
+   Ui::WarningBoxWidget*                 ui;
 };
 
 } // namespace ui
