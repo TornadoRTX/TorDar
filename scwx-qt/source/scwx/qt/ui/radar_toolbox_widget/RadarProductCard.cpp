@@ -1,14 +1,12 @@
 #include "RadarProductCard.hpp"
 
 #include <QLabel>
-#include <QMouseEvent>
 #include <QIcon>
 #include <QVBoxLayout>
-#include <QDebug>
-#include <QStyle>
 #include <QPainter>
 #include <QPainterPath>
 #include <QPalette>
+#include <QStyle>
 
 namespace scwx::qt::ui
 {
@@ -20,45 +18,35 @@ RadarProductCard::RadarProductCard(const QString& title,
 {
    setCursor(Qt::PointingHandCursor);
    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+
    auto* layout = new QVBoxLayout(this);
    layout->setContentsMargins(8, 10, 8, 10);
    layout->setSpacing(6);
 
    // -------------------------
-   // Icon
+   // Icon container
    // -------------------------
    iconContainer_ = new QWidget(this);
    iconContainer_->setFixedSize(44, 44);
-   iconContainer_->setProperty("selected", false);
 
-   QVBoxLayout* iconLayout = new QVBoxLayout(iconContainer_);
+   auto* iconLayout = new QVBoxLayout(iconContainer_);
    iconLayout->setContentsMargins(4, 4, 4, 4);
    iconLayout->setAlignment(Qt::AlignCenter);
 
    imageLabel_ = new QLabel(iconContainer_);
    imageLabel_->setFixedSize(36, 36);
    imageLabel_->setAlignment(Qt::AlignCenter);
-
-   iconLayout->addWidget(imageLabel_);
    imageLabel_->setObjectName("iconImage");
-
    imageLabel_->setProperty("selected", false);
 
    imageLabel_->setStyleSheet(
-      "#iconImage {"
-      "  border-radius: 6px;"
-      "}"
-      "#iconImage[selected='true'] {"
-      "  border: 2px solid #2979FF;"
-      "}");
+      "#iconImage { border-radius: 6px; }"
+      "#iconImage[selected='true'] { border: 2px solid #2979FF; }");
 
+   iconLayout->addWidget(imageLabel_);
+
+   // Load icon
    QIcon icon(iconPath);
-
-   if (icon.isNull())
-   {
-      qWarning() << "RadarProductCard: failed to load icon:" << iconPath;
-   }
-
    QPixmap pixmap = icon.pixmap(QSize(36, 36), QIcon::Normal, QIcon::Off);
 
    QPixmap rounded(36, 36);
@@ -69,12 +57,11 @@ RadarProductCard::RadarProductCard(const QString& title,
    painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
    QPainterPath path;
-   path.addRoundedRect(0, 0, 36, 36, 6, 6); // 6px corner radius
-
+   path.addRoundedRect(0, 0, 36, 36, 6, 6);
    painter.setClipPath(path);
    painter.drawPixmap(0, 0, pixmap);
-
    painter.end();
+
    imageLabel_->setPixmap(rounded);
 
    // -------------------------
@@ -85,30 +72,11 @@ RadarProductCard::RadarProductCard(const QString& title,
    titleLabel_->setWordWrap(true);
    titleLabel_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
    titleLabel_->setMinimumWidth(0);
+   titleLabel_->setObjectName("titleLabel");
    titleLabel_->setProperty("selected", false);
 
-   // -------------------------
-   // Layout
-   // -------------------------
    layout->addWidget(iconContainer_, 0, Qt::AlignHCenter);
    layout->addWidget(titleLabel_);
-   iconContainer_->setObjectName("iconContainer");
-   titleLabel_->setObjectName("titleLabel");
-
-   iconContainer_->setStyleSheet(
-      "#iconContainer {"
-      "  border-radius: 8px;"
-      "}");
-
-   titleLabel_->setStyleSheet(
-      "#titleLabel {"
-      "  background: transparent;"
-      "  font-weight: 600;"
-      "  font-size: 12px;"
-      "}"
-      "#titleLabel[selected='true'] {"
-      "  color: #2979FF;"
-      "}");
 
    UpdateStyle();
 }
@@ -122,7 +90,7 @@ void RadarProductCard::mousePressEvent(QMouseEvent* event)
 {
    if (event->button() == Qt::LeftButton)
    {
-      Clicked();
+      emit Clicked();
    }
 
    QWidget::mousePressEvent(event);
@@ -140,38 +108,30 @@ void RadarProductCard::leaveEvent(QEvent*)
    UpdateStyle();
 }
 
-void RadarProductCard::changeEvent(QEvent* event)
-{
-   if (event->type() == QEvent::PaletteChange ||
-       event->type() == QEvent::ApplicationPaletteChange)
-   {
-      UpdateStyle();
-   }
-
-   QWidget::changeEvent(event);
-}
-
 void RadarProductCard::UpdateStyle()
 {
    const QColor textColor = palette().color(QPalette::WindowText);
-   const int    alpha     = hovered_ ? 30 : 16;
-   QColor       hoverColor(textColor);
-   hoverColor.setAlpha(alpha);
 
-   titleLabel_->setStyleSheet(QString("#titleLabel {"
-                                      "  background: transparent;"
-                                      "  font-weight: 600;"
-                                      "  font-size: 12px;"
-                                      "  color: %1;"
-                                      "}"
-                                      "#titleLabel[selected='true'] {"
-                                      "  color: #2979FF;"
-                                      "}")
-                                 .arg(textColor.name(QColor::HexRgb)));
+   // Hover background derived from theme text color
+   QColor hoverColor(textColor);
+   hoverColor.setAlpha(hovered_ ? 30 : 16);
 
-   setStyleSheet(QString("background-color: %1;"
-                         "border-radius: 10px;")
-                    .arg(hoverColor.name(QColor::HexArgb)));
+   titleLabel_->setStyleSheet(QString(
+      "#titleLabel {"
+      "  background: transparent;"
+      "  font-weight: 600;"
+      "  font-size: 12px;"
+      "  color: %1;"
+      "}"
+      "#titleLabel[selected='true'] {"
+      "  color: #2979FF;"
+      "}")
+      .arg(textColor.name()));
+
+   setStyleSheet(QString(
+      "background-color: %1;"
+      "border-radius: 10px;")
+      .arg(hoverColor.name(QColor::HexArgb)));
 }
 
 void RadarProductCard::SetSelected(bool selected)
@@ -186,10 +146,9 @@ void RadarProductCard::SetSelected(bool selected)
 
    imageLabel_->style()->unpolish(imageLabel_);
    imageLabel_->style()->polish(imageLabel_);
-   imageLabel_->update();
 
-   iconContainer_->update();
    titleLabel_->update();
+   imageLabel_->update();
 }
 
 } // namespace scwx::qt::ui

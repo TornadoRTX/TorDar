@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QWidget>
-#include <QEvent>
 #include <QMouseEvent>
 #include <QEnterEvent>
 
@@ -18,6 +17,7 @@ public:
    explicit RadarProductCard(const QString& title,
                              const QString& iconPath,
                              QWidget*       parent = nullptr);
+
    QSize sizeHint() const override;
    void  SetSelected(bool selected);
 
@@ -28,14 +28,13 @@ protected:
    void mousePressEvent(QMouseEvent* event) override;
    void enterEvent(QEnterEvent* event) override;
    void leaveEvent(QEvent* event) override;
-   void changeEvent(QEvent* event) override;
 
 private:
    void UpdateStyle();
 
-   QLabel*  imageLabel_;
-   QLabel*  titleLabel_;
-   QWidget* iconContainer_;
+   QLabel*  imageLabel_     {nullptr};
+   QLabel*  titleLabel_     {nullptr};
+   QWidget* iconContainer_  {nullptr};
 
    bool hovered_  = false;
    bool selected_ = false;
