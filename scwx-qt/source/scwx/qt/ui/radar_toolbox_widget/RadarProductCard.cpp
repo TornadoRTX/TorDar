@@ -143,14 +143,9 @@ void RadarProductCard::leaveEvent(QEvent*)
 void RadarProductCard::changeEvent(QEvent* event)
 {
    if (event->type() == QEvent::PaletteChange ||
-       event->type() == QEvent::ApplicationPaletteChange ||
-       event->type() == QEvent::StyleChange)
+       event->type() == QEvent::ApplicationPaletteChange)
    {
       UpdateStyle();
-
-      titleLabel_->style()->unpolish(titleLabel_);
-      titleLabel_->style()->polish(titleLabel_);
-      titleLabel_->update();
    }
 
    QWidget::changeEvent(event);
