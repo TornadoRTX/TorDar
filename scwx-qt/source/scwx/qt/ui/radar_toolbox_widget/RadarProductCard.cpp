@@ -16,6 +16,7 @@ RadarProductCard::RadarProductCard(const QString& title,
                                    QWidget*       parent) :
     QWidget(parent)
 {
+   setObjectName("radarProductCard");
    setCursor(Qt::PointingHandCursor);
    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 
@@ -62,7 +63,11 @@ RadarProductCard::RadarProductCard(const QString& title,
    path.addRoundedRect(QRectF(0, 0, 36 * dpr, 36 * dpr), 6 * dpr, 6 * dpr);
 
    painter.setClipPath(path);
-   painter.drawPixmap(0, 0, source);
+   QPixmap scaledSource =
+      source.scaled(pixelSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+   const int offsetX = (pixelSize.width() - scaledSource.width()) / 2;
+   const int offsetY = (pixelSize.height() - scaledSource.height()) / 2;
+   painter.drawPixmap(offsetX, offsetY, scaledSource);
    painter.end();
 
    imageLabel_->setPixmap(rounded);
@@ -117,16 +122,21 @@ void RadarProductCard::UpdateStyle()
    QColor hoverColor(textColor);
    hoverColor.setAlpha(hovered_ ? 30 : 16);
 
-   setStyleSheet(QString("background-color: %1;"
-                         "border-radius: 10px;")
+   setStyleSheet(QString("#radarProductCard {"
+                         "background-color: %1;"
+                         "border: none;"
+                         "border-radius: 10px;"
+                         "}")
                     .arg(hoverColor.name(QColor::HexArgb)));
 
    if (selected_)
    {
       iconContainer_->setStyleSheet(
+         "background: transparent;"
          "border: 2px solid #2979FF;"
          "border-radius: 8px;");
       titleLabel_->setStyleSheet(
+         "background: transparent;"
          "font-weight: 600;"
          "font-size: 12px;"
          "color: #2979FF;");
@@ -134,6 +144,7 @@ void RadarProductCard::UpdateStyle()
    else
    {
       iconContainer_->setStyleSheet(
+         "background: transparent;"
          "border: 2px solid transparent;"
          "border-radius: 8px;");
       titleLabel_->setStyleSheet(QString("font-weight: 600;"
