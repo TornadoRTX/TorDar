@@ -19,6 +19,8 @@
 #include <QVBoxLayout>
 #include <QWidget>
 #include <QFrame>
+#include <QFont>
+#include <QFontMetrics>
 
 #include <algorithm>
 #include <array>
@@ -50,18 +52,33 @@ public:
        currentKey_ {}
    {
       updateTimer_->setSingleShot(false);
-      updateTimer_->setInterval(1000);
+      updateTimer_->setInterval(30000);
       QObject::connect(updateTimer_,
                        &QTimer::timeout,
                        this,
                        &WarningBoxWidgetImpl::UpdateCountdown);
+      QObject::connect(textEventManager_.get(),
+                       &manager::TextEventManager::AlertUpdated,
+                       this,
+                       [this](const types::TextEventKey& key,
+                              std::size_t,
+                              boost::uuids::uuid uuid)
+                       {
+                          if (self_->isVisible() && key == currentKey_ &&
+                              uuid != currentMessageUuid_)
+                          {
+                             PopulateFromWarning(key);
+                          }
+                       });
    }
    ~WarningBoxWidgetImpl() = default;
 
    void PopulateFromWarning(const types::TextEventKey& key);
    void UpdateCountdown();
+   void UpdateExpirationOnly();
    void ApplyTheme(const types::TextEventKey&                   key,
                    const std::shared_ptr<const awips::Segment>& segment);
+   void UpdateTitleFont();
    void AddDetailRow(const std::string& label, const std::string& value);
    static std::string ToUpper(std::string_view value);
    static std::string Trim(std::string_view value);
@@ -85,6 +102,9 @@ public:
    AlertDialog*                               alertDialog_;
    QTimer*                                    updateTimer_;
    types::TextEventKey                        currentKey_;
+   boost::uuids::uuid                         currentMessageUuid_ {};
+   QWidget*                                   stateBadgeFrame_ {nullptr};
+   QLabel*                                    stateBadgeLabel_ {nullptr};
    QWidget*                                   detailsContainer_ {nullptr};
    QVBoxLayout*                               detailsLayout_ {nullptr};
 };
@@ -102,17 +122,49 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    setAutoFillBackground(true);
 
    ui->warningTypeLabel->setTextInteractionFlags(Qt::NoTextInteraction);
+   ui->warningTypeLabel->setWordWrap(true);
    ui->warningTypeLabel->setStyleSheet(
-      "font-size: 24px; font-weight: 800; letter-spacing: 1px;");
+      "font-size: 20px; font-weight: 800; letter-spacing: 1px;");
    ui->expirationLabel->setStyleSheet(
-      "font-size: 15px; font-weight: 700; letter-spacing: 0.5px;");
+      "font-size: 13px; font-weight: 700; letter-spacing: 0.5px;");
    ui->viewEasTextButton->setText("VIEW FULL EAS TEXT");
    ui->closeButton->setText("x");
-   ui->closeButton->setFixedSize(34, 34);
+   ui->closeButton->setFixedSize(28, 28);
    ui->buttonsLayout->setContentsMargins(0, 0, 0, 0);
-   ui->buttonsLayout->setSpacing(8);
-   ui->verticalLayout->setContentsMargins(12, 12, 12, 12);
-   ui->verticalLayout->setSpacing(8);
+   ui->buttonsLayout->setSpacing(0);
+   ui->verticalLayout->setContentsMargins(10, 8, 10, 8);
+   ui->verticalLayout->setSpacing(6);
+   ui->scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+   ui->buttonsLayout->removeWidget(ui->closeButton);
+   while (ui->buttonsLayout->count() > 0)
+   {
+      QLayoutItem* item = ui->buttonsLayout->takeAt(0);
+      if (item != nullptr)
+      {
+         delete item;
+      }
+   }
+   ui->buttonsLayout->addWidget(ui->viewEasTextButton);
+
+   QHBoxLayout* headerLayout = new QHBoxLayout();
+   ui->verticalLayout->removeWidget(ui->warningTypeLabel);
+   headerLayout->setContentsMargins(0, 0, 0, 0);
+   headerLayout->setSpacing(6);
+   headerLayout->addWidget(ui->warningTypeLabel, 1);
+   headerLayout->addWidget(ui->closeButton, 0, Qt::AlignTop);
+   ui->verticalLayout->insertLayout(0, headerLayout);
+
+   p->stateBadgeFrame_ = new QFrame(this);
+   p->stateBadgeFrame_->setObjectName("stateBadgeFrame");
+   QHBoxLayout* badgeLayout = new QHBoxLayout(p->stateBadgeFrame_);
+   badgeLayout->setContentsMargins(8, 4, 8, 4);
+   badgeLayout->setSpacing(0);
+   p->stateBadgeLabel_ = new QLabel(p->stateBadgeFrame_);
+   p->stateBadgeLabel_->setObjectName("stateBadgeLabel");
+   badgeLayout->addWidget(p->stateBadgeLabel_);
+   p->stateBadgeFrame_->setVisible(false);
+   ui->verticalLayout->insertWidget(2, p->stateBadgeFrame_, 0, Qt::AlignLeft);
 
    hide();
 
@@ -172,32 +224,35 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
    if (messages.empty())
       return;
 
-   auto& message  = messages.back();
-   auto  segments = message->segments();
+   const auto message  = messages.back();
+   currentMessageUuid_ = message->uuid();
+   const auto segments = message->segments();
    if (segments.empty())
       return;
 
-   auto& segment = segments.back();
+   const auto segment = segments.back();
    ApplyTheme(key, segment);
 
    // Title: from phenomenon and significance (e.g. "Tornado Warning")
    std::string phenText = awips::GetPhenomenonText(key.phenomenon_);
    std::string sigText  = awips::GetSignificanceText(key.significance_);
    std::string title    = ToUpper(fmt::format("{} {}", phenText, sigText));
+   if (key.phenomenon_ == awips::Phenomenon::Tornado)
+   {
+      if (segment->threatCategory_ == awips::ibw::ThreatCategory::Catastrophic)
+      {
+         title = "TORNADO EMERGENCY";
+      }
+      else if (segment->threatCategory_ ==
+               awips::ibw::ThreatCategory::Destructive)
+      {
+         title = "PDS TORNADO WARNING";
+      }
+   }
    self_->ui->warningTypeLabel->setText(QString::fromStdString(title));
+   UpdateTitleFont();
 
-   // Expiration: from event end
-   auto eventEnd = segment->event_end();
-   auto now      = std::chrono::system_clock::now();
-   auto minutes =
-      std::chrono::duration_cast<std::chrono::minutes>(eventEnd - now).count();
-   std::string expirationStr;
-   if (minutes > 0)
-      expirationStr =
-         fmt::format("EXPIRES IN {} MIN{}", minutes, minutes == 1 ? "" : "S");
-   else
-      expirationStr = "EXPIRED";
-   self_->ui->expirationLabel->setText(QString::fromStdString(expirationStr));
+   UpdateExpirationOnly();
 
    // Affected areas: only if we have UGC data
    std::string countiesStr;
@@ -212,29 +267,16 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
       countiesStr = scwx::util::ToString(countyNames);
       statesStr   = scwx::util::ToString(segment->header_->ugc_.states());
    }
-   if (!countiesStr.empty() || !statesStr.empty())
+   if (!statesStr.empty())
    {
-      self_->ui->areasFrame->setVisible(true);
-      if (!countiesStr.empty())
-      {
-         self_->ui->areasLabel->setVisible(true);
-         self_->ui->areasLabel->setText(
-            QString::fromStdString(fmt::format("AREAS  {}", countiesStr)));
-      }
-      else
-         self_->ui->areasLabel->setVisible(false);
-      if (!statesStr.empty())
-      {
-         self_->ui->statesLabel->setVisible(true);
-         self_->ui->statesLabel->setText(QString::fromStdString(statesStr));
-      }
-      else
-         self_->ui->statesLabel->setVisible(false);
+      stateBadgeLabel_->setText(QString::fromStdString(statesStr));
+      stateBadgeFrame_->setVisible(true);
    }
    else
    {
-      self_->ui->areasFrame->setVisible(false);
+      stateBadgeFrame_->setVisible(false);
    }
+   self_->ui->areasFrame->setVisible(false);
 
    // Clear previous detail rows
    while (QLayoutItem* item = detailsLayout_->takeAt(0))
@@ -246,9 +288,12 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
 
    const auto fields = ParseProductFields(segment);
 
+   if (!countiesStr.empty())
+   {
+      AddDetailRow("Areas", countiesStr);
+   }
    AddSummaryField("Hazard", fields, {"HAZARD"});
    AddSummaryField("Source", fields, {"SOURCE"});
-   AddSummaryField("Impact", fields, {"IMPACT"});
    AddPhenomenonSpecificFields(key.phenomenon_, fields);
 
    detailsLayout_->addStretch();
@@ -269,8 +314,8 @@ void WarningBoxWidgetImpl::AddDetailRow(const std::string& label,
    valueW->setWordWrap(true);
 
    QHBoxLayout* row = new QHBoxLayout(rowFrame);
-   row->setContentsMargins(10, 8, 10, 8);
-   row->setSpacing(8);
+   row->setContentsMargins(8, 6, 8, 6);
+   row->setSpacing(6);
    row->addWidget(labelW, 0);
    row->addWidget(valueW, 1);
 
@@ -302,7 +347,7 @@ void WarningBoxWidgetImpl::ApplyTheme(
 
    std::string styleSheet;
    styleSheet += "QWidget#WarningBoxWidget {";
-   styleSheet += "  background-color: rgba(12, 16, 26, 191);";
+   styleSheet += "  background-color: rgba(12, 16, 26, 230);";
    styleSheet += "  border: 2px solid rgba(" + accentColor + ", 220);";
    styleSheet += "  border-radius: 6px;";
    styleSheet += "}";
@@ -330,6 +375,17 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "  font-weight: 700;";
    styleSheet += "  letter-spacing: 0.8px;";
    styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QFrame#stateBadgeFrame {";
+   styleSheet += "  border: 1px solid rgba(58, 122, 255, 220);";
+   styleSheet += "  border-radius: 3px;";
+   styleSheet += "  background-color: rgba(19, 56, 110, 220);";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QLabel#stateBadgeLabel {";
+   styleSheet += "  color: rgb(224, 236, 255);";
+   styleSheet += "  font-size: 11px;";
+   styleSheet += "  font-weight: 700;";
+   styleSheet += "  letter-spacing: 0.8px;";
+   styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QFrame#detailRow {";
    styleSheet += "  border: 1px solid rgba(" + accentColor + ", 140);";
    styleSheet += "  background-color: rgba(6, 11, 24, 220);";
@@ -339,32 +395,32 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "  background-color: rgba(27, 67, 92, 220);";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QLabel#detailLabel {";
-   styleSheet += "  font-size: 12px;";
+   styleSheet += "  font-size: 11px;";
    styleSheet += "  font-weight: 700;";
-   styleSheet += "  letter-spacing: 0.8px;";
+   styleSheet += "  letter-spacing: 0.6px;";
    styleSheet += "  color: rgba(220, 226, 242, 220);";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QLabel#detailValue {";
-   styleSheet += "  font-size: 14px;";
+   styleSheet += "  font-size: 12px;";
    styleSheet += "  font-weight: 700;";
-   styleSheet += "  letter-spacing: 0.5px;";
+   styleSheet += "  letter-spacing: 0.3px;";
    styleSheet += "  color: rgb(236, 240, 255);";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QPushButton#viewEasTextButton {";
    styleSheet += "  border: 1px solid rgba(" + accentColor + ", 200);";
    styleSheet += "  background-color: rgba(2, 6, 14, 235);";
    styleSheet += "  color: rgb(248, 251, 255);";
-   styleSheet += "  font-size: 16px;";
+   styleSheet += "  font-size: 14px;";
    styleSheet += "  font-weight: 800;";
    styleSheet += "  letter-spacing: 0.8px;";
-   styleSheet += "  padding: 8px;";
+   styleSheet += "  padding: 6px;";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QPushButton#closeButton {";
-   styleSheet += "  border-radius: 17px;";
+   styleSheet += "  border-radius: 14px;";
    styleSheet += "  border: 1px solid rgba(160, 170, 194, 190);";
    styleSheet += "  background-color: rgba(5, 9, 20, 210);";
    styleSheet += "  color: rgba(235, 240, 255, 230);";
-   styleSheet += "  font-size: 18px;";
+   styleSheet += "  font-size: 15px;";
    styleSheet += "  font-weight: 700;";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QPushButton#closeButton:hover {";
@@ -372,6 +428,64 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "}";
 
    self_->setStyleSheet(QString::fromStdString(styleSheet));
+}
+
+void WarningBoxWidgetImpl::UpdateExpirationOnly()
+{
+   if (currentKey_ == types::TextEventKey {})
+   {
+      return;
+   }
+
+   auto messages = textEventManager_->message_list(currentKey_);
+   if (messages.empty())
+   {
+      return;
+   }
+   auto segments = messages.back()->segments();
+   if (segments.empty())
+   {
+      return;
+   }
+
+   auto eventEnd = segments.back()->event_end();
+   auto now      = std::chrono::system_clock::now();
+   auto minutes =
+      std::chrono::duration_cast<std::chrono::minutes>(eventEnd - now).count();
+   std::string expirationStr;
+   if (minutes > 0)
+   {
+      expirationStr =
+         fmt::format("EXPIRES IN {} MIN{}", minutes, minutes == 1 ? "" : "S");
+   }
+   else
+   {
+      expirationStr = "EXPIRED";
+   }
+
+   self_->ui->expirationLabel->setText(QString::fromStdString(expirationStr));
+}
+
+void WarningBoxWidgetImpl::UpdateTitleFont()
+{
+   const int targetWidth = std::max(120, self_->ui->warningTypeLabel->width());
+   QFont     font        = self_->ui->warningTypeLabel->font();
+   int       pointSize   = 20;
+   font.setPointSize(pointSize);
+
+   while (pointSize > 12)
+   {
+      QFontMetrics metrics(font);
+      if (metrics.horizontalAdvance(self_->ui->warningTypeLabel->text()) <=
+          targetWidth)
+      {
+         break;
+      }
+      pointSize--;
+      font.setPointSize(pointSize);
+   }
+
+   self_->ui->warningTypeLabel->setFont(font);
 }
 
 std::string WarningBoxWidgetImpl::ToUpper(std::string_view value)
@@ -545,18 +659,14 @@ void WarningBoxWidgetImpl::AddPhenomenonSpecificFields(
 {
    if (phenomenon == awips::Phenomenon::SevereThunderstorm)
    {
-      AddSummaryField("Hail Threat", fields, {"HAIL THREAT"});
       AddSummaryField("Max Hail Size", fields, {"MAX HAIL SIZE"});
-      AddSummaryField("Wind Threat", fields, {"WIND THREAT"});
       AddSummaryField("Max Wind Gust", fields, {"MAX WIND GUST"});
       AddSummaryField(
          "Damage", fields, {"THUNDERSTORM DAMAGE THREAT", "DAMAGE THREAT"});
    }
    else if (phenomenon == awips::Phenomenon::Tornado)
    {
-      AddSummaryField("Hail Threat", fields, {"HAIL THREAT"});
       AddSummaryField("Max Hail Size", fields, {"MAX HAIL SIZE"});
-      AddSummaryField("Wind Threat", fields, {"WIND THREAT"});
       AddSummaryField("Max Wind Gust", fields, {"MAX WIND GUST"});
       AddSummaryField(
          "Damage Threat", fields, {"TORNADO DAMAGE THREAT", "DAMAGE THREAT"});
@@ -566,18 +676,7 @@ void WarningBoxWidgetImpl::AddPhenomenonSpecificFields(
 
 void WarningBoxWidgetImpl::UpdateCountdown()
 {
-   if (currentKey_ == types::TextEventKey {})
-      return;
-   PopulateFromWarning(currentKey_);
-   auto messages = textEventManager_->message_list(currentKey_);
-   if (messages.empty())
-      return;
-   auto& segment  = messages.back()->segments().back();
-   auto  eventEnd = segment->event_end();
-   auto  now      = std::chrono::system_clock::now();
-   if (std::chrono::duration_cast<std::chrono::minutes>(eventEnd - now)
-          .count() <= 0)
-      updateTimer_->stop();
+   UpdateExpirationOnly();
 }
 
 #include "warning_box_widget.moc"
