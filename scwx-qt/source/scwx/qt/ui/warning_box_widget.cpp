@@ -746,8 +746,9 @@ void WarningBoxWidgetImpl::AdjustHeightToContents()
    {
       const bool detailsOverflow =
          self_->ui->scrollArea->verticalScrollBar()->maximum() > 0;
-      const bool titleClipped = self_->ui->warningTypeLabel->height() <
-                                self_->ui->warningTypeLabel->sizeHint().height();
+      const bool titleClipped =
+         self_->ui->warningTypeLabel->height() <
+         self_->ui->warningTypeLabel->sizeHint().height();
       return detailsOverflow || titleClipped;
    };
 
