@@ -713,69 +713,51 @@ void WarningBoxWidgetImpl::AdjustHeightToContents()
    self_->layout()->activate();
    detailsLayout_->activate();
    detailsContainer_->adjustSize();
-
-   self_->adjustSize();
+   detailsContainer_->updateGeometry();
 
    static constexpr int kExtraBottomSpace = 8;
    static constexpr int kMinBoxHeight     = 220;
-   static constexpr int kStepHeight       = 10;
-   int                  desiredHeight =
-      std::max(kMinBoxHeight, self_->sizeHint().height() + kExtraBottomSpace);
+   static constexpr int kMinDetailsHeight = 40;
+   static constexpr int kParentPaddingY   = 24;
 
-   int maxHeight = desiredHeight;
+   int maxHeight = std::max(kMinBoxHeight, self_->sizeHint().height());
    if (self_->parentWidget() != nullptr)
    {
-      maxHeight = std::max(kMinBoxHeight, self_->parentWidget()->height() - 24);
+      maxHeight = std::max(kMinBoxHeight,
+                           self_->parentWidget()->height() - kParentPaddingY);
    }
 
-   if (desiredHeight > maxHeight)
-   {
-      desiredHeight = maxHeight;
-   }
+   const int detailsWanted =
+      std::max(kMinDetailsHeight,
+               detailsContainer_->sizeHint().height() +
+                  detailsLayout_->contentsMargins().top() +
+                  detailsLayout_->contentsMargins().bottom());
 
-   auto setHeight = [this](int height)
-   {
-      self_->setMinimumHeight(height);
-      self_->setMaximumHeight(height);
-      self_->resize(self_->width(), height);
-      self_->layout()->activate();
-      detailsLayout_->activate();
-   };
+   // Estimate non-scroll-area ("chrome") height by pinning scroll area to min
+   self_->ui->scrollArea->setMinimumHeight(kMinDetailsHeight);
+   self_->ui->scrollArea->setMaximumHeight(kMinDetailsHeight);
+   self_->layout()->activate();
+   const int chromeHeight =
+      std::max(0, self_->sizeHint().height() - kMinDetailsHeight);
 
-   auto hasCutoff = [this]() -> bool
-   {
-      const bool detailsOverflow =
-         self_->ui->scrollArea->verticalScrollBar()->maximum() > 0;
-      const bool titleClipped =
-         self_->ui->warningTypeLabel->height() <
-         self_->ui->warningTypeLabel->sizeHint().height();
-      return detailsOverflow || titleClipped;
-   };
+   const int availableForDetails =
+      std::max(kMinDetailsHeight, maxHeight - chromeHeight - kExtraBottomSpace);
+   const int detailsFinalHeight = std::min(detailsWanted, availableForDetails);
+   const int panelFinalHeight =
+      std::clamp(chromeHeight + detailsFinalHeight + kExtraBottomSpace,
+                 kMinBoxHeight,
+                 maxHeight);
 
-   setHeight(desiredHeight);
+   self_->ui->scrollArea->setMinimumHeight(detailsFinalHeight);
+   self_->ui->scrollArea->setMaximumHeight(detailsFinalHeight);
+   self_->ui->scrollArea->setVerticalScrollBarPolicy(
+      detailsWanted > detailsFinalHeight ? Qt::ScrollBarAsNeeded :
+                                           Qt::ScrollBarAlwaysOff);
 
-   while (hasCutoff() && desiredHeight < maxHeight)
-   {
-      desiredHeight = std::min(maxHeight, desiredHeight + kStepHeight);
-      setHeight(desiredHeight);
-   }
-
-   int bestHeight = desiredHeight;
-   while (bestHeight - kStepHeight >= kMinBoxHeight)
-   {
-      setHeight(bestHeight - kStepHeight);
-      if (hasCutoff())
-      {
-         setHeight(bestHeight);
-         break;
-      }
-      bestHeight -= kStepHeight;
-   }
-
-   if (!hasCutoff())
-   {
-      self_->ui->scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-   }
+   self_->setMinimumHeight(panelFinalHeight);
+   self_->setMaximumHeight(panelFinalHeight);
+   self_->resize(self_->width(), panelFinalHeight);
+   self_->layout()->activate();
 }
 
 std::string WarningBoxWidgetImpl::ToUpper(std::string_view value)
