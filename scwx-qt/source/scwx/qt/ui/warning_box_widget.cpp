@@ -22,6 +22,7 @@
 #include <QFont>
 #include <QFontMetrics>
 #include <QLayoutItem>
+#include <QMargins>
 
 #include <algorithm>
 #include <array>
@@ -113,6 +114,7 @@ public:
    void ApplyTheme(const types::TextEventKey&                   key,
                    const std::shared_ptr<const awips::Segment>& segment);
    void UpdateTitleFont();
+   void AdjustHeightToContents();
    void AddDetailRow(const std::string& label, const std::string& value);
    void AddSevereMetricCards(const std::string& maxHail,
                              const std::string& maxWind);
@@ -368,6 +370,7 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
    }
 
    detailsLayout_->addStretch();
+   AdjustHeightToContents();
 }
 
 void WarningBoxWidgetImpl::AddDetailRow(const std::string& label,
@@ -681,6 +684,47 @@ void WarningBoxWidgetImpl::UpdateTitleFont()
    }
 
    self_->ui->warningTypeLabel->setFont(font);
+}
+
+void WarningBoxWidgetImpl::AdjustHeightToContents()
+{
+   if (detailsContainer_ == nullptr)
+   {
+      return;
+   }
+
+   detailsContainer_->adjustSize();
+
+   const int detailsHeight =
+      std::max(40, detailsContainer_->sizeHint().height());
+   self_->ui->scrollArea->setMinimumHeight(detailsHeight);
+   self_->ui->scrollArea->setMaximumHeight(detailsHeight);
+   self_->ui->scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+   self_->adjustSize();
+
+   static constexpr int kExtraBottomSpace = 8;
+   static constexpr int kMinBoxHeight     = 220;
+   int                  desiredHeight =
+      std::max(kMinBoxHeight, self_->sizeHint().height() + kExtraBottomSpace);
+
+   int maxHeight = desiredHeight;
+   if (self_->parentWidget() != nullptr)
+   {
+      maxHeight = std::max(kMinBoxHeight, self_->parentWidget()->height() - 24);
+   }
+
+   if (desiredHeight > maxHeight)
+   {
+      desiredHeight = maxHeight;
+      self_->ui->scrollArea->setMinimumHeight(40);
+      self_->ui->scrollArea->setMaximumHeight(QWIDGETSIZE_MAX);
+      self_->ui->scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+   }
+
+   self_->setMinimumHeight(desiredHeight);
+   self_->setMaximumHeight(desiredHeight);
+   self_->resize(self_->width(), desiredHeight);
 }
 
 std::string WarningBoxWidgetImpl::ToUpper(std::string_view value)
