@@ -680,7 +680,8 @@ void WarningBoxWidgetImpl::ApplyTheme(
       styleSheet += "  border: 1px solid rgba(34, 49, 88, 210);";
       styleSheet += "  background-color: rgba(8, 13, 31, 236);";
       styleSheet += "}";
-      styleSheet += "QWidget#WarningBoxWidget QFrame#detailRow[highlight=\"true\"] {";
+      styleSheet +=
+         "QWidget#WarningBoxWidget QFrame#detailRow[highlight=\"true\"] {";
       styleSheet += "  background-color: rgba(17, 31, 66, 235);";
       styleSheet += "}";
    }
