@@ -23,6 +23,7 @@
 #include <QFontMetrics>
 #include <QLayoutItem>
 #include <QMargins>
+#include <QScrollBar>
 
 #include <algorithm>
 #include <array>
@@ -148,6 +149,7 @@ public:
    QFrame*                                    progressFill_ {nullptr};
    QFrame*                                    progressSweep_ {nullptr};
    int                                        sweepPosition_ {0};
+   int                                        fixedWidth_ {0};
    QWidget*                                   detailsContainer_ {nullptr};
    QVBoxLayout*                               detailsLayout_ {nullptr};
 };
@@ -239,6 +241,10 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    p->detailsLayout_->setSpacing(4);
    ui->scrollArea->setWidget(p->detailsContainer_);
    ui->scrollArea->setWidgetResizable(true);
+
+   p->fixedWidth_ = width();
+   setMinimumWidth(p->fixedWidth_);
+   setMaximumWidth(p->fixedWidth_);
 }
 
 WarningBoxWidget::~WarningBoxWidget()
@@ -693,18 +699,26 @@ void WarningBoxWidgetImpl::AdjustHeightToContents()
       return;
    }
 
-   detailsContainer_->adjustSize();
+   if (fixedWidth_ > 0)
+   {
+      self_->setMinimumWidth(fixedWidth_);
+      self_->setMaximumWidth(fixedWidth_);
+      self_->resize(fixedWidth_, self_->height());
+   }
 
-   const int detailsHeight =
-      std::max(40, detailsContainer_->sizeHint().height());
-   self_->ui->scrollArea->setMinimumHeight(detailsHeight);
-   self_->ui->scrollArea->setMaximumHeight(detailsHeight);
-   self_->ui->scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+   self_->ui->scrollArea->setMinimumHeight(40);
+   self_->ui->scrollArea->setMaximumHeight(QWIDGETSIZE_MAX);
+   self_->ui->scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+
+   self_->layout()->activate();
+   detailsLayout_->activate();
+   detailsContainer_->adjustSize();
 
    self_->adjustSize();
 
    static constexpr int kExtraBottomSpace = 8;
    static constexpr int kMinBoxHeight     = 220;
+   static constexpr int kStepHeight       = 10;
    int                  desiredHeight =
       std::max(kMinBoxHeight, self_->sizeHint().height() + kExtraBottomSpace);
 
@@ -717,14 +731,50 @@ void WarningBoxWidgetImpl::AdjustHeightToContents()
    if (desiredHeight > maxHeight)
    {
       desiredHeight = maxHeight;
-      self_->ui->scrollArea->setMinimumHeight(40);
-      self_->ui->scrollArea->setMaximumHeight(QWIDGETSIZE_MAX);
-      self_->ui->scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
    }
 
-   self_->setMinimumHeight(desiredHeight);
-   self_->setMaximumHeight(desiredHeight);
-   self_->resize(self_->width(), desiredHeight);
+   auto setHeight = [this](int height)
+   {
+      self_->setMinimumHeight(height);
+      self_->setMaximumHeight(height);
+      self_->resize(self_->width(), height);
+      self_->layout()->activate();
+      detailsLayout_->activate();
+   };
+
+   auto hasCutoff = [this]() -> bool
+   {
+      const bool detailsOverflow =
+         self_->ui->scrollArea->verticalScrollBar()->maximum() > 0;
+      const bool titleClipped = self_->ui->warningTypeLabel->height() <
+                                self_->ui->warningTypeLabel->sizeHint().height();
+      return detailsOverflow || titleClipped;
+   };
+
+   setHeight(desiredHeight);
+
+   while (hasCutoff() && desiredHeight < maxHeight)
+   {
+      desiredHeight = std::min(maxHeight, desiredHeight + kStepHeight);
+      setHeight(desiredHeight);
+   }
+
+   int bestHeight = desiredHeight;
+   while (bestHeight - kStepHeight >= kMinBoxHeight)
+   {
+      setHeight(bestHeight - kStepHeight);
+      if (hasCutoff())
+      {
+         setHeight(bestHeight);
+         break;
+      }
+      bestHeight -= kStepHeight;
+   }
+
+   if (!hasCutoff())
+   {
+      self_->ui->scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+   }
 }
 
 std::string WarningBoxWidgetImpl::ToUpper(std::string_view value)
