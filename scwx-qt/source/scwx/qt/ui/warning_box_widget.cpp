@@ -261,7 +261,9 @@ void WarningBoxWidget::ShowWarning(const types::TextEventKey& key)
    raise();
 
    // Re-run sizing after the widget is shown so layout metrics are final.
-   QTimer::singleShot(0, this, [this]()
+   QTimer::singleShot(0,
+                      this,
+                      [this]()
                       {
                          if (isVisible())
                          {
