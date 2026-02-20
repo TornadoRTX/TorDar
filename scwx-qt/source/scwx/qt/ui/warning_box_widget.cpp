@@ -470,11 +470,17 @@ void WarningBoxWidgetImpl::UpdateProgressVisual(
 
    if (key.phenomenon_ != awips::Phenomenon::SevereThunderstorm)
    {
+      progressTrack_->setMinimumHeight(0);
+      progressTrack_->setMaximumHeight(0);
+      progressTrack_->setFixedHeight(0);
       progressTrack_->setVisible(false);
       sweepTimer_->stop();
       return;
    }
 
+   progressTrack_->setMinimumHeight(6);
+   progressTrack_->setMaximumHeight(6);
+   progressTrack_->setFixedHeight(6);
    progressTrack_->setVisible(true);
    if (!sweepTimer_->isActive())
    {
@@ -515,10 +521,13 @@ void WarningBoxWidgetImpl::ApplyTheme(
    const std::shared_ptr<const awips::Segment>& segment)
 {
    std::string accentColor = "197, 37, 48";
+   bool        isSevere    = false;
 
    if (key.phenomenon_ == awips::Phenomenon::SevereThunderstorm)
    {
-      accentColor = "214, 163, 0";
+      // Keep yellow for severe styling, but use a subtler tone.
+      accentColor = "191, 151, 58";
+      isSevere    = true;
    }
    else if (key.phenomenon_ == awips::Phenomenon::Tornado &&
             (segment->threatCategory_ ==
@@ -576,17 +585,17 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QFrame#progressTrack {";
    styleSheet += "  border: 1px solid rgba(" + accentColor + ", 190);";
-   styleSheet += "  background-color: rgba(25, 33, 56, 210);";
+   styleSheet += "  background-color: rgba(17, 24, 46, 220);";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QFrame#progressFill {";
-   styleSheet += "  background-color: rgba(236, 182, 23, 255);";
+   styleSheet += "  background-color: rgba(235, 191, 66, 255);";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QFrame#progressSweep {";
    styleSheet += "  background-color: rgba(247, 252, 255, 220);";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QFrame#severeMetricCard {";
    styleSheet += "  border: 1px solid rgba(" + accentColor + ", 160);";
-   styleSheet += "  background-color: rgba(8, 13, 28, 225);";
+   styleSheet += "  background-color: rgba(13, 15, 29, 236);";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QLabel#severeMetricTitle {";
    styleSheet += "  font-size: 10px;";
@@ -640,6 +649,36 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "QWidget#WarningBoxWidget QPushButton#closeButton:hover {";
    styleSheet += "  background-color: rgba(" + accentColor + ", 72);";
    styleSheet += "}";
+
+   if (isSevere)
+   {
+      // Severe blueprint look: navy body, yellow accents, clean metric cards.
+      styleSheet += "QWidget#WarningBoxWidget {";
+      styleSheet += "  background-color: rgba(12, 13, 22, 238);";
+      styleSheet += "  border: 1px solid rgba(64, 80, 126, 220);";
+      styleSheet += "}";
+      styleSheet += "QWidget#WarningBoxWidget QFrame#progressTrack {";
+      styleSheet += "  border: 1px solid rgba(191, 151, 58, 210);";
+      styleSheet += "  background-color: rgba(18, 24, 46, 225);";
+      styleSheet += "}";
+      styleSheet += "QWidget#WarningBoxWidget QFrame#progressFill {";
+      styleSheet += "  background-color: rgba(236, 193, 74, 255);";
+      styleSheet += "}";
+      styleSheet += "QWidget#WarningBoxWidget QFrame#severeMetricCard {";
+      styleSheet += "  border: 1px solid rgba(179, 142, 57, 210);";
+      styleSheet += "  background-color: rgba(15, 16, 31, 240);";
+      styleSheet += "}";
+      styleSheet += "QWidget#WarningBoxWidget QLabel#severeMetricTitle {";
+      styleSheet += "  color: rgba(202, 186, 147, 235);";
+      styleSheet += "}";
+      styleSheet += "QWidget#WarningBoxWidget QFrame#detailRow {";
+      styleSheet += "  border: 1px solid rgba(34, 49, 88, 210);";
+      styleSheet += "  background-color: rgba(8, 13, 31, 236);";
+      styleSheet += "}";
+      styleSheet += "QWidget#WarningBoxWidget QFrame#detailRow[highlight=\"true\"] {";
+      styleSheet += "  background-color: rgba(17, 31, 66, 235);";
+      styleSheet += "}";
+   }
 
    self_->setStyleSheet(QString::fromStdString(styleSheet));
 }
