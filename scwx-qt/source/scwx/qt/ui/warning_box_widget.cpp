@@ -21,6 +21,7 @@
 #include <QFrame>
 #include <QFont>
 #include <QFontMetrics>
+#include <QLayoutItem>
 
 #include <algorithm>
 #include <array>
@@ -49,6 +50,7 @@ public:
        textEventManager_ {manager::TextEventManager::Instance()},
        alertDialog_ {nullptr},
        updateTimer_ {new QTimer(self)},
+       sweepTimer_ {new QTimer(self)},
        currentKey_ {}
    {
       updateTimer_->setSingleShot(false);
@@ -70,16 +72,50 @@ public:
                              PopulateFromWarning(key);
                           }
                        });
+
+      sweepTimer_->setSingleShot(false);
+      sweepTimer_->setInterval(33);
+      QObject::connect(sweepTimer_,
+                       &QTimer::timeout,
+                       this,
+                       [this]()
+                       {
+                          if (progressTrack_ == nullptr ||
+                              progressSweep_ == nullptr ||
+                              !progressTrack_->isVisible())
+                          {
+                             return;
+                          }
+
+                          const int trackWidth = progressTrack_->width();
+                          const int sweepWidth = progressSweep_->width();
+                          if (trackWidth <= sweepWidth || sweepWidth <= 0)
+                          {
+                             return;
+                          }
+
+                          sweepPosition_ += 3;
+                          if (sweepPosition_ > trackWidth)
+                          {
+                             sweepPosition_ = -sweepWidth;
+                          }
+                          progressSweep_->move(sweepPosition_, 0);
+                       });
    }
    ~WarningBoxWidgetImpl() = default;
 
    void PopulateFromWarning(const types::TextEventKey& key);
    void UpdateCountdown();
    void UpdateExpirationOnly();
+   void
+        UpdateProgressVisual(const types::TextEventKey&                   key,
+                             const std::shared_ptr<const awips::Segment>& segment);
    void ApplyTheme(const types::TextEventKey&                   key,
                    const std::shared_ptr<const awips::Segment>& segment);
    void UpdateTitleFont();
    void AddDetailRow(const std::string& label, const std::string& value);
+   void AddSevereMetricCards(const std::string& maxHail,
+                             const std::string& maxWind);
    static std::string ToUpper(std::string_view value);
    static std::string Trim(std::string_view value);
    static std::string NormalizeLabel(std::string_view label);
@@ -101,10 +137,15 @@ public:
    std::shared_ptr<manager::TextEventManager> textEventManager_;
    AlertDialog*                               alertDialog_;
    QTimer*                                    updateTimer_;
+   QTimer*                                    sweepTimer_ {nullptr};
    types::TextEventKey                        currentKey_;
    boost::uuids::uuid                         currentMessageUuid_ {};
    QWidget*                                   stateBadgeFrame_ {nullptr};
    QLabel*                                    stateBadgeLabel_ {nullptr};
+   QFrame*                                    progressTrack_ {nullptr};
+   QFrame*                                    progressFill_ {nullptr};
+   QFrame*                                    progressSweep_ {nullptr};
+   int                                        sweepPosition_ {0};
    QWidget*                                   detailsContainer_ {nullptr};
    QVBoxLayout*                               detailsLayout_ {nullptr};
 };
@@ -155,6 +196,19 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    headerLayout->addWidget(ui->closeButton, 0, Qt::AlignTop);
    ui->verticalLayout->insertLayout(0, headerLayout);
 
+   p->progressTrack_ = new QFrame(this);
+   p->progressTrack_->setObjectName("progressTrack");
+   p->progressTrack_->setFixedHeight(6);
+   p->progressTrack_->setVisible(false);
+   p->progressFill_ = new QFrame(p->progressTrack_);
+   p->progressFill_->setObjectName("progressFill");
+   p->progressFill_->setGeometry(0, 0, 0, p->progressTrack_->height());
+   p->progressSweep_ = new QFrame(p->progressTrack_);
+   p->progressSweep_->setObjectName("progressSweep");
+   p->progressSweep_->setFixedSize(68, p->progressTrack_->height());
+   p->progressSweep_->move(-p->progressSweep_->width(), 0);
+   ui->verticalLayout->insertWidget(2, p->progressTrack_);
+
    p->stateBadgeFrame_ = new QFrame(this);
    p->stateBadgeFrame_->setObjectName("stateBadgeFrame");
    QHBoxLayout* badgeLayout = new QHBoxLayout(p->stateBadgeFrame_);
@@ -164,7 +218,7 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    p->stateBadgeLabel_->setObjectName("stateBadgeLabel");
    badgeLayout->addWidget(p->stateBadgeLabel_);
    p->stateBadgeFrame_->setVisible(false);
-   ui->verticalLayout->insertWidget(2, p->stateBadgeFrame_, 0, Qt::AlignLeft);
+   ui->verticalLayout->insertWidget(3, p->stateBadgeFrame_, 0, Qt::AlignLeft);
 
    hide();
 
@@ -202,6 +256,7 @@ void WarningBoxWidget::ShowWarning(const types::TextEventKey& key)
 void WarningBoxWidget::HideWarning()
 {
    p->updateTimer_->stop();
+   p->sweepTimer_->stop();
    hide();
 }
 
@@ -253,6 +308,7 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
    UpdateTitleFont();
 
    UpdateExpirationOnly();
+   UpdateProgressVisual(key, segment);
 
    // Affected areas: only if we have UGC data
    std::string countiesStr;
@@ -288,13 +344,28 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
 
    const auto fields = ParseProductFields(segment);
 
-   if (!countiesStr.empty())
+   if (key.phenomenon_ == awips::Phenomenon::SevereThunderstorm)
    {
-      AddDetailRow("Areas", countiesStr);
+      AddSevereMetricCards(GetFieldValue(fields, {"MAX HAIL SIZE"}),
+                           GetFieldValue(fields, {"MAX WIND GUST"}));
+
+      if (!countiesStr.empty())
+      {
+         AddDetailRow("Areas", countiesStr);
+      }
+      AddSummaryField("Source", fields, {"SOURCE"});
+      AddSummaryField(
+         "Damage", fields, {"THUNDERSTORM DAMAGE THREAT", "DAMAGE THREAT"});
    }
-   AddSummaryField("Hazard", fields, {"HAZARD"});
-   AddSummaryField("Source", fields, {"SOURCE"});
-   AddPhenomenonSpecificFields(key.phenomenon_, fields);
+   else
+   {
+      if (!countiesStr.empty())
+      {
+         AddDetailRow("Areas", countiesStr);
+      }
+      AddSummaryField("Source", fields, {"SOURCE"});
+      AddPhenomenonSpecificFields(key.phenomenon_, fields);
+   }
 
    detailsLayout_->addStretch();
 }
@@ -320,6 +391,103 @@ void WarningBoxWidgetImpl::AddDetailRow(const std::string& label,
    row->addWidget(valueW, 1);
 
    detailsLayout_->addWidget(rowFrame);
+}
+
+void WarningBoxWidgetImpl::AddSevereMetricCards(const std::string& maxHail,
+                                                const std::string& maxWind)
+{
+   QHBoxLayout* row = new QHBoxLayout();
+   row->setContentsMargins(0, 0, 0, 0);
+   row->setSpacing(8);
+
+   auto createCard = [this](const std::string& title, const std::string& value)
+   {
+      QFrame* card = new QFrame(self_);
+      card->setObjectName("severeMetricCard");
+      QVBoxLayout* cardLayout = new QVBoxLayout(card);
+      cardLayout->setContentsMargins(8, 6, 8, 6);
+      cardLayout->setSpacing(0);
+
+      QLabel* titleLabel =
+         new QLabel(QString::fromStdString(ToUpper(title)), card);
+      titleLabel->setObjectName("severeMetricTitle");
+      QLabel* valueLabel = new QLabel(QString::fromStdString(value), card);
+      valueLabel->setObjectName("severeMetricValue");
+
+      cardLayout->addWidget(titleLabel, 0, Qt::AlignHCenter);
+      cardLayout->addWidget(valueLabel, 0, Qt::AlignHCenter);
+      return card;
+   };
+
+   if (!maxHail.empty())
+   {
+      row->addWidget(createCard("Max Hail", maxHail), 1);
+   }
+   if (!maxWind.empty())
+   {
+      row->addWidget(createCard("Max Wind", maxWind), 1);
+   }
+
+   if (row->count() > 0)
+   {
+      detailsLayout_->addLayout(row);
+   }
+   else
+   {
+      delete row;
+   }
+}
+
+void WarningBoxWidgetImpl::UpdateProgressVisual(
+   const types::TextEventKey&                   key,
+   const std::shared_ptr<const awips::Segment>& segment)
+{
+   if (progressTrack_ == nullptr || progressFill_ == nullptr ||
+       progressSweep_ == nullptr)
+   {
+      return;
+   }
+
+   if (key.phenomenon_ != awips::Phenomenon::SevereThunderstorm)
+   {
+      progressTrack_->setVisible(false);
+      sweepTimer_->stop();
+      return;
+   }
+
+   progressTrack_->setVisible(true);
+   if (!sweepTimer_->isActive())
+   {
+      sweepPosition_ = -progressSweep_->width();
+      sweepTimer_->start();
+   }
+
+   const auto begin = segment->event_begin();
+   const auto end   = segment->event_end();
+   const auto now   = std::chrono::system_clock::now();
+
+   float fractionRemaining = 1.0f;
+   if (end > begin)
+   {
+      const auto totalSeconds =
+         std::chrono::duration_cast<std::chrono::seconds>(end - begin).count();
+      const auto remainingSeconds =
+         std::chrono::duration_cast<std::chrono::seconds>(end - now).count();
+
+      if (totalSeconds > 0)
+      {
+         fractionRemaining = static_cast<float>(remainingSeconds) /
+                             static_cast<float>(totalSeconds);
+      }
+   }
+
+   fractionRemaining = std::clamp(fractionRemaining, 0.0f, 1.0f);
+
+   const int trackWidth = progressTrack_->width();
+   const int fillWidth =
+      static_cast<int>(static_cast<float>(trackWidth) * fractionRemaining);
+   progressFill_->setGeometry(
+      0, 0, std::max(0, fillWidth), progressTrack_->height());
 }
 
 void WarningBoxWidgetImpl::ApplyTheme(
@@ -385,6 +553,32 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "  font-size: 11px;";
    styleSheet += "  font-weight: 700;";
    styleSheet += "  letter-spacing: 0.8px;";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QFrame#progressTrack {";
+   styleSheet += "  border: 1px solid rgba(" + accentColor + ", 190);";
+   styleSheet += "  background-color: rgba(25, 33, 56, 210);";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QFrame#progressFill {";
+   styleSheet += "  background-color: rgba(236, 182, 23, 255);";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QFrame#progressSweep {";
+   styleSheet += "  background-color: rgba(247, 252, 255, 220);";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QFrame#severeMetricCard {";
+   styleSheet += "  border: 1px solid rgba(" + accentColor + ", 160);";
+   styleSheet += "  background-color: rgba(8, 13, 28, 225);";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QLabel#severeMetricTitle {";
+   styleSheet += "  font-size: 10px;";
+   styleSheet += "  font-weight: 700;";
+   styleSheet += "  letter-spacing: 0.7px;";
+   styleSheet += "  color: rgba(208, 214, 230, 220);";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QLabel#severeMetricValue {";
+   styleSheet += "  font-size: 17px;";
+   styleSheet += "  font-weight: 800;";
+   styleSheet += "  letter-spacing: 0.6px;";
+   styleSheet += "  color: rgba(244, 248, 255, 245);";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QFrame#detailRow {";
    styleSheet += "  border: 1px solid rgba(" + accentColor + ", 140);";
@@ -464,6 +658,7 @@ void WarningBoxWidgetImpl::UpdateExpirationOnly()
    }
 
    self_->ui->expirationLabel->setText(QString::fromStdString(expirationStr));
+   UpdateProgressVisual(currentKey_, segments.back());
 }
 
 void WarningBoxWidgetImpl::UpdateTitleFont()
