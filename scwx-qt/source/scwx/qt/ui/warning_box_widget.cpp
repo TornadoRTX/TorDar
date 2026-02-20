@@ -393,7 +393,7 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
 void WarningBoxWidgetImpl::AddDetailRow(const std::string& label,
                                         const std::string& value)
 {
-   QFrame* rowFrame = new QFrame(self_);
+   QFrame* rowFrame = new QFrame(detailsContainer_);
    rowFrame->setObjectName("detailRow");
    rowFrame->setProperty("highlight", label == "Source");
 
@@ -422,11 +422,12 @@ void WarningBoxWidgetImpl::AddSevereMetricCards(const std::string& maxHail,
 
    auto createCard = [this](const std::string& title, const std::string& value)
    {
-      QFrame* card = new QFrame(self_);
+      QFrame* card = new QFrame(detailsContainer_);
       card->setObjectName("severeMetricCard");
+      card->setMinimumHeight(68);
       QVBoxLayout* cardLayout = new QVBoxLayout(card);
       cardLayout->setContentsMargins(8, 6, 8, 6);
-      cardLayout->setSpacing(0);
+      cardLayout->setSpacing(2);
 
       QLabel* titleLabel =
          new QLabel(QString::fromStdString(ToUpper(title)), card);
@@ -604,7 +605,7 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "  color: rgba(208, 214, 230, 220);";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QLabel#severeMetricValue {";
-   styleSheet += "  font-size: 17px;";
+   styleSheet += "  font-size: 19px;";
    styleSheet += "  font-weight: 800;";
    styleSheet += "  letter-spacing: 0.6px;";
    styleSheet += "  color: rgba(244, 248, 255, 245);";
@@ -670,6 +671,10 @@ void WarningBoxWidgetImpl::ApplyTheme(
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QLabel#severeMetricTitle {";
       styleSheet += "  color: rgba(202, 186, 147, 235);";
+      styleSheet += "  letter-spacing: 0.9px;";
+      styleSheet += "}";
+      styleSheet += "QWidget#WarningBoxWidget QLabel#severeMetricValue {";
+      styleSheet += "  font-size: 21px;";
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QFrame#detailRow {";
       styleSheet += "  border: 1px solid rgba(34, 49, 88, 210);";
