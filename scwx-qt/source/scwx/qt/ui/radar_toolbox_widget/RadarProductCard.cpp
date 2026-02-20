@@ -36,30 +36,33 @@ RadarProductCard::RadarProductCard(const QString& title,
    imageLabel_ = new QLabel(iconContainer_);
    imageLabel_->setFixedSize(36, 36);
    imageLabel_->setAlignment(Qt::AlignCenter);
-   imageLabel_->setObjectName("iconImage");
-   imageLabel_->setProperty("selected", false);
-
-   imageLabel_->setStyleSheet(
-      "#iconImage { border-radius: 6px; }"
-      "#iconImage[selected='true'] { border: 2px solid #2979FF; }");
 
    iconLayout->addWidget(imageLabel_);
 
-   // Load icon
-   QIcon   icon(iconPath);
-   QPixmap pixmap = icon.pixmap(QSize(36, 36), QIcon::Normal, QIcon::Off);
+   // -------------------------
+   // Load high-DPI icon
+   // -------------------------
+   QIcon icon(iconPath);
+   qreal dpr = devicePixelRatioF();
 
-   QPixmap rounded(36, 36);
+   QSize pixelSize = QSize(36, 36) * dpr;
+
+   QPixmap source = icon.pixmap(pixelSize);
+   source.setDevicePixelRatio(dpr);
+
+   QPixmap rounded(pixelSize);
+   rounded.setDevicePixelRatio(dpr);
    rounded.fill(Qt::transparent);
 
    QPainter painter(&rounded);
    painter.setRenderHint(QPainter::Antialiasing);
-   painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+   painter.setRenderHint(QPainter::SmoothPixmapTransform);
 
    QPainterPath path;
-   path.addRoundedRect(0, 0, 36, 36, 6, 6);
+   path.addRoundedRect(QRectF(0, 0, 36 * dpr, 36 * dpr), 6 * dpr, 6 * dpr);
+
    painter.setClipPath(path);
-   painter.drawPixmap(0, 0, pixmap);
+   painter.drawPixmap(0, 0, source);
    painter.end();
 
    imageLabel_->setPixmap(rounded);
@@ -73,7 +76,6 @@ RadarProductCard::RadarProductCard(const QString& title,
    titleLabel_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
    titleLabel_->setMinimumWidth(0);
    titleLabel_->setObjectName("titleLabel");
-   titleLabel_->setProperty("selected", false);
 
    layout->addWidget(iconContainer_, 0, Qt::AlignHCenter);
    layout->addWidget(titleLabel_);
@@ -110,43 +112,41 @@ void RadarProductCard::leaveEvent(QEvent*)
 
 void RadarProductCard::UpdateStyle()
 {
-   const QColor textColor = palette().color(QPalette::WindowText);
+   QColor textColor = palette().color(QPalette::WindowText);
 
-   // Hover background derived from theme text color
    QColor hoverColor(textColor);
    hoverColor.setAlpha(hovered_ ? 30 : 16);
-
-   titleLabel_->setStyleSheet(QString("#titleLabel {"
-                                      "  background: transparent;"
-                                      "  font-weight: 600;"
-                                      "  font-size: 12px;"
-                                      "  color: %1;"
-                                      "}"
-                                      "#titleLabel[selected='true'] {"
-                                      "  color: #2979FF;"
-                                      "}")
-                                 .arg(textColor.name()));
 
    setStyleSheet(QString("background-color: %1;"
                          "border-radius: 10px;")
                     .arg(hoverColor.name(QColor::HexArgb)));
+
+   if (selected_)
+   {
+      iconContainer_->setStyleSheet(
+         "border: 2px solid #2979FF;"
+         "border-radius: 8px;");
+      titleLabel_->setStyleSheet(
+         "font-weight: 600;"
+         "font-size: 12px;"
+         "color: #2979FF;");
+   }
+   else
+   {
+      iconContainer_->setStyleSheet(
+         "border: 2px solid transparent;"
+         "border-radius: 8px;");
+      titleLabel_->setStyleSheet(QString("font-weight: 600;"
+                                         "font-size: 12px;"
+                                         "color: %1;")
+                                    .arg(textColor.name()));
+   }
 }
 
 void RadarProductCard::SetSelected(bool selected)
 {
    selected_ = selected;
-
-   titleLabel_->setProperty("selected", selected_);
-   imageLabel_->setProperty("selected", selected_);
-
-   titleLabel_->style()->unpolish(titleLabel_);
-   titleLabel_->style()->polish(titleLabel_);
-
-   imageLabel_->style()->unpolish(imageLabel_);
-   imageLabel_->style()->polish(imageLabel_);
-
-   titleLabel_->update();
-   imageLabel_->update();
+   UpdateStyle();
 }
 
 } // namespace scwx::qt::ui
