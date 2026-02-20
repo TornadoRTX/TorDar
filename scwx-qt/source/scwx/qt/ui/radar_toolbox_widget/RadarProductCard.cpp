@@ -133,7 +133,7 @@ void RadarProductCard::UpdateStyle()
    {
       iconContainer_->setStyleSheet(
          "background: transparent;"
-         "border: 2px solid #2979FF;"
+         "border: 2px solid #808080;"
          "border-radius: 8px;");
       titleLabel_->setStyleSheet(
          "background: transparent;"
@@ -144,7 +144,6 @@ void RadarProductCard::UpdateStyle()
    else
    {
       iconContainer_->setStyleSheet(
-         "background: transparent;"
          "border: 2px solid transparent;"
          "border-radius: 8px;");
       titleLabel_->setStyleSheet(QString("font-weight: 600;"
