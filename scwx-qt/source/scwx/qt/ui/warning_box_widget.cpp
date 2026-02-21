@@ -22,6 +22,7 @@
 #include <QGraphicsDropShadowEffect>
 #include <QColor>
 #include <QFont>
+#include <QFontDatabase>
 #include <QFontMetrics>
 #include <QLayoutItem>
 #include <QMargins>
@@ -43,6 +44,21 @@ namespace ui
 
 static const std::string logPrefix_ = "scwx::qt::ui::warning_box_widget";
 static const auto        logger_    = util::Logger::Create(logPrefix_);
+
+static std::string LoadFontFamily(const QString& resourcePath,
+                                  const char*    fallbackFamily)
+{
+   const int fontId = QFontDatabase::addApplicationFont(resourcePath);
+   if (fontId >= 0)
+   {
+      const QStringList families = QFontDatabase::applicationFontFamilies(fontId);
+      if (!families.isEmpty())
+      {
+         return families.first().toStdString();
+      }
+   }
+   return fallbackFamily;
+}
 
 class WarningBoxWidgetImpl : public QObject
 {
@@ -154,6 +170,10 @@ public:
    int                                        fixedWidth_ {0};
    QWidget*                                   detailsContainer_ {nullptr};
    QVBoxLayout*                               detailsLayout_ {nullptr};
+   std::string                                warningTitleFontFamily_ {"HudsonNYPro-SemiBold"};
+   std::string                                expirationFontFamily_ {"IBMPlexMono-SemiBold"};
+   std::string                                monoFontFamily_ {"RobotoMono-Regular"};
+   std::string                                areaSourceValueFontFamily_ {"Shuttleblock-NarrowDemiBold"};
 };
 
 WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
@@ -163,6 +183,15 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
 {
    ui->setupUi(this);
 
+   p->warningTitleFontFamily_ =
+      LoadFontFamily(":/res/fonts/HudsonNYPro-SemiBold.ttf", "HudsonNYPro-SemiBold");
+   p->expirationFontFamily_ =
+      LoadFontFamily(":/res/fonts/IBMPlexMono-SemiBold.ttf", "IBMPlexMono-SemiBold");
+   p->monoFontFamily_ =
+      LoadFontFamily(":/res/fonts/RobotoMono-Regular.ttf", "RobotoMono-Regular");
+   p->areaSourceValueFontFamily_ = LoadFontFamily(
+      ":/res/fonts/Shuttleblock-NarrowDemiBold.ttf", "Shuttleblock-NarrowDemiBold");
+
    setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);
    setAttribute(Qt::WA_TranslucentBackground, false);
    setAttribute(Qt::WA_StyledBackground, true);
@@ -171,11 +200,13 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    ui->warningTypeLabel->setTextInteractionFlags(Qt::NoTextInteraction);
    ui->warningTypeLabel->setWordWrap(true);
    ui->warningTypeLabel->setStyleSheet(
-      "font-family: 'HudsonNYPro-SemiBold';"
-      "font-size: 20px; font-weight: 800; letter-spacing: 1px;");
+      QString("font-family: '%1';"
+              "font-size: 20px; font-weight: 800; letter-spacing: 1px;")
+         .arg(QString::fromStdString(p->warningTitleFontFamily_)));
    ui->expirationLabel->setStyleSheet(
-      "font-family: 'IBMPlexMono-SemiBold';"
-      "font-size: 13px; font-weight: 700; letter-spacing: 0.5px;");
+      QString("font-family: '%1';"
+              "font-size: 13px; font-weight: 700; letter-spacing: 0.5px;")
+         .arg(QString::fromStdString(p->expirationFontFamily_)));
    ui->viewEasTextButton->setText("VIEW FULL EAS TEXT");
    ui->closeButton->setText("x");
    ui->closeButton->setFixedSize(28, 28);
@@ -411,8 +442,12 @@ void WarningBoxWidgetImpl::AddDetailRow(const std::string& label,
 
    if (label == "Areas" || label == "Source")
    {
-      labelW->setStyleSheet("font-family: 'IBMPlexMono-SemiBold';");
-      valueW->setStyleSheet("font-family: 'Shuttleblock-NarrowDemiBold';");
+      labelW->setStyleSheet(
+         QString("font-family: '%1';")
+            .arg(QString::fromStdString(expirationFontFamily_)));
+      valueW->setStyleSheet(
+         QString("font-family: '%1';")
+            .arg(QString::fromStdString(areaSourceValueFontFamily_)));
    }
 
    QHBoxLayout* row = new QHBoxLayout(rowFrame);
@@ -587,7 +622,7 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "  letter-spacing: 0.5px;";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QLabel#statesLabel {";
-   styleSheet += "  font-family: 'RobotoMono-Regular';";
+   styleSheet += "  font-family: '" + monoFontFamily_ + "';";
    styleSheet += "  font-size: 16px;";
    styleSheet += "  font-weight: 700;";
    styleSheet += "  letter-spacing: 0.8px;";
@@ -598,7 +633,7 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "  background-color: rgba(19, 56, 110, 220);";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QLabel#stateBadgeLabel {";
-   styleSheet += "  font-family: 'RobotoMono-Regular';";
+   styleSheet += "  font-family: '" + monoFontFamily_ + "';";
    styleSheet += "  color: rgb(224, 236, 255);";
    styleSheet += "  font-size: 11px;";
    styleSheet += "  font-weight: 700;";
@@ -619,7 +654,7 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "  background-color: rgba(13, 15, 29, 236);";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QLabel#severeMetricTitle {";
-   styleSheet += "  font-family: 'RobotoMono-Regular';";
+   styleSheet += "  font-family: '" + monoFontFamily_ + "';";
    styleSheet += "  font-size: 10px;";
    styleSheet += "  font-weight: 700;";
    styleSheet += "  letter-spacing: 0.7px;";
@@ -692,7 +727,7 @@ void WarningBoxWidgetImpl::ApplyTheme(
       styleSheet += "  background-color: rgb(42, 31, 27);";
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QLabel#severeMetricTitle {";
-      styleSheet += "  font-family: 'RobotoMono-Regular';";
+      styleSheet += "  font-family: '" + monoFontFamily_ + "';";
       styleSheet += "  color: rgba(202, 186, 147, 235);";
       styleSheet += "  letter-spacing: 0.9px;";
       styleSheet += "}";
@@ -753,7 +788,7 @@ void WarningBoxWidgetImpl::UpdateTitleFont()
 {
    const int targetWidth = std::max(120, self_->ui->warningTypeLabel->width());
    QFont     font        = self_->ui->warningTypeLabel->font();
-   font.setFamily("HudsonNYPro-SemiBold");
+   font.setFamily(QString::fromStdString(warningTitleFontFamily_));
    int pointSize = 20;
    font.setPointSize(pointSize);
 
