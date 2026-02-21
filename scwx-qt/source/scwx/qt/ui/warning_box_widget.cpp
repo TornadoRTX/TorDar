@@ -423,7 +423,7 @@ void WarningBoxWidgetImpl::AddSevereMetricCards(const std::string& maxHail,
    row->setSpacing(8);
 
    auto createCard =
-      [this, rowContainer](const std::string& title, const std::string& value)
+      [rowContainer](const std::string& title, const std::string& value)
    {
       QFrame* card = new QFrame(rowContainer);
       card->setObjectName("severeMetricCard");
