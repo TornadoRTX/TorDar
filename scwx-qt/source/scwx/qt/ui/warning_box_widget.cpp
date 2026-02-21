@@ -171,8 +171,10 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    ui->warningTypeLabel->setTextInteractionFlags(Qt::NoTextInteraction);
    ui->warningTypeLabel->setWordWrap(true);
    ui->warningTypeLabel->setStyleSheet(
+      "font-family: 'HudsonNYPro-SemiBold';"
       "font-size: 20px; font-weight: 800; letter-spacing: 1px;");
    ui->expirationLabel->setStyleSheet(
+      "font-family: 'IBMPlexMono-SemiBold';"
       "font-size: 13px; font-weight: 700; letter-spacing: 0.5px;");
    ui->viewEasTextButton->setText("VIEW FULL EAS TEXT");
    ui->closeButton->setText("x");
@@ -407,6 +409,12 @@ void WarningBoxWidgetImpl::AddDetailRow(const std::string& label,
    valueW->setObjectName("detailValue");
    valueW->setWordWrap(true);
 
+   if (label == "Areas" || label == "Source")
+   {
+      labelW->setStyleSheet("font-family: 'IBMPlexMono-SemiBold';");
+      valueW->setStyleSheet("font-family: 'Shuttleblock-NarrowDemiBold';");
+   }
+
    QHBoxLayout* row = new QHBoxLayout(rowFrame);
    row->setContentsMargins(8, 6, 8, 6);
    row->setSpacing(6);
@@ -579,6 +587,7 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "  letter-spacing: 0.5px;";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QLabel#statesLabel {";
+   styleSheet += "  font-family: 'RobotoMono-Regular';";
    styleSheet += "  font-size: 16px;";
    styleSheet += "  font-weight: 700;";
    styleSheet += "  letter-spacing: 0.8px;";
@@ -589,6 +598,7 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "  background-color: rgba(19, 56, 110, 220);";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QLabel#stateBadgeLabel {";
+   styleSheet += "  font-family: 'RobotoMono-Regular';";
    styleSheet += "  color: rgb(224, 236, 255);";
    styleSheet += "  font-size: 11px;";
    styleSheet += "  font-weight: 700;";
@@ -609,6 +619,7 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "  background-color: rgba(13, 15, 29, 236);";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QLabel#severeMetricTitle {";
+   styleSheet += "  font-family: 'RobotoMono-Regular';";
    styleSheet += "  font-size: 10px;";
    styleSheet += "  font-weight: 700;";
    styleSheet += "  letter-spacing: 0.7px;";
@@ -681,6 +692,7 @@ void WarningBoxWidgetImpl::ApplyTheme(
       styleSheet += "  background-color: rgb(42, 31, 27);";
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QLabel#severeMetricTitle {";
+      styleSheet += "  font-family: 'RobotoMono-Regular';";
       styleSheet += "  color: rgba(202, 186, 147, 235);";
       styleSheet += "  letter-spacing: 0.9px;";
       styleSheet += "}";
@@ -741,7 +753,8 @@ void WarningBoxWidgetImpl::UpdateTitleFont()
 {
    const int targetWidth = std::max(120, self_->ui->warningTypeLabel->width());
    QFont     font        = self_->ui->warningTypeLabel->font();
-   int       pointSize   = 20;
+   font.setFamily("HudsonNYPro-SemiBold");
+   int pointSize = 20;
    font.setPointSize(pointSize);
 
    while (pointSize > 12)

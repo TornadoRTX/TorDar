@@ -110,5 +110,10 @@
     <file>res/icons/radar/STPA.svg</file>
     <file>res/icons/radar/ZDR.svg</file>
     <file>res/icons/radar/placeholder.svg</file>
+    <file>res/fonts/HudsonNYPro-SemiBold.ttf</file>
+    <file>res/fonts/IBMPlexMono-SemiBold.ttf</file>
+    <file>res/fonts/RobotoMono-Regular.ttf</file>
+    <file>res/fonts/RobotoMono-Medium.ttf</file>
+    <file>res/fonts/Shuttleblock-NarrowDemiBold.ttf</file>
   </qresource>
 </RCC>
