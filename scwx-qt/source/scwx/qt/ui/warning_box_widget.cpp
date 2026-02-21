@@ -51,7 +51,8 @@ static std::string LoadFontFamily(const QString& resourcePath,
    const int fontId = QFontDatabase::addApplicationFont(resourcePath);
    if (fontId >= 0)
    {
-      const QStringList families = QFontDatabase::applicationFontFamilies(fontId);
+      const QStringList families =
+         QFontDatabase::applicationFontFamilies(fontId);
       if (!families.isEmpty())
       {
          return families.first().toStdString();
@@ -170,10 +171,10 @@ public:
    int                                        fixedWidth_ {0};
    QWidget*                                   detailsContainer_ {nullptr};
    QVBoxLayout*                               detailsLayout_ {nullptr};
-   std::string                                warningTitleFontFamily_ {"HudsonNYPro-SemiBold"};
-   std::string                                expirationFontFamily_ {"IBMPlexMono-SemiBold"};
-   std::string                                monoFontFamily_ {"RobotoMono-Regular"};
-   std::string                                areaSourceValueFontFamily_ {"Shuttleblock-NarrowDemiBold"};
+   std::string warningTitleFontFamily_ {"HudsonNYPro-SemiBold"};
+   std::string expirationFontFamily_ {"IBMPlexMono-SemiBold"};
+   std::string monoFontFamily_ {"RobotoMono-Regular"};
+   std::string areaSourceValueFontFamily_ {"Shuttleblock-NarrowDemiBold"};
 };
 
 WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
@@ -183,14 +184,15 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
 {
    ui->setupUi(this);
 
-   p->warningTitleFontFamily_ =
-      LoadFontFamily(":/res/fonts/HudsonNYPro-SemiBold.ttf", "HudsonNYPro-SemiBold");
-   p->expirationFontFamily_ =
-      LoadFontFamily(":/res/fonts/IBMPlexMono-SemiBold.ttf", "IBMPlexMono-SemiBold");
-   p->monoFontFamily_ =
-      LoadFontFamily(":/res/fonts/RobotoMono-Regular.ttf", "RobotoMono-Regular");
-   p->areaSourceValueFontFamily_ = LoadFontFamily(
-      ":/res/fonts/Shuttleblock-NarrowDemiBold.ttf", "Shuttleblock-NarrowDemiBold");
+   p->warningTitleFontFamily_ = LoadFontFamily(
+      ":/res/fonts/HudsonNYPro-SemiBold.ttf", "HudsonNYPro-SemiBold");
+   p->expirationFontFamily_ = LoadFontFamily(
+      ":/res/fonts/IBMPlexMono-SemiBold.ttf", "IBMPlexMono-SemiBold");
+   p->monoFontFamily_ = LoadFontFamily(":/res/fonts/RobotoMono-Regular.ttf",
+                                       "RobotoMono-Regular");
+   p->areaSourceValueFontFamily_ =
+      LoadFontFamily(":/res/fonts/Shuttleblock-NarrowDemiBold.ttf",
+                     "Shuttleblock-NarrowDemiBold");
 
    setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);
    setAttribute(Qt::WA_TranslucentBackground, false);
