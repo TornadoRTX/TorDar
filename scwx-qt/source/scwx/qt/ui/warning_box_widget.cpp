@@ -268,6 +268,8 @@ void WarningBoxWidget::ShowWarning(const types::TextEventKey& key)
                          if (isVisible())
                          {
                             p->AdjustHeightToContents();
+                            p->UpdateTitleFont();
+                            p->UpdateExpirationOnly();
                          }
                       });
 }
@@ -324,7 +326,6 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
       }
    }
    self_->ui->warningTypeLabel->setText(QString::fromStdString(title));
-   UpdateTitleFont();
 
    UpdateExpirationOnly();
    UpdateProgressVisual(key, segment);
@@ -421,9 +422,10 @@ void WarningBoxWidgetImpl::AddSevereMetricCards(const std::string& maxHail,
    row->setContentsMargins(0, 0, 0, 0);
    row->setSpacing(8);
 
-   auto createCard = [this](const std::string& title, const std::string& value)
+   auto createCard =
+      [this, rowContainer](const std::string& title, const std::string& value)
    {
-      QFrame* card = new QFrame(detailsContainer_);
+      QFrame* card = new QFrame(rowContainer);
       card->setObjectName("severeMetricCard");
       card->setMinimumHeight(68);
       QVBoxLayout* cardLayout = new QVBoxLayout(card);
@@ -815,6 +817,9 @@ void WarningBoxWidgetImpl::AdjustHeightToContents()
    self_->setMaximumHeight(panelFinalHeight);
    self_->resize(self_->width(), panelFinalHeight);
    self_->layout()->activate();
+
+   // Re-apply title scaling after final geometry is set.
+   UpdateTitleFont();
 }
 
 std::string WarningBoxWidgetImpl::ToUpper(std::string_view value)
