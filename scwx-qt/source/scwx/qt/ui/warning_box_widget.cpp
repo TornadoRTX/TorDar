@@ -357,7 +357,7 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
    while (QLayoutItem* item = detailsLayout_->takeAt(0))
    {
       if (item->widget())
-         item->widget()->deleteLater();
+         delete item->widget();
       delete item;
    }
 
@@ -416,7 +416,8 @@ void WarningBoxWidgetImpl::AddDetailRow(const std::string& label,
 void WarningBoxWidgetImpl::AddSevereMetricCards(const std::string& maxHail,
                                                 const std::string& maxWind)
 {
-   QHBoxLayout* row = new QHBoxLayout();
+   QWidget*     rowContainer = new QWidget(detailsContainer_);
+   QHBoxLayout* row          = new QHBoxLayout(rowContainer);
    row->setContentsMargins(0, 0, 0, 0);
    row->setSpacing(8);
 
@@ -451,11 +452,11 @@ void WarningBoxWidgetImpl::AddSevereMetricCards(const std::string& maxHail,
 
    if (row->count() > 0)
    {
-      detailsLayout_->addLayout(row);
+      detailsLayout_->addWidget(rowContainer);
    }
    else
    {
-      delete row;
+      delete rowContainer;
    }
 }
 
@@ -674,7 +675,7 @@ void WarningBoxWidgetImpl::ApplyTheme(
       styleSheet += "  letter-spacing: 0.9px;";
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QLabel#severeMetricValue {";
-      styleSheet += "  font-size: 21px;";
+      styleSheet += "  font-size: 18px;";
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QFrame#detailRow {";
       styleSheet += "  border: 1px solid rgba(34, 49, 88, 210);";
