@@ -71,11 +71,14 @@ TorDar uses assets from the following sources:
 | [EAS Attention Signal](https://en.wikipedia.org/wiki/File:Emergency_Alert_System_Attention_Signal_20s.ogg) | Public Domain |
 | [Flaticon](https://www.flaticon.com/) | [Flaticon License](https://www.freepikcompany.com/legal#nav-flaticon-agreement) | [Details](scwx-qt/res/icons/flaticon/README.md) |
 | [Font Awesome Free](https://fontawesome.com/) | CC BY 4.0 License |
+| [IBM Plex Mono](https://fonts.google.com/specimen/IBM+Plex+Mono) | SIL Open Font License |
 | [Inconsolata](https://fonts.google.com/specimen/Inconsolata) | SIL Open Font License |
 | [NOAA's Weather and Climate Toolkit](https://www.ncdc.noaa.gov/wct/) | Public Domain | Default Color Tables |
 | [qt6ct](https://github.com/trialuser02/qt6ct) | [BSD 2-Clause "Simplified" License](https://spdx.org/licenses/BSD-2-Clause.html) |
+| [Roboto](https://fonts.google.com/specimen/Roboto) | SIL Open Font License |
 | [Roboto Flex](https://fonts.google.com/specimen/Roboto+Flex) | SIL Open Font License |
 | [Supercell thunderstorm with dramatic clouds](https://www.shutterstock.com/image-photo/supercell-thunderstorm-dramatic-clouds-1354353521) | Shutterstock Standard License | Photo by John Sirlin
+
 
 Services
 --------
