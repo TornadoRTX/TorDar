@@ -19,6 +19,8 @@
 #include <QVBoxLayout>
 #include <QWidget>
 #include <QFrame>
+#include <QGraphicsDropShadowEffect>
+#include <QColor>
 #include <QFont>
 #include <QFontMetrics>
 #include <QLayoutItem>
@@ -437,6 +439,11 @@ void WarningBoxWidgetImpl::AddSevereMetricCards(const std::string& maxHail,
       titleLabel->setObjectName("severeMetricTitle");
       QLabel* valueLabel = new QLabel(QString::fromStdString(value), card);
       valueLabel->setObjectName("severeMetricValue");
+      auto* valueGlow = new QGraphicsDropShadowEffect(valueLabel);
+      valueGlow->setBlurRadius(12.0);
+      valueGlow->setColor(QColor(236, 193, 74, 210));
+      valueGlow->setOffset(0.0, 0.0);
+      valueLabel->setGraphicsEffect(valueGlow);
 
       cardLayout->addWidget(titleLabel, 0, Qt::AlignHCenter);
       cardLayout->addWidget(valueLabel, 0, Qt::AlignHCenter);
@@ -670,7 +677,8 @@ void WarningBoxWidgetImpl::ApplyTheme(
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QFrame#severeMetricCard {";
       styleSheet += "  border: 1px solid rgba(179, 142, 57, 210);";
-      styleSheet += "  background-color: rgba(15, 16, 31, 240);";
+      styleSheet += "  border-top: 2px solid rgba(236, 193, 74, 255);";
+      styleSheet += "  background-color: rgb(42, 31, 27);";
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QLabel#severeMetricTitle {";
       styleSheet += "  color: rgba(202, 186, 147, 235);";
