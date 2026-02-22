@@ -6,8 +6,6 @@
 #include <QVBoxLayout>
 #include <QDebug>
 #include <QStyle>
-#include <QPainter>
-#include <QPainterPath>
 
 namespace scwx::qt::ui
 {
@@ -18,38 +16,29 @@ RadarProductCard::RadarProductCard(const QString& title,
     QWidget(parent)
 {
    setCursor(Qt::PointingHandCursor);
-   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+   setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+   setMinimumWidth(130);
    auto* layout = new QVBoxLayout(this);
-   layout->setContentsMargins(8, 10, 8, 10);
-   layout->setSpacing(6);
+   layout->setContentsMargins(4, 6, 4, 6);
+   layout->setSpacing(10);
 
    // -------------------------
    // Icon
    // -------------------------
    iconContainer_ = new QWidget(this);
-   iconContainer_->setFixedSize(44, 44);
+   iconContainer_->setFixedSize(130, 130);
    iconContainer_->setProperty("selected", false);
 
    QVBoxLayout* iconLayout = new QVBoxLayout(iconContainer_);
-   iconLayout->setContentsMargins(4, 4, 4, 4);
+   iconLayout->setContentsMargins(5, 5, 5, 5);
    iconLayout->setAlignment(Qt::AlignCenter);
 
    imageLabel_ = new QLabel(iconContainer_);
-   imageLabel_->setFixedSize(36, 36);
+   imageLabel_->setFixedSize(120, 120);
    imageLabel_->setAlignment(Qt::AlignCenter);
+   imageLabel_->setScaledContents(true);
 
    iconLayout->addWidget(imageLabel_);
-   imageLabel_->setObjectName("iconImage");
-
-   imageLabel_->setProperty("selected", false);
-
-   imageLabel_->setStyleSheet(
-      "#iconImage {"
-      "  border-radius: 6px;"
-      "}"
-      "#iconImage[selected='true'] {"
-      "  border: 2px solid #2979FF;"
-      "}");
 
    QIcon icon(iconPath);
 
@@ -58,23 +47,7 @@ RadarProductCard::RadarProductCard(const QString& title,
       qWarning() << "RadarProductCard: failed to load icon:" << iconPath;
    }
 
-   QPixmap pixmap = icon.pixmap(QSize(36, 36), QIcon::Normal, QIcon::Off);
-
-   QPixmap rounded(36, 36);
-   rounded.fill(Qt::transparent);
-
-   QPainter painter(&rounded);
-   painter.setRenderHint(QPainter::Antialiasing);
-   painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
-
-   QPainterPath path;
-   path.addRoundedRect(0, 0, 36, 36, 6, 6); // 6px corner radius
-
-   painter.setClipPath(path);
-   painter.drawPixmap(0, 0, pixmap);
-
-   painter.end();
-   imageLabel_->setPixmap(rounded);
+   imageLabel_->setPixmap(icon.pixmap(120, 120));
 
    // -------------------------
    // Title
@@ -96,14 +69,18 @@ RadarProductCard::RadarProductCard(const QString& title,
 
    iconContainer_->setStyleSheet(
       "#iconContainer {"
+      "  border: 2px solid #f1f1f1;"
       "  border-radius: 8px;"
+      "}"
+      "#iconContainer[selected='true'] {"
+      "  border: 2px solid #2979FF;"
       "}");
 
    titleLabel_->setStyleSheet(
       "#titleLabel {"
       "  background: transparent;"
-      "  font-weight: 600;"
-      "  font-size: 12px;"
+      "  font-weight: 800;"
+      "  font-size: 15px;"
       "  color: white;"
       "}"
       "#titleLabel[selected='true'] {"
@@ -145,13 +122,13 @@ void RadarProductCard::UpdateStyle()
    if (hovered_)
    {
       setStyleSheet(
-         "background-color: rgba(255, 255, 255, 0.08);"
+         "background-color: rgba(255, 255, 255, 0.06);"
          "border-radius: 10px;");
    }
    else
    {
       setStyleSheet(
-         "background-color: rgba(255, 255, 255, 0.03);"
+         "background-color: transparent;"
          "border-radius: 10px;");
    }
 }
@@ -160,15 +137,14 @@ void RadarProductCard::SetSelected(bool selected)
 {
    selected_ = selected;
 
+   iconContainer_->setProperty("selected", selected_);
    titleLabel_->setProperty("selected", selected_);
-   imageLabel_->setProperty("selected", selected_);
+
+   iconContainer_->style()->unpolish(iconContainer_);
+   iconContainer_->style()->polish(iconContainer_);
 
    titleLabel_->style()->unpolish(titleLabel_);
    titleLabel_->style()->polish(titleLabel_);
-
-   imageLabel_->style()->unpolish(imageLabel_);
-   imageLabel_->style()->polish(imageLabel_);
-   imageLabel_->update();
 
    iconContainer_->update();
    titleLabel_->update();
