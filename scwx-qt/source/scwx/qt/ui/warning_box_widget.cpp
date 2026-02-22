@@ -174,7 +174,8 @@ public:
    std::string warningTitleFontFamily_ {"Rajdhani-Bold"};
    std::string expirationFontFamily_ {"AlegreyaSans-ExtraBold"};
    std::string monoFontFamily_ {"RobotoMono-Regular"};
-   std::string areaSourceValueFontFamily_ {"AlegreyaSans-ExtraBold"};
+   std::string areaSourceLabelFontFamily_ {"AlegreyaSans-ExtraBold"};
+   std::string areaSourceValueFontFamily_ {"Rajdhani"};
 };
 
 WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
@@ -185,13 +186,15 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    ui->setupUi(this);
 
    p->warningTitleFontFamily_ =
-      LoadFontFamily(":/res/fonts/Rajdhani-Bold.tff", "Rajdhani-Bold");
+      LoadFontFamily(":/res/fonts/Rajdhani-Bold.ttf", "Rajdhani");
    p->expirationFontFamily_ = LoadFontFamily(
       ":/res/fonts/AlegreyaSans-ExtraBold.ttf", "AlegreyaSans-ExtraBold");
    p->monoFontFamily_ = LoadFontFamily(":/res/fonts/RobotoMono-Regular.ttf",
                                        "RobotoMono-Regular");
-   p->areaSourceValueFontFamily_ = LoadFontFamily(
+   p->areaSourceLabelFontFamily_ = LoadFontFamily(
       ":/res/fonts/AlegreyaSans-ExtraBold.ttf", "AlegreyaSans-ExtraBold");
+   p->areaSourceValueFontFamily_ = LoadFontFamily(
+      ":/res/fonts/Rajdhani-Bold.ttf", "Rajdhani");
 
    setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);
    setAttribute(Qt::WA_TranslucentBackground, false);
@@ -202,7 +205,7 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    ui->warningTypeLabel->setWordWrap(true);
    ui->warningTypeLabel->setStyleSheet(
       QString("font-family: '%1';"
-              "font-size: 20px; font-weight: 800; letter-spacing: 1px;")
+              "font-size: 20px; font-weight: 700; letter-spacing: 1px;")
          .arg(QString::fromStdString(p->warningTitleFontFamily_)));
    ui->expirationLabel->setStyleSheet(
       QString("font-family: '%1';"
@@ -444,10 +447,10 @@ void WarningBoxWidgetImpl::AddDetailRow(const std::string& label,
    if (label == "Areas" || label == "Source")
    {
       labelW->setStyleSheet(
-         QString("font-family: '%1';")
-            .arg(QString::fromStdString(expirationFontFamily_)));
+         QString("font-family: '%1'; font-weight: 700; letter-spacing: 0px;")
+            .arg(QString::fromStdString(areaSourceLabelFontFamily_)));
       valueW->setStyleSheet(
-         QString("font-family: '%1';")
+         QString("font-family: '%1'; font-weight: 700; letter-spacing: 0px;")
             .arg(QString::fromStdString(areaSourceValueFontFamily_)));
    }
 
