@@ -493,9 +493,9 @@ void WarningBoxWidgetImpl::AddSevereMetricCards(const std::string& maxHail,
    {
       QFrame* card = new QFrame(rowContainer);
       card->setObjectName("severeMetricCard");
-      card->setMinimumHeight(68);
+      card->setMinimumHeight(54);
       QVBoxLayout* cardLayout = new QVBoxLayout(card);
-      cardLayout->setContentsMargins(8, 5, 8, 4);
+      cardLayout->setContentsMargins(8, 3, 8, 3);
       cardLayout->setSpacing(0);
 
       QLabel* titleLabel =
@@ -548,10 +548,10 @@ void WarningBoxWidgetImpl::AddSevereTornadoPossibleBox(
 
    QFrame* box = new QFrame(detailsContainer_);
    box->setObjectName("severeTornadoPossibleBox");
-   box->setMinimumHeight(40);
+   box->setMinimumHeight(34);
 
    QHBoxLayout* layout = new QHBoxLayout(box);
-   layout->setContentsMargins(10, 4, 10, 4);
+   layout->setContentsMargins(8, 2, 8, 2);
    layout->setSpacing(0);
 
    QLabel* label = new QLabel("TORNADO POSSIBLE", box);
@@ -584,10 +584,10 @@ void WarningBoxWidgetImpl::AddSevereDamageThreatBox(
 
    QFrame* box = new QFrame(detailsContainer_);
    box->setObjectName("severeDamageThreatBox");
-   box->setMinimumHeight(40);
+   box->setMinimumHeight(34);
 
    QHBoxLayout* layout = new QHBoxLayout(box);
-   layout->setContentsMargins(10, 4, 10, 4);
+   layout->setContentsMargins(8, 2, 8, 2);
    layout->setSpacing(0);
 
    const QString text =
@@ -688,6 +688,33 @@ void WarningBoxWidgetImpl::ApplyTheme(
    else if (key.phenomenon_ == awips::Phenomenon::Tornado)
    {
       accentColor = "197, 37, 48";
+   }
+
+   if (stateBadgeFrame_ != nullptr)
+   {
+      if (isSevere)
+      {
+         stateBadgeFrame_->setFixedHeight(24);
+      }
+      else
+      {
+         stateBadgeFrame_->setMinimumHeight(0);
+         stateBadgeFrame_->setMaximumHeight(QWIDGETSIZE_MAX);
+      }
+
+      if (auto* badgeLayout =
+             qobject_cast<QHBoxLayout*>(stateBadgeFrame_->layout());
+          badgeLayout != nullptr)
+      {
+         if (isSevere)
+         {
+            badgeLayout->setContentsMargins(6, 2, 6, 2);
+         }
+         else
+         {
+            badgeLayout->setContentsMargins(8, 4, 8, 4);
+         }
+      }
    }
 
    std::string styleSheet;
@@ -835,6 +862,10 @@ void WarningBoxWidgetImpl::ApplyTheme(
       styleSheet += "QWidget#WarningBoxWidget QFrame#progressFill {";
       styleSheet += "  background-color: rgba(236, 193, 74, 255);";
       styleSheet += "}";
+      styleSheet += "QWidget#WarningBoxWidget QLabel#stateBadgeLabel {";
+      styleSheet += "  font-size: 10px;";
+      styleSheet += "  letter-spacing: 0.6px;";
+      styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QFrame#severeMetricCard {";
       styleSheet += "  border: 1px solid rgba(179, 142, 57, 210);";
       styleSheet += "  border-top: 2px solid rgba(236, 193, 74, 255);";
@@ -842,11 +873,12 @@ void WarningBoxWidgetImpl::ApplyTheme(
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QLabel#severeMetricTitle {";
       styleSheet += "  font-family: '" + monoFontFamily_ + "';";
+      styleSheet += "  font-size: 9px;";
       styleSheet += "  color: rgba(202, 186, 147, 235);";
       styleSheet += "  letter-spacing: 0.9px;";
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QLabel#severeMetricValue {";
-      styleSheet += "  font-size: 18px;";
+      styleSheet += "  font-size: 16px;";
       styleSheet += "}";
       styleSheet +=
          "QWidget#WarningBoxWidget QFrame#severeTornadoPossibleBox {";
@@ -855,14 +887,14 @@ void WarningBoxWidgetImpl::ApplyTheme(
       styleSheet += "}";
       styleSheet +=
          "QWidget#WarningBoxWidget QLabel#severeTornadoPossibleValue {";
-      styleSheet += "  font-size: 18px;";
+      styleSheet += "  font-size: 16px;";
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QFrame#severeDamageThreatBox {";
       styleSheet += "  border: 1px solid rgba(205, 166, 75, 235);";
       styleSheet += "  background-color: rgba(67, 49, 20, 238);";
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QLabel#severeDamageThreatValue {";
-      styleSheet += "  font-size: 18px;";
+      styleSheet += "  font-size: 16px;";
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QFrame#detailRow {";
       styleSheet += "  border: 1px solid rgba(34, 49, 88, 210);";
