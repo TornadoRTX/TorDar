@@ -171,10 +171,10 @@ public:
    int                                        fixedWidth_ {0};
    QWidget*                                   detailsContainer_ {nullptr};
    QVBoxLayout*                               detailsLayout_ {nullptr};
-   std::string warningTitleFontFamily_ {"Sinter-Bold"};
-   std::string expirationFontFamily_ {"IBMPlexMono-SemiBold"};
-   std::string monoFontFamily_ {"RobotoMono-Regular"};
-   std::string areaSourceValueFontFamily_ {"TitilliumWeb-SemiBold"};
+   std::string warningTitleFontFamily_ {"Rajdhani-Bold"};
+   std::string expirationFontFamily_ {"AlegreyaSans-ExtraBold"};
+   std::string monoFontFamily_ {"Rajdhani-Bold"};
+   std::string areaSourceValueFontFamily_ {"AlegreyaSans-ExtraBold"};
 };
 
 WarningBoxWidget::WarningBoxWidget(QWidget* parent) :

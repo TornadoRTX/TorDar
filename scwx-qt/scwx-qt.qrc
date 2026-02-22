@@ -113,12 +113,9 @@
     <file>res/fonts/IBMPlexMono-SemiBold.ttf</file>
     <file>res/fonts/RobotoMono-Regular.ttf</file>
     <file>res/fonts/RobotoMono-Medium.ttf</file>
-    <file>res/fonts/Shuttleblock-NarrowDemiBold.ttf</file>
-    <file>res/fonts/Sinter-Medium.otf</file>
-    <file>res/fonts/Sinter-Black.otf</file>
-    <file>res/fonts/Sinter-Regular.otf</file>
-    <file>res/fonts/Sinter-Bold.otf</file>
     <file>res/fonts/TitilliumWeb-SemiBold.ttf</file>
     <file>res/fonts/TitilliumWeb-Bold.ttf</file>
+    <file>res/fonts/AlegreyaSans-ExtraBold.ttf</file>
+    <file>res/fonts/Rajdhani-Bold.ttf</file>
   </qresource>
 </RCC>
