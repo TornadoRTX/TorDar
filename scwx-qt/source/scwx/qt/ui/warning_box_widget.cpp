@@ -174,7 +174,7 @@ public:
    std::string warningTitleFontFamily_ {"Sinter-Bold"};
    std::string expirationFontFamily_ {"IBMPlexMono-SemiBold"};
    std::string monoFontFamily_ {"RobotoMono-Regular"};
-   std::string areaSourceValueFontFamily_ {"Sinter-Bold"};
+   std::string areaSourceValueFontFamily_ {"TitilliumWeb-SemiBold"};
 };
 
 WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
@@ -185,13 +185,13 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    ui->setupUi(this);
 
    p->warningTitleFontFamily_ =
-      LoadFontFamily(":/res/fonts/Sinter-Bold", "Sinter-Bold");
+      LoadFontFamily(":/res/fonts/Sinter-Bold.otf", "Sinter-Bold");
    p->expirationFontFamily_ = LoadFontFamily(
       ":/res/fonts/IBMPlexMono-SemiBold.ttf", "IBMPlexMono-SemiBold");
    p->monoFontFamily_ = LoadFontFamily(":/res/fonts/RobotoMono-Regular.ttf",
                                        "RobotoMono-Regular");
    p->areaSourceValueFontFamily_ = LoadFontFamily(
-      ":/res/fonts/TitilliumWeb-SemiBold", "TitilliumWeb-SemiBold");
+      ":/res/fonts/TitilliumWeb-SemiBold.otf", "TitilliumWeb-SemiBold");
 
    setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);
    setAttribute(Qt::WA_TranslucentBackground, false);
