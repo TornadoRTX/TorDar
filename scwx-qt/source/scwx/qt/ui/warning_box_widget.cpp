@@ -121,6 +121,10 @@ public:
    void AddDetailRow(const std::string& label, const std::string& value);
    void AddSevereMetricCards(const std::string& maxHail,
                              const std::string& maxWind);
+   void AddSevereTornadoPossibleBox(
+      const std::unordered_map<std::string, std::string>& fields);
+   void AddSevereDamageThreatBox(
+      const std::unordered_map<std::string, std::string>& fields);
    static std::string ToUpper(std::string_view value);
    static std::string Trim(std::string_view value);
    static std::string NormalizeLabel(std::string_view label);
@@ -368,6 +372,8 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
 
    if (key.phenomenon_ == awips::Phenomenon::SevereThunderstorm)
    {
+      AddSevereTornadoPossibleBox(fields);
+      AddSevereDamageThreatBox(fields);
       AddSevereMetricCards(GetFieldValue(fields, {"MAX HAIL SIZE"}),
                            GetFieldValue(fields, {"MAX WIND GUST"}));
 
@@ -406,6 +412,7 @@ void WarningBoxWidgetImpl::AddDetailRow(const std::string& label,
    QLabel* valueW = new QLabel(QString::fromStdString(value));
    valueW->setObjectName("detailValue");
    valueW->setWordWrap(true);
+   valueW->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
    QHBoxLayout* row = new QHBoxLayout(rowFrame);
    row->setContentsMargins(8, 6, 8, 6);
@@ -431,14 +438,16 @@ void WarningBoxWidgetImpl::AddSevereMetricCards(const std::string& maxHail,
       card->setObjectName("severeMetricCard");
       card->setMinimumHeight(68);
       QVBoxLayout* cardLayout = new QVBoxLayout(card);
-      cardLayout->setContentsMargins(8, 6, 8, 6);
-      cardLayout->setSpacing(2);
+      cardLayout->setContentsMargins(8, 5, 8, 4);
+      cardLayout->setSpacing(0);
 
       QLabel* titleLabel =
          new QLabel(QString::fromStdString(ToUpper(title)), card);
       titleLabel->setObjectName("severeMetricTitle");
+      titleLabel->setContentsMargins(0, 0, 0, 0);
       QLabel* valueLabel = new QLabel(QString::fromStdString(value), card);
       valueLabel->setObjectName("severeMetricValue");
+      valueLabel->setContentsMargins(0, 0, 0, 0);
       auto* valueGlow = new QGraphicsDropShadowEffect(valueLabel);
       valueGlow->setBlurRadius(12.0);
       valueGlow->setColor(QColor(236, 193, 74, 210));
@@ -467,6 +476,77 @@ void WarningBoxWidgetImpl::AddSevereMetricCards(const std::string& maxHail,
    {
       delete rowContainer;
    }
+}
+
+void WarningBoxWidgetImpl::AddSevereTornadoPossibleBox(
+   const std::unordered_map<std::string, std::string>& fields)
+{
+   const std::string tornadoField =
+      GetFieldValue(fields, {"TORNADO", "TORNADO THREAT"});
+   if (tornadoField.empty() ||
+       ToUpper(tornadoField).find("POSSIBLE") == std::string::npos)
+   {
+      return;
+   }
+
+   QFrame* box = new QFrame(detailsContainer_);
+   box->setObjectName("severeTornadoPossibleBox");
+   box->setMinimumHeight(40);
+
+   QHBoxLayout* layout = new QHBoxLayout(box);
+   layout->setContentsMargins(10, 4, 10, 4);
+   layout->setSpacing(0);
+
+   QLabel* label = new QLabel("TORNADO POSSIBLE", box);
+   label->setObjectName("severeTornadoPossibleValue");
+   label->setAlignment(Qt::AlignCenter);
+   auto* glow = new QGraphicsDropShadowEffect(label);
+   glow->setBlurRadius(14.0);
+   glow->setColor(QColor(236, 64, 64, 230));
+   glow->setOffset(0.0, 0.0);
+   label->setGraphicsEffect(glow);
+
+   layout->addWidget(label);
+   detailsLayout_->addWidget(box);
+}
+
+void WarningBoxWidgetImpl::AddSevereDamageThreatBox(
+   const std::unordered_map<std::string, std::string>& fields)
+{
+   const std::string damageField =
+      GetFieldValue(fields, {"THUNDERSTORM DAMAGE THREAT", "DAMAGE THREAT"});
+   const std::string upperDamage = ToUpper(damageField);
+   const bool        isConsiderable =
+      upperDamage.find("CONSIDERABLE") != std::string::npos;
+   const bool isDestructive =
+      upperDamage.find("DESTRUCTIVE") != std::string::npos;
+   if (!(isConsiderable || isDestructive))
+   {
+      return;
+   }
+
+   QFrame* box = new QFrame(detailsContainer_);
+   box->setObjectName("severeDamageThreatBox");
+   box->setMinimumHeight(40);
+
+   QHBoxLayout* layout = new QHBoxLayout(box);
+   layout->setContentsMargins(10, 4, 10, 4);
+   layout->setSpacing(0);
+
+   const QString text =
+      QString::fromStdString(isDestructive ? "DESTRUCTIVE DAMAGE THREAT" :
+                                             "CONSIDERABLE DAMAGE THREAT");
+   QLabel* label = new QLabel(text, box);
+   label->setObjectName("severeDamageThreatValue");
+   label->setAlignment(Qt::AlignCenter);
+   auto* glow = new QGraphicsDropShadowEffect(label);
+   glow->setBlurRadius(14.0);
+   glow->setColor(QColor(236, 193, 74, 230));
+   glow->setOffset(0.0, 0.0);
+   label->setGraphicsEffect(glow);
+
+   layout->addWidget(label);
+   detailsLayout_->addWidget(box);
 }
 
 void WarningBoxWidgetImpl::UpdateProgressVisual(
@@ -620,6 +700,26 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "  letter-spacing: 0.6px;";
    styleSheet += "  color: rgba(244, 248, 255, 245);";
    styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QFrame#severeTornadoPossibleBox {";
+   styleSheet += "  border: 1px solid rgba(210, 62, 62, 225);";
+   styleSheet += "  background-color: rgba(62, 20, 20, 235);";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QLabel#severeTornadoPossibleValue {";
+   styleSheet += "  font-size: 19px;";
+   styleSheet += "  font-weight: 800;";
+   styleSheet += "  letter-spacing: 1.8px;";
+   styleSheet += "  color: rgba(255, 232, 232, 250);";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QFrame#severeDamageThreatBox {";
+   styleSheet += "  border: 1px solid rgba(191, 151, 58, 235);";
+   styleSheet += "  background-color: rgba(61, 45, 21, 235);";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QLabel#severeDamageThreatValue {";
+   styleSheet += "  font-size: 19px;";
+   styleSheet += "  font-weight: 800;";
+   styleSheet += "  letter-spacing: 1.8px;";
+   styleSheet += "  color: rgba(255, 246, 214, 250);";
+   styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QFrame#detailRow {";
    styleSheet += "  border: 1px solid rgba(" + accentColor + ", 140);";
    styleSheet += "  background-color: rgba(6, 11, 24, 220);";
@@ -685,6 +785,22 @@ void WarningBoxWidgetImpl::ApplyTheme(
       styleSheet += "  letter-spacing: 0.9px;";
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QLabel#severeMetricValue {";
+      styleSheet += "  font-size: 18px;";
+      styleSheet += "}";
+      styleSheet +=
+         "QWidget#WarningBoxWidget QFrame#severeTornadoPossibleBox {";
+      styleSheet += "  border: 1px solid rgba(220, 72, 72, 235);";
+      styleSheet += "  background-color: rgba(73, 21, 21, 238);";
+      styleSheet += "}";
+      styleSheet +=
+         "QWidget#WarningBoxWidget QLabel#severeTornadoPossibleValue {";
+      styleSheet += "  font-size: 18px;";
+      styleSheet += "}";
+      styleSheet += "QWidget#WarningBoxWidget QFrame#severeDamageThreatBox {";
+      styleSheet += "  border: 1px solid rgba(205, 166, 75, 235);";
+      styleSheet += "  background-color: rgba(67, 49, 20, 238);";
+      styleSheet += "}";
+      styleSheet += "QWidget#WarningBoxWidget QLabel#severeDamageThreatValue {";
       styleSheet += "  font-size: 18px;";
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QFrame#detailRow {";
