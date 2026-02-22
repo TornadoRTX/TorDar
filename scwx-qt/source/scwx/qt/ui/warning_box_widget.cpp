@@ -193,8 +193,8 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
                                        "RobotoMono-Regular");
    p->areaSourceLabelFontFamily_ = LoadFontFamily(
       ":/res/fonts/AlegreyaSans-ExtraBold.ttf", "AlegreyaSans-ExtraBold");
-   p->areaSourceValueFontFamily_ = LoadFontFamily(
-      ":/res/fonts/Rajdhani-Bold.ttf", "Rajdhani");
+   p->areaSourceValueFontFamily_ =
+      LoadFontFamily(":/res/fonts/Rajdhani-Bold.ttf", "Rajdhani");
 
    setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);
    setAttribute(Qt::WA_TranslucentBackground, false);
