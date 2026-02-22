@@ -461,6 +461,16 @@ void WarningBoxWidgetImpl::AddDetailRow(const std::string& label,
             .arg(QString::fromStdString(areaSourceValueFontFamily_)));
    }
 
+   if (label == "Areas" || label == "Source")
+   {
+      labelW->setStyleSheet(
+         QString("font-family: '%1'; font-weight: 700; letter-spacing: 0px;")
+            .arg(QString::fromStdString(areaSourceLabelFontFamily_)));
+      valueW->setStyleSheet(
+         QString("font-family: '%1'; font-weight: 700; letter-spacing: 0px;")
+            .arg(QString::fromStdString(areaSourceValueFontFamily_)));
+   }
+
    QHBoxLayout* row = new QHBoxLayout(rowFrame);
    row->setContentsMargins(8, 6, 8, 6);
    row->setSpacing(6);
