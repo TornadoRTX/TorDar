@@ -197,6 +197,7 @@ public:
 
    ui::AlertDockWidget*              alertDockWidget_ {};
    ui::AnimationDockWidget*          animationDockWidget_ {};
+   ui::RadarToolboxWidget*           radarToolboxWidget_ {};
    ui::AboutDialog*                  aboutDialog_ {};
    ui::ExportSettingsDialog*         exportSettingsDialog_ {};
    ui::GpsInfoDialog*                gpsInfoDialog_ {};
@@ -297,10 +298,9 @@ MainWindow::MainWindow(QWidget* parent) :
    p->gpsInfoDialog_ = new ui::GpsInfoDialog(this);
 
    // Configure Menu
-   ui->menuView->insertAction(ui->actionRadarToolbox,
-                              ui->radarToolboxDock->toggleViewAction());
-   ui->radarToolboxDock->toggleViewAction()->setText(tr("Radar &Toolbox"));
-   ui->actionRadarToolbox->setVisible(false);
+   ui->actionRadarToolbox->setCheckable(true);
+   ui->actionRadarToolbox->setChecked(true);
+   ui->actionRadarToolbox->setVisible(true);
 
    ui->menuView->insertAction(ui->actionAlerts,
                               p->alertDockWidget_->toggleViewAction());
@@ -388,11 +388,28 @@ MainWindow::MainWindow(QWidget* parent) :
    ui->radarToolboxScrollAreaContents->layout()->addItem(
       ui->radarToolboxSpacer);
 
-   // TEMP: Replace toolbox contents with new Radar Toolbox UI
-   auto* radarToolboxWidget =
-      new scwx::qt::ui::RadarToolboxWidget(ui->radarToolboxDock);
+   // Replace docked toolbox with floating map overlay
+   ui->radarToolboxDock->setVisible(false);
+   removeDockWidget(ui->radarToolboxDock);
 
-   ui->radarToolboxDock->setWidget(radarToolboxWidget);
+   p->radarToolboxWidget_ =
+      new scwx::qt::ui::RadarToolboxWidget(ui->centralwidget);
+   p->radarToolboxWidget_->show();
+
+   connect(ui->actionRadarToolbox,
+           &QAction::toggled,
+           this,
+           [this](bool visible)
+           {
+              if (p->radarToolboxWidget_ != nullptr)
+              {
+                 p->radarToolboxWidget_->setVisible(visible);
+                 if (visible)
+                 {
+                    p->radarToolboxWidget_->raise();
+                 }
+              }
+           });
 
    // Status Bar
    QWidget* statusBarWidget = new QWidget(this);
@@ -494,9 +511,9 @@ void MainWindow::showEvent(QShowEvent* event)
       firstShowEvent = false;
    }
 
-   if (!restored)
+   if (!restored && p->radarToolboxWidget_ != nullptr)
    {
-      resizeDocks({ui->radarToolboxDock}, {194}, Qt::Horizontal);
+      p->radarToolboxWidget_->raise();
    }
 }
 

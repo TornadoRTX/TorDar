@@ -1,12 +1,15 @@
 #pragma once
 
+#include <QEvent>
 #include <QWidget>
 
 class QVBoxLayout;
+class QGridLayout;
 class QHBoxLayout;
 class QScrollArea;
 class QLabel;
 class QPushButton;
+class QShowEvent;
 
 namespace scwx::qt::ui
 {
@@ -18,7 +21,14 @@ class RadarToolboxWidget : public QWidget
 public:
    explicit RadarToolboxWidget(QWidget* parent = nullptr);
 
+protected:
+   bool eventFilter(QObject* watched, QEvent* event) override;
+   void showEvent(QShowEvent* event) override;
+
 private:
+   void SetCollapsed(bool collapsed);
+   void ClampToParent();
+
    // Root layout
    QVBoxLayout* rootLayout_;
 
@@ -28,7 +38,7 @@ private:
    QPushButton* collapseButton_;
 
    // Products Layout
-   QVBoxLayout* productsLayout_;
+   QGridLayout* productsLayout_;
 
    // Playback row
    QWidget*     playbackRow_;
@@ -38,11 +48,14 @@ private:
    QPushButton* stopBtn_;
 
    // Scrollable content
+   QWidget*     bodyContainer_;
    QScrollArea* scrollArea_;
    QWidget*     scrollContents_;
+   QWidget*     headerDivider_;
 
    bool collapsed_ = false;
    bool isPlaying_ = false;
+   bool positioned_ = false;
 };
 
 } // namespace scwx::qt::ui
