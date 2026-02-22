@@ -78,6 +78,8 @@ TorDar uses assets from the following sources:
 | [Roboto](https://fonts.google.com/specimen/Roboto) | SIL Open Font License |
 | [Roboto Flex](https://fonts.google.com/specimen/Roboto+Flex) | SIL Open Font License |
 | [Supercell thunderstorm with dramatic clouds](https://www.shutterstock.com/image-photo/supercell-thunderstorm-dramatic-clouds-1354353521) | Shutterstock Standard License | Photo by John Sirlin
+| [Titillium Web](https://fonts.google.com/specimen/Titillium+Web) | SIL Open Font License |
+
 
 
 Services
