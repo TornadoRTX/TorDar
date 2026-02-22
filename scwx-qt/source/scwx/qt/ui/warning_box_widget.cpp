@@ -173,7 +173,7 @@ public:
    QVBoxLayout*                               detailsLayout_ {nullptr};
    std::string warningTitleFontFamily_ {"Rajdhani-Bold"};
    std::string expirationFontFamily_ {"AlegreyaSans-ExtraBold"};
-   std::string monoFontFamily_ {"Rajdhani-Bold"};
+   std::string monoFontFamily_ {"RobotoMono-Regular"};
    std::string areaSourceValueFontFamily_ {"AlegreyaSans-ExtraBold"};
 };
 
@@ -185,13 +185,13 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    ui->setupUi(this);
 
    p->warningTitleFontFamily_ =
-      LoadFontFamily(":/res/fonts/Sinter-Bold.otf", "Sinter-Bold");
+      LoadFontFamily(":/res/fonts/Rajdhani-Bold.tff", "Rajdhani-Bold");
    p->expirationFontFamily_ = LoadFontFamily(
-      ":/res/fonts/IBMPlexMono-SemiBold.ttf", "IBMPlexMono-SemiBold");
+      ":/res/fonts/AlegreyaSans-ExtraBold.ttf", "AlegreyaSans-ExtraBold");
    p->monoFontFamily_ = LoadFontFamily(":/res/fonts/RobotoMono-Regular.ttf",
                                        "RobotoMono-Regular");
    p->areaSourceValueFontFamily_ = LoadFontFamily(
-      ":/res/fonts/TitilliumWeb-SemiBold.otf", "TitilliumWeb-SemiBold");
+      ":/res/fonts/AlegreyaSans-ExtraBold.ttf", "AlegreyaSans-ExtraBold");
 
    setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);
    setAttribute(Qt::WA_TranslucentBackground, false);
