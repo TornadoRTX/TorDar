@@ -53,8 +53,8 @@ private:
    QWidget*     scrollContents_;
    QWidget*     headerDivider_;
 
-   bool collapsed_ = false;
-   bool isPlaying_ = false;
+   bool collapsed_  = false;
+   bool isPlaying_  = false;
    bool positioned_ = false;
 };
 

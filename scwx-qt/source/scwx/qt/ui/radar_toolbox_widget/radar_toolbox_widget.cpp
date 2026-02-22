@@ -48,7 +48,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    // -------------------------
    // Header
    // -------------------------
-   headerContainer_   = new QWidget(this);
+   headerContainer_ = new QWidget(this);
    headerContainer_->setObjectName("RadarToolboxHeader");
    auto* headerLayout = new QHBoxLayout(headerContainer_);
    headerLayout->setContentsMargins(16, 8, 12, 8);
@@ -63,7 +63,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    collapseButton_->setFixedSize(30, 30);
    collapseButton_->setFlat(true);
 
-   playbackRow_         = new QWidget(this);
+   playbackRow_ = new QWidget(this);
    playbackRow_->setObjectName("RadarToolboxPlaybackRow");
    auto* playbackLayout = new QHBoxLayout(playbackRow_);
    playbackLayout->setContentsMargins(0, 0, 0, 0);
@@ -98,7 +98,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    headerDivider_->setFixedHeight(2);
    rootLayout_->addWidget(headerDivider_);
 
-   bodyContainer_ = new QWidget(this);
+   bodyContainer_   = new QWidget(this);
    auto* bodyLayout = new QVBoxLayout(bodyContainer_);
    bodyLayout->setContentsMargins(16, 16, 16, 16);
    bodyLayout->setSpacing(0);
@@ -113,7 +113,8 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    scrollArea_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 
    scrollContents_ = new QWidget(scrollArea_);
-   scrollContents_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+   scrollContents_->setSizePolicy(QSizePolicy::Expanding,
+                                  QSizePolicy::Preferred);
 
    productsLayout_ = new QGridLayout(scrollContents_);
    productsLayout_->setSpacing(18);
@@ -175,10 +176,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    connect(collapseButton_,
            &QPushButton::clicked,
            this,
-           [this]()
-           {
-              SetCollapsed(!collapsed_);
-           });
+           [this]() { SetCollapsed(!collapsed_); });
 
    // -------------------------
    // Play / Pause toggle
