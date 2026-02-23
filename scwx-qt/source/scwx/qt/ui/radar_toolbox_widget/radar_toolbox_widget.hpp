@@ -27,6 +27,7 @@ protected:
 
 private:
    void SetCollapsed(bool collapsed);
+   void MoveToBottomLeft();
    void ClampToParent();
 
    // Root layout
@@ -52,6 +53,7 @@ private:
    QScrollArea* scrollArea_;
    QWidget*     scrollContents_;
    QWidget*     headerDivider_;
+   QWidget*     collapsedPeek_;
 
    bool collapsed_  = false;
    bool isPlaying_  = false;
