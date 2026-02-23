@@ -190,15 +190,20 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    ui->setupUi(this);
 
    p->warningTitleFontFamily_ =
-      LoadFontFamily(":/res/fonts/Rajdhani-Bold.ttf", "Rajdhani");
+      LoadFontFamily(":/res/fonts/Rajdhani-Regular.ttf", "Rajdhani");
+   LoadFontFamily(":/res/fonts/Rajdhani-Medium.ttf",
+                  p->warningTitleFontFamily_.c_str());
+   LoadFontFamily(":/res/fonts/Rajdhani-SemiBold.ttf",
+                  p->warningTitleFontFamily_.c_str());
+   LoadFontFamily(":/res/fonts/Rajdhani-Bold.ttf",
+                  p->warningTitleFontFamily_.c_str());
    p->expirationFontFamily_ = LoadFontFamily(
       ":/res/fonts/AlegreyaSans-ExtraBold.ttf", "AlegreyaSans-ExtraBold");
    p->monoFontFamily_ = LoadFontFamily(":/res/fonts/RobotoMono-Regular.ttf",
                                        "RobotoMono-Regular");
    p->areaSourceLabelFontFamily_ = LoadFontFamily(
       ":/res/fonts/AlegreyaSans-ExtraBold.ttf", "AlegreyaSans-ExtraBold");
-   p->areaSourceValueFontFamily_ =
-      LoadFontFamily(":/res/fonts/Rajdhani-Bold.ttf", "Rajdhani");
+   p->areaSourceValueFontFamily_ = p->warningTitleFontFamily_;
 
    setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);
    setAttribute(Qt::WA_TranslucentBackground, false);
@@ -207,10 +212,13 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
 
    ui->warningTypeLabel->setTextInteractionFlags(Qt::NoTextInteraction);
    ui->warningTypeLabel->setWordWrap(true);
-   ui->warningTypeLabel->setStyleSheet(
-      QString("font-family: '%1';"
-              "font-size: 20px; font-weight: 700; letter-spacing: 0px;")
-         .arg(QString::fromStdString(p->warningTitleFontFamily_)));
+   QFont warningTypeFont {};
+   warningTypeFont.setFamily(QString::fromStdString(p->warningTitleFontFamily_));
+   warningTypeFont.setPointSize(20);
+   warningTypeFont.setWeight(QFont::Bold);
+   warningTypeFont.setStyleStrategy(QFont::PreferAntialias);
+   warningTypeFont.setHintingPreference(QFont::PreferNoHinting);
+   ui->warningTypeLabel->setFont(warningTypeFont);
    ui->warningTypeLabel->setContentsMargins(0, 0, 0, 0);
    ui->expirationLabel->setStyleSheet(
       QString("font-family: '%1';"
@@ -467,16 +475,6 @@ void WarningBoxWidgetImpl::AddDetailRow(const std::string& label,
    valueW->setObjectName("detailValue");
    valueW->setWordWrap(true);
    valueW->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-
-   if (label == "Areas" || label == "Source")
-   {
-      labelW->setStyleSheet(
-         QString("font-family: '%1'; font-weight: 700; letter-spacing: 0px;")
-            .arg(QString::fromStdString(areaSourceLabelFontFamily_)));
-      valueW->setStyleSheet(
-         QString("font-family: '%1'; font-weight: 700; letter-spacing: 0px;")
-            .arg(QString::fromStdString(areaSourceValueFontFamily_)));
-   }
 
    if (label == "Areas" || label == "Source")
    {
@@ -979,6 +977,8 @@ void WarningBoxWidgetImpl::UpdateTitleFont()
    QFont     font        = self_->ui->warningTypeLabel->font();
    font.setFamily(QString::fromStdString(warningTitleFontFamily_));
    font.setWeight(QFont::Bold);
+   font.setStyleStrategy(QFont::PreferAntialias);
+   font.setHintingPreference(QFont::PreferNoHinting);
    const QString text = self_->ui->warningTypeLabel->text();
 
    int pointSize = 20;
