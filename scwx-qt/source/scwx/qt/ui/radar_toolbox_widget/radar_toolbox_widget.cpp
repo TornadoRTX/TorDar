@@ -2,10 +2,13 @@
 #include "RadarProductCard.hpp"
 
 #include <QFrame>
+#include <QFontDatabase>
 #include <QGridLayout>
 #include <QHBoxLayout>
+#include <QIcon>
 #include <QLabel>
 #include <QLayout>
+#include <QMouseEvent>
 #include <QPushButton>
 #include <QScrollArea>
 #include <QShowEvent>
@@ -30,11 +33,19 @@ namespace scwx::qt::ui
 
 RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 {
+   static bool antonLoaded = false;
+
+   if (!antonLoaded)
+   {
+      QFontDatabase::addApplicationFont(":/res/fonts/Anton-Regular.ttf");
+      antonLoaded = true;
+   }
+
    setObjectName("RadarToolboxFloatingPanel");
    setAttribute(Qt::WA_StyledBackground, true);
    setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
-   setMinimumWidth(470);
-   setMaximumWidth(680);
+   setMinimumWidth(727);
+   setMaximumWidth(727);
 
    if (parent != nullptr)
    {
@@ -50,6 +61,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    // -------------------------
    headerContainer_ = new QWidget(this);
    headerContainer_->setObjectName("RadarToolboxHeader");
+   headerContainer_->installEventFilter(this);
    auto* headerLayout = new QHBoxLayout(headerContainer_);
    headerLayout->setContentsMargins(16, 8, 12, 8);
    headerLayout->setSpacing(8);
@@ -57,6 +69,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    titleLabel_ = new QLabel(tr("RADAR TOOLBOX"), headerContainer_);
    titleLabel_->setObjectName("RadarToolboxTitle");
    titleLabel_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+   titleLabel_->installEventFilter(this);
 
    collapseButton_ = new QPushButton("^", headerContainer_);
    collapseButton_->setObjectName("RadarToolboxCollapseButton");
@@ -65,6 +78,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 
    playbackRow_ = new QWidget(this);
    playbackRow_->setObjectName("RadarToolboxPlaybackRow");
+   playbackRow_->installEventFilter(this);
    auto* playbackLayout = new QHBoxLayout(playbackRow_);
    playbackLayout->setContentsMargins(0, 0, 0, 0);
    playbackLayout->setSpacing(6);
@@ -78,6 +92,14 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    playPauseBtn_->setObjectName("RadarToolboxControlButton");
    forwardBtn_->setObjectName("RadarToolboxControlButton");
    stopBtn_->setObjectName("RadarToolboxControlButtonStop");
+
+   playPauseBtn_->setText("");
+   playPauseBtn_->setIcon(QIcon(":/res/icons/play_button.svg"));
+   playPauseBtn_->setIconSize(QSize(22, 22));
+
+   stopBtn_->setText("");
+   stopBtn_->setIcon(QIcon(":/res/icons/Square.svg"));
+   stopBtn_->setIconSize(QSize(18, 18));
 
    for (auto* btn : {backBtn_, playPauseBtn_, forwardBtn_, stopBtn_})
    {
@@ -98,6 +120,11 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    headerDivider_->setFixedHeight(2);
    rootLayout_->addWidget(headerDivider_);
 
+   collapsedPeek_ = new QWidget(this);
+   collapsedPeek_->setObjectName("RadarToolboxCollapsedPeek");
+   collapsedPeek_->setFixedHeight(12);
+   rootLayout_->addWidget(collapsedPeek_);
+
    bodyContainer_   = new QWidget(this);
    auto* bodyLayout = new QVBoxLayout(bodyContainer_);
    bodyLayout->setContentsMargins(16, 16, 16, 16);
@@ -117,7 +144,8 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
                                   QSizePolicy::Preferred);
 
    productsLayout_ = new QGridLayout(scrollContents_);
-   productsLayout_->setSpacing(18);
+   productsLayout_->setHorizontalSpacing(122);
+   productsLayout_->setVerticalSpacing(24);
    productsLayout_->setContentsMargins(0, 0, 0, 0);
    productsLayout_->setSizeConstraint(QLayout::SetMinAndMaxSize);
 
@@ -187,7 +215,9 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
            [this]()
            {
               isPlaying_ = !isPlaying_;
-              playPauseBtn_->setText(isPlaying_ ? "||" : ">");
+              playPauseBtn_->setIcon(QIcon(
+                 isPlaying_ ? ":/res/icons/font-awesome-6/pause-solid.svg" :
+                              ":/res/icons/play_button.svg"));
            });
 
    // -------------------------
@@ -199,7 +229,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
            [this]()
            {
               isPlaying_ = false;
-              playPauseBtn_->setText(">");
+              playPauseBtn_->setIcon(QIcon(":/res/icons/play_button.svg"));
               // Future: jump to latest frame + re-enable auto-update
            });
 
@@ -207,7 +237,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
       "#RadarToolboxFloatingPanel {"
       "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
       "     stop:0 #06080d, stop:1 #3f434a);"
-      "  border: 4px solid #f2f2f2;"
+      "  border: 5px solid #f2f2f2;"
       "  border-radius: 24px;"
       "}"
       "#RadarToolboxHeader {"
@@ -217,13 +247,17 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
       "  border-top-right-radius: 20px;"
       "}"
       "#RadarToolboxTitle {"
+      "  font-family: 'Anton';"
       "  color: #ffffff;"
-      "  font-size: 22px;"
+      "  font-size: 36px;"
       "  font-weight: 900;"
       "  letter-spacing: 1px;"
       "}"
       "#RadarToolboxHeaderDivider {"
       "  background: #ffffff;"
+      "}"
+      "#RadarToolboxCollapsedPeek {"
+      "  background: rgba(0, 0, 0, 0.28);"
       "}"
       "#RadarToolboxCollapseButton {"
       "  color: #ffffff;"
@@ -258,8 +292,22 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 
 bool RadarToolboxWidget::eventFilter(QObject* watched, QEvent* event)
 {
+   if ((watched == headerContainer_ || watched == titleLabel_ ||
+        watched == playbackRow_) &&
+       event->type() == QEvent::MouseButtonPress)
+   {
+      auto* mouseEvent = static_cast<QMouseEvent*>(event);
+
+      if (mouseEvent->button() == Qt::LeftButton)
+      {
+         SetCollapsed(!collapsed_);
+         return true;
+      }
+   }
+
    if (watched == parentWidget() && event->type() == QEvent::Resize)
    {
+      MoveToBottomLeft();
       ClampToParent();
       raise();
    }
@@ -273,7 +321,7 @@ void RadarToolboxWidget::showEvent(QShowEvent* event)
 
    if (!positioned_)
    {
-      move(20, 20);
+      MoveToBottomLeft();
       positioned_ = true;
    }
 
@@ -284,21 +332,43 @@ void RadarToolboxWidget::showEvent(QShowEvent* event)
 void RadarToolboxWidget::SetCollapsed(bool collapsed)
 {
    collapsed_ = collapsed;
+   playbackRow_->setVisible(true);
    bodyContainer_->setVisible(!collapsed_);
-   headerDivider_->setVisible(!collapsed_);
+   headerDivider_->setVisible(true);
+   collapsedPeek_->setVisible(collapsed_);
    collapseButton_->setText(collapsed_ ? "v" : "^");
 
    if (collapsed_)
    {
-      setMaximumHeight(headerContainer_->sizeHint().height() + 8);
+      setMinimumHeight(0);
+      setMaximumHeight(QWIDGETSIZE_MAX);
+      adjustSize();
+      setFixedHeight(sizeHint().height());
    }
    else
    {
+      setMinimumHeight(0);
       setMaximumHeight(QWIDGETSIZE_MAX);
    }
 
    adjustSize();
+   MoveToBottomLeft();
    ClampToParent();
+}
+
+void RadarToolboxWidget::MoveToBottomLeft()
+{
+   QWidget* parent = parentWidget();
+
+   if (parent == nullptr)
+   {
+      return;
+   }
+
+   const int x = 20;
+   const int y = std::max(0, parent->height() - height() - 20);
+
+   move(x, y);
 }
 
 void RadarToolboxWidget::ClampToParent()

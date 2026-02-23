@@ -17,16 +17,16 @@ RadarProductCard::RadarProductCard(const QString& title,
 {
    setCursor(Qt::PointingHandCursor);
    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-   setMinimumWidth(130);
+   setMinimumWidth(116);
    auto* layout = new QVBoxLayout(this);
    layout->setContentsMargins(4, 6, 4, 6);
-   layout->setSpacing(10);
+   layout->setSpacing(16);
 
    // -------------------------
    // Icon
    // -------------------------
    iconContainer_ = new QWidget(this);
-   iconContainer_->setFixedSize(130, 130);
+   iconContainer_->setFixedSize(116, 114);
    iconContainer_->setProperty("selected", false);
 
    QVBoxLayout* iconLayout = new QVBoxLayout(iconContainer_);
@@ -34,7 +34,7 @@ RadarProductCard::RadarProductCard(const QString& title,
    iconLayout->setAlignment(Qt::AlignCenter);
 
    imageLabel_ = new QLabel(iconContainer_);
-   imageLabel_->setFixedSize(120, 120);
+   imageLabel_->setFixedSize(106, 104);
    imageLabel_->setAlignment(Qt::AlignCenter);
    imageLabel_->setScaledContents(true);
 
@@ -47,7 +47,7 @@ RadarProductCard::RadarProductCard(const QString& title,
       qWarning() << "RadarProductCard: failed to load icon:" << iconPath;
    }
 
-   imageLabel_->setPixmap(icon.pixmap(120, 120));
+   imageLabel_->setPixmap(icon.pixmap(106, 104));
 
    // -------------------------
    // Title
@@ -69,18 +69,19 @@ RadarProductCard::RadarProductCard(const QString& title,
 
    iconContainer_->setStyleSheet(
       "#iconContainer {"
-      "  border: 2px solid #f1f1f1;"
+      "  border: 5px solid #f1f1f1;"
       "  border-radius: 8px;"
       "}"
       "#iconContainer[selected='true'] {"
-      "  border: 2px solid #2979FF;"
+      "  border: 5px solid #2979FF;"
       "}");
 
    titleLabel_->setStyleSheet(
       "#titleLabel {"
       "  background: transparent;"
+      "  font-family: 'Anton';"
       "  font-weight: 800;"
-      "  font-size: 15px;"
+      "  font-size: 28px;"
       "  color: white;"
       "}"
       "#titleLabel[selected='true'] {"
