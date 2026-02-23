@@ -211,6 +211,7 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
       QString("font-family: '%1';"
               "font-size: 20px; font-weight: 700; letter-spacing: 1px;")
          .arg(QString::fromStdString(p->warningTitleFontFamily_)));
+   ui->warningTypeLabel->setContentsMargins(0, 0, 0, 0);
    ui->expirationLabel->setStyleSheet(
       QString("font-family: '%1';"
               "font-size: 13px; font-weight: 700; letter-spacing: 0.5px;")
@@ -236,18 +237,18 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    }
    ui->buttonsLayout->addWidget(ui->viewEasTextButton);
 
-   QHBoxLayout* headerLayout = new QHBoxLayout();
    ui->verticalLayout->removeWidget(ui->warningTypeLabel);
    ui->verticalLayout->removeWidget(ui->expirationLabel);
-   headerLayout->setContentsMargins(0, 0, 0, 0);
-   headerLayout->setSpacing(6);
-   headerLayout->addWidget(ui->warningTypeLabel, 1);
-   headerLayout->addWidget(ui->closeButton, 0, Qt::AlignTop);
-   QVBoxLayout* topLayout = new QVBoxLayout();
+   QVBoxLayout* titleLayout = new QVBoxLayout();
+   titleLayout->setContentsMargins(0, 0, 0, 0);
+   titleLayout->setSpacing(1);
+   titleLayout->addWidget(ui->warningTypeLabel, 0, Qt::AlignLeft);
+   titleLayout->addWidget(ui->expirationLabel, 0, Qt::AlignLeft);
+   QHBoxLayout* topLayout = new QHBoxLayout();
    topLayout->setContentsMargins(0, 0, 0, 0);
-   topLayout->setSpacing(1);
-   topLayout->addLayout(headerLayout);
-   topLayout->addWidget(ui->expirationLabel, 0, Qt::AlignLeft);
+   topLayout->setSpacing(6);
+   topLayout->addLayout(titleLayout, 1);
+   topLayout->addWidget(ui->closeButton, 0, Qt::AlignTop);
    ui->verticalLayout->insertLayout(0, topLayout);
 
    p->progressTrack_ = new QFrame(this);
@@ -265,11 +266,16 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
 
    p->stateBadgeFrame_ = new QFrame(this);
    p->stateBadgeFrame_->setObjectName("stateBadgeFrame");
+   p->stateBadgeFrame_->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
    QHBoxLayout* badgeLayout = new QHBoxLayout(p->stateBadgeFrame_);
    badgeLayout->setContentsMargins(8, 4, 8, 4);
    badgeLayout->setSpacing(0);
    p->stateBadgeLabel_ = new QLabel(p->stateBadgeFrame_);
    p->stateBadgeLabel_->setObjectName("stateBadgeLabel");
+   p->stateBadgeLabel_->setAlignment(Qt::AlignCenter);
+   p->stateBadgeLabel_->setWordWrap(false);
+   p->stateBadgeLabel_->setMinimumWidth(28);
+   p->stateBadgeLabel_->setMaximumWidth(120);
    badgeLayout->addWidget(p->stateBadgeLabel_);
    p->stateBadgeFrame_->setVisible(false);
    ui->verticalLayout->insertWidget(3, p->stateBadgeFrame_, 0, Qt::AlignLeft);
@@ -395,11 +401,17 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
    }
    if (!statesStr.empty())
    {
-      stateBadgeLabel_->setText(QString::fromStdString(statesStr));
+      const QString fullStates    = QString::fromStdString(statesStr);
+      const QString displayStates = stateBadgeLabel_->fontMetrics().elidedText(
+         fullStates, Qt::ElideRight, 120);
+      stateBadgeLabel_->setText(displayStates);
+      stateBadgeLabel_->setToolTip(displayStates == fullStates ? QString {} :
+                                                                 fullStates);
       stateBadgeFrame_->setVisible(true);
    }
    else
    {
+      stateBadgeLabel_->setToolTip(QString {});
       stateBadgeFrame_->setVisible(false);
    }
    self_->ui->areasFrame->setVisible(false);
@@ -426,8 +438,6 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
          AddDetailRow("Areas", countiesStr);
       }
       AddSummaryField("Source", fields, {"SOURCE"});
-      AddSummaryField(
-         "Damage", fields, {"THUNDERSTORM DAMAGE THREAT", "DAMAGE THREAT"});
    }
    else
    {
@@ -701,12 +711,11 @@ void WarningBoxWidgetImpl::ApplyTheme(
    {
       if (isSevere)
       {
-         stateBadgeFrame_->setFixedHeight(24);
+         stateBadgeFrame_->setFixedHeight(22);
       }
       else
       {
-         stateBadgeFrame_->setMinimumHeight(0);
-         stateBadgeFrame_->setMaximumHeight(QWIDGETSIZE_MAX);
+         stateBadgeFrame_->setFixedHeight(26);
       }
 
       if (auto* badgeLayout =
@@ -715,11 +724,11 @@ void WarningBoxWidgetImpl::ApplyTheme(
       {
          if (isSevere)
          {
-            badgeLayout->setContentsMargins(6, 2, 6, 2);
+            badgeLayout->setContentsMargins(5, 1, 5, 1);
          }
          else
          {
-            badgeLayout->setContentsMargins(8, 4, 8, 4);
+            badgeLayout->setContentsMargins(7, 2, 7, 2);
          }
       }
    }
