@@ -219,7 +219,7 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    ui->expirationLabel->setContentsMargins(0, 0, 0, 0);
    ui->viewEasTextButton->setText("VIEW FULL EAS TEXT");
    ui->closeButton->setText("x");
-   ui->closeButton->setFixedSize(28, 28);
+   ui->closeButton->setFixedSize(18, 18);
    ui->buttonsLayout->setContentsMargins(0, 0, 0, 0);
    ui->buttonsLayout->setSpacing(0);
    ui->verticalLayout->setContentsMargins(10, 8, 10, 8);
@@ -246,7 +246,7 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    titleLayout->addWidget(ui->expirationLabel, 0, Qt::AlignLeft);
    QHBoxLayout* topLayout = new QHBoxLayout();
    topLayout->setContentsMargins(0, 0, 0, 0);
-   topLayout->setSpacing(6);
+   topLayout->setSpacing(2);
    topLayout->addLayout(titleLayout, 1);
    topLayout->addWidget(ui->closeButton, 0, Qt::AlignTop);
    ui->verticalLayout->insertLayout(0, topLayout);
@@ -858,15 +858,15 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "  padding: 6px;";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QPushButton#closeButton {";
-   styleSheet += "  border-radius: 14px;";
-   styleSheet += "  border: 1px solid rgba(160, 170, 194, 190);";
-   styleSheet += "  background-color: rgba(5, 9, 20, 210);";
+   styleSheet += "  border: none;";
+   styleSheet += "  background: transparent;";
    styleSheet += "  color: rgba(235, 240, 255, 230);";
-   styleSheet += "  font-size: 15px;";
-   styleSheet += "  font-weight: 700;";
+   styleSheet += "  font-size: 17px;";
+   styleSheet += "  font-weight: 800;";
+   styleSheet += "  padding: 0px;";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QPushButton#closeButton:hover {";
-   styleSheet += "  background-color: rgba(" + accentColor + ", 72);";
+   styleSheet += "  color: rgba(255, 255, 255, 255);";
    styleSheet += "}";
 
    if (isSevere)
