@@ -175,7 +175,7 @@ public:
    int                                        fixedWidth_ {0};
    QWidget*                                   detailsContainer_ {nullptr};
    QVBoxLayout*                               detailsLayout_ {nullptr};
-   std::string warningTitleFontFamily_ {"Rajdhani-Bold"};
+   std::string warningTitleFontFamily_ {"Rajdhani"};
    std::string expirationFontFamily_ {"AlegreyaSans-ExtraBold"};
    std::string monoFontFamily_ {"RobotoMono-Regular"};
    std::string areaSourceLabelFontFamily_ {"AlegreyaSans-ExtraBold"};
@@ -209,7 +209,7 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    ui->warningTypeLabel->setWordWrap(true);
    ui->warningTypeLabel->setStyleSheet(
       QString("font-family: '%1';"
-              "font-size: 20px; font-weight: 700; letter-spacing: 1px;")
+              "font-size: 20px; font-weight: 700; letter-spacing: 0px;")
          .arg(QString::fromStdString(p->warningTitleFontFamily_)));
    ui->warningTypeLabel->setContentsMargins(0, 0, 0, 0);
    ui->expirationLabel->setStyleSheet(
@@ -241,7 +241,7 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    ui->verticalLayout->removeWidget(ui->expirationLabel);
    QVBoxLayout* titleLayout = new QVBoxLayout();
    titleLayout->setContentsMargins(0, 0, 0, 0);
-   titleLayout->setSpacing(1);
+   titleLayout->setSpacing(0);
    titleLayout->addWidget(ui->warningTypeLabel, 0, Qt::AlignLeft);
    titleLayout->addWidget(ui->expirationLabel, 0, Qt::AlignLeft);
    QHBoxLayout* topLayout = new QHBoxLayout();
@@ -804,7 +804,7 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QLabel#severeMetricValue {";
    styleSheet += "  font-size: 19px;";
-   styleSheet += "  font-weight: 800;";
+   styleSheet += "  font-weight: 900;";
    styleSheet += "  letter-spacing: 0.6px;";
    styleSheet += "  color: rgba(244, 248, 255, 245);";
    styleSheet += "}";
@@ -814,7 +814,7 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QLabel#severeTornadoPossibleValue {";
    styleSheet += "  font-size: 19px;";
-   styleSheet += "  font-weight: 800;";
+   styleSheet += "  font-weight: 900;";
    styleSheet += "  letter-spacing: 1.8px;";
    styleSheet += "  color: rgba(255, 232, 232, 250);";
    styleSheet += "}";
@@ -824,7 +824,7 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QLabel#severeDamageThreatValue {";
    styleSheet += "  font-size: 19px;";
-   styleSheet += "  font-weight: 800;";
+   styleSheet += "  font-weight: 900;";
    styleSheet += "  letter-spacing: 1.8px;";
    styleSheet += "  color: rgba(255, 246, 214, 250);";
    styleSheet += "}";
@@ -875,10 +875,10 @@ void WarningBoxWidgetImpl::ApplyTheme(
       styleSheet += "QWidget#WarningBoxWidget {";
       styleSheet +=
          "  background-color: qradialgradient("
-         "cx:1.0, cy:0.0, radius:1.2, fx:1.0, fy:0.0, "
-         "stop:0 rgba(64, 52, 18, 242), "
-         "stop:0.30 rgba(20, 18, 22, 245), "
-         "stop:0.55 rgba(0, 2, 26, 255), "
+         "cx:1.0, cy:0.0, radius:1.45, fx:1.0, fy:0.0, "
+         "stop:0 rgba(118, 98, 30, 248), "
+         "stop:0.42 rgba(48, 40, 20, 246), "
+         "stop:0.78 rgba(0, 2, 26, 255), "
          "stop:1 rgba(0, 2, 26, 255));";
       styleSheet += "  border: 1px solid rgba(64, 80, 126, 220);";
       styleSheet += "}";
@@ -978,14 +978,20 @@ void WarningBoxWidgetImpl::UpdateTitleFont()
    const int targetWidth = std::max(120, self_->ui->warningTypeLabel->width());
    QFont     font        = self_->ui->warningTypeLabel->font();
    font.setFamily(QString::fromStdString(warningTitleFontFamily_));
+   font.setWeight(QFont::Bold);
+   const QString text = self_->ui->warningTypeLabel->text();
+
    int pointSize = 20;
    font.setPointSize(pointSize);
-
-   while (pointSize > 12)
+   QRect textBounds {};
+   while (pointSize > 14)
    {
       QFontMetrics metrics(font);
-      if (metrics.horizontalAdvance(self_->ui->warningTypeLabel->text()) <=
-          targetWidth)
+      textBounds = metrics.boundingRect(
+         QRect(0, 0, targetWidth, 200), Qt::TextWordWrap, text);
+
+      // Keep title readable and within two wrapped lines.
+      if (textBounds.height() <= ((metrics.lineSpacing() * 2) + 2))
       {
          break;
       }
@@ -993,7 +999,15 @@ void WarningBoxWidgetImpl::UpdateTitleFont()
       font.setPointSize(pointSize);
    }
 
+   QFontMetrics finalMetrics(font);
+   textBounds = finalMetrics.boundingRect(
+      QRect(0, 0, targetWidth, 200), Qt::TextWordWrap, text);
+   const int titleHeight =
+      std::max(finalMetrics.lineSpacing(), textBounds.height());
+
    self_->ui->warningTypeLabel->setFont(font);
+   self_->ui->warningTypeLabel->setMinimumHeight(titleHeight);
+   self_->ui->warningTypeLabel->setMaximumHeight(titleHeight);
 }
 
 void WarningBoxWidgetImpl::AdjustHeightToContents()
