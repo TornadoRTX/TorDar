@@ -213,7 +213,8 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    ui->warningTypeLabel->setTextInteractionFlags(Qt::NoTextInteraction);
    ui->warningTypeLabel->setWordWrap(true);
    QFont warningTypeFont {};
-   warningTypeFont.setFamily(QString::fromStdString(p->warningTitleFontFamily_));
+   warningTypeFont.setFamily(
+      QString::fromStdString(p->warningTitleFontFamily_));
    warningTypeFont.setPointSize(20);
    warningTypeFont.setWeight(QFont::Bold);
    warningTypeFont.setStyleStrategy(QFont::PreferAntialias);
