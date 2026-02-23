@@ -215,6 +215,7 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
       QString("font-family: '%1';"
               "font-size: 13px; font-weight: 700; letter-spacing: 0.5px;")
          .arg(QString::fromStdString(p->expirationFontFamily_)));
+   ui->expirationLabel->setContentsMargins(0, 0, 0, 0);
    ui->viewEasTextButton->setText("VIEW FULL EAS TEXT");
    ui->closeButton->setText("x");
    ui->closeButton->setFixedSize(28, 28);
@@ -237,11 +238,17 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
 
    QHBoxLayout* headerLayout = new QHBoxLayout();
    ui->verticalLayout->removeWidget(ui->warningTypeLabel);
+   ui->verticalLayout->removeWidget(ui->expirationLabel);
    headerLayout->setContentsMargins(0, 0, 0, 0);
    headerLayout->setSpacing(6);
    headerLayout->addWidget(ui->warningTypeLabel, 1);
    headerLayout->addWidget(ui->closeButton, 0, Qt::AlignTop);
-   ui->verticalLayout->insertLayout(0, headerLayout);
+   QVBoxLayout* topLayout = new QVBoxLayout();
+   topLayout->setContentsMargins(0, 0, 0, 0);
+   topLayout->setSpacing(1);
+   topLayout->addLayout(headerLayout);
+   topLayout->addWidget(ui->expirationLabel, 0, Qt::AlignLeft);
+   ui->verticalLayout->insertLayout(0, topLayout);
 
    p->progressTrack_ = new QFrame(this);
    p->progressTrack_->setObjectName("progressTrack");
@@ -719,7 +726,12 @@ void WarningBoxWidgetImpl::ApplyTheme(
 
    std::string styleSheet;
    styleSheet += "QWidget#WarningBoxWidget {";
-   styleSheet += "  background-color: rgba(12, 16, 26, 230);";
+   styleSheet +=
+      "  background-color: qlineargradient("
+      "x1:0, y1:0, x2:0, y2:1, "
+      "stop:0 rgba(0, 2, 26, 242), "
+      "stop:0.22 rgba(0, 2, 26, 255), "
+      "stop:1 rgba(0, 2, 26, 255));";
    styleSheet += "  border: 2px solid rgba(" + accentColor + ", 220);";
    styleSheet += "  border-radius: 6px;";
    styleSheet += "}";
@@ -852,7 +864,13 @@ void WarningBoxWidgetImpl::ApplyTheme(
    {
       // Severe blueprint look: navy body, yellow accents, clean metric cards.
       styleSheet += "QWidget#WarningBoxWidget {";
-      styleSheet += "  background-color: rgba(12, 13, 22, 238);";
+      styleSheet +=
+         "  background-color: qradialgradient("
+         "cx:1.0, cy:0.0, radius:1.2, fx:1.0, fy:0.0, "
+         "stop:0 rgba(64, 52, 18, 242), "
+         "stop:0.30 rgba(20, 18, 22, 245), "
+         "stop:0.55 rgba(0, 2, 26, 255), "
+         "stop:1 rgba(0, 2, 26, 255));";
       styleSheet += "  border: 1px solid rgba(64, 80, 126, 220);";
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QFrame#progressTrack {";
