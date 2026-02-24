@@ -212,10 +212,11 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
 
    ui->warningTypeLabel->setTextInteractionFlags(Qt::NoTextInteraction);
    ui->warningTypeLabel->setWordWrap(true);
+   ui->warningTypeLabel->setAlignment(Qt::AlignLeft | Qt::AlignTop);
    QFont warningTypeFont {};
    warningTypeFont.setFamily(
       QString::fromStdString(p->warningTitleFontFamily_));
-   warningTypeFont.setPointSize(20);
+   warningTypeFont.setPointSize(47);
    warningTypeFont.setWeight(QFont::Bold);
    warningTypeFont.setStyleStrategy(QFont::PreferAntialias);
    warningTypeFont.setHintingPreference(QFont::PreferNoHinting);
@@ -483,7 +484,8 @@ void WarningBoxWidgetImpl::AddDetailRow(const std::string& label,
          QString("font-family: '%1'; font-weight: 700; letter-spacing: 0px;")
             .arg(QString::fromStdString(areaSourceLabelFontFamily_)));
       valueW->setStyleSheet(
-         QString("font-family: '%1'; font-weight: 700; letter-spacing: 0px;")
+         QString("font-family: '%1'; font-size: 20px; font-weight: 700; "
+                 "letter-spacing: 0px;")
             .arg(QString::fromStdString(areaSourceValueFontFamily_)));
    }
 
@@ -982,27 +984,10 @@ void WarningBoxWidgetImpl::UpdateTitleFont()
    font.setHintingPreference(QFont::PreferNoHinting);
    const QString text = self_->ui->warningTypeLabel->text();
 
-   int pointSize = 20;
-   font.setPointSize(pointSize);
-   QRect textBounds {};
-   while (pointSize > 14)
-   {
-      QFontMetrics metrics(font);
-      textBounds = metrics.boundingRect(
-         QRect(0, 0, targetWidth, 200), Qt::TextWordWrap, text);
-
-      // Keep title readable and within two wrapped lines.
-      if (textBounds.height() <= ((metrics.lineSpacing() * 2) + 2))
-      {
-         break;
-      }
-      pointSize--;
-      font.setPointSize(pointSize);
-   }
-
+   font.setPointSize(47);
    QFontMetrics finalMetrics(font);
-   textBounds = finalMetrics.boundingRect(
-      QRect(0, 0, targetWidth, 200), Qt::TextWordWrap, text);
+   const QRect  textBounds = finalMetrics.boundingRect(
+      QRect(0, 0, targetWidth, 1000), Qt::TextWordWrap, text);
    const int titleHeight =
       std::max(finalMetrics.lineSpacing(), textBounds.height());
 
