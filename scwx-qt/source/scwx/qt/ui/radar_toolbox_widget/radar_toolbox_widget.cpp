@@ -33,12 +33,12 @@ namespace scwx::qt::ui
 
 RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 {
-   static bool antonLoaded = false;
+   static bool gothicLoaded = false;
 
-   if (!antonLoaded)
+   if (!gothicLoaded)
    {
-      QFontDatabase::addApplicationFont(":/res/fonts/Anton-Regular.ttf");
-      antonLoaded = true;
+      QFontDatabase::addApplicationFont(":/res/fonts/Gothic-No.13-Regular.otf");
+      gothicLoaded = true;
    }
 
    setObjectName("RadarToolboxFloatingPanel");
@@ -68,7 +68,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 
    titleLabel_ = new QLabel(tr("RADAR TOOLBOX"), headerContainer_);
    titleLabel_->setObjectName("RadarToolboxTitle");
-   titleLabel_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+   titleLabel_->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
    titleLabel_->installEventFilter(this);
 
    collapseButton_ = new QPushButton("^", headerContainer_);
@@ -109,8 +109,9 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    }
 
    headerLayout->addWidget(titleLabel_);
+   headerLayout->addStretch(1);
    headerLayout->addWidget(collapseButton_, 0, Qt::AlignVCenter);
-   headerLayout->addStretch();
+   headerLayout->addStretch(1);
    headerLayout->addWidget(playbackRow_, 0, Qt::AlignVCenter);
 
    rootLayout_->addWidget(headerContainer_);
@@ -122,7 +123,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 
    collapsedPeek_ = new QWidget(this);
    collapsedPeek_->setObjectName("RadarToolboxCollapsedPeek");
-   collapsedPeek_->setFixedHeight(12);
+   collapsedPeek_->setFixedHeight(5);
    rootLayout_->addWidget(collapsedPeek_);
 
    bodyContainer_   = new QWidget(this);
@@ -236,7 +237,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    setStyleSheet(
       "#RadarToolboxFloatingPanel {"
       "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
-      "     stop:0 #06080d, stop:1 #3f434a);"
+      "     stop:0rgb(0, 0, 0), stop:1rgb(0, 0, 0));"
       "  border: 5px solid #f2f2f2;"
       "  border-radius: 24px;"
       "}"
@@ -247,7 +248,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
       "  border-top-right-radius: 20px;"
       "}"
       "#RadarToolboxTitle {"
-      "  font-family: 'Anton';"
+      "  font-family: 'Gothic No.13 Regular', 'Gothic-No.13-Regular';"
       "  color: #ffffff;"
       "  font-size: 36px;"
       "  font-weight: 900;"
@@ -257,9 +258,10 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
       "  background: #ffffff;"
       "}"
       "#RadarToolboxCollapsedPeek {"
-      "  background: rgba(0, 0, 0, 0.28);"
+      "  background:rgb(0, 0, 0);"
       "}"
       "#RadarToolboxCollapseButton {"
+      "  font-family: 'Gothic No.13 Regular', 'Gothic-No.13-Regular';"
       "  color: #ffffff;"
       "  font-size: 22px;"
       "  border: none;"
@@ -270,6 +272,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
       "}"
       "#RadarToolboxControlButton,"
       "#RadarToolboxControlButtonStop {"
+      "  font-family: 'Gothic No.13 Regular', 'Gothic-No.13-Regular';"
       "  color: #f2f2f2;"
       "  background: #0e95ff;"
       "  border: 2px solid #0378d4;"
@@ -336,7 +339,7 @@ void RadarToolboxWidget::SetCollapsed(bool collapsed)
    bodyContainer_->setVisible(!collapsed_);
    headerDivider_->setVisible(true);
    collapsedPeek_->setVisible(collapsed_);
-   collapseButton_->setText(collapsed_ ? "v" : "^");
+   collapseButton_->setText(collapsed_ ? "^" : "v");
 
    if (collapsed_)
    {
@@ -347,8 +350,7 @@ void RadarToolboxWidget::SetCollapsed(bool collapsed)
    }
    else
    {
-      setMinimumHeight(0);
-      setMaximumHeight(QWIDGETSIZE_MAX);
+      setFixedHeight(352);
    }
 
    adjustSize();

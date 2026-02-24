@@ -110,8 +110,8 @@
     <file>res/icons/radar/STPA.svg</file>
     <file>res/icons/radar/ZDR.svg</file>
     <file>res/icons/radar/placeholder.svg</file>
-    <file>res/fonts/Anton-Regular.ttf</file>
     <file>res/icons/play_button.svg</file>
     <file>res/icons/Square.svg</file>
+    <file>res/fonts/Gothic-No.13-Regular.otf</file>
   </qresource>
 </RCC>
