@@ -52,7 +52,10 @@ RadarProductCard::RadarProductCard(const QString& title,
    // -------------------------
    // Title
    // -------------------------
-   titleLabel_ = new QLabel(title, this);
+   titleLabel_ = new QLabel(this);
+   titleLabel_->setTextFormat(Qt::RichText);
+   titleLabel_->setText(QString("<div style='line-height: 4px;'>%1</div>")
+                           .arg(title.toHtmlEscaped()));
    titleLabel_->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
    titleLabel_->setWordWrap(true);
    titleLabel_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
@@ -79,7 +82,7 @@ RadarProductCard::RadarProductCard(const QString& title,
    titleLabel_->setStyleSheet(
       "#titleLabel {"
       "  background: transparent;"
-      "  font-family: 'Anton';"
+      "  font-family: 'Gothic No.13 Regular', 'Gothic-No.13-Regular';"
       "  font-weight: 800;"
       "  font-size: 28px;"
       "  color: white;"
