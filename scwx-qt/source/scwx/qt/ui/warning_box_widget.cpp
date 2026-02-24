@@ -213,6 +213,10 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    ui->warningTypeLabel->setTextInteractionFlags(Qt::NoTextInteraction);
    ui->warningTypeLabel->setWordWrap(true);
    ui->warningTypeLabel->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+   // Clear .ui stylesheet font sizing so runtime QFont settings are honored.
+   ui->warningTypeLabel->setStyleSheet(QString {});
+   ui->warningTypeLabel->setSizePolicy(QSizePolicy::Preferred,
+                                       QSizePolicy::Minimum);
    QFont warningTypeFont {};
    warningTypeFont.setFamily(
       QString::fromStdString(p->warningTitleFontFamily_));
@@ -992,8 +996,7 @@ void WarningBoxWidgetImpl::UpdateTitleFont()
       std::max(finalMetrics.lineSpacing(), textBounds.height());
 
    self_->ui->warningTypeLabel->setFont(font);
-   self_->ui->warningTypeLabel->setMinimumHeight(titleHeight);
-   self_->ui->warningTypeLabel->setMaximumHeight(titleHeight);
+   self_->ui->warningTypeLabel->setFixedHeight(titleHeight);
 }
 
 void WarningBoxWidgetImpl::AdjustHeightToContents()
