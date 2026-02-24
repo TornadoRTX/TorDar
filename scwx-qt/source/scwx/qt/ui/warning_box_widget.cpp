@@ -880,10 +880,10 @@ void WarningBoxWidgetImpl::ApplyTheme(
       styleSheet += "QWidget#WarningBoxWidget {";
       styleSheet +=
          "  background-color: qradialgradient("
-         "cx:1.0, cy:0.0, radius:1.45, fx:1.0, fy:0.0, "
-         "stop:0 rgba(118, 98, 30, 248), "
-         "stop:0.42 rgba(48, 40, 20, 246), "
-         "stop:0.78 rgba(0, 2, 26, 255), "
+         "cx:1.0, cy:0.0, radius:1.10, fx:1.0, fy:0.0, "
+         "stop:0 rgba(88, 72, 24, 230), "
+         "stop:0.24 rgba(36, 30, 18, 234), "
+         "stop:0.39 rgba(0, 2, 26, 255), "
          "stop:1 rgba(0, 2, 26, 255));";
       styleSheet += "  border: 1px solid rgba(64, 80, 126, 220);";
       styleSheet += "}";
