@@ -220,7 +220,7 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    QFont warningTypeFont {};
    warningTypeFont.setFamily(
       QString::fromStdString(p->warningTitleFontFamily_));
-   warningTypeFont.setPointSize(47);
+   warningTypeFont.setPointSize(19);
    warningTypeFont.setWeight(QFont::Bold);
    warningTypeFont.setStyleStrategy(QFont::PreferAntialias);
    warningTypeFont.setHintingPreference(QFont::PreferNoHinting);
@@ -482,13 +482,22 @@ void WarningBoxWidgetImpl::AddDetailRow(const std::string& label,
    valueW->setWordWrap(true);
    valueW->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
-   if (label == "Areas" || label == "Source")
+   const bool isAreaOrSource = (label == "Areas" || label == "Source");
+   const bool isTornadoHailWind =
+      (currentKey_.phenomenon_ == awips::Phenomenon::Tornado &&
+       (label == "Max Hail Size" || label == "Max Wind Gust"));
+
+   if (isAreaOrSource)
    {
       labelW->setStyleSheet(
          QString("font-family: '%1'; font-weight: 700; letter-spacing: 0px;")
             .arg(QString::fromStdString(areaSourceLabelFontFamily_)));
+   }
+
+   if (isAreaOrSource || isTornadoHailWind)
+   {
       valueW->setStyleSheet(
-         QString("font-family: '%1'; font-size: 20px; font-weight: 700; "
+         QString("font-family: '%1'; font-size: 10px; font-weight: 700; "
                  "letter-spacing: 0px;")
             .arg(QString::fromStdString(areaSourceValueFontFamily_)));
    }
@@ -988,7 +997,7 @@ void WarningBoxWidgetImpl::UpdateTitleFont()
    font.setHintingPreference(QFont::PreferNoHinting);
    const QString text = self_->ui->warningTypeLabel->text();
 
-   font.setPointSize(47);
+   font.setPointSize(19);
    QFontMetrics finalMetrics(font);
    const QRect  textBounds = finalMetrics.boundingRect(
       QRect(0, 0, targetWidth, 1000), Qt::TextWordWrap, text);
