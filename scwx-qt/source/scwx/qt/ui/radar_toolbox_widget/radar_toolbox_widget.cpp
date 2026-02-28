@@ -236,8 +236,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 
    setStyleSheet(
       "#RadarToolboxFloatingPanel {"
-      "  background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
-      "     stop:0rgb(0, 0, 0), stop:1rgb(0, 0, 0));"
+      "  background: #000000;"
       "  border: 3px solid #f2f2f2;"
       "  border-radius: 12px;"
       "}"
@@ -265,7 +264,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
       "  color: #ffffff;"
       "  font-size: 11px;"
       "  border: none;"
-      "  background: #000000;"
+      "  background: transparent;"
       "}"
       "#RadarToolboxCollapseButton:hover {"
       "  color: #d9d9d9;"
@@ -350,7 +349,7 @@ void RadarToolboxWidget::SetCollapsed(bool collapsed)
    }
    else
    {
-      setFixedHeight(176);
+      setFixedHeight(264);
    }
 
    adjustSize();
@@ -367,8 +366,8 @@ void RadarToolboxWidget::MoveToBottomLeft()
       return;
    }
 
-   const int x = 10;
-   const int y = std::max(0, parent->height() - height() - 10);
+   const int x = 16;
+   const int y = std::max(0, parent->height() - height() - 16);
 
    move(x, y);
 }

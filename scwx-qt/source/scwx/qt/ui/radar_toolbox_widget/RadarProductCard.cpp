@@ -81,7 +81,7 @@ RadarProductCard::RadarProductCard(const QString& title,
 
    titleLabel_->setStyleSheet(
       "#titleLabel {"
-      "  background: #000000;"
+      "  background: transparent;"
       "  font-family: 'Gothic No.13 Regular', 'Gothic-No.13-Regular';"
       "  font-weight: 800;"
       "  font-size: 7px;"
@@ -132,7 +132,7 @@ void RadarProductCard::UpdateStyle()
    else
    {
       setStyleSheet(
-         "background-color: #000000;"
+         "background-color: rgba(255, 255, 255, 0.06);"
          "border-radius: 5px;");
    }
 }
