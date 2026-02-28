@@ -671,26 +671,26 @@ void WarningBoxWidgetImpl::UpdateProgressVisual(
    const auto end   = segment->event_end();
    const auto now   = std::chrono::system_clock::now();
 
-   float fractionRemaining = 1.0f;
+   float fractionElapsed = 0.0f;
    if (end > begin)
    {
       const auto totalSeconds =
          std::chrono::duration_cast<std::chrono::seconds>(end - begin).count();
-      const auto remainingSeconds =
-         std::chrono::duration_cast<std::chrono::seconds>(end - now).count();
+      const auto elapsedSeconds =
+         std::chrono::duration_cast<std::chrono::seconds>(now - begin).count();
 
       if (totalSeconds > 0)
       {
-         fractionRemaining = static_cast<float>(remainingSeconds) /
-                             static_cast<float>(totalSeconds);
+         fractionElapsed =
+            static_cast<float>(elapsedSeconds) / static_cast<float>(totalSeconds);
       }
    }
 
-   fractionRemaining = std::clamp(fractionRemaining, 0.0f, 1.0f);
+   fractionElapsed = std::clamp(fractionElapsed, 0.0f, 1.0f);
 
    const int trackWidth = progressTrack_->width();
    const int fillWidth =
-      static_cast<int>(static_cast<float>(trackWidth) * fractionRemaining);
+      static_cast<int>(static_cast<float>(trackWidth) * fractionElapsed);
    progressFill_->setGeometry(
       0, 0, std::max(0, fillWidth), progressTrack_->height());
 }
