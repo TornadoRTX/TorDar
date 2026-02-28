@@ -138,6 +138,10 @@ public:
    void AddDetailRow(const std::string& label, const std::string& value);
    void AddSevereMetricCards(const std::string& maxHail,
                              const std::string& maxWind);
+   void AddSevereTornadoPossibleBox(
+      const std::unordered_map<std::string, std::string>& fields);
+   void AddSevereDamageThreatBox(
+      const std::unordered_map<std::string, std::string>& fields);
    static std::string ToUpper(std::string_view value);
    static std::string Trim(std::string_view value);
    static std::string NormalizeLabel(std::string_view label);
@@ -171,7 +175,7 @@ public:
    int                                        fixedWidth_ {0};
    QWidget*                                   detailsContainer_ {nullptr};
    QVBoxLayout*                               detailsLayout_ {nullptr};
-   std::string warningTitleFontFamily_ {"Rajdhani-Bold"};
+   std::string warningTitleFontFamily_ {"Rajdhani"};
    std::string expirationFontFamily_ {"AlegreyaSans-ExtraBold"};
    std::string monoFontFamily_ {"RobotoMono-Regular"};
    std::string areaSourceLabelFontFamily_ {"AlegreyaSans-ExtraBold"};
@@ -186,15 +190,20 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    ui->setupUi(this);
 
    p->warningTitleFontFamily_ =
-      LoadFontFamily(":/res/fonts/Rajdhani-Bold.ttf", "Rajdhani");
+      LoadFontFamily(":/res/fonts/Rajdhani-Regular.ttf", "Rajdhani");
+   LoadFontFamily(":/res/fonts/Rajdhani-Medium.ttf",
+                  p->warningTitleFontFamily_.c_str());
+   LoadFontFamily(":/res/fonts/Rajdhani-SemiBold.ttf",
+                  p->warningTitleFontFamily_.c_str());
+   LoadFontFamily(":/res/fonts/Rajdhani-Bold.ttf",
+                  p->warningTitleFontFamily_.c_str());
    p->expirationFontFamily_ = LoadFontFamily(
       ":/res/fonts/AlegreyaSans-ExtraBold.ttf", "AlegreyaSans-ExtraBold");
    p->monoFontFamily_ = LoadFontFamily(":/res/fonts/RobotoMono-Regular.ttf",
                                        "RobotoMono-Regular");
    p->areaSourceLabelFontFamily_ = LoadFontFamily(
       ":/res/fonts/AlegreyaSans-ExtraBold.ttf", "AlegreyaSans-ExtraBold");
-   p->areaSourceValueFontFamily_ =
-      LoadFontFamily(":/res/fonts/Rajdhani-Bold.ttf", "Rajdhani");
+   p->areaSourceValueFontFamily_ = p->warningTitleFontFamily_;
 
    setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);
    setAttribute(Qt::WA_TranslucentBackground, false);
@@ -203,17 +212,28 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
 
    ui->warningTypeLabel->setTextInteractionFlags(Qt::NoTextInteraction);
    ui->warningTypeLabel->setWordWrap(true);
-   ui->warningTypeLabel->setStyleSheet(
-      QString("font-family: '%1';"
-              "font-size: 20px; font-weight: 700; letter-spacing: 1px;")
-         .arg(QString::fromStdString(p->warningTitleFontFamily_)));
+   ui->warningTypeLabel->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+   // Clear .ui stylesheet font sizing so runtime QFont settings are honored.
+   ui->warningTypeLabel->setStyleSheet(QString {});
+   ui->warningTypeLabel->setSizePolicy(QSizePolicy::Preferred,
+                                       QSizePolicy::Minimum);
+   QFont warningTypeFont {};
+   warningTypeFont.setFamily(
+      QString::fromStdString(p->warningTitleFontFamily_));
+   warningTypeFont.setPointSize(19);
+   warningTypeFont.setWeight(QFont::Bold);
+   warningTypeFont.setStyleStrategy(QFont::PreferAntialias);
+   warningTypeFont.setHintingPreference(QFont::PreferNoHinting);
+   ui->warningTypeLabel->setFont(warningTypeFont);
+   ui->warningTypeLabel->setContentsMargins(0, 0, 0, 0);
    ui->expirationLabel->setStyleSheet(
       QString("font-family: '%1';"
               "font-size: 13px; font-weight: 700; letter-spacing: 0.5px;")
          .arg(QString::fromStdString(p->expirationFontFamily_)));
+   ui->expirationLabel->setContentsMargins(0, 0, 0, 0);
    ui->viewEasTextButton->setText("VIEW FULL EAS TEXT");
    ui->closeButton->setText("x");
-   ui->closeButton->setFixedSize(28, 28);
+   ui->closeButton->setFixedSize(18, 18);
    ui->buttonsLayout->setContentsMargins(0, 0, 0, 0);
    ui->buttonsLayout->setSpacing(0);
    ui->verticalLayout->setContentsMargins(10, 8, 10, 8);
@@ -231,13 +251,19 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    }
    ui->buttonsLayout->addWidget(ui->viewEasTextButton);
 
-   QHBoxLayout* headerLayout = new QHBoxLayout();
    ui->verticalLayout->removeWidget(ui->warningTypeLabel);
-   headerLayout->setContentsMargins(0, 0, 0, 0);
-   headerLayout->setSpacing(6);
-   headerLayout->addWidget(ui->warningTypeLabel, 1);
-   headerLayout->addWidget(ui->closeButton, 0, Qt::AlignTop);
-   ui->verticalLayout->insertLayout(0, headerLayout);
+   ui->verticalLayout->removeWidget(ui->expirationLabel);
+   QVBoxLayout* titleLayout = new QVBoxLayout();
+   titleLayout->setContentsMargins(0, 0, 0, 0);
+   titleLayout->setSpacing(0);
+   titleLayout->addWidget(ui->warningTypeLabel, 0, Qt::AlignLeft);
+   titleLayout->addWidget(ui->expirationLabel, 0, Qt::AlignLeft);
+   QHBoxLayout* topLayout = new QHBoxLayout();
+   topLayout->setContentsMargins(0, 0, 0, 0);
+   topLayout->setSpacing(2);
+   topLayout->addLayout(titleLayout, 1);
+   topLayout->addWidget(ui->closeButton, 0, Qt::AlignTop);
+   ui->verticalLayout->insertLayout(0, topLayout);
 
    p->progressTrack_ = new QFrame(this);
    p->progressTrack_->setObjectName("progressTrack");
@@ -254,11 +280,16 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
 
    p->stateBadgeFrame_ = new QFrame(this);
    p->stateBadgeFrame_->setObjectName("stateBadgeFrame");
+   p->stateBadgeFrame_->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
    QHBoxLayout* badgeLayout = new QHBoxLayout(p->stateBadgeFrame_);
    badgeLayout->setContentsMargins(8, 4, 8, 4);
    badgeLayout->setSpacing(0);
    p->stateBadgeLabel_ = new QLabel(p->stateBadgeFrame_);
    p->stateBadgeLabel_->setObjectName("stateBadgeLabel");
+   p->stateBadgeLabel_->setAlignment(Qt::AlignCenter);
+   p->stateBadgeLabel_->setWordWrap(false);
+   p->stateBadgeLabel_->setMinimumWidth(28);
+   p->stateBadgeLabel_->setMaximumWidth(120);
    badgeLayout->addWidget(p->stateBadgeLabel_);
    p->stateBadgeFrame_->setVisible(false);
    ui->verticalLayout->insertWidget(3, p->stateBadgeFrame_, 0, Qt::AlignLeft);
@@ -384,11 +415,17 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
    }
    if (!statesStr.empty())
    {
-      stateBadgeLabel_->setText(QString::fromStdString(statesStr));
+      const QString fullStates    = QString::fromStdString(statesStr);
+      const QString displayStates = stateBadgeLabel_->fontMetrics().elidedText(
+         fullStates, Qt::ElideRight, 120);
+      stateBadgeLabel_->setText(displayStates);
+      stateBadgeLabel_->setToolTip(displayStates == fullStates ? QString {} :
+                                                                 fullStates);
       stateBadgeFrame_->setVisible(true);
    }
    else
    {
+      stateBadgeLabel_->setToolTip(QString {});
       stateBadgeFrame_->setVisible(false);
    }
    self_->ui->areasFrame->setVisible(false);
@@ -405,26 +442,19 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
 
    if (key.phenomenon_ == awips::Phenomenon::SevereThunderstorm)
    {
-      AddSevereMetricCards(GetFieldValue(fields, {"MAX HAIL SIZE"}),
-                           GetFieldValue(fields, {"MAX WIND GUST"}));
+      AddSevereTornadoPossibleBox(fields);
+      AddSevereDamageThreatBox(fields);
+   }
 
-      if (!countiesStr.empty())
-      {
-         AddDetailRow("Areas", countiesStr);
-      }
-      AddSummaryField("Source", fields, {"SOURCE"});
-      AddSummaryField(
-         "Damage", fields, {"THUNDERSTORM DAMAGE THREAT", "DAMAGE THREAT"});
-   }
-   else
+   AddSevereMetricCards(GetFieldValue(fields, {"MAX HAIL SIZE"}),
+                        GetFieldValue(fields, {"MAX WIND GUST"}));
+
+   if (!countiesStr.empty())
    {
-      if (!countiesStr.empty())
-      {
-         AddDetailRow("Areas", countiesStr);
-      }
-      AddSummaryField("Source", fields, {"SOURCE"});
-      AddPhenomenonSpecificFields(key.phenomenon_, fields);
+      AddDetailRow("Areas", countiesStr);
    }
+   AddSummaryField("Source", fields, {"SOURCE"});
+   AddPhenomenonSpecificFields(key.phenomenon_, fields);
 
    detailsLayout_->addStretch();
    AdjustHeightToContents();
@@ -443,14 +473,25 @@ void WarningBoxWidgetImpl::AddDetailRow(const std::string& label,
    QLabel* valueW = new QLabel(QString::fromStdString(value));
    valueW->setObjectName("detailValue");
    valueW->setWordWrap(true);
+   valueW->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
-   if (label == "Areas" || label == "Source")
+   const bool isAreaOrSource = (label == "Areas" || label == "Source");
+   const bool isTornadoHailWind =
+      (currentKey_.phenomenon_ == awips::Phenomenon::Tornado &&
+       (label == "Max Hail Size" || label == "Max Wind Gust"));
+
+   if (isAreaOrSource)
    {
       labelW->setStyleSheet(
          QString("font-family: '%1'; font-weight: 700; letter-spacing: 0px;")
             .arg(QString::fromStdString(areaSourceLabelFontFamily_)));
+   }
+
+   if (isAreaOrSource || isTornadoHailWind)
+   {
       valueW->setStyleSheet(
-         QString("font-family: '%1'; font-weight: 700; letter-spacing: 0px;")
+         QString("font-family: '%1'; font-size: 10px; font-weight: 700; "
+                 "letter-spacing: 0px;")
             .arg(QString::fromStdString(areaSourceValueFontFamily_)));
    }
 
@@ -476,16 +517,18 @@ void WarningBoxWidgetImpl::AddSevereMetricCards(const std::string& maxHail,
    {
       QFrame* card = new QFrame(rowContainer);
       card->setObjectName("severeMetricCard");
-      card->setMinimumHeight(68);
+      card->setMinimumHeight(54);
       QVBoxLayout* cardLayout = new QVBoxLayout(card);
-      cardLayout->setContentsMargins(8, 6, 8, 6);
-      cardLayout->setSpacing(2);
+      cardLayout->setContentsMargins(8, 3, 8, 3);
+      cardLayout->setSpacing(0);
 
       QLabel* titleLabel =
          new QLabel(QString::fromStdString(ToUpper(title)), card);
       titleLabel->setObjectName("severeMetricTitle");
+      titleLabel->setContentsMargins(0, 0, 0, 0);
       QLabel* valueLabel = new QLabel(QString::fromStdString(value), card);
       valueLabel->setObjectName("severeMetricValue");
+      valueLabel->setContentsMargins(0, 0, 0, 0);
       auto* valueGlow = new QGraphicsDropShadowEffect(valueLabel);
       valueGlow->setBlurRadius(12.0);
       valueGlow->setColor(QColor(236, 193, 74, 210));
@@ -516,6 +559,77 @@ void WarningBoxWidgetImpl::AddSevereMetricCards(const std::string& maxHail,
    }
 }
 
+void WarningBoxWidgetImpl::AddSevereTornadoPossibleBox(
+   const std::unordered_map<std::string, std::string>& fields)
+{
+   const std::string tornadoField =
+      GetFieldValue(fields, {"TORNADO", "TORNADO THREAT"});
+   if (tornadoField.empty() ||
+       ToUpper(tornadoField).find("POSSIBLE") == std::string::npos)
+   {
+      return;
+   }
+
+   QFrame* box = new QFrame(detailsContainer_);
+   box->setObjectName("severeTornadoPossibleBox");
+   box->setMinimumHeight(34);
+
+   QHBoxLayout* layout = new QHBoxLayout(box);
+   layout->setContentsMargins(8, 2, 8, 2);
+   layout->setSpacing(0);
+
+   QLabel* label = new QLabel("TORNADO POSSIBLE", box);
+   label->setObjectName("severeTornadoPossibleValue");
+   label->setAlignment(Qt::AlignCenter);
+   auto* glow = new QGraphicsDropShadowEffect(label);
+   glow->setBlurRadius(14.0);
+   glow->setColor(QColor(236, 64, 64, 230));
+   glow->setOffset(0.0, 0.0);
+   label->setGraphicsEffect(glow);
+
+   layout->addWidget(label);
+   detailsLayout_->addWidget(box);
+}
+
+void WarningBoxWidgetImpl::AddSevereDamageThreatBox(
+   const std::unordered_map<std::string, std::string>& fields)
+{
+   const std::string damageField =
+      GetFieldValue(fields, {"THUNDERSTORM DAMAGE THREAT", "DAMAGE THREAT"});
+   const std::string upperDamage = ToUpper(damageField);
+   const bool        isConsiderable =
+      upperDamage.find("CONSIDERABLE") != std::string::npos;
+   const bool isDestructive =
+      upperDamage.find("DESTRUCTIVE") != std::string::npos;
+   if (!(isConsiderable || isDestructive))
+   {
+      return;
+   }
+
+   QFrame* box = new QFrame(detailsContainer_);
+   box->setObjectName("severeDamageThreatBox");
+   box->setMinimumHeight(34);
+
+   QHBoxLayout* layout = new QHBoxLayout(box);
+   layout->setContentsMargins(8, 2, 8, 2);
+   layout->setSpacing(0);
+
+   const QString text =
+      QString::fromStdString(isDestructive ? "DESTRUCTIVE DAMAGE THREAT" :
+                                             "CONSIDERABLE DAMAGE THREAT");
+   QLabel* label = new QLabel(text, box);
+   label->setObjectName("severeDamageThreatValue");
+   label->setAlignment(Qt::AlignCenter);
+   auto* glow = new QGraphicsDropShadowEffect(label);
+   glow->setBlurRadius(14.0);
+   glow->setColor(QColor(236, 193, 74, 230));
+   glow->setOffset(0.0, 0.0);
+   label->setGraphicsEffect(glow);
+
+   layout->addWidget(label);
+   detailsLayout_->addWidget(box);
+}
+
 void WarningBoxWidgetImpl::UpdateProgressVisual(
    const types::TextEventKey&                   key,
    const std::shared_ptr<const awips::Segment>& segment)
@@ -526,15 +640,7 @@ void WarningBoxWidgetImpl::UpdateProgressVisual(
       return;
    }
 
-   if (key.phenomenon_ != awips::Phenomenon::SevereThunderstorm)
-   {
-      progressTrack_->setMinimumHeight(0);
-      progressTrack_->setMaximumHeight(0);
-      progressTrack_->setFixedHeight(0);
-      progressTrack_->setVisible(false);
-      sweepTimer_->stop();
-      return;
-   }
+   static_cast<void>(key);
 
    progressTrack_->setMinimumHeight(6);
    progressTrack_->setMaximumHeight(6);
@@ -550,26 +656,26 @@ void WarningBoxWidgetImpl::UpdateProgressVisual(
    const auto end   = segment->event_end();
    const auto now   = std::chrono::system_clock::now();
 
-   float fractionRemaining = 1.0f;
+   float fractionElapsed = 0.0f;
    if (end > begin)
    {
       const auto totalSeconds =
          std::chrono::duration_cast<std::chrono::seconds>(end - begin).count();
-      const auto remainingSeconds =
-         std::chrono::duration_cast<std::chrono::seconds>(end - now).count();
+      const auto elapsedSeconds =
+         std::chrono::duration_cast<std::chrono::seconds>(now - begin).count();
 
       if (totalSeconds > 0)
       {
-         fractionRemaining = static_cast<float>(remainingSeconds) /
-                             static_cast<float>(totalSeconds);
+         fractionElapsed = static_cast<float>(elapsedSeconds) /
+                           static_cast<float>(totalSeconds);
       }
    }
 
-   fractionRemaining = std::clamp(fractionRemaining, 0.0f, 1.0f);
+   fractionElapsed = std::clamp(fractionElapsed, 0.0f, 1.0f);
 
    const int trackWidth = progressTrack_->width();
    const int fillWidth =
-      static_cast<int>(static_cast<float>(trackWidth) * fractionRemaining);
+      static_cast<int>(static_cast<float>(trackWidth) * fractionElapsed);
    progressFill_->setGeometry(
       0, 0, std::max(0, fillWidth), progressTrack_->height());
 }
@@ -600,10 +706,44 @@ void WarningBoxWidgetImpl::ApplyTheme(
       accentColor = "197, 37, 48";
    }
 
+   if (stateBadgeFrame_ != nullptr)
+   {
+      if (isSevere)
+      {
+         stateBadgeFrame_->setFixedHeight(22);
+      }
+      else
+      {
+         stateBadgeFrame_->setFixedHeight(26);
+      }
+
+      if (auto* badgeLayout =
+             qobject_cast<QHBoxLayout*>(stateBadgeFrame_->layout());
+          badgeLayout != nullptr)
+      {
+         if (isSevere)
+         {
+            badgeLayout->setContentsMargins(5, 1, 5, 1);
+         }
+         else
+         {
+            badgeLayout->setContentsMargins(7, 2, 7, 2);
+         }
+      }
+   }
+
    std::string styleSheet;
    styleSheet += "QWidget#WarningBoxWidget {";
-   styleSheet += "  background-color: rgba(12, 16, 26, 230);";
-   styleSheet += "  border: 2px solid rgba(" + accentColor + ", 220);";
+   styleSheet +=
+      "  background-color: qradialgradient("
+      "cx:1.0, cy:0.0, radius:1.10, fx:1.0, fy:0.0, "
+      "stop:0 rgba(" +
+      accentColor +
+      ", 105), "
+      "stop:0.20 rgba(12, 12, 16, 238), "
+      "stop:0.34 rgba(0, 2, 26, 255), "
+      "stop:1 rgba(0, 2, 26, 255));";
+   styleSheet += "  border: 1px solid rgba(" + accentColor + ", 220);";
    styleSheet += "  border-radius: 6px;";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QLabel {";
@@ -648,7 +788,7 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "  background-color: rgba(17, 24, 46, 220);";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QFrame#progressFill {";
-   styleSheet += "  background-color: rgba(235, 191, 66, 255);";
+   styleSheet += "  background-color: rgba(" + accentColor + ", 255);";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QFrame#progressSweep {";
    styleSheet += "  background-color: rgba(247, 252, 255, 220);";
@@ -666,9 +806,29 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QLabel#severeMetricValue {";
    styleSheet += "  font-size: 19px;";
-   styleSheet += "  font-weight: 800;";
+   styleSheet += "  font-weight: 900;";
    styleSheet += "  letter-spacing: 0.6px;";
    styleSheet += "  color: rgba(244, 248, 255, 245);";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QFrame#severeTornadoPossibleBox {";
+   styleSheet += "  border: 1px solid rgba(210, 62, 62, 225);";
+   styleSheet += "  background-color: rgba(62, 20, 20, 235);";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QLabel#severeTornadoPossibleValue {";
+   styleSheet += "  font-size: 19px;";
+   styleSheet += "  font-weight: 900;";
+   styleSheet += "  letter-spacing: 1.8px;";
+   styleSheet += "  color: rgba(255, 232, 232, 250);";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QFrame#severeDamageThreatBox {";
+   styleSheet += "  border: 1px solid rgba(191, 151, 58, 235);";
+   styleSheet += "  background-color: rgba(61, 45, 21, 235);";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QLabel#severeDamageThreatValue {";
+   styleSheet += "  font-size: 19px;";
+   styleSheet += "  font-weight: 900;";
+   styleSheet += "  letter-spacing: 1.8px;";
+   styleSheet += "  color: rgba(255, 246, 214, 250);";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QFrame#detailRow {";
    styleSheet += "  border: 1px solid rgba(" + accentColor + ", 140);";
@@ -700,30 +860,27 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "  padding: 6px;";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QPushButton#closeButton {";
-   styleSheet += "  border-radius: 14px;";
-   styleSheet += "  border: 1px solid rgba(160, 170, 194, 190);";
-   styleSheet += "  background-color: rgba(5, 9, 20, 210);";
+   styleSheet += "  border: none;";
+   styleSheet += "  background: transparent;";
    styleSheet += "  color: rgba(235, 240, 255, 230);";
-   styleSheet += "  font-size: 15px;";
-   styleSheet += "  font-weight: 700;";
+   styleSheet += "  font-size: 17px;";
+   styleSheet += "  font-weight: 800;";
+   styleSheet += "  padding: 0px;";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QPushButton#closeButton:hover {";
-   styleSheet += "  background-color: rgba(" + accentColor + ", 72);";
+   styleSheet += "  color: rgba(255, 255, 255, 255);";
    styleSheet += "}";
 
    if (isSevere)
    {
-      // Severe blueprint look: navy body, yellow accents, clean metric cards.
-      styleSheet += "QWidget#WarningBoxWidget {";
-      styleSheet += "  background-color: rgba(12, 13, 22, 238);";
-      styleSheet += "  border: 1px solid rgba(64, 80, 126, 220);";
-      styleSheet += "}";
+      // Severe blueprint tuning: keep compact typography and card treatment.
       styleSheet += "QWidget#WarningBoxWidget QFrame#progressTrack {";
       styleSheet += "  border: 1px solid rgba(191, 151, 58, 210);";
       styleSheet += "  background-color: rgba(18, 24, 46, 225);";
       styleSheet += "}";
-      styleSheet += "QWidget#WarningBoxWidget QFrame#progressFill {";
-      styleSheet += "  background-color: rgba(236, 193, 74, 255);";
+      styleSheet += "QWidget#WarningBoxWidget QLabel#stateBadgeLabel {";
+      styleSheet += "  font-size: 10px;";
+      styleSheet += "  letter-spacing: 0.6px;";
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QFrame#severeMetricCard {";
       styleSheet += "  border: 1px solid rgba(179, 142, 57, 210);";
@@ -732,11 +889,28 @@ void WarningBoxWidgetImpl::ApplyTheme(
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QLabel#severeMetricTitle {";
       styleSheet += "  font-family: '" + monoFontFamily_ + "';";
+      styleSheet += "  font-size: 9px;";
       styleSheet += "  color: rgba(202, 186, 147, 235);";
       styleSheet += "  letter-spacing: 0.9px;";
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QLabel#severeMetricValue {";
-      styleSheet += "  font-size: 18px;";
+      styleSheet += "  font-size: 16px;";
+      styleSheet += "}";
+      styleSheet +=
+         "QWidget#WarningBoxWidget QFrame#severeTornadoPossibleBox {";
+      styleSheet += "  border: 1px solid rgba(220, 72, 72, 235);";
+      styleSheet += "  background-color: rgba(73, 21, 21, 238);";
+      styleSheet += "}";
+      styleSheet +=
+         "QWidget#WarningBoxWidget QLabel#severeTornadoPossibleValue {";
+      styleSheet += "  font-size: 16px;";
+      styleSheet += "}";
+      styleSheet += "QWidget#WarningBoxWidget QFrame#severeDamageThreatBox {";
+      styleSheet += "  border: 1px solid rgba(205, 166, 75, 235);";
+      styleSheet += "  background-color: rgba(67, 49, 20, 238);";
+      styleSheet += "}";
+      styleSheet += "QWidget#WarningBoxWidget QLabel#severeDamageThreatValue {";
+      styleSheet += "  font-size: 16px;";
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QFrame#detailRow {";
       styleSheet += "  border: 1px solid rgba(34, 49, 88, 210);";
@@ -793,22 +967,20 @@ void WarningBoxWidgetImpl::UpdateTitleFont()
    const int targetWidth = std::max(120, self_->ui->warningTypeLabel->width());
    QFont     font        = self_->ui->warningTypeLabel->font();
    font.setFamily(QString::fromStdString(warningTitleFontFamily_));
-   int pointSize = 20;
-   font.setPointSize(pointSize);
+   font.setWeight(QFont::Bold);
+   font.setStyleStrategy(QFont::PreferAntialias);
+   font.setHintingPreference(QFont::PreferNoHinting);
+   const QString text = self_->ui->warningTypeLabel->text();
 
-   while (pointSize > 12)
-   {
-      QFontMetrics metrics(font);
-      if (metrics.horizontalAdvance(self_->ui->warningTypeLabel->text()) <=
-          targetWidth)
-      {
-         break;
-      }
-      pointSize--;
-      font.setPointSize(pointSize);
-   }
+   font.setPointSize(19);
+   QFontMetrics finalMetrics(font);
+   const QRect  textBounds = finalMetrics.boundingRect(
+      QRect(0, 0, targetWidth, 1000), Qt::TextWordWrap, text);
+   const int titleHeight =
+      std::max(finalMetrics.lineSpacing(), textBounds.height());
 
    self_->ui->warningTypeLabel->setFont(font);
+   self_->ui->warningTypeLabel->setFixedHeight(titleHeight);
 }
 
 void WarningBoxWidgetImpl::AdjustHeightToContents()
@@ -1053,15 +1225,10 @@ void WarningBoxWidgetImpl::AddPhenomenonSpecificFields(
 {
    if (phenomenon == awips::Phenomenon::SevereThunderstorm)
    {
-      AddSummaryField("Max Hail Size", fields, {"MAX HAIL SIZE"});
-      AddSummaryField("Max Wind Gust", fields, {"MAX WIND GUST"});
-      AddSummaryField(
-         "Damage", fields, {"THUNDERSTORM DAMAGE THREAT", "DAMAGE THREAT"});
+      // Severe warning metric boxes now handle hail/wind/damage presentation.
    }
    else if (phenomenon == awips::Phenomenon::Tornado)
    {
-      AddSummaryField("Max Hail Size", fields, {"MAX HAIL SIZE"});
-      AddSummaryField("Max Wind Gust", fields, {"MAX WIND GUST"});
       AddSummaryField(
          "Damage Threat", fields, {"TORNADO DAMAGE THREAT", "DAMAGE THREAT"});
       AddSummaryField("Tornado Threat", fields, {"TORNADO THREAT"});

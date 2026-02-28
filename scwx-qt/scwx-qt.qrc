@@ -117,5 +117,8 @@
     <file>res/fonts/TitilliumWeb-Bold.ttf</file>
     <file>res/fonts/AlegreyaSans-ExtraBold.ttf</file>
     <file>res/fonts/Rajdhani-Bold.ttf</file>
+    <file>res/fonts/Rajdhani-Medium.ttf</file>
+    <file>res/fonts/Rajdhani-SemiBold.ttf</file>
+    <file>res/fonts/Rajdhani-Regular.ttf</file>
   </qresource>
 </RCC>
