@@ -1,6 +1,9 @@
 #include "radar_toolbox_widget.hpp"
 #include "RadarProductCard.hpp"
 
+#include <scwx/qt/ui/animation_dock_widget.hpp>
+#include <scwx/qt/ui/collapsible_group.hpp>
+
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
@@ -73,6 +76,14 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 
    playbackLayout->addStretch();
    rootLayout_->addWidget(playbackRow_);
+
+   // -------------------------
+   // Timeline
+   // -------------------------
+   timelineGroup_       = new CollapsibleGroup(tr("Timeline"), this);
+   animationDockWidget_ = new AnimationDockWidget(this);
+   timelineGroup_->GetContentsLayout()->addWidget(animationDockWidget_);
+   rootLayout_->addWidget(timelineGroup_);
 
    // -------------------------
    // Scroll area (products)
@@ -177,6 +188,16 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
               playPauseBtn_->setText("▶");
               // Future: jump to latest frame + re-enable auto-update
            });
+}
+
+AnimationDockWidget* RadarToolboxWidget::animation_dock_widget() const
+{
+   return animationDockWidget_;
+}
+
+CollapsibleGroup* RadarToolboxWidget::timeline_group() const
+{
+   return timelineGroup_;
 }
 
 } // namespace scwx::qt::ui

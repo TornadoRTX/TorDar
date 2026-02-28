@@ -375,13 +375,6 @@ MainWindow::MainWindow(QWidget* parent) :
    ui->radarToolboxScrollAreaContents->layout()->addWidget(
       p->level2SettingsGroup_);
 
-   // Timeline
-   p->timelineGroup_       = new ui::CollapsibleGroup(tr("Timeline"), this);
-   p->animationDockWidget_ = new ui::AnimationDockWidget(this);
-   p->timelineGroup_->GetContentsLayout()->addWidget(p->animationDockWidget_);
-   ui->radarToolboxScrollAreaContents->layout()->addWidget(p->timelineGroup_);
-   p->animationDockWidget_->UpdateTimeZone(defaultTimeZone);
-
    // Reset toolbox spacer at the bottom
    ui->radarToolboxScrollAreaContents->layout()->removeItem(
       ui->radarToolboxSpacer);
@@ -393,6 +386,9 @@ MainWindow::MainWindow(QWidget* parent) :
       new scwx::qt::ui::RadarToolboxWidget(ui->radarToolboxDock);
 
    ui->radarToolboxDock->setWidget(radarToolboxWidget);
+   p->timelineGroup_       = radarToolboxWidget->timeline_group();
+   p->animationDockWidget_ = radarToolboxWidget->animation_dock_widget();
+   p->animationDockWidget_->UpdateTimeZone(defaultTimeZone);
 
    // Status Bar
    QWidget* statusBarWidget = new QWidget(this);

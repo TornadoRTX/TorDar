@@ -11,12 +11,17 @@ class QPushButton;
 namespace scwx::qt::ui
 {
 
+class AnimationDockWidget;
+class CollapsibleGroup;
+
 class RadarToolboxWidget : public QWidget
 {
    Q_OBJECT
 
 public:
    explicit RadarToolboxWidget(QWidget* parent = nullptr);
+   AnimationDockWidget* animation_dock_widget() const;
+   CollapsibleGroup*    timeline_group() const;
 
 private:
    // Root layout
@@ -36,6 +41,10 @@ private:
    QPushButton* playPauseBtn_;
    QPushButton* forwardBtn_;
    QPushButton* stopBtn_;
+
+   // Timeline
+   CollapsibleGroup*    timelineGroup_;
+   AnimationDockWidget* animationDockWidget_;
 
    // Scrollable content
    QScrollArea* scrollArea_;
