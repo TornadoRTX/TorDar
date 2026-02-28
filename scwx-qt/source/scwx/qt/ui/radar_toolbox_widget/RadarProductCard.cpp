@@ -17,24 +17,24 @@ RadarProductCard::RadarProductCard(const QString& title,
 {
    setCursor(Qt::PointingHandCursor);
    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-   setMinimumWidth(116);
+   setMinimumWidth(58);
    auto* layout = new QVBoxLayout(this);
-   layout->setContentsMargins(4, 6, 4, 6);
-   layout->setSpacing(16);
+   layout->setContentsMargins(2, 3, 2, 3);
+   layout->setSpacing(8);
 
    // -------------------------
    // Icon
    // -------------------------
    iconContainer_ = new QWidget(this);
-   iconContainer_->setFixedSize(116, 114);
+   iconContainer_->setFixedSize(58, 57);
    iconContainer_->setProperty("selected", false);
 
    QVBoxLayout* iconLayout = new QVBoxLayout(iconContainer_);
-   iconLayout->setContentsMargins(5, 5, 5, 5);
+   iconLayout->setContentsMargins(2, 2, 2, 2);
    iconLayout->setAlignment(Qt::AlignCenter);
 
    imageLabel_ = new QLabel(iconContainer_);
-   imageLabel_->setFixedSize(106, 104);
+   imageLabel_->setFixedSize(53, 52);
    imageLabel_->setAlignment(Qt::AlignCenter);
    imageLabel_->setScaledContents(true);
 
@@ -47,7 +47,7 @@ RadarProductCard::RadarProductCard(const QString& title,
       qWarning() << "RadarProductCard: failed to load icon:" << iconPath;
    }
 
-   imageLabel_->setPixmap(icon.pixmap(106, 104));
+   imageLabel_->setPixmap(icon.pixmap(53, 52));
 
    // -------------------------
    // Title
@@ -72,19 +72,19 @@ RadarProductCard::RadarProductCard(const QString& title,
 
    iconContainer_->setStyleSheet(
       "#iconContainer {"
-      "  border: 5px solid #f1f1f1;"
-      "  border-radius: 8px;"
+      "  border: 3px solid #f1f1f1;"
+      "  border-radius: 4px;"
       "}"
       "#iconContainer[selected='true'] {"
-      "  border: 5px solid #2979FF;"
+      "  border: 3px solid #2979FF;"
       "}");
 
    titleLabel_->setStyleSheet(
       "#titleLabel {"
-      "  background: transparent;"
+      "  background: #000000;"
       "  font-family: 'Gothic No.13 Regular', 'Gothic-No.13-Regular';"
       "  font-weight: 800;"
-      "  font-size: 28px;"
+      "  font-size: 7px;"
       "  color: white;"
       "}"
       "#titleLabel[selected='true'] {"
@@ -126,14 +126,14 @@ void RadarProductCard::UpdateStyle()
    if (hovered_)
    {
       setStyleSheet(
-         "background-color: rgba(255, 255, 255, 0.06);"
-         "border-radius: 10px;");
+         "background-color: #1a1a1a;"
+         "border-radius: 5px;");
    }
    else
    {
       setStyleSheet(
-         "background-color: transparent;"
-         "border-radius: 10px;");
+         "background-color: #000000;"
+         "border-radius: 5px;");
    }
 }
 
