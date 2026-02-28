@@ -666,8 +666,8 @@ void WarningBoxWidgetImpl::UpdateProgressVisual(
 
       if (totalSeconds > 0)
       {
-         fractionElapsed =
-            static_cast<float>(elapsedSeconds) / static_cast<float>(totalSeconds);
+         fractionElapsed = static_cast<float>(elapsedSeconds) /
+                           static_cast<float>(totalSeconds);
       }
    }
 
@@ -737,7 +737,9 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet +=
       "  background-color: qradialgradient("
       "cx:1.0, cy:0.0, radius:1.10, fx:1.0, fy:0.0, "
-      "stop:0 rgba(" + accentColor + ", 220), "
+      "stop:0 rgba(" +
+      accentColor +
+      ", 220), "
       "stop:0.24 rgba(30, 28, 26, 232), "
       "stop:0.39 rgba(0, 2, 26, 255), "
       "stop:1 rgba(0, 2, 26, 255));";
