@@ -444,24 +444,17 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
    {
       AddSevereTornadoPossibleBox(fields);
       AddSevereDamageThreatBox(fields);
-      AddSevereMetricCards(GetFieldValue(fields, {"MAX HAIL SIZE"}),
-                           GetFieldValue(fields, {"MAX WIND GUST"}));
+   }
 
-      if (!countiesStr.empty())
-      {
-         AddDetailRow("Areas", countiesStr);
-      }
-      AddSummaryField("Source", fields, {"SOURCE"});
-   }
-   else
+   AddSevereMetricCards(GetFieldValue(fields, {"MAX HAIL SIZE"}),
+                        GetFieldValue(fields, {"MAX WIND GUST"}));
+
+   if (!countiesStr.empty())
    {
-      if (!countiesStr.empty())
-      {
-         AddDetailRow("Areas", countiesStr);
-      }
-      AddSummaryField("Source", fields, {"SOURCE"});
-      AddPhenomenonSpecificFields(key.phenomenon_, fields);
+      AddDetailRow("Areas", countiesStr);
    }
+   AddSummaryField("Source", fields, {"SOURCE"});
+   AddPhenomenonSpecificFields(key.phenomenon_, fields);
 
    detailsLayout_->addStretch();
    AdjustHeightToContents();
@@ -647,15 +640,7 @@ void WarningBoxWidgetImpl::UpdateProgressVisual(
       return;
    }
 
-   if (key.phenomenon_ != awips::Phenomenon::SevereThunderstorm)
-   {
-      progressTrack_->setMinimumHeight(0);
-      progressTrack_->setMaximumHeight(0);
-      progressTrack_->setFixedHeight(0);
-      progressTrack_->setVisible(false);
-      sweepTimer_->stop();
-      return;
-   }
+   static_cast<void>(key);
 
    progressTrack_->setMinimumHeight(6);
    progressTrack_->setMaximumHeight(6);
@@ -750,10 +735,11 @@ void WarningBoxWidgetImpl::ApplyTheme(
    std::string styleSheet;
    styleSheet += "QWidget#WarningBoxWidget {";
    styleSheet +=
-      "  background-color: qlineargradient("
-      "x1:0, y1:0, x2:0, y2:1, "
-      "stop:0 rgba(0, 2, 26, 242), "
-      "stop:0.22 rgba(0, 2, 26, 255), "
+      "  background-color: qradialgradient("
+      "cx:1.0, cy:0.0, radius:1.10, fx:1.0, fy:0.0, "
+      "stop:0 rgba(" + accentColor + ", 220), "
+      "stop:0.24 rgba(30, 28, 26, 232), "
+      "stop:0.39 rgba(0, 2, 26, 255), "
       "stop:1 rgba(0, 2, 26, 255));";
    styleSheet += "  border: 2px solid rgba(" + accentColor + ", 220);";
    styleSheet += "  border-radius: 6px;";
@@ -800,7 +786,7 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "  background-color: rgba(17, 24, 46, 220);";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QFrame#progressFill {";
-   styleSheet += "  background-color: rgba(235, 191, 66, 255);";
+   styleSheet += "  background-color: rgba(" + accentColor + ", 255);";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QFrame#progressSweep {";
    styleSheet += "  background-color: rgba(247, 252, 255, 220);";
@@ -885,23 +871,10 @@ void WarningBoxWidgetImpl::ApplyTheme(
 
    if (isSevere)
    {
-      // Severe blueprint look: navy body, yellow accents, clean metric cards.
-      styleSheet += "QWidget#WarningBoxWidget {";
-      styleSheet +=
-         "  background-color: qradialgradient("
-         "cx:1.0, cy:0.0, radius:1.10, fx:1.0, fy:0.0, "
-         "stop:0 rgba(88, 72, 24, 230), "
-         "stop:0.24 rgba(36, 30, 18, 234), "
-         "stop:0.39 rgba(0, 2, 26, 255), "
-         "stop:1 rgba(0, 2, 26, 255));";
-      styleSheet += "  border: 1px solid rgba(64, 80, 126, 220);";
-      styleSheet += "}";
+      // Severe blueprint tuning: keep compact typography and card treatment.
       styleSheet += "QWidget#WarningBoxWidget QFrame#progressTrack {";
       styleSheet += "  border: 1px solid rgba(191, 151, 58, 210);";
       styleSheet += "  background-color: rgba(18, 24, 46, 225);";
-      styleSheet += "}";
-      styleSheet += "QWidget#WarningBoxWidget QFrame#progressFill {";
-      styleSheet += "  background-color: rgba(236, 193, 74, 255);";
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QLabel#stateBadgeLabel {";
       styleSheet += "  font-size: 10px;";
@@ -1250,15 +1223,10 @@ void WarningBoxWidgetImpl::AddPhenomenonSpecificFields(
 {
    if (phenomenon == awips::Phenomenon::SevereThunderstorm)
    {
-      AddSummaryField("Max Hail Size", fields, {"MAX HAIL SIZE"});
-      AddSummaryField("Max Wind Gust", fields, {"MAX WIND GUST"});
-      AddSummaryField(
-         "Damage", fields, {"THUNDERSTORM DAMAGE THREAT", "DAMAGE THREAT"});
+      // Severe warning metric boxes now handle hail/wind/damage presentation.
    }
    else if (phenomenon == awips::Phenomenon::Tornado)
    {
-      AddSummaryField("Max Hail Size", fields, {"MAX HAIL SIZE"});
-      AddSummaryField("Max Wind Gust", fields, {"MAX WIND GUST"});
       AddSummaryField(
          "Damage Threat", fields, {"TORNADO DAMAGE THREAT", "DAMAGE THREAT"});
       AddSummaryField("Tornado Threat", fields, {"TORNADO THREAT"});
