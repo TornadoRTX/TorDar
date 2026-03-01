@@ -379,6 +379,7 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
 
    const auto segment = segments.back();
    ApplyTheme(key, segment);
+   const auto fields = ParseProductFields(segment);
 
    // Title: from phenomenon and significance (e.g. "Tornado Warning")
    std::string phenText = awips::GetPhenomenonText(key.phenomenon_);
@@ -386,12 +387,21 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
    std::string title    = ToUpper(fmt::format("{} {}", phenText, sigText));
    if (key.phenomenon_ == awips::Phenomenon::Tornado)
    {
-      if (segment->threatCategory_ == awips::ibw::ThreatCategory::Catastrophic)
+      const std::string tornadoDamageThreat = ToUpper(
+         GetFieldValue(fields, {"TORNADO DAMAGE THREAT", "DAMAGE THREAT"}));
+      const bool isCatastrophic =
+         segment->threatCategory_ == awips::ibw::ThreatCategory::Catastrophic ||
+         tornadoDamageThreat.find("CATASTROPHIC") != std::string::npos;
+      const bool isPds =
+         segment->threatCategory_ == awips::ibw::ThreatCategory::Destructive ||
+         tornadoDamageThreat.find("CONSIDERABLE") != std::string::npos ||
+         tornadoDamageThreat.find("DESTRUCTIVE") != std::string::npos;
+
+      if (isCatastrophic)
       {
          title = "TORNADO EMERGENCY";
       }
-      else if (segment->threatCategory_ ==
-               awips::ibw::ThreatCategory::Destructive)
+      else if (isPds)
       {
          title = "PDS TORNADO WARNING";
       }
@@ -439,8 +449,7 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
       delete item;
    }
 
-   const auto fields = ParseProductFields(segment);
-   tornadoObserved_  = false;
+   tornadoObserved_ = false;
    if (key.phenomenon_ == awips::Phenomenon::Tornado)
    {
       const std::string tornadoField =
