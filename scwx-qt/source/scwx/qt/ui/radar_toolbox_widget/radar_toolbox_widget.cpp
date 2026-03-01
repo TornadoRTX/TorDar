@@ -44,8 +44,8 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    setObjectName("RadarToolboxFloatingPanel");
    setAttribute(Qt::WA_StyledBackground, true);
    setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
-   setMinimumWidth(364);
-   setMaximumWidth(364);
+   setMinimumWidth(546);
+   setMaximumWidth(546);
 
    if (parent != nullptr)
    {
@@ -63,8 +63,8 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    headerContainer_->setObjectName("RadarToolboxHeader");
    headerContainer_->installEventFilter(this);
    auto* headerLayout = new QHBoxLayout(headerContainer_);
-   headerLayout->setContentsMargins(8, 4, 6, 4);
-   headerLayout->setSpacing(4);
+   headerLayout->setContentsMargins(12, 6, 9, 6);
+   headerLayout->setSpacing(6);
 
    titleLabel_ = new QLabel(tr("RADAR TOOLBOX"), headerContainer_);
    titleLabel_->setObjectName("RadarToolboxTitle");
@@ -73,7 +73,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 
    collapseButton_ = new QPushButton("^", headerContainer_);
    collapseButton_->setObjectName("RadarToolboxCollapseButton");
-   collapseButton_->setFixedSize(15, 15);
+   collapseButton_->setFixedSize(23, 23);
    collapseButton_->setFlat(true);
 
    playbackRow_ = new QWidget(this);
@@ -81,7 +81,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    playbackRow_->installEventFilter(this);
    auto* playbackLayout = new QHBoxLayout(playbackRow_);
    playbackLayout->setContentsMargins(0, 0, 0, 0);
-   playbackLayout->setSpacing(3);
+   playbackLayout->setSpacing(5);
 
    backBtn_      = new QPushButton(tr("<"), playbackRow_);
    playPauseBtn_ = new QPushButton(tr(">"), playbackRow_);
@@ -95,15 +95,15 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 
    playPauseBtn_->setText("");
    playPauseBtn_->setIcon(QIcon(":/res/icons/play_button.svg"));
-   playPauseBtn_->setIconSize(QSize(11, 11));
+   playPauseBtn_->setIconSize(QSize(17, 17));
 
    stopBtn_->setText("");
    stopBtn_->setIcon(QIcon(":/res/icons/Square.svg"));
-   stopBtn_->setIconSize(QSize(9, 9));
+   stopBtn_->setIconSize(QSize(14, 14));
 
    for (auto* btn : {backBtn_, playPauseBtn_, forwardBtn_, stopBtn_})
    {
-      btn->setFixedSize(20, 20);
+      btn->setFixedSize(30, 30);
       btn->setFlat(true);
       playbackLayout->addWidget(btn);
    }
@@ -118,17 +118,17 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 
    headerDivider_ = new QWidget(this);
    headerDivider_->setObjectName("RadarToolboxHeaderDivider");
-   headerDivider_->setFixedHeight(1);
+   headerDivider_->setFixedHeight(2);
    rootLayout_->addWidget(headerDivider_);
 
    collapsedPeek_ = new QWidget(this);
    collapsedPeek_->setObjectName("RadarToolboxCollapsedPeek");
-   collapsedPeek_->setFixedHeight(3);
+   collapsedPeek_->setFixedHeight(5);
    rootLayout_->addWidget(collapsedPeek_);
 
    bodyContainer_   = new QWidget(this);
    auto* bodyLayout = new QVBoxLayout(bodyContainer_);
-   bodyLayout->setContentsMargins(8, 8, 8, 8);
+   bodyLayout->setContentsMargins(12, 12, 12, 12);
    bodyLayout->setSpacing(0);
 
    // -------------------------
@@ -145,8 +145,8 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
                                   QSizePolicy::Preferred);
 
    productsLayout_ = new QGridLayout(scrollContents_);
-   productsLayout_->setHorizontalSpacing(61);
-   productsLayout_->setVerticalSpacing(12);
+   productsLayout_->setHorizontalSpacing(92);
+   productsLayout_->setVerticalSpacing(18);
    productsLayout_->setContentsMargins(0, 0, 0, 0);
    productsLayout_->setSizeConstraint(QLayout::SetMinAndMaxSize);
 
@@ -237,19 +237,19 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    setStyleSheet(
       "#RadarToolboxFloatingPanel {"
       "  background: #000000;"
-      "  border: 3px solid #f2f2f2;"
-      "  border-radius: 12px;"
+      "  border: 5px solid #f2f2f2;"
+      "  border-radius: 18px;"
       "}"
       "#RadarToolboxHeader {"
-      "  min-height: 28px;"
+      "  min-height: 42px;"
       "  background: #000000;"
-      "  border-top-left-radius: 10px;"
-      "  border-top-right-radius: 10px;"
+      "  border-top-left-radius: 15px;"
+      "  border-top-right-radius: 15px;"
       "}"
       "#RadarToolboxTitle {"
       "  font-family: 'Gothic No.13 Regular', 'Gothic-No.13-Regular';"
       "  color: #ffffff;"
-      "  font-size: 18px;"
+      "  font-size: 27px;"
       "  font-weight: 900;"
       "  letter-spacing: 1px;"
       "}"
@@ -262,9 +262,9 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
       "#RadarToolboxCollapseButton {"
       "  font-family: 'Gothic No.13 Regular', 'Gothic-No.13-Regular';"
       "  color: #ffffff;"
-      "  font-size: 11px;"
+      "  font-size: 17px;"
       "  border: none;"
-      "  background: transparent;"
+      "  background: #000000;"
       "}"
       "#RadarToolboxCollapseButton:hover {"
       "  color: #d9d9d9;"
@@ -274,11 +274,11 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
       "  font-family: 'Gothic No.13 Regular', 'Gothic-No.13-Regular';"
       "  color: #f2f2f2;"
       "  background: #0e95ff;"
-      "  border: 1px solid #0378d4;"
-      "  border-radius: 6px;"
-      "  font-size: 13px;"
+      "  border: 2px solid #0378d4;"
+      "  border-radius: 9px;"
+      "  font-size: 20px;"
       "  font-weight: 900;"
-      "  min-width: 20px;"
+      "  min-width: 30px;"
       "}"
       "#RadarToolboxControlButton:hover,"
       "#RadarToolboxControlButtonStop:hover {"
@@ -286,7 +286,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
       "}"
       "#RadarToolboxControlButtonStop {"
       "  color: #dbe9f8;"
-      "  font-size: 10px;"
+      "  font-size: 15px;"
       "}");
 
    SetCollapsed(false);
@@ -349,7 +349,7 @@ void RadarToolboxWidget::SetCollapsed(bool collapsed)
    }
    else
    {
-      setFixedHeight(264);
+      setFixedHeight(396);
    }
 
    adjustSize();
