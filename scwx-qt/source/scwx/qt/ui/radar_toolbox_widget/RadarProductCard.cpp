@@ -1,5 +1,7 @@
 #include "RadarProductCard.hpp"
 
+#include <QFont>
+#include <QFontDatabase>
 #include <QLabel>
 #include <QMouseEvent>
 #include <QIcon>
@@ -9,6 +11,41 @@
 
 namespace scwx::qt::ui
 {
+
+namespace
+{
+QString GetToolboxFontFamily()
+{
+   static QString fontFamily {};
+   static bool    loaded {false};
+
+   if (!loaded)
+   {
+      const int fontId = QFontDatabase::addApplicationFont(
+         ":/res/fonts/Gothic-No.13-Regular.otf");
+
+      if (fontId != -1)
+      {
+         const QStringList families =
+            QFontDatabase::applicationFontFamilies(fontId);
+
+         if (!families.isEmpty())
+         {
+            fontFamily = families.front();
+         }
+      }
+
+      loaded = true;
+   }
+
+   if (fontFamily.isEmpty())
+   {
+      fontFamily = "Sans Serif";
+   }
+
+   return fontFamily;
+}
+} // namespace
 
 RadarProductCard::RadarProductCard(const QString& title,
                                    const QString& iconPath,
@@ -61,6 +98,10 @@ RadarProductCard::RadarProductCard(const QString& title,
    titleLabel_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
    titleLabel_->setMinimumWidth(0);
    titleLabel_->setProperty("selected", false);
+   QFont titleFont {GetToolboxFontFamily()};
+   titleFont.setPixelSize(11);
+   titleFont.setWeight(QFont::Black);
+   titleLabel_->setFont(titleFont);
 
    // -------------------------
    // Layout
@@ -82,9 +123,6 @@ RadarProductCard::RadarProductCard(const QString& title,
    titleLabel_->setStyleSheet(
       "#titleLabel {"
       "  background: transparent;"
-      "  font-family: 'Gothic No.13 Regular', 'Gothic-No.13-Regular';"
-      "  font-weight: 800;"
-      "  font-size: 11px;"
       "  color: white;"
       "}"
       "#titleLabel[selected='true'] {"
