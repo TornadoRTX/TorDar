@@ -138,9 +138,9 @@ public:
    void AddDetailRow(const std::string& label, const std::string& value);
    void AddSevereMetricCards(const std::string& maxHail,
                              const std::string& maxWind);
-   void AddSevereTornadoPossibleBox(
+   bool AddSevereTornadoPossibleBox(
       const std::unordered_map<std::string, std::string>& fields);
-   void AddSevereDamageThreatBox(
+   bool AddSevereDamageThreatBox(
       const std::unordered_map<std::string, std::string>& fields);
    static std::string ToUpper(std::string_view value);
    static std::string Trim(std::string_view value);
@@ -180,6 +180,7 @@ public:
    std::string monoFontFamily_ {"RobotoMono-Regular"};
    std::string areaSourceLabelFontFamily_ {"AlegreyaSans-ExtraBold"};
    std::string areaSourceValueFontFamily_ {"Rajdhani"};
+   bool        tornadoObserved_ {false};
 };
 
 WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
@@ -439,11 +440,27 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
    }
 
    const auto fields = ParseProductFields(segment);
+   tornadoObserved_  = false;
+   if (key.phenomenon_ == awips::Phenomenon::Tornado)
+   {
+      const std::string tornadoField =
+         GetFieldValue(fields, {"TORNADO", "TORNADO THREAT"});
+      tornadoObserved_ =
+         ToUpper(tornadoField).find("OBSERVED") != std::string::npos;
+   }
 
    if (key.phenomenon_ == awips::Phenomenon::SevereThunderstorm)
    {
-      AddSevereTornadoPossibleBox(fields);
-      AddSevereDamageThreatBox(fields);
+      const bool hasTornadoPossible = AddSevereTornadoPossibleBox(fields);
+      const bool hasDamageThreat    = AddSevereDamageThreatBox(fields);
+      if (hasTornadoPossible && hasDamageThreat)
+      {
+         detailsLayout_->insertSpacing(1, 6);
+      }
+      if (hasTornadoPossible || hasDamageThreat)
+      {
+         detailsLayout_->addSpacing(8);
+      }
    }
 
    AddSevereMetricCards(GetFieldValue(fields, {"MAX HAIL SIZE"}),
@@ -495,6 +512,15 @@ void WarningBoxWidgetImpl::AddDetailRow(const std::string& label,
             .arg(QString::fromStdString(areaSourceValueFontFamily_)));
    }
 
+   if (label == "Source" && tornadoObserved_)
+   {
+      auto* sourceGlow = new QGraphicsDropShadowEffect(valueW);
+      sourceGlow->setBlurRadius(12.0);
+      sourceGlow->setColor(QColor(220, 56, 56, 220));
+      sourceGlow->setOffset(0.0, 0.0);
+      valueW->setGraphicsEffect(sourceGlow);
+   }
+
    QHBoxLayout* row = new QHBoxLayout(rowFrame);
    row->setContentsMargins(8, 6, 8, 6);
    row->setSpacing(6);
@@ -513,7 +539,7 @@ void WarningBoxWidgetImpl::AddSevereMetricCards(const std::string& maxHail,
    row->setSpacing(8);
 
    auto createCard =
-      [rowContainer](const std::string& title, const std::string& value)
+      [this, rowContainer](const std::string& title, const std::string& value)
    {
       QFrame* card = new QFrame(rowContainer);
       card->setObjectName("severeMetricCard");
@@ -531,7 +557,14 @@ void WarningBoxWidgetImpl::AddSevereMetricCards(const std::string& maxHail,
       valueLabel->setContentsMargins(0, 0, 0, 0);
       auto* valueGlow = new QGraphicsDropShadowEffect(valueLabel);
       valueGlow->setBlurRadius(12.0);
-      valueGlow->setColor(QColor(236, 193, 74, 210));
+      if (currentKey_.phenomenon_ == awips::Phenomenon::Tornado)
+      {
+         valueGlow->setColor(QColor(220, 56, 56, 220));
+      }
+      else
+      {
+         valueGlow->setColor(QColor(236, 193, 74, 210));
+      }
       valueGlow->setOffset(0.0, 0.0);
       valueLabel->setGraphicsEffect(valueGlow);
 
@@ -559,7 +592,7 @@ void WarningBoxWidgetImpl::AddSevereMetricCards(const std::string& maxHail,
    }
 }
 
-void WarningBoxWidgetImpl::AddSevereTornadoPossibleBox(
+bool WarningBoxWidgetImpl::AddSevereTornadoPossibleBox(
    const std::unordered_map<std::string, std::string>& fields)
 {
    const std::string tornadoField =
@@ -567,7 +600,7 @@ void WarningBoxWidgetImpl::AddSevereTornadoPossibleBox(
    if (tornadoField.empty() ||
        ToUpper(tornadoField).find("POSSIBLE") == std::string::npos)
    {
-      return;
+      return false;
    }
 
    QFrame* box = new QFrame(detailsContainer_);
@@ -589,9 +622,10 @@ void WarningBoxWidgetImpl::AddSevereTornadoPossibleBox(
 
    layout->addWidget(label);
    detailsLayout_->addWidget(box);
+   return true;
 }
 
-void WarningBoxWidgetImpl::AddSevereDamageThreatBox(
+bool WarningBoxWidgetImpl::AddSevereDamageThreatBox(
    const std::unordered_map<std::string, std::string>& fields)
 {
    const std::string damageField =
@@ -603,7 +637,7 @@ void WarningBoxWidgetImpl::AddSevereDamageThreatBox(
       upperDamage.find("DESTRUCTIVE") != std::string::npos;
    if (!(isConsiderable || isDestructive))
    {
-      return;
+      return false;
    }
 
    QFrame* box = new QFrame(detailsContainer_);
@@ -628,6 +662,7 @@ void WarningBoxWidgetImpl::AddSevereDamageThreatBox(
 
    layout->addWidget(label);
    detailsLayout_->addWidget(box);
+   return true;
 }
 
 void WarningBoxWidgetImpl::UpdateProgressVisual(
@@ -686,6 +721,7 @@ void WarningBoxWidgetImpl::ApplyTheme(
 {
    std::string accentColor = "197, 37, 48";
    bool        isSevere    = false;
+   bool        isTornado   = false;
 
    if (key.phenomenon_ == awips::Phenomenon::SevereThunderstorm)
    {
@@ -700,10 +736,12 @@ void WarningBoxWidgetImpl::ApplyTheme(
                 awips::ibw::ThreatCategory::Catastrophic))
    {
       accentColor = "116, 61, 194";
+      isTornado   = true;
    }
    else if (key.phenomenon_ == awips::Phenomenon::Tornado)
    {
       accentColor = "197, 37, 48";
+      isTornado   = true;
    }
 
    if (stateBadgeFrame_ != nullptr)
@@ -912,6 +950,26 @@ void WarningBoxWidgetImpl::ApplyTheme(
       styleSheet += "QWidget#WarningBoxWidget QLabel#severeDamageThreatValue {";
       styleSheet += "  font-size: 16px;";
       styleSheet += "}";
+      styleSheet += "QWidget#WarningBoxWidget QFrame#detailRow {";
+      styleSheet += "  border: 1px solid rgba(34, 49, 88, 210);";
+      styleSheet += "  background-color: rgba(8, 13, 31, 236);";
+      styleSheet += "}";
+      styleSheet +=
+         "QWidget#WarningBoxWidget QFrame#detailRow[highlight=\"true\"] {";
+      styleSheet += "  background-color: rgba(17, 31, 66, 235);";
+      styleSheet += "}";
+   }
+
+   if (isTornado)
+   {
+      // Tornado metric cards: dark maroon body with brighter maroon top strip.
+      styleSheet += "QWidget#WarningBoxWidget QFrame#severeMetricCard {";
+      styleSheet += "  border: 1px solid rgba(132, 18, 8, 210);";
+      styleSheet += "  border-top: 2px solid rgb(132, 18, 8);";
+      styleSheet += "  background-color: rgb(44, 6, 24);";
+      styleSheet += "}";
+
+      // Tornado parameter rows: match severe row colors (no red border).
       styleSheet += "QWidget#WarningBoxWidget QFrame#detailRow {";
       styleSheet += "  border: 1px solid rgba(34, 49, 88, 210);";
       styleSheet += "  background-color: rgba(8, 13, 31, 236);";
