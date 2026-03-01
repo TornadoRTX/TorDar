@@ -2,6 +2,7 @@
 #include "RadarProductCard.hpp"
 
 #include <QFrame>
+#include <QFont>
 #include <QFontDatabase>
 #include <QGridLayout>
 #include <QHBoxLayout>
@@ -26,6 +27,38 @@ struct ProductInfo
    QString icon;
 };
 
+QString GetToolboxFontFamily()
+{
+   static QString fontFamily {};
+   static bool    loaded {false};
+
+   if (!loaded)
+   {
+      const int fontId = QFontDatabase::addApplicationFont(
+         ":/res/fonts/Gothic-No.13-Regular.otf");
+
+      if (fontId != -1)
+      {
+         const QStringList families =
+            QFontDatabase::applicationFontFamilies(fontId);
+
+         if (!families.isEmpty())
+         {
+            fontFamily = families.front();
+         }
+      }
+
+      loaded = true;
+   }
+
+   if (fontFamily.isEmpty())
+   {
+      fontFamily = "Sans Serif";
+   }
+
+   return fontFamily;
+}
+
 } // namespace
 
 namespace scwx::qt::ui
@@ -33,13 +66,7 @@ namespace scwx::qt::ui
 
 RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 {
-   static bool gothicLoaded = false;
-
-   if (!gothicLoaded)
-   {
-      QFontDatabase::addApplicationFont(":/res/fonts/Gothic-No.13-Regular.otf");
-      gothicLoaded = true;
-   }
+   const QString toolboxFontFamily = GetToolboxFontFamily();
 
    setObjectName("RadarToolboxFloatingPanel");
    setAttribute(Qt::WA_StyledBackground, true);
@@ -70,11 +97,19 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    titleLabel_->setObjectName("RadarToolboxTitle");
    titleLabel_->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
    titleLabel_->installEventFilter(this);
+   QFont titleFont {toolboxFontFamily};
+   titleFont.setPixelSize(27);
+   titleFont.setWeight(QFont::Black);
+   titleLabel_->setFont(titleFont);
 
    collapseButton_ = new QPushButton("^", headerContainer_);
    collapseButton_->setObjectName("RadarToolboxCollapseButton");
    collapseButton_->setFixedSize(23, 23);
    collapseButton_->setFlat(true);
+   QFont collapseFont {toolboxFontFamily};
+   collapseFont.setPixelSize(17);
+   collapseFont.setWeight(QFont::Bold);
+   collapseButton_->setFont(collapseFont);
 
    playbackRow_ = new QWidget(this);
    playbackRow_->setObjectName("RadarToolboxPlaybackRow");
@@ -101,6 +136,14 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    stopBtn_->setIcon(QIcon(":/res/icons/Square.svg"));
    stopBtn_->setIconSize(QSize(14, 14));
 
+   QFont playbackFont {toolboxFontFamily};
+   playbackFont.setPixelSize(20);
+   playbackFont.setWeight(QFont::Black);
+   backBtn_->setFont(playbackFont);
+   playPauseBtn_->setFont(playbackFont);
+   forwardBtn_->setFont(playbackFont);
+   stopBtn_->setFont(playbackFont);
+
    for (auto* btn : {backBtn_, playPauseBtn_, forwardBtn_, stopBtn_})
    {
       btn->setFixedSize(30, 30);
@@ -118,7 +161,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 
    headerDivider_ = new QWidget(this);
    headerDivider_->setObjectName("RadarToolboxHeaderDivider");
-   headerDivider_->setFixedHeight(2);
+   headerDivider_->setFixedHeight(5);
    rootLayout_->addWidget(headerDivider_);
 
    collapsedPeek_ = new QWidget(this);
@@ -126,7 +169,8 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    collapsedPeek_->setFixedHeight(5);
    rootLayout_->addWidget(collapsedPeek_);
 
-   bodyContainer_   = new QWidget(this);
+   bodyContainer_ = new QWidget(this);
+   bodyContainer_->setObjectName("RadarToolboxBody");
    auto* bodyLayout = new QVBoxLayout(bodyContainer_);
    bodyLayout->setContentsMargins(12, 12, 12, 12);
    bodyLayout->setSpacing(0);
@@ -135,12 +179,14 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    // Scroll area (products)
    // -------------------------
    scrollArea_ = new QScrollArea(bodyContainer_);
+   scrollArea_->setObjectName("RadarToolboxScrollArea");
    scrollArea_->setFrameShape(QFrame::NoFrame);
    scrollArea_->setWidgetResizable(true);
    scrollArea_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
    scrollArea_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 
    scrollContents_ = new QWidget(scrollArea_);
+   scrollContents_->setObjectName("RadarToolboxScrollContents");
    scrollContents_->setSizePolicy(QSizePolicy::Expanding,
                                   QSizePolicy::Preferred);
 
@@ -256,13 +302,20 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
       "#RadarToolboxHeaderDivider {"
       "  background: #ffffff;"
       "}"
+      "#RadarToolboxBody {"
+      "  background: #000000;"
+      "}"
+      "#RadarToolboxScrollArea {"
+      "  background: #000000;"
+      "}"
+      "#RadarToolboxScrollContents {"
+      "  background: #000000;"
+      "}"
       "#RadarToolboxCollapsedPeek {"
-      "  background:rgb(0, 0, 0);"
+      "  background: #000000;"
       "}"
       "#RadarToolboxCollapseButton {"
-      "  font-family: 'Gothic No.13 Regular', 'Gothic-No.13-Regular';"
       "  color: #ffffff;"
-      "  font-size: 17px;"
       "  border: none;"
       "  background: #000000;"
       "}"
@@ -271,12 +324,10 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
       "}"
       "#RadarToolboxControlButton,"
       "#RadarToolboxControlButtonStop {"
-      "  font-family: 'Gothic No.13 Regular', 'Gothic-No.13-Regular';"
       "  color: #f2f2f2;"
       "  background: #0e95ff;"
       "  border: 2px solid #0378d4;"
       "  border-radius: 9px;"
-      "  font-size: 20px;"
       "  font-weight: 900;"
       "  min-width: 30px;"
       "}"
@@ -286,7 +337,6 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
       "}"
       "#RadarToolboxControlButtonStop {"
       "  color: #dbe9f8;"
-      "  font-size: 15px;"
       "}");
 
    SetCollapsed(false);
@@ -344,16 +394,26 @@ void RadarToolboxWidget::SetCollapsed(bool collapsed)
    {
       setMinimumHeight(0);
       setMaximumHeight(QWIDGETSIZE_MAX);
-      adjustSize();
-      setFixedHeight(sizeHint().height());
+      const int lineTop = headerContainer_->height() + headerDivider_->height();
+      const int floorY  = (parentWidget() != nullptr) ?
+                             (parentWidget()->height() - 16) :
+                             (y() + lineTop + collapsedPeek_->height());
+      const int fillHeight = std::max(5, floorY - y() - lineTop);
+      collapsedPeek_->setFixedHeight(fillHeight);
+
+      setFixedHeight(lineTop + fillHeight);
    }
    else
    {
-      setFixedHeight(396);
+      collapsedPeek_->setFixedHeight(5);
+      setFixedHeight(264);
    }
 
    adjustSize();
-   MoveToBottomLeft();
+   if (!collapsed_)
+   {
+      MoveToBottomLeft();
+   }
    ClampToParent();
 }
 
