@@ -27,15 +27,15 @@ struct ProductInfo
    QString icon;
 };
 
-QString GetToolboxFontFamily()
+QString GetOswaldBoldFontFamily()
 {
    static QString fontFamily {};
    static bool    loaded {false};
 
    if (!loaded)
    {
-      const int fontId = QFontDatabase::addApplicationFont(
-         ":/res/fonts/Gothic-No.13-Regular.otf");
+      const int fontId =
+         QFontDatabase::addApplicationFont(":/res/fonts/Oswald-Bold.ttf");
 
       if (fontId != -1)
       {
@@ -66,7 +66,7 @@ namespace scwx::qt::ui
 
 RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 {
-   const QString toolboxFontFamily = GetToolboxFontFamily();
+   const QString oswaldBoldFontFamily = GetOswaldBoldFontFamily();
 
    setObjectName("RadarToolboxFloatingPanel");
    setAttribute(Qt::WA_StyledBackground, true);
@@ -88,6 +88,8 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    // -------------------------
    headerContainer_ = new QWidget(this);
    headerContainer_->setObjectName("RadarToolboxHeader");
+   headerContainer_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+   headerContainer_->setFixedHeight(42);
    headerContainer_->installEventFilter(this);
    auto* headerLayout = new QHBoxLayout(headerContainer_);
    headerLayout->setContentsMargins(12, 6, 9, 6);
@@ -97,16 +99,16 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    titleLabel_->setObjectName("RadarToolboxTitle");
    titleLabel_->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
    titleLabel_->installEventFilter(this);
-   QFont titleFont {toolboxFontFamily};
+   QFont titleFont {oswaldBoldFontFamily};
    titleFont.setPixelSize(27);
-   titleFont.setWeight(QFont::Black);
+   titleFont.setWeight(QFont::Bold);
    titleLabel_->setFont(titleFont);
 
    collapseButton_ = new QPushButton("^", headerContainer_);
    collapseButton_->setObjectName("RadarToolboxCollapseButton");
    collapseButton_->setFixedSize(23, 23);
    collapseButton_->setFlat(true);
-   QFont collapseFont {toolboxFontFamily};
+   QFont collapseFont {oswaldBoldFontFamily};
    collapseFont.setPixelSize(17);
    collapseFont.setWeight(QFont::Bold);
    collapseButton_->setFont(collapseFont);
@@ -136,13 +138,11 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    stopBtn_->setIcon(QIcon(":/res/icons/Square.svg"));
    stopBtn_->setIconSize(QSize(14, 14));
 
-   QFont playbackFont {toolboxFontFamily};
+   QFont playbackFont {oswaldBoldFontFamily};
    playbackFont.setPixelSize(20);
-   playbackFont.setWeight(QFont::Black);
+   playbackFont.setWeight(QFont::Bold);
    backBtn_->setFont(playbackFont);
-   playPauseBtn_->setFont(playbackFont);
    forwardBtn_->setFont(playbackFont);
-   stopBtn_->setFont(playbackFont);
 
    for (auto* btn : {backBtn_, playPauseBtn_, forwardBtn_, stopBtn_})
    {
@@ -293,7 +293,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
       "  border-top-right-radius: 15px;"
       "}"
       "#RadarToolboxTitle {"
-      "  font-family: 'Gothic No.13 Regular', 'Gothic-No.13-Regular';"
+      "  font-family: 'Oswald';"
       "  color: #ffffff;"
       "  font-size: 27px;"
       "  font-weight: 900;"
@@ -409,7 +409,6 @@ void RadarToolboxWidget::SetCollapsed(bool collapsed)
       setFixedHeight(264);
    }
 
-   adjustSize();
    if (!collapsed_)
    {
       MoveToBottomLeft();

@@ -14,15 +14,15 @@ namespace scwx::qt::ui
 
 namespace
 {
-QString GetToolboxFontFamily()
+QString GetOswaldMediumFontFamily()
 {
    static QString fontFamily {};
    static bool    loaded {false};
 
    if (!loaded)
    {
-      const int fontId = QFontDatabase::addApplicationFont(
-         ":/res/fonts/Gothic-No.13-Regular.otf");
+      const int fontId =
+         QFontDatabase::addApplicationFont(":/res/fonts/Oswald-Medium.ttf");
 
       if (fontId != -1)
       {
@@ -98,9 +98,9 @@ RadarProductCard::RadarProductCard(const QString& title,
    titleLabel_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
    titleLabel_->setMinimumWidth(0);
    titleLabel_->setProperty("selected", false);
-   QFont titleFont {GetToolboxFontFamily()};
+   QFont titleFont {GetOswaldMediumFontFamily()};
    titleFont.setPixelSize(11);
-   titleFont.setWeight(QFont::Black);
+   titleFont.setWeight(QFont::Medium);
    titleLabel_->setFont(titleFont);
 
    // -------------------------
