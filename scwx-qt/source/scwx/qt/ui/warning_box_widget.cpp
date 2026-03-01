@@ -484,11 +484,11 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
       const bool hasDamageThreat    = AddSevereDamageThreatBox(fields);
       if (hasTornadoPossible && hasDamageThreat)
       {
-         detailsLayout_->insertSpacing(1, 6);
+         detailsLayout_->insertSpacing(1, 3);
       }
       if (hasTornadoPossible || hasDamageThreat)
       {
-         detailsLayout_->addSpacing(8);
+         detailsLayout_->addSpacing(4);
       }
    }
    else if (key.phenomenon_ == awips::Phenomenon::Tornado)
@@ -497,11 +497,11 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
       const bool hasConfirmed    = AddTornadoConfirmedBox();
       if (hasDamageThreat && hasConfirmed)
       {
-         detailsLayout_->insertSpacing(1, 6);
+         detailsLayout_->insertSpacing(1, 3);
       }
       if (hasDamageThreat || hasConfirmed)
       {
-         detailsLayout_->addSpacing(8);
+         detailsLayout_->addSpacing(4);
       }
    }
 
