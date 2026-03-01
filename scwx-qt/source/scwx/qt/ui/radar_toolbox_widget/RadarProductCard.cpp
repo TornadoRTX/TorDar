@@ -17,24 +17,24 @@ RadarProductCard::RadarProductCard(const QString& title,
 {
    setCursor(Qt::PointingHandCursor);
    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-   setMinimumWidth(58);
+   setMinimumWidth(87);
    auto* layout = new QVBoxLayout(this);
-   layout->setContentsMargins(2, 3, 2, 3);
-   layout->setSpacing(8);
+   layout->setContentsMargins(3, 5, 3, 5);
+   layout->setSpacing(12);
 
    // -------------------------
    // Icon
    // -------------------------
    iconContainer_ = new QWidget(this);
-   iconContainer_->setFixedSize(58, 57);
+   iconContainer_->setFixedSize(87, 86);
    iconContainer_->setProperty("selected", false);
 
    QVBoxLayout* iconLayout = new QVBoxLayout(iconContainer_);
-   iconLayout->setContentsMargins(2, 2, 2, 2);
+   iconLayout->setContentsMargins(3, 3, 3, 3);
    iconLayout->setAlignment(Qt::AlignCenter);
 
    imageLabel_ = new QLabel(iconContainer_);
-   imageLabel_->setFixedSize(53, 52);
+   imageLabel_->setFixedSize(80, 78);
    imageLabel_->setAlignment(Qt::AlignCenter);
    imageLabel_->setScaledContents(true);
 
@@ -47,14 +47,14 @@ RadarProductCard::RadarProductCard(const QString& title,
       qWarning() << "RadarProductCard: failed to load icon:" << iconPath;
    }
 
-   imageLabel_->setPixmap(icon.pixmap(53, 52));
+   imageLabel_->setPixmap(icon.pixmap(80, 78));
 
    // -------------------------
    // Title
    // -------------------------
    titleLabel_ = new QLabel(this);
    titleLabel_->setTextFormat(Qt::RichText);
-   titleLabel_->setText(QString("<div style='line-height: 4px;'>%1</div>")
+   titleLabel_->setText(QString("<div style='line-height: 6px;'>%1</div>")
                            .arg(title.toHtmlEscaped()));
    titleLabel_->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
    titleLabel_->setWordWrap(true);
@@ -72,11 +72,11 @@ RadarProductCard::RadarProductCard(const QString& title,
 
    iconContainer_->setStyleSheet(
       "#iconContainer {"
-      "  border: 3px solid #f1f1f1;"
-      "  border-radius: 4px;"
+      "  border: 5px solid #f1f1f1;"
+      "  border-radius: 6px;"
       "}"
       "#iconContainer[selected='true'] {"
-      "  border: 3px solid #2979FF;"
+      "  border: 5px solid #2979FF;"
       "}");
 
    titleLabel_->setStyleSheet(
@@ -84,7 +84,7 @@ RadarProductCard::RadarProductCard(const QString& title,
       "  background: transparent;"
       "  font-family: 'Gothic No.13 Regular', 'Gothic-No.13-Regular';"
       "  font-weight: 800;"
-      "  font-size: 7px;"
+      "  font-size: 11px;"
       "  color: white;"
       "}"
       "#titleLabel[selected='true'] {"
@@ -127,13 +127,13 @@ void RadarProductCard::UpdateStyle()
    {
       setStyleSheet(
          "background-color: #1a1a1a;"
-         "border-radius: 5px;");
+         "border-radius: 8px;");
    }
    else
    {
       setStyleSheet(
          "background-color: rgba(255, 255, 255, 0.06);"
-         "border-radius: 5px;");
+         "border-radius: 8px;");
    }
 }
 
