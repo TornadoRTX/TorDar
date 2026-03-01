@@ -546,7 +546,14 @@ void WarningBoxWidgetImpl::AddDetailRow(const std::string& label,
             .arg(QString::fromStdString(areaSourceLabelFontFamily_)));
    }
 
-   if (isAreaOrSource || isTornadoHailWind)
+   if (isAreaOrSource)
+   {
+      valueW->setStyleSheet(
+         QString("font-family: '%1'; font-size: 15px; font-weight: 700; "
+                 "letter-spacing: 0px;")
+            .arg(QString::fromStdString(areaSourceValueFontFamily_)));
+   }
+   else if (isTornadoHailWind)
    {
       valueW->setStyleSheet(
          QString("font-family: '%1'; font-size: 10px; font-weight: 700; "
@@ -558,7 +565,7 @@ void WarningBoxWidgetImpl::AddDetailRow(const std::string& label,
    {
       auto* sourceGlow = new QGraphicsDropShadowEffect(valueW);
       sourceGlow->setBlurRadius(12.0);
-      sourceGlow->setColor(QColor(220, 56, 56, 220));
+      sourceGlow->setColor(QColor(245, 248, 255, 230));
       sourceGlow->setOffset(0.0, 0.0);
       valueW->setGraphicsEffect(sourceGlow);
    }
