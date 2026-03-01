@@ -66,6 +66,14 @@ class WarningBoxWidgetImpl : public QObject
    Q_OBJECT
 
 public:
+   enum class TornadoStyle
+   {
+      None,
+      Normal,
+      Pds,
+      Emergency
+   };
+
    explicit WarningBoxWidgetImpl(WarningBoxWidget* self) :
        self_ {self},
        textEventManager_ {manager::TextEventManager::Instance()},
@@ -142,6 +150,9 @@ public:
       const std::unordered_map<std::string, std::string>& fields);
    bool AddSevereDamageThreatBox(
       const std::unordered_map<std::string, std::string>& fields);
+   bool AddTornadoDamageThreatBox(
+      const std::unordered_map<std::string, std::string>& fields);
+   bool               AddTornadoConfirmedBox();
    static std::string ToUpper(std::string_view value);
    static std::string Trim(std::string_view value);
    static std::string NormalizeLabel(std::string_view label);
@@ -175,12 +186,13 @@ public:
    int                                        fixedWidth_ {0};
    QWidget*                                   detailsContainer_ {nullptr};
    QVBoxLayout*                               detailsLayout_ {nullptr};
-   std::string warningTitleFontFamily_ {"Rajdhani"};
-   std::string expirationFontFamily_ {"AlegreyaSans-ExtraBold"};
-   std::string monoFontFamily_ {"RobotoMono-Regular"};
-   std::string areaSourceLabelFontFamily_ {"AlegreyaSans-ExtraBold"};
-   std::string areaSourceValueFontFamily_ {"Rajdhani"};
-   bool        tornadoObserved_ {false};
+   std::string  warningTitleFontFamily_ {"Rajdhani"};
+   std::string  expirationFontFamily_ {"AlegreyaSans-ExtraBold"};
+   std::string  monoFontFamily_ {"RobotoMono-Regular"};
+   std::string  areaSourceLabelFontFamily_ {"AlegreyaSans-ExtraBold"};
+   std::string  areaSourceValueFontFamily_ {"Rajdhani"};
+   TornadoStyle tornadoStyle_ {TornadoStyle::None};
+   bool         tornadoObserved_ {false};
 };
 
 WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
@@ -378,13 +390,9 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
       return;
 
    const auto segment = segments.back();
-   ApplyTheme(key, segment);
-   const auto fields = ParseProductFields(segment);
+   const auto fields  = ParseProductFields(segment);
 
-   // Title: from phenomenon and significance (e.g. "Tornado Warning")
-   std::string phenText = awips::GetPhenomenonText(key.phenomenon_);
-   std::string sigText  = awips::GetSignificanceText(key.significance_);
-   std::string title    = ToUpper(fmt::format("{} {}", phenText, sigText));
+   tornadoStyle_ = TornadoStyle::None;
    if (key.phenomenon_ == awips::Phenomenon::Tornado)
    {
       const std::string tornadoDamageThreat = ToUpper(
@@ -396,12 +404,24 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
          segment->threatCategory_ == awips::ibw::ThreatCategory::Destructive ||
          tornadoDamageThreat.find("CONSIDERABLE") != std::string::npos ||
          tornadoDamageThreat.find("DESTRUCTIVE") != std::string::npos;
+      tornadoStyle_ = isCatastrophic ? TornadoStyle::Emergency :
+                      isPds          ? TornadoStyle::Pds :
+                                       TornadoStyle::Normal;
+   }
 
-      if (isCatastrophic)
+   ApplyTheme(key, segment);
+
+   // Title: from phenomenon and significance (e.g. "Tornado Warning")
+   std::string phenText = awips::GetPhenomenonText(key.phenomenon_);
+   std::string sigText  = awips::GetSignificanceText(key.significance_);
+   std::string title    = ToUpper(fmt::format("{} {}", phenText, sigText));
+   if (key.phenomenon_ == awips::Phenomenon::Tornado)
+   {
+      if (tornadoStyle_ == TornadoStyle::Emergency)
       {
          title = "TORNADO EMERGENCY";
       }
-      else if (isPds)
+      else if (tornadoStyle_ == TornadoStyle::Pds)
       {
          title = "PDS TORNADO WARNING";
       }
@@ -467,6 +487,19 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
          detailsLayout_->insertSpacing(1, 6);
       }
       if (hasTornadoPossible || hasDamageThreat)
+      {
+         detailsLayout_->addSpacing(8);
+      }
+   }
+   else if (key.phenomenon_ == awips::Phenomenon::Tornado)
+   {
+      const bool hasDamageThreat = AddTornadoDamageThreatBox(fields);
+      const bool hasConfirmed    = AddTornadoConfirmedBox();
+      if (hasDamageThreat && hasConfirmed)
+      {
+         detailsLayout_->insertSpacing(1, 6);
+      }
+      if (hasDamageThreat || hasConfirmed)
       {
          detailsLayout_->addSpacing(8);
       }
@@ -674,6 +707,104 @@ bool WarningBoxWidgetImpl::AddSevereDamageThreatBox(
    return true;
 }
 
+bool WarningBoxWidgetImpl::AddTornadoDamageThreatBox(
+   const std::unordered_map<std::string, std::string>& fields)
+{
+   if (tornadoStyle_ != TornadoStyle::Pds &&
+       tornadoStyle_ != TornadoStyle::Emergency)
+   {
+      return false;
+   }
+
+   const std::string damageField = ToUpper(
+      GetFieldValue(fields, {"TORNADO DAMAGE THREAT", "DAMAGE THREAT"}));
+
+   std::string text = "CONSIDERABLE DAMAGE THREAT";
+   if (damageField.find("CATASTROPHIC") != std::string::npos)
+   {
+      text = "CATASTROPHIC DAMAGE THREAT";
+   }
+   else if (damageField.find("DESTRUCTIVE") != std::string::npos)
+   {
+      text = "DESTRUCTIVE DAMAGE THREAT";
+   }
+   else if (damageField.find("CONSIDERABLE") != std::string::npos)
+   {
+      text = "CONSIDERABLE DAMAGE THREAT";
+   }
+
+   QColor glowColor {220, 56, 56, 230};
+   if (tornadoStyle_ == TornadoStyle::Pds)
+   {
+      glowColor = QColor(150, 120, 242, 230);
+   }
+   else if (tornadoStyle_ == TornadoStyle::Emergency)
+   {
+      glowColor = QColor(242, 126, 186, 235);
+   }
+
+   QFrame* box = new QFrame(detailsContainer_);
+   box->setObjectName("tornadoDamageThreatBox");
+   box->setMinimumHeight(34);
+
+   QHBoxLayout* layout = new QHBoxLayout(box);
+   layout->setContentsMargins(8, 2, 8, 2);
+   layout->setSpacing(0);
+
+   QLabel* label = new QLabel(QString::fromStdString(text), box);
+   label->setObjectName("tornadoDamageThreatValue");
+   label->setAlignment(Qt::AlignCenter);
+   auto* glow = new QGraphicsDropShadowEffect(label);
+   glow->setBlurRadius(14.0);
+   glow->setColor(glowColor);
+   glow->setOffset(0.0, 0.0);
+   label->setGraphicsEffect(glow);
+
+   layout->addWidget(label);
+   detailsLayout_->addWidget(box);
+   return true;
+}
+
+bool WarningBoxWidgetImpl::AddTornadoConfirmedBox()
+{
+   if (!tornadoObserved_ ||
+       currentKey_.phenomenon_ != awips::Phenomenon::Tornado)
+   {
+      return false;
+   }
+
+   QColor glowColor {220, 56, 56, 230};
+   if (tornadoStyle_ == TornadoStyle::Pds)
+   {
+      glowColor = QColor(150, 120, 242, 230);
+   }
+   else if (tornadoStyle_ == TornadoStyle::Emergency)
+   {
+      glowColor = QColor(242, 126, 186, 235);
+   }
+
+   QFrame* box = new QFrame(detailsContainer_);
+   box->setObjectName("tornadoConfirmedBox");
+   box->setMinimumHeight(34);
+
+   QHBoxLayout* layout = new QHBoxLayout(box);
+   layout->setContentsMargins(8, 2, 8, 2);
+   layout->setSpacing(0);
+
+   QLabel* label = new QLabel("TORNADO CONFIRMED", box);
+   label->setObjectName("tornadoConfirmedValue");
+   label->setAlignment(Qt::AlignCenter);
+   auto* glow = new QGraphicsDropShadowEffect(label);
+   glow->setBlurRadius(14.0);
+   glow->setColor(glowColor);
+   glow->setOffset(0.0, 0.0);
+   label->setGraphicsEffect(glow);
+
+   layout->addWidget(label);
+   detailsLayout_->addWidget(box);
+   return true;
+}
+
 void WarningBoxWidgetImpl::UpdateProgressVisual(
    const types::TextEventKey&                   key,
    const std::shared_ptr<const awips::Segment>& segment)
@@ -728,6 +859,7 @@ void WarningBoxWidgetImpl::ApplyTheme(
    const types::TextEventKey&                   key,
    const std::shared_ptr<const awips::Segment>& segment)
 {
+   static_cast<void>(segment);
    std::string accentColor = "197, 37, 48";
    bool        isSevere    = false;
    bool        isTornado   = false;
@@ -738,19 +870,34 @@ void WarningBoxWidgetImpl::ApplyTheme(
       accentColor = "191, 151, 58";
       isSevere    = true;
    }
-   else if (key.phenomenon_ == awips::Phenomenon::Tornado &&
-            (segment->threatCategory_ ==
-                awips::ibw::ThreatCategory::Destructive ||
-             segment->threatCategory_ ==
-                awips::ibw::ThreatCategory::Catastrophic))
-   {
-      accentColor = "116, 61, 194";
-      isTornado   = true;
-   }
    else if (key.phenomenon_ == awips::Phenomenon::Tornado)
    {
-      accentColor = "197, 37, 48";
-      isTornado   = true;
+      if (tornadoStyle_ == TornadoStyle::Emergency)
+      {
+         accentColor = "218, 86, 155";
+      }
+      else if (tornadoStyle_ == TornadoStyle::Pds)
+      {
+         accentColor = "116, 61, 194";
+      }
+      else
+      {
+         accentColor = "197, 37, 48";
+      }
+      isTornado = true;
+   }
+
+   std::string tornadoBoxBackground = "62, 20, 20";
+   std::string tornadoBoxTextColor  = "255, 232, 232";
+   if (tornadoStyle_ == TornadoStyle::Pds)
+   {
+      tornadoBoxBackground = "49, 27, 78";
+      tornadoBoxTextColor  = "238, 232, 255";
+   }
+   else if (tornadoStyle_ == TornadoStyle::Emergency)
+   {
+      tornadoBoxBackground = "77, 24, 53";
+      tornadoBoxTextColor  = "255, 232, 244";
    }
 
    if (stateBadgeFrame_ != nullptr)
@@ -876,6 +1023,26 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "  font-weight: 900;";
    styleSheet += "  letter-spacing: 1.8px;";
    styleSheet += "  color: rgba(255, 246, 214, 250);";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QFrame#tornadoDamageThreatBox {";
+   styleSheet += "  border: 1px solid rgba(" + accentColor + ", 235);";
+   styleSheet += "  background-color: rgba(" + tornadoBoxBackground + ", 238);";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QLabel#tornadoDamageThreatValue {";
+   styleSheet += "  font-size: 16px;";
+   styleSheet += "  font-weight: 900;";
+   styleSheet += "  letter-spacing: 1.6px;";
+   styleSheet += "  color: rgba(" + tornadoBoxTextColor + ", 250);";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QFrame#tornadoConfirmedBox {";
+   styleSheet += "  border: 1px solid rgba(" + accentColor + ", 235);";
+   styleSheet += "  background-color: rgba(" + tornadoBoxBackground + ", 238);";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QLabel#tornadoConfirmedValue {";
+   styleSheet += "  font-size: 16px;";
+   styleSheet += "  font-weight: 900;";
+   styleSheet += "  letter-spacing: 1.6px;";
+   styleSheet += "  color: rgba(" + tornadoBoxTextColor + ", 250);";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QFrame#detailRow {";
    styleSheet += "  border: 1px solid rgba(" + accentColor + ", 140);";
@@ -1296,8 +1463,6 @@ void WarningBoxWidgetImpl::AddPhenomenonSpecificFields(
    }
    else if (phenomenon == awips::Phenomenon::Tornado)
    {
-      AddSummaryField(
-         "Damage Threat", fields, {"TORNADO DAMAGE THREAT", "DAMAGE THREAT"});
       AddSummaryField("Tornado Threat", fields, {"TORNADO THREAT"});
    }
 }
