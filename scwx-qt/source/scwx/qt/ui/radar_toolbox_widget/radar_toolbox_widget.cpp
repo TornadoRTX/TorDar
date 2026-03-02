@@ -394,21 +394,31 @@ void RadarToolboxWidget::SetCollapsed(bool collapsed)
    {
       setMinimumHeight(0);
       setMaximumHeight(QWIDGETSIZE_MAX);
+      constexpr int kExpandedHeight = 264;
+      constexpr int kBottomInset    = 16;
       const int lineTop = headerContainer_->height() + headerDivider_->height();
-      const int floorY  = (parentWidget() != nullptr) ?
-                             parentWidget()->height() :
-                             (y() + lineTop + collapsedPeek_->height());
-      const int fillHeight = std::max(5, floorY - y() - lineTop);
+
+      int targetY = y();
+      int floorY  = y() + lineTop + collapsedPeek_->height();
+
+      if (parentWidget() != nullptr)
+      {
+         const int parentHeight = parentWidget()->height();
+         const int expandedY =
+            std::max(0, parentHeight - kExpandedHeight - kBottomInset);
+         targetY = expandedY + ((kExpandedHeight * 3) / 4);
+         floorY  = parentHeight;
+      }
+
+      const int fillHeight = std::max(5, floorY - targetY - lineTop);
       collapsedPeek_->setFixedHeight(fillHeight);
 
       setFixedHeight(lineTop + fillHeight);
 
-      // Collapsed state sits slightly lower than expanded state
       if (parentWidget() != nullptr)
       {
          const int x = 16;
-         const int y = std::max(0, parentWidget()->height() - height());
-         move(x, y);
+         move(x, targetY);
       }
    }
    else
