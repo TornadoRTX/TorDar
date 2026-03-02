@@ -243,6 +243,9 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
       QString("font-family: '%1';"
               "font-size: 13px; font-weight: 700; letter-spacing: 0.5px;")
          .arg(QString::fromStdString(p->expirationFontFamily_)));
+   ui->expirationLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+   ui->expirationLabel->setSizePolicy(QSizePolicy::Preferred,
+                                      QSizePolicy::Fixed);
    ui->expirationLabel->setContentsMargins(0, 0, 0, 0);
    ui->viewEasTextButton->setText("VIEW FULL EAS TEXT");
    ui->closeButton->setText("x");
@@ -564,8 +567,8 @@ void WarningBoxWidgetImpl::AddDetailRow(const std::string& label,
    if (label == "Source" && tornadoObserved_)
    {
       auto* sourceGlow = new QGraphicsDropShadowEffect(valueW);
-      sourceGlow->setBlurRadius(12.0);
-      sourceGlow->setColor(QColor(245, 248, 255, 230));
+      sourceGlow->setBlurRadius(7.0);
+      sourceGlow->setColor(QColor(245, 248, 255, 160));
       sourceGlow->setOffset(0.0, 0.0);
       valueW->setGraphicsEffect(sourceGlow);
    }
@@ -1200,13 +1203,22 @@ void WarningBoxWidgetImpl::UpdateExpirationOnly()
    }
 
    self_->ui->expirationLabel->setText(QString::fromStdString(expirationStr));
+   const int expirationHeight =
+      self_->ui->expirationLabel->fontMetrics().height();
+   self_->ui->expirationLabel->setMinimumHeight(expirationHeight);
+   self_->ui->expirationLabel->setMaximumHeight(expirationHeight);
    UpdateProgressVisual(currentKey_, segments.back());
 }
 
 void WarningBoxWidgetImpl::UpdateTitleFont()
 {
-   const int targetWidth = std::max(120, self_->ui->warningTypeLabel->width());
-   QFont     font        = self_->ui->warningTypeLabel->font();
+   const QMargins margins = self_->ui->verticalLayout->contentsMargins();
+   int targetWidth        = self_->width() - margins.left() - margins.right();
+   targetWidth -= self_->ui->closeButton->width();
+   targetWidth -= 2; // topLayout spacing between title block and close button
+   targetWidth = std::max(120, targetWidth);
+
+   QFont font = self_->ui->warningTypeLabel->font();
    font.setFamily(QString::fromStdString(warningTitleFontFamily_));
    font.setWeight(QFont::Bold);
    font.setStyleStrategy(QFont::PreferAntialias);
@@ -1221,6 +1233,8 @@ void WarningBoxWidgetImpl::UpdateTitleFont()
       std::max(finalMetrics.lineSpacing(), textBounds.height());
 
    self_->ui->warningTypeLabel->setFont(font);
+   self_->ui->warningTypeLabel->setMinimumWidth(targetWidth);
+   self_->ui->warningTypeLabel->setMaximumWidth(targetWidth);
    self_->ui->warningTypeLabel->setFixedHeight(titleHeight);
 }
 
