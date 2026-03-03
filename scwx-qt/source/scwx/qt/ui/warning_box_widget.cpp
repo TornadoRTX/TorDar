@@ -657,10 +657,11 @@ bool WarningBoxWidgetImpl::AddSevereTornadoPossibleBox(
 
    QFrame* box = new QFrame(detailsContainer_);
    box->setObjectName("severeTornadoPossibleBox");
-   box->setMinimumHeight(34);
+   box->setMinimumHeight(28);
+   box->setMaximumHeight(28);
 
    QHBoxLayout* layout = new QHBoxLayout(box);
-   layout->setContentsMargins(8, 2, 8, 2);
+   layout->setContentsMargins(8, 0, 8, 0);
    layout->setSpacing(0);
 
    QLabel* label = new QLabel("TORNADO POSSIBLE", box);
@@ -694,10 +695,11 @@ bool WarningBoxWidgetImpl::AddSevereDamageThreatBox(
 
    QFrame* box = new QFrame(detailsContainer_);
    box->setObjectName("severeDamageThreatBox");
-   box->setMinimumHeight(34);
+   box->setMinimumHeight(28);
+   box->setMaximumHeight(28);
 
    QHBoxLayout* layout = new QHBoxLayout(box);
-   layout->setContentsMargins(8, 2, 8, 2);
+   layout->setContentsMargins(8, 0, 8, 0);
    layout->setSpacing(0);
 
    const QString text =
@@ -755,10 +757,11 @@ bool WarningBoxWidgetImpl::AddTornadoDamageThreatBox(
 
    QFrame* box = new QFrame(detailsContainer_);
    box->setObjectName("tornadoDamageThreatBox");
-   box->setMinimumHeight(34);
+   box->setMinimumHeight(28);
+   box->setMaximumHeight(28);
 
    QHBoxLayout* layout = new QHBoxLayout(box);
-   layout->setContentsMargins(8, 2, 8, 2);
+   layout->setContentsMargins(8, 0, 8, 0);
    layout->setSpacing(0);
 
    QLabel* label = new QLabel(QString::fromStdString(text), box);
@@ -795,10 +798,11 @@ bool WarningBoxWidgetImpl::AddTornadoConfirmedBox()
 
    QFrame* box = new QFrame(detailsContainer_);
    box->setObjectName("tornadoConfirmedBox");
-   box->setMinimumHeight(34);
+   box->setMinimumHeight(28);
+   box->setMaximumHeight(28);
 
    QHBoxLayout* layout = new QHBoxLayout(box);
-   layout->setContentsMargins(8, 2, 8, 2);
+   layout->setContentsMargins(8, 0, 8, 0);
    layout->setSpacing(0);
 
    QLabel* label = new QLabel("TORNADO CONFIRMED", box);
