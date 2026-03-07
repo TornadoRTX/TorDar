@@ -175,6 +175,10 @@ static const std::unordered_map<MapProvider, MapProviderInfo> mapProviderInfo_ {
           {.name_ {"Topo Dark"},
            .url_ {"https://api.maptiler.com/maps/topo-v2-dark/style.json"},
            .drawBelow_ {"aeroway_runway", "Runway"}},
+          {.name_ {"TorDar Classic (v2)"},
+           .url_ {"https://api.maptiler.com/maps/019c9288-f53c-7f5c-89cd-"
+                  "f7f73a52b823/style.json"},
+           .drawBelow_ {"Railway tunnel"}},
           {.name_ {"Winter"},
            .url_ {"https://api.maptiler.com/maps/winter-v2/style.json"},
            .drawBelow_ {"aeroway_runway", "Aeroway"}}}}},
