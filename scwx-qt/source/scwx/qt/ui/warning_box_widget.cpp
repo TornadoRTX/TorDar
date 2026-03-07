@@ -198,7 +198,7 @@ public:
    QWidget*                                   detailsContainer_ {nullptr};
    QVBoxLayout*                               detailsLayout_ {nullptr};
    std::string  warningTitleFontFamily_ {"Rajdhani"};
-   std::string  expirationFontFamily_ {"AlegreyaSans-ExtraBold"};
+   std::string  expirationFontFamily_ {"IBMPlexMono-SemiBold"};
    std::string  monoFontFamily_ {"RobotoMono-Regular"};
    std::string  areaSourceLabelFontFamily_ {"AlegreyaSans-ExtraBold"};
    std::string  areaSourceValueFontFamily_ {"Rajdhani"};
@@ -222,7 +222,7 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    LoadFontFamily(":/res/fonts/Rajdhani-Bold.ttf",
                   p->warningTitleFontFamily_.c_str());
    p->expirationFontFamily_ = LoadFontFamily(
-      ":/res/fonts/AlegreyaSans-ExtraBold.ttf", "AlegreyaSans-ExtraBold");
+      ":/res/fonts/IBMPlexMono-SemiBold.ttf", "IBMPlexMono-SemiBold");
    p->monoFontFamily_ = LoadFontFamily(":/res/fonts/RobotoMono-Regular.ttf",
                                        "RobotoMono-Regular");
    p->areaSourceLabelFontFamily_ = LoadFontFamily(
@@ -1272,7 +1272,7 @@ void WarningBoxWidgetImpl::AdjustHeightToContents()
       self_->resize(fixedWidth_, self_->height());
    }
 
-   self_->ui->scrollArea->setMinimumHeight(40);
+   self_->ui->scrollArea->setMinimumHeight(20);
    self_->ui->scrollArea->setMaximumHeight(QWIDGETSIZE_MAX);
    self_->ui->scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 
@@ -1281,9 +1281,9 @@ void WarningBoxWidgetImpl::AdjustHeightToContents()
    detailsContainer_->adjustSize();
    detailsContainer_->updateGeometry();
 
-   static constexpr int kExtraBottomSpace = 8;
-   static constexpr int kMinBoxHeight     = 220;
-   static constexpr int kMinDetailsHeight = 40;
+   static constexpr int kExtraBottomSpace = 2;
+   static constexpr int kMinBoxHeight     = 0;
+   static constexpr int kMinDetailsHeight = 20;
    static constexpr int kParentPaddingY   = 24;
 
    int maxHeight = std::max(kMinBoxHeight, self_->sizeHint().height());
