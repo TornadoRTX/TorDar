@@ -99,6 +99,17 @@ public:
                               uuid != currentMessageUuid_)
                           {
                              PopulateFromWarning(key);
+                             QTimer::singleShot(0,
+                                                self_,
+                                                [this]()
+                                                {
+                                                   if (self_->isVisible())
+                                                   {
+                                                      AdjustHeightToContents();
+                                                      UpdateTitleFont();
+                                                      UpdateExpirationOnly();
+                                                   }
+                                                });
                           }
                        });
 
@@ -875,17 +886,20 @@ void WarningBoxWidgetImpl::ApplyTheme(
 {
    static_cast<void>(segment);
    std::string accentColor = "197, 37, 48";
-   bool        isSevere    = false;
-   bool        isTornado   = false;
+   std::string cornerGlowColor {"197, 37, 48"};
+   bool        isSevere  = false;
+   bool        isTornado = false;
 
    if (key.phenomenon_ == awips::Phenomenon::SevereThunderstorm)
    {
       // Keep yellow for severe styling, but use a subtler tone.
-      accentColor = "191, 151, 58";
-      isSevere    = true;
+      accentColor     = "191, 151, 58";
+      cornerGlowColor = "47, 40, 39"; // #2f2827
+      isSevere        = true;
    }
    else if (key.phenomenon_ == awips::Phenomenon::Tornado)
    {
+      cornerGlowColor = "61, 19, 24"; // #3d1318
       if (tornadoStyle_ == TornadoStyle::Emergency)
       {
          accentColor = "218, 86, 155";
@@ -944,12 +958,14 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "QWidget#WarningBoxWidget {";
    styleSheet +=
       "  background-color: qradialgradient("
-      "cx:1.0, cy:0.0, radius:1.10, fx:1.0, fy:0.0, "
+      "cx:1.0, cy:0.0, radius:1.35, fx:1.0, fy:0.0, "
       "stop:0 rgba(" +
-      accentColor +
-      ", 105), "
-      "stop:0.20 rgba(12, 12, 16, 238), "
-      "stop:0.34 rgba(0, 2, 26, 255), "
+      cornerGlowColor +
+      ", 250), "
+      "stop:0.38 rgba(" +
+      cornerGlowColor +
+      ", 155), "
+      "stop:0.60 rgba(0, 2, 26, 255), "
       "stop:1 rgba(0, 2, 26, 255));";
    styleSheet += "  border: 1px solid rgba(" + accentColor + ", 220);";
    styleSheet += "  border-radius: 6px;";
