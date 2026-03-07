@@ -961,10 +961,10 @@ void WarningBoxWidgetImpl::ApplyTheme(
       "cx:1.0, cy:0.0, radius:1.35, fx:1.0, fy:0.0, "
       "stop:0 rgba(" +
       cornerGlowColor +
-      ", 5), "
+      ", 250), "
       "stop:0.38 rgba(" +
       cornerGlowColor +
-      ", 3), "
+      ", 255), "
       "stop:0.60 rgba(0, 2, 26, 255), "
       "stop:1 rgba(0, 2, 26, 255));";
    styleSheet += "  border: 1px solid rgba(" + accentColor + ", 220);";
