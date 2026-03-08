@@ -336,6 +336,7 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    p->detailsLayout_    = new QVBoxLayout(p->detailsContainer_);
    p->detailsLayout_->setContentsMargins(0, 0, 0, 0);
    p->detailsLayout_->setSpacing(4);
+   p->detailsLayout_->setAlignment(Qt::AlignTop);
    ui->scrollArea->setWidget(p->detailsContainer_);
    ui->scrollArea->setWidgetResizable(true);
 
@@ -529,7 +530,6 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
    AddSummaryField("Source", fields, {"SOURCE"});
    AddPhenomenonSpecificFields(key.phenomenon_, fields);
 
-   detailsLayout_->addStretch();
    AdjustHeightToContents();
 }
 
@@ -887,26 +887,33 @@ void WarningBoxWidgetImpl::ApplyTheme(
    static_cast<void>(segment);
    std::string accentColor = "197, 37, 48";
    std::string cornerGlowColor {"197, 37, 48"};
+   std::string transitionGlowColor {"40, 24, 32"};
    bool        isSevere  = false;
    bool        isTornado = false;
 
    if (key.phenomenon_ == awips::Phenomenon::SevereThunderstorm)
    {
       // Keep yellow for severe styling, but use a subtler tone.
-      accentColor     = "191, 151, 58";
-      cornerGlowColor = "47, 40, 39"; // #2f2827
-      isSevere        = true;
+      accentColor         = "191, 151, 58";
+      cornerGlowColor     = "47, 40, 39"; // #2f2827
+      transitionGlowColor = "68, 55, 40";
+      isSevere            = true;
    }
    else if (key.phenomenon_ == awips::Phenomenon::Tornado)
    {
-      cornerGlowColor = "61, 19, 24"; // #3d1318
+      cornerGlowColor     = "54, 20, 20"; // #361414 (normal tornado)
+      transitionGlowColor = "78, 34, 34";
       if (tornadoStyle_ == TornadoStyle::Emergency)
       {
-         accentColor = "218, 86, 155";
+         accentColor         = "218, 86, 155";
+         cornerGlowColor     = "102, 19, 91"; // #66135b
+         transitionGlowColor = "130, 45, 115";
       }
       else if (tornadoStyle_ == TornadoStyle::Pds)
       {
-         accentColor = "116, 61, 194";
+         accentColor         = "116, 61, 194";
+         cornerGlowColor     = "60, 20, 87"; // #3c1457
+         transitionGlowColor = "90, 45, 120";
       }
       else
       {
@@ -962,10 +969,12 @@ void WarningBoxWidgetImpl::ApplyTheme(
       "stop:0 rgba(" +
       cornerGlowColor +
       ", 250), "
-      "stop:0.24 rgba(" +
+      "stop:0.18 rgba(" +
       cornerGlowColor +
       ", 255), "
-      "stop:0.40 rgba(22, 16, 21, 255), "
+      "stop:0.38 rgba(" +
+      transitionGlowColor +
+      ", 255), "
       "stop:0.60 rgba(0, 2, 26, 255), "
       "stop:1 rgba(0, 2, 26, 255));";
    styleSheet += "  border: 1px solid rgba(" + accentColor + ", 220);";
