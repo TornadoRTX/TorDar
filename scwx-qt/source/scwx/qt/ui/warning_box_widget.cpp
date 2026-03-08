@@ -901,8 +901,8 @@ void WarningBoxWidgetImpl::ApplyTheme(
    }
    else if (key.phenomenon_ == awips::Phenomenon::Tornado)
    {
-      cornerGlowColor     = "54, 20, 20"; // #361414 (normal tornado)
-      transitionGlowColor = "78, 34, 34";
+      cornerGlowColor     = "60, 16, 32"; // normal tornado: deep red-magenta
+      transitionGlowColor = "92, 24, 56";
       if (tornadoStyle_ == TornadoStyle::Emergency)
       {
          accentColor         = "218, 86, 155";
@@ -965,17 +965,21 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "QWidget#WarningBoxWidget {";
    styleSheet +=
       "  background-color: qradialgradient("
-      "cx:1.0, cy:0.0, radius:1.35, fx:1.0, fy:0.0, "
+      "cx:1.0, cy:0.0, radius:0.34, fx:1.0, fy:0.0, "
       "stop:0 rgba(" +
       cornerGlowColor +
       ", 250), "
-      "stop:0.18 rgba(" +
+      "stop:0.22 rgba(" +
       cornerGlowColor +
-      ", 255), "
-      "stop:0.38 rgba(" +
+      ", 210), "
+      "stop:0.36 rgba(" +
       transitionGlowColor +
-      ", 255), "
-      "stop:0.60 rgba(0, 2, 26, 255), "
+      ", 170), "
+      "stop:0.48 rgba(42, 20, 36, 130), "
+      "stop:0.60 rgba(" +
+      transitionGlowColor +
+      ", 90), "
+      "stop:0.72 rgba(0, 2, 26, 255), "
       "stop:1 rgba(0, 2, 26, 255));";
    styleSheet += "  border: 1px solid rgba(" + accentColor + ", 220);";
    styleSheet += "  border-radius: 6px;";
