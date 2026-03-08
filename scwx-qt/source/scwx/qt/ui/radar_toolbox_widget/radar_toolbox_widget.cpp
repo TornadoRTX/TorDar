@@ -298,6 +298,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
       "  border-radius: 18px;"
       "}"
       "#RadarToolboxFloatingPanel[collapsed=\"true\"] {"
+      "  border-bottom: none;"
       "  border-bottom-left-radius: 0px;"
       "  border-bottom-right-radius: 0px;"
       "}"
