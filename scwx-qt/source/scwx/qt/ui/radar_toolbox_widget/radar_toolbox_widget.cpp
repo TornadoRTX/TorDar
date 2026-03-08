@@ -13,6 +13,7 @@
 #include <QPushButton>
 #include <QScrollArea>
 #include <QShowEvent>
+#include <QStyle>
 #include <QVBoxLayout>
 #include <QWidget>
 #include <algorithm>
@@ -80,7 +81,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    }
 
    rootLayout_ = new QVBoxLayout(this);
-   rootLayout_->setContentsMargins(5, 5, 5, 5);
+   rootLayout_->setContentsMargins(2, 2, 2, 2);
    rootLayout_->setSpacing(0);
 
    // -------------------------
@@ -169,12 +170,12 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 
    headerDivider_ = new QWidget(this);
    headerDivider_->setObjectName("RadarToolboxHeaderDivider");
-   headerDivider_->setFixedHeight(5);
+   headerDivider_->setFixedHeight(2);
    rootLayout_->addWidget(headerDivider_);
 
    collapsedPeek_ = new QWidget(this);
    collapsedPeek_->setObjectName("RadarToolboxCollapsedPeek");
-   collapsedPeek_->setFixedHeight(5);
+   collapsedPeek_->setFixedHeight(2);
    rootLayout_->addWidget(collapsedPeek_);
 
    bodyContainer_ = new QWidget(this);
@@ -293,8 +294,12 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    setStyleSheet(
       "#RadarToolboxFloatingPanel {"
       "  background: #000000;"
-      "  border: 5px solid #f2f2f2;"
+      "  border: 2px solid #f2f2f2;"
       "  border-radius: 18px;"
+      "}"
+      "#RadarToolboxFloatingPanel[collapsed=\"true\"] {"
+      "  border-bottom-left-radius: 0px;"
+      "  border-bottom-right-radius: 0px;"
       "}"
       "#RadarToolboxHeader {"
       "  min-height: 42px;"
@@ -413,6 +418,8 @@ void RadarToolboxWidget::SetCollapsed(bool collapsed)
       constexpr int kExpandedHeight = 264;
       constexpr int kBottomInset    = 16;
       const int lineTop = headerContainer_->height() + headerDivider_->height();
+      const int frameExtra = rootLayout_->contentsMargins().top() +
+                             rootLayout_->contentsMargins().bottom();
 
       int targetY = y();
       int floorY  = y() + lineTop + collapsedPeek_->height();
@@ -426,10 +433,11 @@ void RadarToolboxWidget::SetCollapsed(bool collapsed)
          floorY  = parentHeight;
       }
 
-      const int fillHeight = std::max(5, floorY - targetY - lineTop);
+      const int fillHeight =
+         std::max(2, floorY - targetY - lineTop - frameExtra);
       collapsedPeek_->setFixedHeight(fillHeight);
 
-      setFixedHeight(lineTop + fillHeight);
+      setFixedHeight(lineTop + fillHeight + frameExtra);
 
       if (parentWidget() != nullptr)
       {
@@ -439,9 +447,13 @@ void RadarToolboxWidget::SetCollapsed(bool collapsed)
    }
    else
    {
-      collapsedPeek_->setFixedHeight(5);
+      collapsedPeek_->setFixedHeight(2);
       setFixedHeight(264);
    }
+
+   setProperty("collapsed", collapsed_);
+   style()->unpolish(this);
+   style()->polish(this);
 
    if (!collapsed_)
    {
