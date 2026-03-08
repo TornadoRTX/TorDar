@@ -80,7 +80,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    }
 
    rootLayout_ = new QVBoxLayout(this);
-   rootLayout_->setContentsMargins(0, 0, 0, 0);
+   rootLayout_->setContentsMargins(5, 5, 5, 5);
    rootLayout_->setSpacing(0);
 
    // -------------------------
@@ -151,10 +151,18 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
       playbackLayout->addWidget(btn);
    }
 
-   headerLayout->addWidget(titleLabel_);
-   headerLayout->addStretch(1);
-   headerLayout->addWidget(collapseButton_, 0, Qt::AlignVCenter);
-   headerLayout->addStretch(1);
+   auto* centerToggleContainer = new QWidget(headerContainer_);
+   auto* centerToggleLayout    = new QHBoxLayout(centerToggleContainer);
+   centerToggleLayout->setContentsMargins(0, 0, 0, 0);
+   centerToggleLayout->setSpacing(0);
+   centerToggleLayout->addStretch(1);
+   centerToggleLayout->addWidget(collapseButton_, 0, Qt::AlignVCenter);
+   centerToggleLayout->addStretch(1);
+   centerToggleContainer->setSizePolicy(QSizePolicy::Expanding,
+                                        QSizePolicy::Preferred);
+
+   headerLayout->addWidget(titleLabel_, 0, Qt::AlignVCenter);
+   headerLayout->addWidget(centerToggleContainer, 1);
    headerLayout->addWidget(playbackRow_, 0, Qt::AlignVCenter);
 
    rootLayout_->addWidget(headerContainer_);
@@ -171,6 +179,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 
    bodyContainer_ = new QWidget(this);
    bodyContainer_->setObjectName("RadarToolboxBody");
+   bodyContainer_->setAttribute(Qt::WA_StyledBackground, true);
    auto* bodyLayout = new QVBoxLayout(bodyContainer_);
    bodyLayout->setContentsMargins(12, 12, 12, 12);
    bodyLayout->setSpacing(0);
@@ -187,6 +196,7 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
 
    scrollContents_ = new QWidget(scrollArea_);
    scrollContents_->setObjectName("RadarToolboxScrollContents");
+   scrollContents_->setAttribute(Qt::WA_StyledBackground, true);
    scrollContents_->setSizePolicy(QSizePolicy::Expanding,
                                   QSizePolicy::Preferred);
 
@@ -304,12 +314,18 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
       "}"
       "#RadarToolboxBody {"
       "  background: #000000;"
+      "  border-bottom-left-radius: 15px;"
+      "  border-bottom-right-radius: 15px;"
       "}"
       "#RadarToolboxScrollArea {"
       "  background: #000000;"
+      "  border-bottom-left-radius: 15px;"
+      "  border-bottom-right-radius: 15px;"
       "}"
       "#RadarToolboxScrollContents {"
       "  background: #000000;"
+      "  border-bottom-left-radius: 15px;"
+      "  border-bottom-right-radius: 15px;"
       "}"
       "#RadarToolboxCollapsedPeek {"
       "  background: #000000;"
