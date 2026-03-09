@@ -921,6 +921,8 @@ void WarningBoxWidgetImpl::ApplyTheme(
       }
       isTornado = true;
    }
+   const bool isBaseTornado = (key.phenomenon_ == awips::Phenomenon::Tornado &&
+                               tornadoStyle_ == TornadoStyle::Normal);
 
    std::string tornadoBoxBackground = "62, 20, 20";
    std::string tornadoBoxTextColor  = "255, 232, 232";
@@ -963,22 +965,51 @@ void WarningBoxWidgetImpl::ApplyTheme(
 
    std::string styleSheet;
    styleSheet += "QWidget#WarningBoxWidget {";
-   styleSheet +=
-      "  background-color: qradialgradient("
-      "cx:1.0, cy:0.0, radius:0.75, fx:1.0, fy:0.0, "
-      "stop:0 rgba(" +
-      cornerGlowColor +
-      ", 255), "
-      "stop:0.16 rgba(" +
-      transitionGlowColor +
-      ", 255), "
-      "stop:0.30 rgba(" +
-      transitionGlowColor +
-      ", 255), "
-      "stop:0.42 rgba(30, 16, 28, 255), "
-      "stop:0.56 rgba(0, 2, 26, 255), "
-      "stop:0.68 rgba(0, 2, 26, 255), "
-      "stop:1 rgba(0, 2, 26, 255));";
+   if (isBaseTornado)
+   {
+      styleSheet +=
+         "  background-color: qradialgradient("
+         "cx:1.0, cy:0.0, radius:0.88, fx:1.0, fy:0.0, "
+         "stop:0 rgba(" +
+         cornerGlowColor +
+         ", 255), "
+         "stop:0.25 rgba(43, 17, 32, 255), "
+         "stop:0.50 rgba(41, 17, 32, 255), "
+         "stop:0.75 rgba(30, 12, 30, 255), "
+         "stop:1 rgba(0, 2, 26, 255));";
+   }
+   else if (isSevere)
+   {
+      styleSheet +=
+         "  background-color: qradialgradient("
+         "cx:1.0, cy:0.0, radius:0.88, fx:1.0, fy:0.0, "
+         "stop:0 rgba(" +
+         cornerGlowColor +
+         ", 255), "
+         "stop:0.25 rgba(47, 41, 38, 255), "
+         "stop:0.50 rgba(37, 33, 36, 255), "
+         "stop:0.75 rgba(28, 26, 33, 255), "
+         "stop:1 rgba(0, 2, 26, 255));";
+   }
+   else
+   {
+      styleSheet +=
+         "  background-color: qradialgradient("
+         "cx:1.0, cy:0.0, radius:0.88, fx:1.0, fy:0.0, "
+         "stop:0 rgba(" +
+         cornerGlowColor +
+         ", 255), "
+         "stop:0.20 rgba(" +
+         transitionGlowColor +
+         ", 252), "
+         "stop:0.38 rgba(" +
+         transitionGlowColor +
+         ", 240), "
+         "stop:0.54 rgba(38, 20, 33, 255), "
+         "stop:0.66 rgba(0, 2, 26, 255), "
+         "stop:0.76 rgba(0, 2, 26, 255), "
+         "stop:1 rgba(0, 2, 26, 255));";
+   }
    styleSheet += "  border: 1px solid rgba(" + accentColor + ", 220);";
    styleSheet += "  border-radius: 6px;";
    styleSheet += "}";
