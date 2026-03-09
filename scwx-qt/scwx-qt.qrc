@@ -113,5 +113,8 @@
         <file>res/icons/radar/placeholder.svg</file>
         <file>res/icons/play_button.svg</file>
         <file>res/icons/Square.svg</file>
+        <file>res/fonts/InterTight-Medium.ttf</file>
+        <file>res/fonts/InterTight-SemiBold.ttf</file>
+        <file>res/fonts/InterTight-Regular.ttf</file>
     </qresource>
 </RCC>
