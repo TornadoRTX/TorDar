@@ -14,15 +14,15 @@ namespace scwx::qt::ui
 
 namespace
 {
-QString GetInterTightRegularFontFamily()
+QString GetInterTightBoldFontFamily()
 {
    static QString fontFamily {};
    static bool    loaded {false};
 
    if (!loaded)
    {
-      const int fontId = QFontDatabase::addApplicationFont(
-         ":/res/fonts/InterTight-Regular.ttf");
+      const int fontId =
+         QFontDatabase::addApplicationFont(":/res/fonts/InterTight-Bold.ttf");
 
       if (fontId != -1)
       {
@@ -98,9 +98,9 @@ RadarProductCard::RadarProductCard(const QString& title,
    titleLabel_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
    titleLabel_->setMinimumWidth(0);
    titleLabel_->setProperty("selected", false);
-   QFont titleFont {GetInterTightRegularFontFamily()};
+   QFont titleFont {GetInterTightBoldFontFamily()};
    titleFont.setPixelSize(11);
-   titleFont.setWeight(QFont::Normal);
+   titleFont.setWeight(QFont::Bold);
    titleLabel_->setFont(titleFont);
 
    // -------------------------

@@ -116,5 +116,6 @@
         <file>res/fonts/InterTight-Medium.ttf</file>
         <file>res/fonts/InterTight-SemiBold.ttf</file>
         <file>res/fonts/InterTight-Regular.ttf</file>
+        <file>res/fonts/InterTight-Bold.ttf</file>
     </qresource>
 </RCC>
