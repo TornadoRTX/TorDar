@@ -965,21 +965,19 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "QWidget#WarningBoxWidget {";
    styleSheet +=
       "  background-color: qradialgradient("
-      "cx:1.0, cy:0.0, radius:0.34, fx:1.0, fy:0.0, "
+      "cx:1.0, cy:0.0, radius:0.75, fx:1.0, fy:0.0, "
       "stop:0 rgba(" +
       cornerGlowColor +
-      ", 250), "
-      "stop:0.22 rgba(" +
-      cornerGlowColor +
-      ", 210), "
-      "stop:0.36 rgba(" +
+      ", 255), "
+      "stop:0.16 rgba(" +
       transitionGlowColor +
-      ", 170), "
-      "stop:0.48 rgba(42, 20, 36, 130), "
-      "stop:0.60 rgba(" +
+      ", 255), "
+      "stop:0.30 rgba(" +
       transitionGlowColor +
-      ", 90), "
-      "stop:0.72 rgba(0, 2, 26, 255), "
+      ", 255), "
+      "stop:0.42 rgba(30, 16, 28, 255), "
+      "stop:0.56 rgba(0, 2, 26, 255), "
+      "stop:0.68 rgba(0, 2, 26, 255), "
       "stop:1 rgba(0, 2, 26, 255));";
    styleSheet += "  border: 1px solid rgba(" + accentColor + ", 220);";
    styleSheet += "  border-radius: 6px;";
