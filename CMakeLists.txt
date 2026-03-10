@@ -8,7 +8,7 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET 12.0)
 scwx_python_setup()
 
 project(${PROJECT_NAME}
-        VERSION      0.5.4
+        VERSION      0.5.5
         DESCRIPTION  "Supercell Wx is a free, open source advanced weather radar viewer."
         HOMEPAGE_URL "https://github.com/dpaulat/supercell-wx"
         LANGUAGES    C CXX)
@@ -32,12 +32,9 @@ set_property(DIRECTORY
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_ALL_NO_LIB")
 
 set(SCWX_DIR ${PROJECT_SOURCE_DIR})
-set(SCWX_VERSION "0.5.4")
+set(SCWX_VERSION "0.5.5")
 
 option(SCWX_ADDRESS_SANITIZER "Build with Address Sanitizer" OFF)
-
-# Disables MapLibre GL assertions in Debug builds
-add_compile_definitions($<$<CONFIG:Debug>:MBGL_DISABLE_ASSERTIONS>)
 
 add_subdirectory(external)
 add_subdirectory(wxdata)
