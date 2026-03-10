@@ -45,18 +45,23 @@
 #include <scwx/util/logger.hpp>
 #include <scwx/util/time.hpp>
 
+#include <algorithm>
 #include <set>
 
 #include <boost/asio/post.hpp>
 #include <boost/asio/thread_pool.hpp>
 #include <QDesktopServices>
+#include <QGuiApplication>
 #include <QKeyEvent>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QScreen>
+#include <QSignalBlocker>
 #include <QSplitter>
 #include <QStandardPaths>
 #include <QTimer>
 #include <QToolButton>
+#include <QWindow>
 
 namespace scwx::qt::main
 {
@@ -90,16 +95,9 @@ public:
        updateManager_ {manager::UpdateManager::Instance()},
        maps_ {}
    {
-      mapProvider_ = map::GetMapProvider(
-         settings::GeneralSettings::Instance().map_provider().GetValue());
-      const map::MapProviderInfo& mapProviderInfo =
-         map::GetMapProviderInfo(mapProvider_);
-
       std::string appDataPath {
          QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)
             .toStdString()};
-      std::string cacheDbPath {appDataPath + "/" +
-                               mapProviderInfo.cacheDbName_};
 
       if (!std::filesystem::exists(appDataPath))
       {
@@ -111,35 +109,25 @@ public:
          }
       }
 
-      std::string mapProviderApiKey = map::GetMapProviderApiKey(mapProvider_);
-
-      if (mapProvider_ == map::MapProvider::Mapbox)
-      {
-         settings_.setProviderTemplate(mapProviderInfo.providerTemplate_);
-         settings_.setApiKey(QString {mapProviderApiKey.c_str()});
-      }
-      settings_.setCacheDatabasePath(QString {cacheDbPath.c_str()});
-      settings_.setCacheDatabaseMaximumSize(20 * 1024 * 1024);
+      mapProvider_ = map::GetMapProvider(
+         settings::GeneralSettings::Instance().map_provider().GetValue());
+      map::ConfigureMapSettings(mapProvider_, settings_);
 
       if (settings::GeneralSettings::Instance().track_location().GetValue())
       {
          positionManager_->TrackLocation(true);
       }
    }
+
    ~MainWindowImpl()
    {
       homeRadarConnection_.disconnect();
+      clockFormatConnection_.disconnect();
       defaultTimeZoneConnection_.disconnect();
-
-      auto& generalSettings = settings::GeneralSettings::Instance();
-
-      auto& customStyleUrl       = generalSettings.custom_style_url();
-      auto& customStyleDrawLayer = generalSettings.custom_style_draw_layer();
-
-      customStyleUrl.UnregisterValueChangedCallback(
-         customStyleUrlChangedCallbackUuid_);
-      customStyleDrawLayer.UnregisterValueChangedCallback(
-         customStyleDrawLayerChangedCallbackUuid_);
+      for (auto& connection : connections_)
+      {
+         connection.disconnect();
+      }
 
       clockTimer_.stop();
       threadPool_.join();
@@ -211,9 +199,14 @@ public:
 
    QTimer clockTimer_ {};
 
-   bool               customStyleAvailable_ {false};
-   boost::uuids::uuid customStyleDrawLayerChangedCallbackUuid_ {};
-   boost::uuids::uuid customStyleUrlChangedCallbackUuid_ {};
+   bool customStyleAvailable_ {false};
+
+   std::vector<boost::signals2::scoped_connection> connections_ {};
+
+#ifdef Q_OS_WIN
+   QRect            priorFullScreenGeometry_ {};
+   Qt::WindowStates priorFullScreenWindowState_ {};
+#endif
 
    std::shared_ptr<manager::AlertManager>  alertManager_;
    std::shared_ptr<manager::HotkeyManager> hotkeyManager_ {
@@ -692,6 +685,49 @@ void MainWindow::on_actionDumpRadarProductRecords_triggered()
    manager::RadarProductManager::DumpRecords();
 }
 
+void MainWindow::on_actionFullScreen_triggered(bool checked)
+{
+   if (checked)
+   {
+#ifdef Q_OS_WIN
+      // On Windows, showFullScreen() with QOpenGLWidgets breaks dropdown menus.
+      // Use a frameless window covering the screen geometry as a workaround.
+      p->priorFullScreenWindowState_ = windowState();
+      p->priorFullScreenGeometry_    = geometry();
+      setWindowFlag(Qt::FramelessWindowHint, true);
+      QScreen* screen = windowHandle() ? windowHandle()->screen() : nullptr;
+      if (screen == nullptr)
+      {
+         screen = QGuiApplication::primaryScreen();
+      }
+      if (screen != nullptr)
+      {
+         setGeometry(screen->geometry());
+      }
+      show();
+#else
+      showFullScreen();
+#endif
+   }
+   else
+   {
+#ifdef Q_OS_WIN
+      setWindowFlag(Qt::FramelessWindowHint, false);
+      if (p->priorFullScreenWindowState_ & Qt::WindowMaximized)
+      {
+         showMaximized();
+      }
+      else
+      {
+         showNormal();
+         setGeometry(p->priorFullScreenGeometry_);
+      }
+#else
+      setWindowState(windowState() & ~Qt::WindowFullScreen);
+#endif
+   }
+}
+
 void MainWindow::on_actionRadarWireframe_triggered(bool checked)
 {
    p->activeMap_->SetRadarWireframeEnabled(checked);
@@ -858,29 +894,38 @@ void MainWindowImpl::ConfigureMapStyles()
 
    for (std::size_t i = 0; i < maps_.size(); i++)
    {
-      std::string styleName = mapSettings.map_style(i).GetValue();
+      const std::string configuredStyleName =
+         mapSettings.map_style(i).GetValue();
+      std::string styleName = configuredStyleName;
 
-      if ((customStyleAvailable_ && styleName == "Custom") ||
-          std::find_if(mapProviderInfo.mapStyles_.cbegin(),
-                       mapProviderInfo.mapStyles_.cend(),
-                       [&](const auto& mapStyle)
-                       { return mapStyle.name_ == styleName; }) !=
-             mapProviderInfo.mapStyles_.cend())
+      if (!((customStyleAvailable_ && styleName == "Custom") ||
+            styleName == "None" ||
+            std::ranges::find_if(mapProviderInfo.mapStyles_,
+                                 [&](const auto& mapStyle)
+                                 { return mapStyle.name_ == styleName; }) !=
+               mapProviderInfo.mapStyles_.cend()))
       {
-         // Initialize map style from settings
-         maps_.at(i)->SetInitialMapStyle(styleName);
-
-         // Update the active map's style
-         if (maps_[i] == activeMap_)
-         {
-            UpdateMapStyle(styleName);
-         }
+         styleName = !mapProviderInfo.mapStyles_.empty() ?
+                        mapProviderInfo.mapStyles_.at(0).name_ :
+                        "None";
       }
-      else if (!mapProviderInfo.mapStyles_.empty())
+
+      const std::string currentStyleName = maps_.at(i)->GetMapStyle();
+      if (currentStyleName != "?")
       {
-         // Stage first valid map style from map provider
-         mapSettings.map_style(i).StageValue(
-            mapProviderInfo.mapStyles_.at(0).name_);
+         styleName = currentStyleName;
+      }
+
+      maps_.at(i)->SetInitialMapStyle(styleName);
+
+      if (maps_[i] == activeMap_)
+      {
+         UpdateMapStyle(styleName);
+      }
+
+      if (configuredStyleName != styleName)
+      {
+         mapSettings.map_style(i).StageValue(styleName);
       }
    }
 }
@@ -1135,6 +1180,16 @@ void MainWindowImpl::ConnectAnimationSignals()
 
 void MainWindowImpl::ConnectOtherSignals()
 {
+   connect(hotkeyManager_.get(),
+           &manager::HotkeyManager::HotkeyPressed,
+           mainWindow_,
+           [this](types::Hotkey hotkey, bool /*isAutoRepeat*/)
+           {
+              if (hotkey == types::Hotkey::ToggleFullScreen)
+              {
+                 mainWindow_->ui->actionFullScreen->trigger();
+              }
+           });
    connect(qApp,
            &QApplication::focusChanged,
            mainWindow_,
@@ -1339,14 +1394,11 @@ void MainWindowImpl::ConnectOtherSignals()
    auto& generalSettings = settings::GeneralSettings::Instance();
    homeRadarConnection_ =
       generalSettings.default_radar_site().changed_signal().connect(
-         [this]()
+         [this](const auto& event)
          {
             const std::shared_ptr<config::RadarSite> radarSite =
                activeMap_->GetRadarSite();
-            const std::string homeRadarSite =
-               settings::GeneralSettings::Instance()
-                  .default_radar_site()
-                  .GetValue();
+            const std::string& homeRadarSite = event.newValue_;
             if (radarSite == nullptr)
             {
                mainWindow_->ui->saveRadarProductsButton->setVisible(false);
@@ -1360,20 +1412,35 @@ void MainWindowImpl::ConnectOtherSignals()
 
    clockFormatConnection_ =
       generalSettings.clock_format().changed_signal().connect(
-         []()
+         [](const auto& event)
          {
-            auto& generalSettings = settings::GeneralSettings::Instance();
             util::time::set_default_clock_format(
-               util::GetClockFormat(generalSettings.clock_format().GetValue()));
+               util::GetClockFormat(event.newValue_));
          });
    defaultTimeZoneConnection_ =
       generalSettings.default_time_zone().changed_signal().connect(
-         [this]()
+         [this](auto&&...)
          {
             const auto defaultTimeZone = activeMap_->GetDefaultTimeZone();
             util::time::set_current_time_zone(defaultTimeZone);
             animationDockWidget_->UpdateTimeZone(defaultTimeZone);
          });
+
+   connections_.emplace_back(
+      generalSettings.custom_style_url().changed_signal().connect(
+         [this](auto&&...) { PopulateCustomMapStyle(); }));
+   connections_.emplace_back(
+      generalSettings.custom_style_draw_layer().changed_signal().connect(
+         [this](auto&&...) { PopulateCustomMapStyle(); }));
+
+   connections_.emplace_back(
+      generalSettings.map_provider().changed_signal().connect(
+         [this](const auto& event)
+         {
+            mapProvider_ = map::GetMapProvider(event.newValue_);
+            PopulateMapStyles();
+            ConfigureMapStyles();
+         }));
 
    // Ensure default clock format is initialized
    util::time::set_default_clock_format(
@@ -1493,6 +1560,10 @@ void MainWindowImpl::PopulateCustomMapStyle()
 
 void MainWindowImpl::PopulateMapStyles()
 {
+   const QSignalBlocker blocker(mainWindow_->ui->mapStyleComboBox);
+
+   mainWindow_->ui->mapStyleComboBox->clear();
+
    const auto& mapProviderInfo = map::GetMapProviderInfo(mapProvider_);
    for (const auto& mapStyle : mapProviderInfo.mapStyles_)
    {
@@ -1500,19 +1571,11 @@ void MainWindowImpl::PopulateMapStyles()
          QString::fromStdString(mapStyle.name_));
    }
 
-   auto& generalSettings = settings::GeneralSettings::Instance();
+   const std::string kNone = "None";
+   mainWindow_->ui->mapStyleComboBox->addItem(QString::fromStdString(kNone));
 
-   auto& customStyleUrl       = generalSettings.custom_style_url();
-   auto& customStyleDrawLayer = generalSettings.custom_style_draw_layer();
-
-   customStyleUrlChangedCallbackUuid_ =
-      customStyleUrl.RegisterValueChangedCallback(
-         [this]([[maybe_unused]] const std::string& value)
-         { PopulateCustomMapStyle(); });
-   customStyleDrawLayerChangedCallbackUuid_ =
-      customStyleDrawLayer.RegisterValueChangedCallback(
-         [this]([[maybe_unused]] const std::string& value)
-         { PopulateCustomMapStyle(); });
+   // The combobox was cleared above, so force re-evaluation of custom style.
+   customStyleAvailable_ = false;
 
    PopulateCustomMapStyle();
 }
@@ -1598,6 +1661,7 @@ void MainWindowImpl::UpdateMapStyle(const std::string& styleName)
       QString::fromStdString(styleName));
    if (index != -1)
    {
+      const QSignalBlocker blocker(mainWindow_->ui->mapStyleComboBox);
       mainWindow_->ui->mapStyleComboBox->setCurrentIndex(index);
 
       // Update settings for active map
