@@ -36,6 +36,9 @@ set(SCWX_VERSION "0.5.5")
 
 option(SCWX_ADDRESS_SANITIZER "Build with Address Sanitizer" OFF)
 
+# Disables MapLibre GL assertions in Debug builds
+add_compile_definitions($<$<CONFIG:Debug>:MBGL_DISABLE_ASSERTIONS>)
+
 add_subdirectory(external)
 add_subdirectory(wxdata)
 add_subdirectory(scwx-qt)
