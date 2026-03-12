@@ -193,6 +193,7 @@ public:
    QFrame*                                    progressTrack_ {nullptr};
    QFrame*                                    progressFill_ {nullptr};
    QFrame*                                    progressSweep_ {nullptr};
+   QFrame*                                    progressMid_ {nullptr};
    int                                        sweepPosition_ {0};
    int                                        fixedWidth_ {0};
    QWidget*                                   detailsContainer_ {nullptr};
@@ -303,6 +304,10 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    p->progressSweep_->setObjectName("progressSweep");
    p->progressSweep_->setFixedSize(68, p->progressTrack_->height());
    p->progressSweep_->move(-p->progressSweep_->width(), 0);
+   p->progressMid_ = new QFrame(p->progressTrack_);
+   p->progressMid_->setObjectName("progressMid");
+   p->progressMid_->setFixedSize(40, 2);
+   p->progressMid_->move(0, (p->progressTrack_->height() - 2) / 2);
    ui->verticalLayout->insertWidget(2, p->progressTrack_);
 
    p->stateBadgeFrame_ = new QFrame(this);
@@ -763,7 +768,7 @@ bool WarningBoxWidgetImpl::AddTornadoDamageThreatBox(
    }
    else if (tornadoStyle_ == TornadoStyle::Emergency)
    {
-      glowColor = QColor(242, 126, 186, 235);
+      glowColor = QColor(255, 0, 255, 235);
    }
 
    QFrame* box = new QFrame(detailsContainer_);
@@ -804,7 +809,7 @@ bool WarningBoxWidgetImpl::AddTornadoConfirmedBox()
    }
    else if (tornadoStyle_ == TornadoStyle::Emergency)
    {
-      glowColor = QColor(242, 126, 186, 235);
+      glowColor = QColor(255, 0, 255, 235);
    }
 
    QFrame* box = new QFrame(detailsContainer_);
@@ -835,7 +840,7 @@ void WarningBoxWidgetImpl::UpdateProgressVisual(
    const std::shared_ptr<const awips::Segment>& segment)
 {
    if (progressTrack_ == nullptr || progressFill_ == nullptr ||
-       progressSweep_ == nullptr)
+       progressSweep_ == nullptr || progressMid_ == nullptr)
    {
       return;
    }
@@ -874,6 +879,13 @@ void WarningBoxWidgetImpl::UpdateProgressVisual(
    fractionElapsed = std::clamp(fractionElapsed, 0.0f, 1.0f);
 
    const int trackWidth = progressTrack_->width();
+   const int midWidth   = progressMid_->width();
+   if (trackWidth > midWidth)
+   {
+      progressMid_->move((trackWidth - midWidth) / 2,
+                         (progressTrack_->height() - progressMid_->height()) /
+                            2);
+   }
    const int fillWidth =
       static_cast<int>(static_cast<float>(trackWidth) * fractionElapsed);
    progressFill_->setGeometry(
@@ -905,9 +917,9 @@ void WarningBoxWidgetImpl::ApplyTheme(
       transitionGlowColor = "92, 24, 56";
       if (tornadoStyle_ == TornadoStyle::Emergency)
       {
-         accentColor         = "218, 86, 155";
-         cornerGlowColor     = "102, 19, 91"; // #66135b
-         transitionGlowColor = "130, 45, 115";
+         accentColor         = "255, 0, 255";
+         cornerGlowColor     = "255, 0, 255"; // #ff00ff
+         transitionGlowColor = "200, 0, 200";
       }
       else if (tornadoStyle_ == TornadoStyle::Pds)
       {
@@ -933,8 +945,8 @@ void WarningBoxWidgetImpl::ApplyTheme(
    }
    else if (tornadoStyle_ == TornadoStyle::Emergency)
    {
-      tornadoBoxBackground = "77, 24, 53";
-      tornadoBoxTextColor  = "255, 232, 244";
+      tornadoBoxBackground = "64, 0, 64";
+      tornadoBoxTextColor  = "255, 230, 255";
    }
 
    if (stateBadgeFrame_ != nullptr)
@@ -1051,14 +1063,18 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "  letter-spacing: 0.8px;";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QFrame#progressTrack {";
-   styleSheet += "  border: 1px solid rgba(" + accentColor + ", 190);";
-   styleSheet += "  background-color: rgba(17, 24, 46, 220);";
+   styleSheet += "  border: none;";
+   styleSheet += "  background-color: transparent;";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QFrame#progressFill {";
    styleSheet += "  background-color: rgba(" + accentColor + ", 255);";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QFrame#progressSweep {";
    styleSheet += "  background-color: rgba(247, 252, 255, 220);";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QFrame#progressMid {";
+   styleSheet += "  background-color: rgba(180, 186, 198, 220);";
+   styleSheet += "  border-radius: 1px;";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QFrame#severeMetricCard {";
    styleSheet += "  border: 1px solid rgba(" + accentColor + ", 160);";
