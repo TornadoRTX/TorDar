@@ -308,7 +308,7 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    p->progressMid_ = new QFrame(p->progressTrack_);
    p->progressMid_->setObjectName("progressMid");
    p->progressMid_->setFixedHeight(2);
-   p->progressMid_->move(0, 6);
+   p->progressMid_->move(0, (p->progressTrack_->height() - 2) / 2);
    p->progressMid_->lower();
    ui->verticalLayout->insertWidget(2, p->progressTrack_);
 
@@ -884,8 +884,9 @@ void WarningBoxWidgetImpl::UpdateProgressVisual(
    const int trackHeight = progressTrack_->height();
    const int fillHeight  = std::max(0, trackHeight - 2);
    progressSweep_->setFixedHeight(fillHeight);
+   const int midHeight = progressMid_->height();
    progressMid_->setGeometry(
-      0, fillHeight, trackWidth, trackHeight - fillHeight);
+      0, (trackHeight - midHeight) / 2, trackWidth, midHeight);
    const int fillWidth =
       static_cast<int>(static_cast<float>(trackWidth) * fractionElapsed);
    progressFill_->setGeometry(0, 0, std::max(0, fillWidth), fillHeight);
