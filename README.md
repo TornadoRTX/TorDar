@@ -1,13 +1,15 @@
 > [!CAUTION]
 > The only official websites that are affilated with TorDar are this GitHub page and TornadoRTX social media. Do not trust any other websites or Social Media accounts that claim to be affilated or have ownership of this fork.
 
+## [Development Update #1](https://github.com/TornadoRTX/TorDar/discussions/37) is now available! 
+
 # TorDar (Tornado Radar)
 
 Tornado Radar (TorDar for short) is currently in devolpment and is a fork of Supercell WX, which is free and open source. TorDar will feature a more modern and updated UI than Supercell WX.
 
 Go check out Supercell WX here: https://github.com/dpaulat/supercell-wx
 
-TorDar will only be available on Windows at launch, but may be fitted to other operating systems at a later date. (Not guaranteed)
+TorDar is now confirmed to be working on all Desktop platforms at launch!
 
 More updates will be shown here for devolpment, as well as a trailer on YouTube once TorDar is ready to be released into Beta.
 
