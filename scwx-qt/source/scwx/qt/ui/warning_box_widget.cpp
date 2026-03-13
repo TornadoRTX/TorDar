@@ -229,6 +229,7 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    p->areaSourceLabelFontFamily_ = LoadFontFamily(
       ":/res/fonts/AlegreyaSans-ExtraBold.ttf", "AlegreyaSans-ExtraBold");
    p->areaSourceValueFontFamily_ = p->warningTitleFontFamily_;
+   LoadFontFamily(":/res/fonts/AlegreyaSans-Black.ttf", "AlegreyaSans-Black");
 
    setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);
    setAttribute(Qt::WA_TranslucentBackground, false);
@@ -1160,6 +1161,7 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "  border: 1px solid rgba(" + accentColor + ", 200);";
    styleSheet += "  background-color: rgba(2, 6, 14, 235);";
    styleSheet += "  color: rgb(248, 251, 255);";
+   styleSheet += "  font-family: 'AlegreyaSans-Black';";
    styleSheet += "  font-size: 14px;";
    styleSheet += "  font-weight: 800;";
    styleSheet += "  letter-spacing: 0.8px;";
