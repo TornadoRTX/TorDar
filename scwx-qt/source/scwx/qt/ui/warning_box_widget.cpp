@@ -306,8 +306,9 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    p->progressSweep_->move(-p->progressSweep_->width(), 0);
    p->progressMid_ = new QFrame(p->progressTrack_);
    p->progressMid_->setObjectName("progressMid");
-   p->progressMid_->setFixedSize(40, 2);
-   p->progressMid_->move(0, (p->progressTrack_->height() - 2) / 2);
+   p->progressMid_->setFixedHeight(2);
+   p->progressMid_->move(0, p->progressTrack_->height());
+   p->progressMid_->lower();
    ui->verticalLayout->insertWidget(2, p->progressTrack_);
 
    p->stateBadgeFrame_ = new QFrame(this);
@@ -879,13 +880,9 @@ void WarningBoxWidgetImpl::UpdateProgressVisual(
    fractionElapsed = std::clamp(fractionElapsed, 0.0f, 1.0f);
 
    const int trackWidth = progressTrack_->width();
-   const int midWidth   = progressMid_->width();
-   if (trackWidth > midWidth)
-   {
-      progressMid_->move((trackWidth - midWidth) / 2,
-                         (progressTrack_->height() - progressMid_->height()) /
-                            2);
-   }
+   const int midHeight  = progressMid_->height();
+   progressMid_->setGeometry(
+      0, progressTrack_->height(), trackWidth, midHeight);
    const int fillWidth =
       static_cast<int>(static_cast<float>(trackWidth) * fractionElapsed);
    progressFill_->setGeometry(
@@ -984,8 +981,11 @@ void WarningBoxWidgetImpl::ApplyTheme(
          "cx:1.0, cy:0.0, radius:0.88, fx:1.0, fy:0.0, "
          "stop:0 rgba(" +
          cornerGlowColor +
-         ", 255), "
+         ", 250), "
          "stop:0.25 rgba(43, 17, 32, 255), "
+         "stop:0.33 rgba(" +
+         cornerGlowColor +
+         ", 250), "
          "stop:0.50 rgba(41, 17, 32, 255), "
          "stop:0.75 rgba(30, 12, 30, 255), "
          "stop:1 rgba(0, 2, 26, 255));";
@@ -997,8 +997,11 @@ void WarningBoxWidgetImpl::ApplyTheme(
          "cx:1.0, cy:0.0, radius:0.88, fx:1.0, fy:0.0, "
          "stop:0 rgba(" +
          cornerGlowColor +
-         ", 255), "
+         ", 250), "
          "stop:0.25 rgba(47, 41, 38, 255), "
+         "stop:0.33 rgba(" +
+         cornerGlowColor +
+         ", 250), "
          "stop:0.50 rgba(37, 33, 36, 255), "
          "stop:0.75 rgba(28, 26, 33, 255), "
          "stop:1 rgba(0, 2, 26, 255));";
@@ -1178,8 +1181,8 @@ void WarningBoxWidgetImpl::ApplyTheme(
    {
       // Severe blueprint tuning: keep compact typography and card treatment.
       styleSheet += "QWidget#WarningBoxWidget QFrame#progressTrack {";
-      styleSheet += "  border: 1px solid rgba(191, 151, 58, 210);";
-      styleSheet += "  background-color: rgba(18, 24, 46, 225);";
+      styleSheet += "  border: none;";
+      styleSheet += "  background-color: transparent;";
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QLabel#stateBadgeLabel {";
       styleSheet += "  font-size: 10px;";
