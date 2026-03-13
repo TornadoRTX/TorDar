@@ -296,19 +296,19 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
 
    p->progressTrack_ = new QFrame(this);
    p->progressTrack_->setObjectName("progressTrack");
-   p->progressTrack_->setFixedHeight(6);
+   p->progressTrack_->setFixedHeight(8);
    p->progressTrack_->setVisible(false);
    p->progressFill_ = new QFrame(p->progressTrack_);
    p->progressFill_->setObjectName("progressFill");
-   p->progressFill_->setGeometry(0, 0, 0, p->progressTrack_->height());
+   p->progressFill_->setGeometry(0, 0, 0, 6);
    p->progressSweep_ = new QFrame(p->progressTrack_);
    p->progressSweep_->setObjectName("progressSweep");
-   p->progressSweep_->setFixedSize(68, p->progressTrack_->height());
+   p->progressSweep_->setFixedSize(68, 6);
    p->progressSweep_->move(-p->progressSweep_->width(), 0);
    p->progressMid_ = new QFrame(p->progressTrack_);
    p->progressMid_->setObjectName("progressMid");
    p->progressMid_->setFixedHeight(2);
-   p->progressMid_->move(0, p->progressTrack_->height());
+   p->progressMid_->move(0, 6);
    p->progressMid_->lower();
    ui->verticalLayout->insertWidget(2, p->progressTrack_);
 
@@ -849,9 +849,9 @@ void WarningBoxWidgetImpl::UpdateProgressVisual(
 
    static_cast<void>(key);
 
-   progressTrack_->setMinimumHeight(6);
-   progressTrack_->setMaximumHeight(6);
-   progressTrack_->setFixedHeight(6);
+   progressTrack_->setMinimumHeight(8);
+   progressTrack_->setMaximumHeight(8);
+   progressTrack_->setFixedHeight(8);
    progressTrack_->setVisible(true);
    if (!sweepTimer_->isActive())
    {
@@ -880,14 +880,15 @@ void WarningBoxWidgetImpl::UpdateProgressVisual(
 
    fractionElapsed = std::clamp(fractionElapsed, 0.0f, 1.0f);
 
-   const int trackWidth = progressTrack_->width();
-   const int midHeight  = progressMid_->height();
+   const int trackWidth  = progressTrack_->width();
+   const int trackHeight = progressTrack_->height();
+   const int fillHeight  = std::max(0, trackHeight - 2);
+   progressSweep_->setFixedHeight(fillHeight);
    progressMid_->setGeometry(
-      0, progressTrack_->height(), trackWidth, midHeight);
+      0, fillHeight, trackWidth, trackHeight - fillHeight);
    const int fillWidth =
       static_cast<int>(static_cast<float>(trackWidth) * fractionElapsed);
-   progressFill_->setGeometry(
-      0, 0, std::max(0, fillWidth), progressTrack_->height());
+   progressFill_->setGeometry(0, 0, std::max(0, fillWidth), fillHeight);
 }
 
 void WarningBoxWidgetImpl::ApplyTheme(
