@@ -115,32 +115,33 @@ public:
 
       sweepTimer_->setSingleShot(false);
       sweepTimer_->setInterval(33);
-      QObject::connect(sweepTimer_,
-                       &QTimer::timeout,
-                       this,
-                       [this]()
-                       {
-                          if (progressTrack_ == nullptr ||
-                              progressSweep_ == nullptr ||
-                              !progressTrack_->isVisible())
-                          {
-                             return;
-                          }
+      QObject::connect(
+         sweepTimer_,
+         &QTimer::timeout,
+         this,
+         [this]()
+         {
+            if (progressTrack_ == nullptr || progressSweep_ == nullptr ||
+                progressSweepGlow_ == nullptr || !progressTrack_->isVisible())
+            {
+               return;
+            }
 
-                          const int trackWidth = progressTrack_->width();
-                          const int sweepWidth = progressSweep_->width();
-                          if (trackWidth <= sweepWidth || sweepWidth <= 0)
-                          {
-                             return;
-                          }
+            const int trackWidth = progressTrack_->width();
+            const int sweepWidth = progressSweep_->width();
+            if (trackWidth <= sweepWidth || sweepWidth <= 0)
+            {
+               return;
+            }
 
-                          sweepPosition_ += 3;
-                          if (sweepPosition_ > trackWidth)
-                          {
-                             sweepPosition_ = -sweepWidth;
-                          }
-                          progressSweep_->move(sweepPosition_, 0);
-                       });
+            sweepPosition_ += 3;
+            if (sweepPosition_ > trackWidth)
+            {
+               sweepPosition_ = -sweepWidth;
+            }
+            progressSweep_->move(sweepPosition_, 0);
+            progressSweepGlow_->move(sweepPosition_ - 3, 0);
+         });
    }
    ~WarningBoxWidgetImpl() = default;
 
@@ -193,6 +194,7 @@ public:
    QFrame*                                    progressTrack_ {nullptr};
    QFrame*                                    progressFill_ {nullptr};
    QFrame*                                    progressSweep_ {nullptr};
+   QFrame*                                    progressSweepGlow_ {nullptr};
    QFrame*                                    progressMid_ {nullptr};
    int                                        sweepPosition_ {0};
    int                                        fixedWidth_ {0};
@@ -305,11 +307,11 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    p->progressSweep_->setObjectName("progressSweep");
    p->progressSweep_->setFixedSize(68, 6);
    p->progressSweep_->move(-p->progressSweep_->width(), 0);
-   auto* sweepGlow = new QGraphicsDropShadowEffect(p->progressSweep_);
-   sweepGlow->setBlurRadius(10.0);
-   sweepGlow->setColor(QColor(255, 255, 255, 140));
-   sweepGlow->setOffset(0.0, 0.0);
-   p->progressSweep_->setGraphicsEffect(sweepGlow);
+   p->progressSweepGlow_ = new QFrame(p->progressTrack_);
+   p->progressSweepGlow_->setObjectName("progressSweepGlow");
+   p->progressSweepGlow_->setFixedSize(74, 8);
+   p->progressSweepGlow_->move(-p->progressSweep_->width() - 3, 0);
+   p->progressSweepGlow_->lower();
    p->progressMid_ = new QFrame(p->progressTrack_);
    p->progressMid_->setObjectName("progressMid");
    p->progressMid_->setFixedHeight(1);
@@ -771,7 +773,7 @@ bool WarningBoxWidgetImpl::AddTornadoDamageThreatBox(
    QColor glowColor {220, 56, 56, 230};
    if (tornadoStyle_ == TornadoStyle::Pds)
    {
-      glowColor = QColor(164, 92, 214, 220);
+      glowColor = QColor(150, 120, 242, 230);
    }
    else if (tornadoStyle_ == TornadoStyle::Emergency)
    {
@@ -812,7 +814,7 @@ bool WarningBoxWidgetImpl::AddTornadoConfirmedBox()
    QColor glowColor {220, 56, 56, 230};
    if (tornadoStyle_ == TornadoStyle::Pds)
    {
-      glowColor = QColor(164, 92, 214, 220);
+      glowColor = QColor(150, 120, 242, 230);
    }
    else if (tornadoStyle_ == TornadoStyle::Emergency)
    {
@@ -945,8 +947,8 @@ void WarningBoxWidgetImpl::ApplyTheme(
    std::string tornadoBoxTextColor  = "255, 232, 232";
    if (tornadoStyle_ == TornadoStyle::Pds)
    {
-      tornadoBoxBackground = "50, 9, 72"; // #320948
-      tornadoBoxTextColor  = "226, 205, 242";
+      tornadoBoxBackground = "49, 27, 78";
+      tornadoBoxTextColor  = "238, 232, 255";
    }
    else if (tornadoStyle_ == TornadoStyle::Emergency)
    {
@@ -1083,16 +1085,14 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "QWidget#WarningBoxWidget QFrame#progressSweep {";
    styleSheet += "  background-color: rgba(247, 252, 255, 220);";
    styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QFrame#progressSweepGlow {";
+   styleSheet += "  background-color: rgba(255, 255, 255, 90);";
+   styleSheet += "  border-radius: 4px;";
+   styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QFrame#progressMid {";
    styleSheet += "  background-color: rgba(180, 186, 198, 220);";
    styleSheet += "  border-radius: 1px;";
    styleSheet += "}";
-   if (tornadoStyle_ == TornadoStyle::Pds)
-   {
-      styleSheet += "QWidget#WarningBoxWidget QFrame#progressFill {";
-      styleSheet += "  background-color: rgb(138, 5, 159);";
-      styleSheet += "}";
-   }
    styleSheet += "QWidget#WarningBoxWidget QFrame#severeMetricCard {";
    styleSheet += "  border: 1px solid rgba(" + accentColor + ", 160);";
    styleSheet += "  background-color: rgba(13, 15, 29, 236);";
