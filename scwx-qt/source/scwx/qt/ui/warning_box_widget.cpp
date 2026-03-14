@@ -766,7 +766,7 @@ bool WarningBoxWidgetImpl::AddTornadoDamageThreatBox(
    QColor glowColor {220, 56, 56, 230};
    if (tornadoStyle_ == TornadoStyle::Pds)
    {
-      glowColor = QColor(150, 120, 242, 230);
+      glowColor = QColor(164, 92, 214, 220);
    }
    else if (tornadoStyle_ == TornadoStyle::Emergency)
    {
@@ -807,7 +807,7 @@ bool WarningBoxWidgetImpl::AddTornadoConfirmedBox()
    QColor glowColor {220, 56, 56, 230};
    if (tornadoStyle_ == TornadoStyle::Pds)
    {
-      glowColor = QColor(150, 120, 242, 230);
+      glowColor = QColor(164, 92, 214, 220);
    }
    else if (tornadoStyle_ == TornadoStyle::Emergency)
    {
@@ -940,8 +940,8 @@ void WarningBoxWidgetImpl::ApplyTheme(
    std::string tornadoBoxTextColor  = "255, 232, 232";
    if (tornadoStyle_ == TornadoStyle::Pds)
    {
-      tornadoBoxBackground = "49, 27, 78";
-      tornadoBoxTextColor  = "238, 232, 255";
+      tornadoBoxBackground = "50, 9, 72"; // #320948
+      tornadoBoxTextColor  = "226, 205, 242";
    }
    else if (tornadoStyle_ == TornadoStyle::Emergency)
    {
@@ -1082,6 +1082,12 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "  background-color: rgba(180, 186, 198, 220);";
    styleSheet += "  border-radius: 1px;";
    styleSheet += "}";
+   if (tornadoStyle_ == TornadoStyle::Pds)
+   {
+      styleSheet += "QWidget#WarningBoxWidget QFrame#progressFill {";
+      styleSheet += "  background-color: rgb(138, 5, 159);";
+      styleSheet += "}";
+   }
    styleSheet += "QWidget#WarningBoxWidget QFrame#severeMetricCard {";
    styleSheet += "  border: 1px solid rgba(" + accentColor + ", 160);";
    styleSheet += "  background-color: rgba(13, 15, 29, 236);";
