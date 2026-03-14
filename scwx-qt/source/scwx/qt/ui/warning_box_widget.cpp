@@ -305,6 +305,11 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    p->progressSweep_->setObjectName("progressSweep");
    p->progressSweep_->setFixedSize(68, 6);
    p->progressSweep_->move(-p->progressSweep_->width(), 0);
+   auto* sweepGlow = new QGraphicsDropShadowEffect(p->progressSweep_);
+   sweepGlow->setBlurRadius(10.0);
+   sweepGlow->setColor(QColor(255, 255, 255, 140));
+   sweepGlow->setOffset(0.0, 0.0);
+   p->progressSweep_->setGraphicsEffect(sweepGlow);
    p->progressMid_ = new QFrame(p->progressTrack_);
    p->progressMid_->setObjectName("progressMid");
    p->progressMid_->setFixedHeight(1);
