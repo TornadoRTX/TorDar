@@ -307,8 +307,8 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    p->progressSweep_->move(-p->progressSweep_->width(), 0);
    p->progressMid_ = new QFrame(p->progressTrack_);
    p->progressMid_->setObjectName("progressMid");
-   p->progressMid_->setFixedHeight(2);
-   p->progressMid_->move(0, (p->progressTrack_->height() - 2) / 2);
+   p->progressMid_->setFixedHeight(1);
+   p->progressMid_->move(0, (p->progressTrack_->height() - 1) / 2);
    p->progressMid_->lower();
    ui->verticalLayout->insertWidget(2, p->progressTrack_);
 
