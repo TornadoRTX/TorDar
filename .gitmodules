@@ -43,4 +43,3 @@
 [submodule "test/data"]
 	path = test/data
 	url = https://github.com/dpaulat/supercell-wx-test-data
-	branch = feature/full-screen
