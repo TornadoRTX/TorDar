@@ -513,7 +513,7 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
       const bool hasDamageThreat    = AddSevereDamageThreatBox(fields);
       if (hasTornadoPossible && hasDamageThreat)
       {
-         detailsLayout_->insertSpacing(1, 3);
+         detailsLayout_->insertSpacing(1, 1);
       }
       if (hasTornadoPossible || hasDamageThreat)
       {
@@ -526,7 +526,7 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
       const bool hasConfirmed    = AddTornadoConfirmedBox();
       if (hasDamageThreat && hasConfirmed)
       {
-         detailsLayout_->insertSpacing(1, 3);
+         detailsLayout_->insertSpacing(1, 1);
       }
       if (hasDamageThreat || hasConfirmed)
       {
@@ -534,12 +534,28 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
       }
    }
 
-   AddSevereMetricCards(GetFieldValue(fields, {"MAX HAIL SIZE"}),
-                        GetFieldValue(fields, {"MAX WIND GUST"}));
+   const std::string maxHail = GetFieldValue(fields, {"MAX HAIL SIZE"});
+   const std::string maxWind = GetFieldValue(fields, {"MAX WIND GUST"});
+   if (key.phenomenon_ == awips::Phenomenon::Tornado)
+   {
+      AddSevereMetricCards({}, {});
+   }
+   else
+   {
+      AddSevereMetricCards(maxHail, maxWind);
+   }
 
    if (!countiesStr.empty())
    {
       AddDetailRow("Areas", countiesStr);
+   }
+   if (key.phenomenon_ == awips::Phenomenon::Tornado && !maxWind.empty())
+   {
+      AddDetailRow("Max Wind Gust", maxWind);
+   }
+   if (key.phenomenon_ == awips::Phenomenon::Tornado && !maxHail.empty())
+   {
+      AddDetailRow("Max Hail Size", maxHail);
    }
    AddSummaryField("Source", fields, {"SOURCE"});
    AddPhenomenonSpecificFields(key.phenomenon_, fields);
@@ -1215,6 +1231,7 @@ void WarningBoxWidgetImpl::ApplyTheme(
       styleSheet += "  letter-spacing: 0.9px;";
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QLabel#severeMetricValue {";
+      styleSheet += "  font-family: 'Rajdhani-Bold';";
       styleSheet += "  font-size: 16px;";
       styleSheet += "}";
       styleSheet +=
