@@ -600,8 +600,6 @@ void WarningBoxWidgetImpl::AddDetailRow(const std::string& label,
    valueW->setWordWrap(true);
    valueW->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
-   const bool isAreaOrSource = (label == "Areas" || label == "Source");
-
    labelW->setStyleSheet(
       QString("font-family: '%1'; font-weight: 700; letter-spacing: 0px;")
          .arg(QString::fromStdString(areaSourceLabelFontFamily_)));
