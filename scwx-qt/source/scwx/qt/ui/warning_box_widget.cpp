@@ -30,6 +30,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdio>
 #include <cctype>
 #include <initializer_list>
 #include <string_view>
@@ -140,7 +141,9 @@ public:
                sweepPosition_ = -sweepWidth;
             }
             progressSweep_->move(sweepPosition_, 0);
-            progressSweepGlow_->move(sweepPosition_ - 3, 0);
+            const int glowWidth = progressSweepGlow_->width();
+            progressSweepGlow_->move(
+               sweepPosition_ - ((glowWidth - sweepWidth) / 2), 0);
          });
    }
    ~WarningBoxWidgetImpl() = default;
@@ -313,8 +316,8 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    p->progressSweep_->move(-p->progressSweep_->width(), 0);
    p->progressSweepGlow_ = new QFrame(p->progressTrack_);
    p->progressSweepGlow_->setObjectName("progressSweepGlow");
-   p->progressSweepGlow_->setFixedSize(74, 8);
-   p->progressSweepGlow_->move(-p->progressSweep_->width() - 3, 0);
+   p->progressSweepGlow_->setFixedSize(110, 8);
+   p->progressSweepGlow_->move(-p->progressSweep_->width() - 21, 0);
    p->progressSweepGlow_->lower();
    p->progressMid_ = new QFrame(p->progressTrack_);
    p->progressMid_->setObjectName("progressMid");
@@ -370,6 +373,8 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    p->cornerTR_->raise();
    p->cornerBL_->raise();
    p->cornerBR_->raise();
+   p->cornerTR_->setVisible(false);
+   p->cornerBL_->setVisible(false);
 
    p->fixedWidth_ = width();
    setMinimumWidth(p->fixedWidth_);
@@ -596,31 +601,15 @@ void WarningBoxWidgetImpl::AddDetailRow(const std::string& label,
    valueW->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
    const bool isAreaOrSource = (label == "Areas" || label == "Source");
-   const bool isTornadoHailWind =
-      (currentKey_.phenomenon_ == awips::Phenomenon::Tornado &&
-       (label == "Max Hail Size" || label == "Max Wind Gust"));
 
-   if (isAreaOrSource)
-   {
-      labelW->setStyleSheet(
-         QString("font-family: '%1'; font-weight: 700; letter-spacing: 0px;")
-            .arg(QString::fromStdString(areaSourceLabelFontFamily_)));
-   }
+   labelW->setStyleSheet(
+      QString("font-family: '%1'; font-weight: 700; letter-spacing: 0px;")
+         .arg(QString::fromStdString(areaSourceLabelFontFamily_)));
 
-   if (isAreaOrSource)
-   {
-      valueW->setStyleSheet(
-         QString("font-family: '%1'; font-size: 15px; font-weight: 700; "
-                 "letter-spacing: 0px;")
-            .arg(QString::fromStdString(areaSourceValueFontFamily_)));
-   }
-   else if (isTornadoHailWind)
-   {
-      valueW->setStyleSheet(
-         QString("font-family: '%1'; font-size: 10px; font-weight: 700; "
-                 "letter-spacing: 0px;")
-            .arg(QString::fromStdString(areaSourceValueFontFamily_)));
-   }
+   valueW->setStyleSheet(
+      QString("font-family: '%1'; font-size: 15px; font-weight: 700; "
+              "letter-spacing: 0px;")
+         .arg(QString::fromStdString(areaSourceValueFontFamily_)));
 
    if (label == "Source" && tornadoObserved_)
    {
@@ -1087,9 +1076,17 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "  background: transparent;";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QFrame#cornerBR {";
-   styleSheet += "  border-bottom: 2px solid rgba(" + accentColor + ", 255);";
-   styleSheet += "  border-right: 2px solid rgba(" + accentColor + ", 255);";
-   styleSheet += "  background: transparent;";
+   styleSheet += "  border: none;";
+   styleSheet +=
+      "  background: qlineargradient(x1:0, y1:1, x2:1, y2:0, "
+      "stop:0 rgba(" +
+      accentColor +
+      ", 255), "
+      "stop:0.45 rgba(" +
+      accentColor +
+      ", 255), "
+      "stop:0.46 rgba(0, 0, 0, 0), "
+      "stop:1 rgba(0, 0, 0, 0));";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QLabel {";
    styleSheet += "  color: rgb(236, 240, 255);";
@@ -1139,11 +1136,17 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "  background-color: rgba(247, 252, 255, 220);";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QFrame#progressSweepGlow {";
-   styleSheet += "  background-color: rgba(255, 255, 255, 90);";
+   styleSheet +=
+      "  background: qlineargradient(x1:0, y1:0.5, x2:1, y2:0.5, "
+      "stop:0 rgba(255, 255, 255, 0), "
+      "stop:0.25 rgba(255, 255, 255, 80), "
+      "stop:0.5 rgba(255, 255, 255, 160), "
+      "stop:0.75 rgba(255, 255, 255, 80), "
+      "stop:1 rgba(255, 255, 255, 0));";
    styleSheet += "  border-radius: 4px;";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QFrame#progressMid {";
-   styleSheet += "  background-color: rgba(180, 186, 198, 220);";
+   styleSheet += "  background-color: rgb(96, 99, 105);";
    styleSheet += "  border-radius: 1px;";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QFrame#severeMetricCard {";
@@ -1318,6 +1321,28 @@ void WarningBoxWidgetImpl::ApplyTheme(
    }
 
    self_->setStyleSheet(QString::fromStdString(styleSheet));
+
+   int ar = 0;
+   int ag = 0;
+   int ab = 0;
+   (void) std::sscanf(accentColor.c_str(), "%d, %d, %d", &ar, &ag, &ab);
+   const QColor accentGlowColor {ar, ag, ab, 60};
+   if (cornerTL_ != nullptr)
+   {
+      auto* glow = new QGraphicsDropShadowEffect(cornerTL_);
+      glow->setBlurRadius(6.0);
+      glow->setColor(accentGlowColor);
+      glow->setOffset(0.0, 0.0);
+      cornerTL_->setGraphicsEffect(glow);
+   }
+   if (cornerBR_ != nullptr)
+   {
+      auto* glow = new QGraphicsDropShadowEffect(cornerBR_);
+      glow->setBlurRadius(6.0);
+      glow->setColor(accentGlowColor);
+      glow->setOffset(0.0, 0.0);
+      cornerBR_->setGraphicsEffect(glow);
+   }
 }
 
 void WarningBoxWidgetImpl::UpdateExpirationOnly()
