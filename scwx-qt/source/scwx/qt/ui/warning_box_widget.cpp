@@ -200,6 +200,10 @@ public:
    int                                        fixedWidth_ {0};
    QWidget*                                   detailsContainer_ {nullptr};
    QVBoxLayout*                               detailsLayout_ {nullptr};
+   QFrame*                                    cornerTL_ {nullptr};
+   QFrame*                                    cornerTR_ {nullptr};
+   QFrame*                                    cornerBL_ {nullptr};
+   QFrame*                                    cornerBR_ {nullptr};
    std::string  warningTitleFontFamily_ {"Rajdhani"};
    std::string  expirationFontFamily_ {"IBMPlexMono-SemiBold"};
    std::string  monoFontFamily_ {"RobotoMono-Regular"};
@@ -353,6 +357,19 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    p->detailsLayout_->setAlignment(Qt::AlignTop);
    ui->scrollArea->setWidget(p->detailsContainer_);
    ui->scrollArea->setWidgetResizable(true);
+
+   p->cornerTL_ = new QFrame(this);
+   p->cornerTL_->setObjectName("cornerTL");
+   p->cornerTR_ = new QFrame(this);
+   p->cornerTR_->setObjectName("cornerTR");
+   p->cornerBL_ = new QFrame(this);
+   p->cornerBL_->setObjectName("cornerBL");
+   p->cornerBR_ = new QFrame(this);
+   p->cornerBR_->setObjectName("cornerBR");
+   p->cornerTL_->raise();
+   p->cornerTR_->raise();
+   p->cornerBL_->raise();
+   p->cornerBR_->raise();
 
    p->fixedWidth_ = width();
    setMinimumWidth(p->fixedWidth_);
@@ -1052,7 +1069,27 @@ void WarningBoxWidgetImpl::ApplyTheme(
          "stop:1 rgba(0, 2, 26, 255));";
    }
    styleSheet += "  border: 1px solid rgba(" + accentColor + ", 220);";
-   styleSheet += "  border-radius: 6px;";
+   styleSheet += "  border-radius: 0px;";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QFrame#cornerTL {";
+   styleSheet += "  border-top: 2px solid rgba(" + accentColor + ", 255);";
+   styleSheet += "  border-left: 2px solid rgba(" + accentColor + ", 255);";
+   styleSheet += "  background: transparent;";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QFrame#cornerTR {";
+   styleSheet += "  border-top: 2px solid rgba(" + accentColor + ", 255);";
+   styleSheet += "  border-right: 2px solid rgba(" + accentColor + ", 255);";
+   styleSheet += "  background: transparent;";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QFrame#cornerBL {";
+   styleSheet += "  border-bottom: 2px solid rgba(" + accentColor + ", 255);";
+   styleSheet += "  border-left: 2px solid rgba(" + accentColor + ", 255);";
+   styleSheet += "  background: transparent;";
+   styleSheet += "}";
+   styleSheet += "QWidget#WarningBoxWidget QFrame#cornerBR {";
+   styleSheet += "  border-bottom: 2px solid rgba(" + accentColor + ", 255);";
+   styleSheet += "  border-right: 2px solid rgba(" + accentColor + ", 255);";
+   styleSheet += "  background: transparent;";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QLabel {";
    styleSheet += "  color: rgb(236, 240, 255);";
@@ -1418,6 +1455,19 @@ void WarningBoxWidgetImpl::AdjustHeightToContents()
    self_->setMaximumHeight(panelFinalHeight);
    self_->resize(self_->width(), panelFinalHeight);
    self_->layout()->activate();
+
+   if (cornerTL_ != nullptr && cornerTR_ != nullptr && cornerBL_ != nullptr &&
+       cornerBR_ != nullptr)
+   {
+      static constexpr int kCornerSize = 12;
+      const int            w           = self_->width();
+      const int            h           = self_->height();
+      cornerTL_->setGeometry(0, 0, kCornerSize, kCornerSize);
+      cornerTR_->setGeometry(w - kCornerSize, 0, kCornerSize, kCornerSize);
+      cornerBL_->setGeometry(0, h - kCornerSize, kCornerSize, kCornerSize);
+      cornerBR_->setGeometry(
+         w - kCornerSize, h - kCornerSize, kCornerSize, kCornerSize);
+   }
 
    // Re-apply title scaling after final geometry is set.
    UpdateTitleFont();
