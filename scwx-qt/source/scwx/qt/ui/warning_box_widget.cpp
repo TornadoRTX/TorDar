@@ -1324,7 +1324,7 @@ void WarningBoxWidgetImpl::ApplyTheme(
    int ag = 0;
    int ab = 0;
 #if defined(_MSC_VER)
-   (void) std::sscanf_s(accentColor.c_str(), "%d, %d, %d", &ar, &ag, &ab);
+   (void) ::sscanf_s(accentColor.c_str(), "%d, %d, %d", &ar, &ag, &ab);
 #else
    (void) std::sscanf(accentColor.c_str(), "%d, %d, %d", &ar, &ag, &ab);
 #endif
