@@ -1077,13 +1077,18 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "  border: none;";
    styleSheet +=
       "  background: qlineargradient(x1:0, y1:1, x2:1, y2:0, "
-      "stop:0 rgba(" +
+      "stop:0 rgba(0, 0, 0, 0), "
+      "stop:0.42 rgba(0, 0, 0, 0), "
+      "stop:0.46 rgba(" +
+      accentColor +
+      ", 240), "
+      "stop:0.50 rgba(" +
       accentColor +
       ", 255), "
-      "stop:0.45 rgba(" +
+      "stop:0.54 rgba(" +
       accentColor +
-      ", 255), "
-      "stop:0.46 rgba(0, 0, 0, 0), "
+      ", 240), "
+      "stop:0.58 rgba(0, 0, 0, 0), "
       "stop:1 rgba(0, 0, 0, 0));";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QLabel {";
@@ -1269,8 +1274,9 @@ void WarningBoxWidgetImpl::ApplyTheme(
       styleSheet += "  letter-spacing: 0.9px;";
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QLabel#severeMetricValue {";
-      styleSheet += "  font-family: 'Rajdhani-Bold';";
+      styleSheet += "  font-family: '" + warningTitleFontFamily_ + "';";
       styleSheet += "  font-size: 16px;";
+      styleSheet += "  font-weight: 800;";
       styleSheet += "}";
       styleSheet +=
          "QWidget#WarningBoxWidget QFrame#severeTornadoPossibleBox {";
