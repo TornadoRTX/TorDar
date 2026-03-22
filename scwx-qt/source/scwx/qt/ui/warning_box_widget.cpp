@@ -652,6 +652,17 @@ void WarningBoxWidgetImpl::AddSevereMetricCards(const std::string& maxHail,
       QLabel* valueLabel = new QLabel(QString::fromStdString(value), card);
       valueLabel->setObjectName("severeMetricValue");
       valueLabel->setContentsMargins(0, 0, 0, 0);
+      if (currentKey_.phenomenon_ == awips::Phenomenon::SevereThunderstorm)
+      {
+         QFont metricValueFont = valueLabel->font();
+         metricValueFont.setFamily(
+            QString::fromStdString(warningTitleFontFamily_));
+         metricValueFont.setPointSize(15);
+         metricValueFont.setWeight(QFont::Bold);
+         metricValueFont.setStyleStrategy(QFont::PreferAntialias);
+         metricValueFont.setHintingPreference(QFont::PreferNoHinting);
+         valueLabel->setFont(metricValueFont);
+      }
       auto* valueGlow = new QGraphicsDropShadowEffect(valueLabel);
       valueGlow->setBlurRadius(12.0);
       if (currentKey_.phenomenon_ == awips::Phenomenon::Tornado)
@@ -1076,20 +1087,20 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "QWidget#WarningBoxWidget QFrame#cornerBR {";
    styleSheet += "  border: none;";
    styleSheet +=
-      "  background: qlineargradient(x1:0, y1:1, x2:1, y2:0, "
-      "stop:0 rgba(0, 0, 0, 0), "
-      "stop:0.42 rgba(0, 0, 0, 0), "
-      "stop:0.46 rgba(" +
+      "  background: qlineargradient(x1:0, y1:0, x2:1, y2:1, "
+      "stop:0 rgba(0, 2, 26, 255), "
+      "stop:0.64 rgba(0, 2, 26, 255), "
+      "stop:0.68 rgba(" +
       accentColor +
       ", 240), "
-      "stop:0.50 rgba(" +
+      "stop:0.72 rgba(" +
       accentColor +
       ", 255), "
-      "stop:0.54 rgba(" +
+      "stop:0.76 rgba(" +
       accentColor +
       ", 240), "
-      "stop:0.58 rgba(0, 0, 0, 0), "
-      "stop:1 rgba(0, 0, 0, 0));";
+      "stop:0.80 rgba(0, 2, 26, 255), "
+      "stop:1 rgba(0, 2, 26, 255));";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QLabel {";
    styleSheet += "  color: rgb(236, 240, 255);";
@@ -1275,8 +1286,8 @@ void WarningBoxWidgetImpl::ApplyTheme(
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QLabel#severeMetricValue {";
       styleSheet += "  font-family: '" + warningTitleFontFamily_ + "';";
-      styleSheet += "  font-size: 16px;";
-      styleSheet += "  font-weight: 800;";
+      styleSheet += "  font-size: 15px;";
+      styleSheet += "  font-weight: 700;";
       styleSheet += "}";
       styleSheet +=
          "QWidget#WarningBoxWidget QFrame#severeTornadoPossibleBox {";
