@@ -5,6 +5,7 @@
 #include <scwx/common/color_table.hpp>
 #include <scwx/qt/config/county_database.hpp>
 #include <scwx/qt/config/radar_site.hpp>
+#include <scwx/qt/main/application_paths.hpp>
 #include <scwx/qt/manager/media_manager.hpp>
 #include <scwx/qt/manager/position_manager.hpp>
 #include <scwx/qt/manager/settings_manager.hpp>
@@ -46,7 +47,6 @@
 #include <QGeoPositionInfo>
 #include <QPushButton>
 #include <QStandardItemModel>
-#include <QStandardPaths>
 #include <QToolButton>
 #include <utility>
 
@@ -166,6 +166,7 @@ public:
           &alertAudioRadius_,
           &alertAudioCounty_,
           &alertAudioWFO_,
+          &masterVolume_,
           &hoverTextWrap_,
           &tooltipMethod_,
           &placefileTextDropShadowEnabled_,
@@ -302,6 +303,8 @@ public:
 
    std::unordered_map<awips::Phenomenon, settings::SettingsInterface<bool>>
       alertAudioEnabled_ {};
+
+   settings::SettingsInterface<std::int64_t> masterVolume_ {};
 
    std::unordered_map<types::FontCategory,
                       settings::SettingsInterface<std::string>>
@@ -605,9 +608,12 @@ void SettingsDialogImpl::SetupGeneralTab()
 
          if (file.isEmpty())
          {
-            const QString appDataPath {QStandardPaths::writableLocation(
-               QStandardPaths::AppLocalDataLocation)};
-            file = appDataPath + "/theme.conf";
+            const std::filesystem::path settingsPath {
+               main::ApplicationPaths::GetLocation(
+                  main::ApplicationPaths::StandardLocation::Settings)};
+            const std::filesystem::path defaultFilePath =
+               settingsPath / "theme.conf";
+            file = QString::fromStdString(defaultFilePath.generic_string());
             self_->ui->themeFileLineEdit->setText(file);
             // setText does not emit the textEdited signal
             Q_EMIT self_->ui->themeFileLineEdit->textEdited(file);
@@ -1378,6 +1384,11 @@ void SettingsDialogImpl::SetupAudioTab()
    alertAudioWFO_.SetEditWidget(self_->ui->alertAudioWFOLineEdit);
    alertAudioWFO_.SetResetButton(self_->ui->resetAlertAudioWFOButton);
    alertAudioWFO_.EnableTrimming();
+
+   masterVolume_.SetSettingsVariable(audioSettings.master_volume());
+   masterVolume_.SetEditWidget(self_->ui->masterVolumeSlider);
+   masterVolume_.SetLabelWidget(self_->ui->masterVolumeLabel);
+   masterVolume_.SetResetButton(self_->ui->resetMasterVolumeButton);
 }
 
 void SettingsDialogImpl::SetupTextTab()

@@ -31,6 +31,7 @@
 #include <scwx/util/time.hpp>
 
 #include <algorithm>
+#include <limits>
 #include <ranges>
 #include <set>
 #include <utility>
@@ -65,6 +66,8 @@ namespace scwx::qt::map
 static const std::string logPrefix_ = "scwx::qt::map::map_widget";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 
+static constexpr double kDefaultZoom_ {7.0};
+
 class MapWidgetImpl : public QObject
 {
    Q_OBJECT
@@ -94,11 +97,6 @@ public:
        currentStyleIndex_ {0},
        currentStyle_ {nullptr},
        frameDraws_(0),
-       prevLatitude_ {0.0},
-       prevLongitude_ {0.0},
-       prevZoom_ {0.0},
-       prevBearing_ {0.0},
-       prevPitch_ {0.0},
        tiltsToIndices_ {}
    {
       // Create views
@@ -138,8 +136,10 @@ public:
    {
       // Disconnect signals
       colorPaletteConnection_.disconnect();
-
-      DeinitializeCustomStyles();
+      for (auto& connection : connections_)
+      {
+         connection.disconnect();
+      }
 
       // Set ImGui Context
       ImGui::SetCurrentContext(imGuiContext_);
@@ -168,7 +168,6 @@ public:
                           const std::string& before);
    void ConnectMapSignals();
    void ConnectSignals();
-   void DeinitializeCustomStyles() const;
    void HandleHotkeyPressed(types::Hotkey hotkey, bool isAutoRepeat);
    void HandleHotkeyReleased(types::Hotkey hotkey);
    void HandleHotkeyUpdates();
@@ -179,6 +178,9 @@ public:
    void RadarProductManagerDisconnect();
    void RadarProductViewConnect();
    void RadarProductViewDisconnect();
+   void ResetMap(const std::string& styleName);
+   [[nodiscard]] std::string
+        ResolveMapStyleName(const std::string& preferredStyleName) const;
    void RunMousePicking();
    void ScreenCaptureCopy();
    void ScreenCaptureSaveImage();
@@ -213,14 +215,14 @@ public:
    std::vector<std::shared_ptr<GenericLayer>> genericLayers_ {};
 
    const std::vector<MapStyle> emptyStyles_ {};
-   std::vector<MapStyle>       customStyles_ {
+   const std::vector<MapStyle> noneStyles_ {
+      MapStyle {.name_ {"None"}, .url_ {}, .drawBelow_ {}}};
+   std::vector<MapStyle> customStyles_ {
       MapStyle {.name_ {"Custom"}, .url_ {}, .drawBelow_ {}}};
    QStringList styleLayers_;
 
-   boost::uuids::uuid customStyleUrlChangedCallbackId_ {};
-   boost::uuids::uuid customStyleDrawBelowChangedCallbackId_ {};
-
-   boost::signals2::scoped_connection colorPaletteConnection_ {};
+   std::vector<boost::signals2::scoped_connection> connections_ {};
+   boost::signals2::scoped_connection              colorPaletteConnection_ {};
 
    ImGuiContext* imGuiContext_;
    std::string   imGuiContextName_;
@@ -261,6 +263,8 @@ public:
    std::size_t     currentStyleIndex_;
    const MapStyle* currentStyle_;
    std::string     initialStyleName_ {};
+   bool            mapChangedOnce_ {false};
+   bool            mapStylePending_ {false};
 
    Qt::KeyboardModifiers lastKeyboardModifiers_ {
       Qt::KeyboardModifier::NoModifier};
@@ -269,11 +273,11 @@ public:
 
    uint64_t frameDraws_;
 
-   double prevLatitude_;
-   double prevLongitude_;
-   double prevZoom_;
-   double prevBearing_;
-   double prevPitch_;
+   double prevLatitude_ {0.0};
+   double prevLongitude_ {0.0};
+   double prevZoom_ {kDefaultZoom_};
+   double prevBearing_ {0.0};
+   double prevPitch_ {0.0};
 
    types::CaptureType screenCaptureRequested_ {types::CaptureType::None};
 
@@ -333,35 +337,21 @@ void MapWidgetImpl::InitializeCustomStyles()
    customStyle.url_  = customStyleUrl.GetValue();
    customStyle.drawBelow_.push_back(customStyleDrawLayer.GetValue());
 
-   customStyleUrlChangedCallbackId_ =
-      customStyleUrl.RegisterValueChangedCallback(
-         [this](const std::string& url) { customStyles_[0].url_ = url; });
-   customStyleDrawBelowChangedCallbackId_ =
-      customStyleDrawLayer.RegisterValueChangedCallback(
-         [this](const std::string& drawLayer)
+   connections_.emplace_back(customStyleUrl.changed_signal().connect(
+      [this](const auto& event) { customStyles_[0].url_ = event.newValue_; }));
+   connections_.emplace_back(customStyleDrawLayer.changed_signal().connect(
+      [this](const auto& event)
+      {
+         const std::string& drawLayer = event.newValue_;
+         if (!drawLayer.empty())
          {
-            if (!drawLayer.empty())
-            {
-               customStyles_[0].drawBelow_ = {drawLayer};
-            }
-            else
-            {
-               customStyles_[0].drawBelow_.clear();
-            }
-         });
-}
-
-void MapWidgetImpl::DeinitializeCustomStyles() const
-{
-   auto& generalSettings = settings::GeneralSettings::Instance();
-
-   auto& customStyleUrl       = generalSettings.custom_style_url();
-   auto& customStyleDrawLayer = generalSettings.custom_style_draw_layer();
-
-   customStyleUrl.UnregisterValueChangedCallback(
-      customStyleUrlChangedCallbackId_);
-   customStyleDrawLayer.UnregisterValueChangedCallback(
-      customStyleDrawBelowChangedCallbackId_);
+            customStyles_[0].drawBelow_ = {drawLayer};
+         }
+         else
+         {
+            customStyles_[0].drawBelow_.clear();
+         }
+      }));
 }
 
 void MapWidgetImpl::ConnectMapSignals()
@@ -460,6 +450,51 @@ void MapWidgetImpl::ConnectSignals()
               productAvailabilityProductSelected_ = true;
               CheckLevel3Availability();
            });
+
+   auto& generalSettings = settings::GeneralSettings::Instance();
+
+   connections_.emplace_back(
+      generalSettings.map_provider().changed_signal().connect(
+         [this](const auto& event)
+         {
+            const auto mapProvider = GetMapProvider(event.newValue_);
+            context_->set_map_provider(mapProvider);
+            ConfigureMapSettings(mapProvider, settings_);
+
+            const std::string styleName = ResolveMapStyleName(
+               currentStyle_ ? currentStyle_->name_ : initialStyleName_);
+
+            initialStyleName_ = styleName;
+            ResetMap(styleName);
+         }));
+   connections_.emplace_back(
+      generalSettings.mapbox_api_key().changed_signal().connect(
+         [this](const auto& event)
+         {
+            if (context_->map_provider() == MapProvider::Mapbox)
+            {
+               // Reset the map, since the API key is embedded in settings
+               settings_.setApiKey(QString::fromStdString(event.newValue_));
+               const std::string& activeStyleName =
+                  currentStyle_ ? currentStyle_->name_ : initialStyleName_;
+               ResetMap(activeStyleName == "None" ? "" : activeStyleName);
+            }
+         }));
+   connections_.emplace_back(
+      generalSettings.maptiler_api_key().changed_signal().connect(
+         [this](auto&&...)
+         {
+            if (context_->map_provider() == MapProvider::MapTiler)
+            {
+               // Reapply style instead of resetting the map
+               const std::string& activeStyleName =
+                  currentStyle_ ? currentStyle_->name_ : initialStyleName_;
+               widget_->SetMapStyle(activeStyleName == "None" ?
+                                       ResolveMapStyleName("") :
+                                       activeStyleName,
+                                    true);
+            }
+         }));
 }
 
 void MapWidgetImpl::HandleHotkeyPressed(types::Hotkey hotkey, bool isAutoRepeat)
@@ -832,6 +867,46 @@ void MapWidget::SetSmoothingEnabled(bool smoothingEnabled)
    }
 }
 
+std::optional<float> MapWidget::GetColorTableThreshold() const
+{
+   auto radarProductView = p->context_->radar_product_view();
+   if (radarProductView != nullptr)
+   {
+      return radarProductView->color_table_threshold();
+   }
+   return std::nullopt;
+}
+
+std::pair<float, float> MapWidget::GetColorTableRange() const
+{
+   auto radarProductView = p->context_->radar_product_view();
+   if (radarProductView != nullptr)
+   {
+      return radarProductView->GetColorTableRange();
+   }
+   return {-std::numeric_limits<float>::infinity(),
+           std::numeric_limits<float>::infinity()};
+}
+
+std::string MapWidget::GetColorTableUnits() const
+{
+   auto radarProductView = p->context_->radar_product_view();
+   if (radarProductView != nullptr)
+   {
+      return radarProductView->units();
+   }
+   return {};
+}
+
+void MapWidget::SetColorTableThreshold(std::optional<float> threshold)
+{
+   auto radarProductView = p->context_->radar_product_view();
+   if (radarProductView != nullptr)
+   {
+      radarProductView->set_color_table_threshold(threshold);
+   }
+}
+
 const scwx::util::time_zone* MapWidget::GetDefaultTimeZone() const
 {
    return p->radarProductManager_->default_time_zone();
@@ -935,7 +1010,7 @@ void MapWidget::SelectRadarProduct(common::RadarProductGroup group,
             settings::PaletteSettings::Instance().palette(palette);
 
          p->colorPaletteConnection_ = paletteSetting.changed_signal().connect(
-            [this, palette]() { p->UpdateColorTable(palette); });
+            [this, palette](auto&&...) { p->UpdateColorTable(palette); });
 
          p->InitializeNewRadarProductView(palette);
       }
@@ -1122,36 +1197,34 @@ void MapWidget::SetInitialMapStyle(const std::string& styleName)
    p->initialStyleName_ = styleName;
 }
 
-void MapWidget::SetMapStyle(const std::string& styleName)
+void MapWidget::SetMapStyle(const std::string& styleName, bool force)
 {
    const auto  mapProvider     = p->context_->map_provider();
    const auto& mapProviderInfo = GetMapProviderInfo(mapProvider);
    auto&       fixedStyles     = mapProviderInfo.mapStyles_;
 
-   auto styles = boost::join(fixedStyles,
+   auto styles = boost::join(boost::join(fixedStyles, p->noneStyles_),
                              p->customStyles_[0].IsValid() ? p->customStyles_ :
                                                              p->emptyStyles_);
 
-   if (p->currentStyleIndex_ >= styles.size())
-   {
-      p->currentStyleIndex_ = 0;
-   }
-
    for (size_t i = 0u; i < styles.size(); ++i)
    {
-      if (styles[i].name_ == styleName)
+      const auto* style = &styles[static_cast<std::ptrdiff_t>(i)];
+
+      if (style->name_ == styleName)
       {
-         p->currentStyleIndex_ = i;
-         p->currentStyle_      = &styles[i];
-
-         logger_->debug("Updating style: {}", styles[i].name_);
-
-         util::maplibre::SetMapStyleUrl(p->context_, styles[i].url_);
-
-         if (++p->currentStyleIndex_ >= styles.size())
+         if (p->currentStyleIndex_ == i && p->currentStyle_ == style && !force)
          {
-            p->currentStyleIndex_ = 0;
+            // No need to set the style again
+            break;
          }
+
+         p->currentStyleIndex_ = i;
+         p->currentStyle_      = style;
+
+         logger_->debug("Updating style: {}", style->name_);
+
+         util::maplibre::SetMapStyleUrl(p->context_, style->url_);
 
          break;
       }
@@ -1191,26 +1264,21 @@ void MapWidget::changeStyle()
    const auto& mapProviderInfo = GetMapProviderInfo(mapProvider);
    auto&       fixedStyles     = mapProviderInfo.mapStyles_;
 
-   auto styles = boost::join(fixedStyles,
+   auto styles = boost::join(boost::join(fixedStyles, p->noneStyles_),
                              p->customStyles_[0].IsValid() ? p->customStyles_ :
                                                              p->emptyStyles_);
-
-   if (p->currentStyleIndex_ >= styles.size())
-   {
-      p->currentStyleIndex_ = 0;
-   }
-
-   p->currentStyle_ = &styles[p->currentStyleIndex_];
-
-   logger_->debug("Updating style: {}", styles[p->currentStyleIndex_].name_);
-
-   util::maplibre::SetMapStyleUrl(p->context_,
-                                  styles[p->currentStyleIndex_].url_);
 
    if (++p->currentStyleIndex_ >= styles.size())
    {
       p->currentStyleIndex_ = 0;
    }
+
+   p->currentStyle_ =
+      &styles[static_cast<std::ptrdiff_t>(p->currentStyleIndex_)];
+
+   logger_->debug("Updating style: {}", p->currentStyle_->name_);
+
+   util::maplibre::SetMapStyleUrl(p->context_, p->currentStyle_->url_);
 
    Q_EMIT MapStyleChanged(p->currentStyle_->name_);
 }
@@ -1615,35 +1683,104 @@ void MapWidget::initializeGL()
    ImGui_ImplOpenGL3_Init();
    p->imGuiRendererInitialized_ = true;
 
-   p->map_.reset(
-      new QMapLibre::Map(nullptr, p->settings_, size(), pixelRatio()));
-   p->context_->set_map(p->map_);
-   p->ConnectMapSignals();
+   p->ResetMap(p->initialStyleName_);
 
-   // Set default location to radar site
-   std::shared_ptr<config::RadarSite> radarSite =
-      p->radarProductManager_->radar_site();
-   p->map_->setCoordinateZoom({radarSite->latitude(), radarSite->longitude()},
-                              7);
    p->UpdateStoredMapParameters();
    Q_EMIT MapParametersChanged(p->prevLatitude_,
                                p->prevLongitude_,
                                p->prevZoom_,
                                p->prevBearing_,
                                p->prevPitch_);
+}
 
-   // Update style
-   if (p->initialStyleName_.empty())
+void MapWidgetImpl::ResetMap(const std::string& styleName)
+{
+   logger_->debug("Resetting map");
+
+   const std::string resolvedStyleName = ResolveMapStyleName(styleName);
+
+   initialStyleName_ = resolvedStyleName;
+
+   // Determine whether this is the first-time initialization or a runtime reset
+   const bool hadExistingMap = static_cast<bool>(map_);
+
+   map_ = std::make_shared<QMapLibre::Map>(
+      nullptr, settings_, widget_->size(), widget_->pixelRatio());
+   context_->set_map(map_);
+   ConnectMapSignals();
+
+   // Set initial location:
+   //  - On first initialization, center on the radar site.
+   //  - On subsequent resets, restore the previous map view position.
+   if (hadExistingMap)
    {
-      changeStyle();
+      map_->setCoordinateZoom({prevLatitude_, prevLongitude_}, prevZoom_);
    }
    else
    {
-      SetMapStyle(p->initialStyleName_);
+      const std::shared_ptr<config::RadarSite> radarSite =
+         radarProductManager_->radar_site();
+      map_->setCoordinateZoom({radarSite->latitude(), radarSite->longitude()},
+                              prevZoom_);
    }
 
+   // Update style
+   if (resolvedStyleName.empty())
+   {
+      widget_->changeStyle();
+   }
+   else
+   {
+      widget_->SetMapStyle(resolvedStyleName, true);
+
+      if (resolvedStyleName == "None" || resolvedStyleName == "Custom")
+      {
+         // An empty map style may not trigger a map change event, so set the
+         // pending flag to ensure the map style is applied to the map layers
+         mapStylePending_ = true;
+      }
+   }
+
+   mapChangedOnce_ = false;
+
    connect(
-      p->map_.get(), &QMapLibre::Map::mapChanged, this, &MapWidget::mapChanged);
+      map_.get(), &QMapLibre::Map::mapChanged, widget_, &MapWidget::mapChanged);
+   connect(map_.get(),
+           &QMapLibre::Map::mapLoadingFailed,
+           widget_,
+           [this](QMapLibre::Map::MapLoadingFailure, const QString& reason)
+           {
+              logger_->error("Map loading failed: {}", reason.toStdString());
+
+              // If the map failed to load, and we haven't loaded a map yet,
+              // default to the "None" map. This prevents a "black screen" on
+              // startup.
+              if (!mapChangedOnce_)
+              {
+                 mapChangedOnce_ = true;
+                 widget_->SetMapStyle("None");
+              }
+           });
+}
+
+std::string
+MapWidgetImpl::ResolveMapStyleName(const std::string& preferredStyleName) const
+{
+   const auto& mapProviderInfo = GetMapProviderInfo(context_->map_provider());
+
+   if ((customStyles_[0].IsValid() && preferredStyleName == "Custom") ||
+       preferredStyleName == "None" ||
+       std::ranges::find_if(mapProviderInfo.mapStyles_,
+                            [&](const auto& mapStyle)
+                            { return mapStyle.name_ == preferredStyleName; }) !=
+          mapProviderInfo.mapStyles_.cend())
+   {
+      return preferredStyleName;
+   }
+
+   return !mapProviderInfo.mapStyles_.empty() ?
+             mapProviderInfo.mapStyles_.front().name_ :
+             "None";
 }
 
 void MapWidget::paintGL()
@@ -1847,6 +1984,18 @@ void MapWidget::mapChanged(QMapLibre::Map::MapChange mapChange)
    case QMapLibre::Map::MapChangeDidFinishLoadingStyle:
       p->UpdateLoadedStyle();
       p->AddLayers();
+      p->mapChangedOnce_  = true;
+      p->mapStylePending_ = false;
+      break;
+
+   case QMapLibre::Map::MapChangeDidFinishRenderingFrame:
+      if (p->mapStylePending_)
+      {
+         p->UpdateLoadedStyle();
+         p->AddLayers();
+         p->mapChangedOnce_  = true;
+         p->mapStylePending_ = false;
+      }
       break;
 
    default:
@@ -2158,7 +2307,10 @@ void MapWidgetImpl::ScreenCaptureSaveImage()
          // Create directory if it doesn't exist
          if (!std::filesystem::exists(screenCaptureFolder))
          {
-            if (!std::filesystem::create_directories(screenCaptureFolder))
+            std::error_code error;
+            if (!std::filesystem::create_directories(screenCaptureFolder,
+                                                     error) &&
+                error)
             {
                logger_->error(
                   "Unable to create screen capture directory: \"{}\"",

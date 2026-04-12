@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: windows_msvc2022_x64
+          - name: windows_vs2022_x64
             os: windows-2022
             build_type: Release
             env_cc: ''
@@ -28,22 +28,41 @@ jobs:
             compiler: msvc
             cppflags: ''
             ldflags: ''
-            msvc_arch: x64
-            msvc_version: 2022
+            vs_arch: x64
+            vs_version: 2022
             qt_version: 6.10.1
             qt_arch_aqt: win64_msvc2022_64
             qt_arch_dir: msvc2022_64
             qt_modules: qtimageformats qtmultimedia qtpositioning qtserialport
             qt_tools: ''
             conan_package_manager: ''
-            conan_profile: scwx-windows_msvc2022_x64
+            conan_profile: scwx-windows_vs2022_x64
             appimage_arch: ''
-            artifact_suffix: windows-x64
-          - name: linux_gcc_x64
-            os: ubuntu-22.04
+            artifact_suffix: windows-vs2022-x64
+          - name: windows_vs2026_x64
+            os: windows-2025-vs2026
             build_type: Release
-            env_cc: gcc-11
-            env_cxx: g++-11
+            env_cc: ''
+            env_cxx: ''
+            compiler: msvc
+            cppflags: ''
+            ldflags: ''
+            vs_arch: x64
+            vs_version: 18
+            qt_version: 6.10.1
+            qt_arch_aqt: win64_msvc2022_64
+            qt_arch_dir: msvc2022_64
+            qt_modules: qtimageformats qtmultimedia qtpositioning qtserialport
+            qt_tools: ''
+            conan_package_manager: ''
+            conan_profile: scwx-windows_vs2026_x64
+            appimage_arch: ''
+            artifact_suffix: windows-vs2026-x64
+          - name: linux_gcc-13_x64
+            os: ubuntu-24.04
+            build_type: Release
+            env_cc: gcc-13
+            env_cxx: g++-13
             compiler: gcc
             cppflags: ''
             ldflags: ''
@@ -53,15 +72,15 @@ jobs:
             qt_modules: qtimageformats qtmultimedia qtpositioning qtserialport
             qt_tools: ''
             conan_package_manager: --conf tools.system.package_manager:mode=install --conf tools.system.package_manager:sudo=True
-            conan_profile: scwx-linux_gcc-11
+            conan_profile: scwx-linux_gcc-13
             appimage_arch: x86_64
-            artifact_suffix: linux-x64
+            artifact_suffix: linux-gcc-13-x64
             compiler_packages: ''
-          - name: linux_clang_x64
+          - name: linux_clang-18_x64
             os: ubuntu-24.04
             build_type: Release
-            env_cc: clang-17
-            env_cxx: clang++-17
+            env_cc: clang-18
+            env_cxx: clang++-18
             compiler: clang
             cppflags: ''
             ldflags: ''
@@ -71,15 +90,15 @@ jobs:
             qt_modules: qtimageformats qtmultimedia qtpositioning qtserialport
             qt_tools: ''
             conan_package_manager: --conf tools.system.package_manager:mode=install --conf tools.system.package_manager:sudo=True
-            conan_profile: scwx-linux_clang-17
+            conan_profile: scwx-linux_clang-18
             appimage_arch: x86_64
-            artifact_suffix: linux-clang-x64
-            compiler_packages: clang-17
-          - name: linux_gcc_arm64
+            artifact_suffix: linux-clang-18-x64
+            compiler_packages: clang-18
+          - name: linux_gcc-13_arm64
             os: ubuntu-24.04-arm
             build_type: Release
-            env_cc: gcc-11
-            env_cxx: g++-11
+            env_cc: gcc-13
+            env_cxx: g++-13
             compiler: gcc
             cppflags: ''
             ldflags: ''
@@ -89,11 +108,11 @@ jobs:
             qt_modules: qtimageformats qtmultimedia qtpositioning qtserialport
             qt_tools: ''
             conan_package_manager: --conf tools.system.package_manager:mode=install --conf tools.system.package_manager:sudo=True
-            conan_profile: scwx-linux_gcc-11_armv8
+            conan_profile: scwx-linux_gcc-13_armv8
             appimage_arch: aarch64
-            artifact_suffix: linux-arm64
-            compiler_packages: g++-11
-          - name: macos_clang18_x64
+            artifact_suffix: linux-gcc-13-arm64
+            compiler_packages: g++-13
+          - name: macos_clang-18_x64
             os: macos-15-intel
             build_type: Release
             env_cc: clang
@@ -108,7 +127,7 @@ jobs:
             conan_profile: scwx-macos_clang-18
             appimage_arch: ''
             artifact_suffix: macos-x64
-          - name: macos_clang18_arm64
+          - name: macos_clang-18_arm64
             os: macos-14
             build_type: Release
             env_cc: clang
@@ -127,7 +146,7 @@ jobs:
     env:
       CC: ${{ matrix.env_cc }}
       CXX: ${{ matrix.env_cxx }}
-      SCWX_VERSION: v0.5.4
+      SCWX_VERSION: v0.5.6
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -152,10 +171,24 @@ jobs:
 
     - name: Setup MSVC
       if: matrix.compiler == 'msvc'
-      uses: ilammy/msvc-dev-cmd@v1
-      with:
-        arch: ${{ matrix.msvc_arch }}
-        vsversion: ${{ matrix.msvc_version }}
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+        $vsPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+        if (-not $vsPath) { throw "Visual Studio with C++ tools not found" }
+
+        $vsDevCmd = Join-Path $vsPath "Common7\Tools\VsDevCmd.bat"
+        if (-not (Test-Path $vsDevCmd)) { throw "VsDevCmd not found at $vsDevCmd" }
+
+        $arch = if ("${{ matrix.vs_arch }}" -eq "x64") { "amd64" } else { "${{ matrix.vs_arch }}" }
+
+        cmd.exe /d /s /c """$vsDevCmd"" -arch=$arch -host_arch=$arch && set" |
+          ForEach-Object {
+            if ($_ -match "^(.*?)=(.*)$") {
+              "$($matches[1])=$($matches[2])" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            }
+          }
 
     - name: Setup Ubuntu Environment
       if: ${{ startsWith(matrix.os, 'ubuntu') }}
@@ -201,7 +234,7 @@ jobs:
       uses: actions/cache@v5
       with:
         path: ~/.conan2
-        key: build-${{ matrix.conan_profile }}-${{ hashFiles('./source/conanfile.py', './source/tools/conan/profiles/*') }}
+        key: build-v2-${{ matrix.conan_profile }}-${{ hashFiles('./source/conanfile.py', './source/tools/conan/profiles/*') }}
 
     - name: Install Conan Packages
       shell: pwsh
@@ -219,6 +252,7 @@ jobs:
           --settings:all build_type=${{ matrix.build_type }} `
           --output-folder ./conan/ `
           ${{ matrix.conan_package_manager }}
+        conan cache clean
 
     - name: Build Supercell Wx
       shell: pwsh
@@ -278,29 +312,29 @@ jobs:
         tar -czf supercell-wx-${{ matrix.artifact_suffix }}.tar.gz supercell-wx/
 
     - name: Upload Artifacts (Windows)
-      if: matrix.os == 'windows-2022'
-      uses: actions/upload-artifact@v6
+      if: ${{ startsWith(matrix.os, 'windows') }}
+      uses: actions/upload-artifact@v7
       with:
         name: supercell-wx-${{ matrix.artifact_suffix }}
         path: ${{ github.workspace }}/supercell-wx/
 
     - name: Upload Debug Artifacts (Windows)
-      if: matrix.os == 'windows-2022'
-      uses: actions/upload-artifact@v6
+      if: ${{ startsWith(matrix.os, 'windows') }}
+      uses: actions/upload-artifact@v7
       with:
         name: supercell-wx-debug-${{ matrix.artifact_suffix }}
         path: ${{ github.workspace }}/build/Release/bin/*.pdb
 
     - name: Upload Artifacts (Linux)
       if: ${{ startsWith(matrix.os, 'ubuntu') }}
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: supercell-wx-${{ matrix.artifact_suffix }}
         path: ${{ github.workspace }}/supercell-wx-${{ matrix.artifact_suffix }}.tar.gz
 
     - name: Upload Debug Artifacts (Linux)
       if: ${{ startsWith(matrix.os, 'ubuntu') }}
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: supercell-wx-debug-${{ matrix.artifact_suffix }}
         path: |
@@ -308,15 +342,15 @@ jobs:
           ${{ github.workspace }}/build/Release/lib/*.debug
 
     - name: Build Installer (Windows)
-      if: matrix.os == 'windows-2022'
+      if: ${{ startsWith(matrix.os, 'windows') }}
       shell: pwsh
       run: |
         cd build
         cpack
 
     - name: Upload Installer (Windows)
-      if: matrix.os == 'windows-2022'
-      uses: actions/upload-artifact@v6
+      if: ${{ startsWith(matrix.os, 'windows') }}
+      uses: actions/upload-artifact@v7
       with:
         name: supercell-wx-installer-${{ matrix.artifact_suffix }}
         path: ${{ github.workspace }}/build/supercell-wx-*.msi*
@@ -349,7 +383,7 @@ jobs:
 
     - name: Upload AppImage (Linux)
       if: ${{ startsWith(matrix.os, 'ubuntu') }}
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: supercell-wx-appimage-${{ matrix.artifact_suffix }}
         path: ${{ github.workspace }}/*-${{ matrix.appimage_arch }}.AppImage*
@@ -384,7 +418,7 @@ jobs:
 
     - name: Upload FlatPak (Linux)
       if: ${{ startsWith(matrix.os, 'ubuntu') }}
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: supercell-wx-flatpak-${{ matrix.artifact_suffix }}
         path: ${{ github.workspace }}/supercell-wx.flatpak
@@ -398,7 +432,7 @@ jobs:
 
     - name: Upload Disk Image (macOS)
       if: ${{ startsWith(matrix.os, 'macos') }}
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: supercell-wx-${{ matrix.artifact_suffix }}
         path: ${{ github.workspace }}/build/supercell-wx-*.dmg*
@@ -412,7 +446,7 @@ jobs:
 
     - name: Upload Test Logs
       if: ${{ !cancelled() }}
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: supercell-wx-test-logs-${{ matrix.name }}
         path: ${{ github.workspace }}/build/Testing/

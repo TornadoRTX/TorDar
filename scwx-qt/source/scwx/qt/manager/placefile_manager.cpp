@@ -2,19 +2,20 @@
 #include <scwx/qt/manager/font_manager.hpp>
 #include <scwx/qt/manager/resource_manager.hpp>
 #include <scwx/qt/main/application.hpp>
+#include <scwx/qt/main/application_paths.hpp>
 #include <scwx/qt/util/network.hpp>
 #include <scwx/gr/placefile.hpp>
 #include <scwx/network/cpr.hpp>
 #include <scwx/util/json.hpp>
 #include <scwx/util/logger.hpp>
 
+#include <atomic>
 #include <shared_mutex>
 #include <vector>
 
 #include <QDir>
 #include <QGuiApplication>
 #include <QScreen>
-#include <QStandardPaths>
 #include <QUrl>
 #include <boost/algorithm/string.hpp>
 #include <boost/asio/post.hpp>
@@ -25,11 +26,7 @@
 #include <cpr/cpr.h>
 #include <fmt/chrono.h>
 
-namespace scwx
-{
-namespace qt
-{
-namespace manager
+namespace scwx::qt::manager
 {
 
 static const std::string logPrefix_ = "scwx::qt::manager::placefile_manager";
@@ -117,7 +114,7 @@ public:
                           boost::json::value&                     jv,
                           const std::shared_ptr<PlacefileRecord>& record)
    {
-      jv = {{kEnabledName_, record->enabled_},
+      jv = {{kEnabledName_, record->enabled_.load()},
             {kThresholdedName_, record->thresholded_},
             {kTitleName_, record->title_},
             {kNameName_, record->name_}};
@@ -140,7 +137,7 @@ public:
    std::string                    name_;
    std::string                    title_;
    std::shared_ptr<gr::Placefile> placefile_;
-   bool                           enabled_;
+   std::atomic<bool>              enabled_;
    bool                           thresholded_;
    boost::asio::thread_pool       threadPool_ {1u};
    boost::asio::steady_timer      refreshTimer_ {threadPool_};
@@ -359,20 +356,17 @@ PlacefileManager::Impl::PlacefileRecord::refresh_time() const
 
 void PlacefileManager::Impl::InitializePlacefileSettings()
 {
-   std::string appDataPath {
-      QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
-         .toStdString()};
+   const std::string settingsPath {
+      main::ApplicationPaths::GetLocation(
+         main::ApplicationPaths::StandardLocation::Settings)
+         .generic_string()};
 
-   if (!std::filesystem::exists(appDataPath))
+   if (!std::filesystem::exists(settingsPath))
    {
-      if (!std::filesystem::create_directories(appDataPath))
-      {
-         logger_->error("Unable to create application data directory: \"{}\"",
-                        appDataPath);
-      }
+      logger_->error("Settings path does not exist: \"{}\"", settingsPath);
    }
 
-   placefileSettingsPath_ = appDataPath + "/placefiles.json";
+   placefileSettingsPath_ = settingsPath + "/placefiles.json";
 }
 
 void PlacefileManager::Impl::ReadPlacefileSettings()
@@ -637,20 +631,34 @@ void PlacefileManager::Impl::PlacefileRecord::Update()
 
       // Send HTTP GET request
       auto response =
-         cpr::Get(cpr::Url {decodedUrl}, network::cpr::GetHeader(), parameters);
+         cpr::Get(cpr::Url {decodedUrl},
+                  network::cpr::GetHeader(),
+                  parameters,
+                  network::cpr::GetDefaultTimeout(),
+                  network::cpr::GetDefaultConnectTimeout(),
+                  network::cpr::GetDefaultLowSpeed(),
+                  network::cpr::GetDefaultProgressCallback(enabled_));
 
       if (cpr::status::is_success(response.status_code))
       {
          std::istringstream responseBody {response.text};
          updatedPlacefile = gr::Placefile::Load(name, responseBody);
       }
-      else if (response.status_code == 0)
+      else if (response.status_code == 0 && enabled_)
       {
-         logger_->error("Error loading placefile: {}", response.error.message);
+         logger_->error("Error loading placefile: {} ({})",
+                        decodedUrl,
+                        response.error.message);
+      }
+      else if (enabled_)
+      {
+         logger_->error("Error loading placefile: {} ({})",
+                        decodedUrl,
+                        response.status_line);
       }
       else
       {
-         logger_->error("Error loading placefile: {}", response.status_line);
+         logger_->debug("Request cancelled, shutting down");
       }
    }
 
@@ -891,6 +899,4 @@ PlacefileManager::Impl::LoadImageResources(
    return ResourceManager::LoadImageResources(urlStrings);
 }
 
-} // namespace manager
-} // namespace qt
-} // namespace scwx
+} // namespace scwx::qt::manager

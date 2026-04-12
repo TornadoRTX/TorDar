@@ -18,9 +18,11 @@ find_package(Fontconfig)
 find_package(geographiclib)
 find_package(geos)
 find_package(glm)
+find_package(JPEG)
 find_package(OpenGL REQUIRED)
 find_package(Python COMPONENTS Interpreter)
 find_package(SQLite3)
+find_package(TIFF)
 
 find_package(QT NAMES Qt6
              COMPONENTS Gui
@@ -53,13 +55,17 @@ find_package(Qt${QT_VERSION_MAJOR}
 set(SRC_EXE_MAIN source/scwx/qt/main/main.cpp)
 
 set(HDR_MAIN source/scwx/qt/main/application.hpp
+             source/scwx/qt/main/application_paths.hpp
              source/scwx/qt/main/check_privilege.hpp
              source/scwx/qt/main/main_window.hpp
-             source/scwx/qt/main/process_validation.hpp)
+             source/scwx/qt/main/process_validation.hpp
+             source/scwx/qt/main/program_options.hpp)
 set(SRC_MAIN source/scwx/qt/main/application.cpp
+             source/scwx/qt/main/application_paths.cpp
              source/scwx/qt/main/check_privilege.cpp
              source/scwx/qt/main/main_window.cpp
-             source/scwx/qt/main/process_validation.cpp)
+             source/scwx/qt/main/process_validation.cpp
+             source/scwx/qt/main/program_options.cpp)
 set(UI_MAIN  source/scwx/qt/main/main_window.ui)
 set(HDR_CONFIG source/scwx/qt/config/county_database.hpp
                source/scwx/qt/config/radar_site.hpp)
@@ -294,6 +300,7 @@ set(HDR_UI source/scwx/qt/ui/about_dialog.hpp
            source/scwx/qt/ui/level2_products_widget.hpp
            source/scwx/qt/ui/level2_settings_widget.hpp
            source/scwx/qt/ui/level3_products_widget.hpp
+           source/scwx/qt/ui/level3_settings_widget.hpp
            source/scwx/qt/ui/line_label.hpp
            source/scwx/qt/ui/open_url_dialog.hpp
            source/scwx/qt/ui/placefile_dialog.hpp
@@ -329,6 +336,7 @@ set(SRC_UI source/scwx/qt/ui/about_dialog.cpp
            source/scwx/qt/ui/level2_products_widget.cpp
            source/scwx/qt/ui/level2_settings_widget.cpp
            source/scwx/qt/ui/level3_products_widget.cpp
+           source/scwx/qt/ui/level3_settings_widget.cpp
            source/scwx/qt/ui/line_label.cpp
            source/scwx/qt/ui/open_url_dialog.cpp
            source/scwx/qt/ui/placefile_dialog.cpp
@@ -466,13 +474,13 @@ set(JSON_FILES res/config/radar_sites.json)
 set(TS_FILES ts/scwx_en_US.ts)
 
 set(RADAR_SITES_FILE ${scwx-qt_SOURCE_DIR}/res/config/radar_sites.json)
-set(COUNTY_DBF_FILES ${SCWX_DIR}/data/db/c_18mr25.dbf)
-set(ZONE_DBF_FILES   ${SCWX_DIR}/data/db/fz18mr25.dbf
-                     ${SCWX_DIR}/data/db/mz18mr25.dbf
-                     ${SCWX_DIR}/data/db/oz18mr25.dbf
-                     ${SCWX_DIR}/data/db/z_18mr25.dbf)
-set(STATE_DBF_FILES  ${SCWX_DIR}/data/db/s_18mr25.dbf)
-set(WFO_DBF_FILES    ${SCWX_DIR}/data/db/w_18mr25.dbf)
+set(COUNTY_DBF_FILES ${SCWX_DIR}/data/db/c_16ap26.dbf)
+set(ZONE_DBF_FILES   ${SCWX_DIR}/data/db/fz16ap26.dbf
+                     ${SCWX_DIR}/data/db/mz16ap26.dbf
+                     ${SCWX_DIR}/data/db/oz16ap26.dbf
+                     ${SCWX_DIR}/data/db/z_16ap26.dbf)
+set(STATE_DBF_FILES  ${SCWX_DIR}/data/db/s_16ap26.dbf)
+set(WFO_DBF_FILES    ${SCWX_DIR}/data/db/w_16ap26.dbf)
 set(COUNTIES_SQLITE_DB ${scwx-qt_BINARY_DIR}/res/db/counties.db)
 
 set(RESOURCE_INPUT  ${scwx-qt_SOURCE_DIR}/res/scwx-qt.rc.in)
@@ -664,9 +672,7 @@ set_target_properties(scwx-qt_update_radar_sites   PROPERTIES FOLDER generate)
 if (WIN32)
     set(APP_ICON_RESOURCE_WINDOWS ${RESOURCE_OUTPUT})
     qt_add_executable(supercell-wx ${EXECUTABLE_SOURCES} ${APP_ICON_RESOURCE_WINDOWS})
-    if (SCWX_DISABLE_CONSOLE)
-        set_target_properties(supercell-wx PROPERTIES WIN32_EXECUTABLE $<IF:$<CONFIG:Release>,TRUE,FALSE>)
-    endif()
+    set_target_properties(supercell-wx PROPERTIES WIN32_EXECUTABLE $<IF:$<CONFIG:Release>,TRUE,FALSE>)
 elseif (APPLE)
     set(SCWX_ICON "${scwx-qt_SOURCE_DIR}/res/icons/scwx.icns")
 
@@ -799,13 +805,26 @@ target_link_libraries(scwx-qt PUBLIC Qt${QT_VERSION_MAJOR}::Widgets
                                      glad_gl_core_33
                                      glm::glm
                                      imgui
+                                     JPEG::JPEG
                                      qt6ct-common
                                      qt6ct-widgets
                                      SQLite::SQLite3
+                                     TIFF::TIFF
                                      wxdata)
+
+target_link_libraries(scwx-qt INTERFACE Boost::program_options)
 
 target_link_libraries(supercell-wx PRIVATE scwx-qt
                                            wxdata)
+
+if (WIN32)
+    # Deploy Qt to target directory
+    add_custom_command(TARGET supercell-wx
+                       POST_BUILD
+                       COMMAND "${WINDEPLOYQT_EXECUTABLE}"
+                           --no-translations $<TARGET_FILE:supercell-wx>
+                       COMMENT "Running windeployqt for supercell-wx...")
+endif()
 
 if (LINUX)
     # Set DT_RUNPATH for Linux targets
@@ -905,6 +924,9 @@ set(CPACK_PACKAGE_VENDOR        "Dan Paulat")
 set(CPACK_PACKAGE_CHECKSUM      SHA256)
 set(CPACK_RESOURCE_FILE_LICENSE "${SCWX_DIR}/LICENSE.txt")
 
+set(SCWX_WINDOWS_PACKAGE_INSTALL_ROOT "" CACHE PATH
+    "Existing installed Supercell Wx tree to package for Windows")
+
 if (MSVC)
     set(CPACK_PACKAGE_FILE_NAME           "supercell-wx-v${SCWX_VERSION}-windows-x64")
     set(CPACK_PACKAGE_INSTALL_DIRECTORY   "Supercell Wx")
@@ -917,8 +939,25 @@ if (MSVC)
     set(CPACK_WIX_TEMPLATE                "${CMAKE_CURRENT_SOURCE_DIR}/wix.template.in")
     set(CPACK_WIX_EXTENSIONS              WixUIExtension WiXUtilExtension)
 
-    set(CPACK_INSTALL_CMAKE_PROJECTS
-        "${CMAKE_CURRENT_BINARY_DIR};${CMAKE_PROJECT_NAME};supercell-wx;/")
+    if (SCWX_WINDOWS_PACKAGE_INSTALL_ROOT)
+        if (NOT IS_DIRECTORY "${SCWX_WINDOWS_PACKAGE_INSTALL_ROOT}")
+            message(FATAL_ERROR
+                    "SCWX_WINDOWS_PACKAGE_INSTALL_ROOT does not exist: ${SCWX_WINDOWS_PACKAGE_INSTALL_ROOT}")
+        endif()
+
+        cmake_path(ABSOLUTE_PATH SCWX_WINDOWS_PACKAGE_INSTALL_ROOT
+                   NORMALIZE
+                   OUTPUT_VARIABLE scwx_windows_package_install_root)
+
+        message(STATUS "Packaging Windows installer from: ${scwx_windows_package_install_root}")
+
+        set(CPACK_INSTALL_CMAKE_PROJECTS "")
+        set(CPACK_INSTALLED_DIRECTORIES
+            "${scwx_windows_package_install_root};/")
+    else()
+        set(CPACK_INSTALL_CMAKE_PROJECTS
+            "${CMAKE_CURRENT_BINARY_DIR};${CMAKE_PROJECT_NAME};supercell-wx;/")
+    endif()
 
     include(CPack)
 elseif(APPLE)

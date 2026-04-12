@@ -32,6 +32,7 @@
 #include <scwx/qt/ui/level2_products_widget.hpp>
 #include <scwx/qt/ui/level2_settings_widget.hpp>
 #include <scwx/qt/ui/level3_products_widget.hpp>
+#include <scwx/qt/ui/level3_settings_widget.hpp>
 #include <scwx/qt/ui/placefile_dialog.hpp>
 #include <scwx/qt/ui/marker_dialog.hpp>
 #include <scwx/qt/ui/radar_site_dialog.hpp>
@@ -44,18 +45,22 @@
 #include <scwx/util/logger.hpp>
 #include <scwx/util/time.hpp>
 
+#include <algorithm>
 #include <set>
 
 #include <boost/asio/post.hpp>
 #include <boost/asio/thread_pool.hpp>
 #include <QDesktopServices>
+#include <QGuiApplication>
 #include <QKeyEvent>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QScreen>
+#include <QSignalBlocker>
 #include <QSplitter>
-#include <QStandardPaths>
 #include <QTimer>
 #include <QToolButton>
+#include <QWindow>
 
 namespace scwx::qt::main
 {
@@ -72,14 +77,6 @@ public:
        mainWindow_ {mainWindow},
        settings_ {},
        activeMap_ {nullptr},
-       mapSettingsGroup_ {nullptr},
-       level2ProductsGroup_ {nullptr},
-       level2SettingsGroup_ {nullptr},
-       level3ProductsGroup_ {nullptr},
-       timelineGroup_ {nullptr},
-       level2ProductsWidget_ {nullptr},
-       level2SettingsWidget_ {nullptr},
-       level3ProductsWidget_ {nullptr},
        alertManager_ {manager::AlertManager::Instance()},
        placefileManager_ {manager::PlacefileManager::Instance()},
        markerManager_ {manager::MarkerManager::Instance()},
@@ -91,54 +88,23 @@ public:
    {
       mapProvider_ = map::GetMapProvider(
          settings::GeneralSettings::Instance().map_provider().GetValue());
-      const map::MapProviderInfo& mapProviderInfo =
-         map::GetMapProviderInfo(mapProvider_);
-
-      std::string appDataPath {
-         QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)
-            .toStdString()};
-      std::string cacheDbPath {appDataPath + "/" +
-                               mapProviderInfo.cacheDbName_};
-
-      if (!std::filesystem::exists(appDataPath))
-      {
-         if (!std::filesystem::create_directories(appDataPath))
-         {
-            logger_->error(
-               "Unable to create application local data directory: \"{}\"",
-               appDataPath);
-         }
-      }
-
-      std::string mapProviderApiKey = map::GetMapProviderApiKey(mapProvider_);
-
-      if (mapProvider_ == map::MapProvider::Mapbox)
-      {
-         settings_.setProviderTemplate(mapProviderInfo.providerTemplate_);
-         settings_.setApiKey(QString {mapProviderApiKey.c_str()});
-      }
-      settings_.setCacheDatabasePath(QString {cacheDbPath.c_str()});
-      settings_.setCacheDatabaseMaximumSize(20 * 1024 * 1024);
+      map::ConfigureMapSettings(mapProvider_, settings_);
 
       if (settings::GeneralSettings::Instance().track_location().GetValue())
       {
          positionManager_->TrackLocation(true);
       }
    }
+
    ~MainWindowImpl()
    {
       homeRadarConnection_.disconnect();
+      clockFormatConnection_.disconnect();
       defaultTimeZoneConnection_.disconnect();
-
-      auto& generalSettings = settings::GeneralSettings::Instance();
-
-      auto& customStyleUrl       = generalSettings.custom_style_url();
-      auto& customStyleDrawLayer = generalSettings.custom_style_draw_layer();
-
-      customStyleUrl.UnregisterValueChangedCallback(
-         customStyleUrlChangedCallbackUuid_);
-      customStyleDrawLayer.UnregisterValueChangedCallback(
-         customStyleDrawLayerChangedCallbackUuid_);
+      for (auto& connection : connections_)
+      {
+         connection.disconnect();
+      }
 
       clockTimer_.stop();
       threadPool_.join();
@@ -181,15 +147,17 @@ public:
 
    std::shared_ptr<gl::GlContext> glContext_ {nullptr};
 
-   ui::CollapsibleGroup*     mapSettingsGroup_;
-   ui::CollapsibleGroup*     level2ProductsGroup_;
-   ui::CollapsibleGroup*     level2SettingsGroup_;
-   ui::CollapsibleGroup*     level3ProductsGroup_;
-   ui::CollapsibleGroup*     timelineGroup_;
-   ui::Level2ProductsWidget* level2ProductsWidget_;
-   ui::Level2SettingsWidget* level2SettingsWidget_;
+   ui::CollapsibleGroup*     mapSettingsGroup_ {nullptr};
+   ui::CollapsibleGroup*     level2ProductsGroup_ {nullptr};
+   ui::CollapsibleGroup*     level2SettingsGroup_ {nullptr};
+   ui::CollapsibleGroup*     level3ProductsGroup_ {nullptr};
+   ui::CollapsibleGroup*     level3SettingsGroup_ {nullptr};
+   ui::CollapsibleGroup*     timelineGroup_ {nullptr};
+   ui::Level2ProductsWidget* level2ProductsWidget_ {nullptr};
+   ui::Level2SettingsWidget* level2SettingsWidget_ {nullptr};
 
-   ui::Level3ProductsWidget* level3ProductsWidget_;
+   ui::Level3ProductsWidget* level3ProductsWidget_ {nullptr};
+   ui::Level3SettingsWidget* level3SettingsWidget_ {nullptr};
 
    QLabel* coordinateLabel_ {nullptr};
    QLabel* timeLabel_ {nullptr};
@@ -210,9 +178,14 @@ public:
 
    QTimer clockTimer_ {};
 
-   bool               customStyleAvailable_ {false};
-   boost::uuids::uuid customStyleDrawLayerChangedCallbackUuid_ {};
-   boost::uuids::uuid customStyleUrlChangedCallbackUuid_ {};
+   bool customStyleAvailable_ {false};
+
+   std::vector<boost::signals2::scoped_connection> connections_ {};
+
+#ifdef Q_OS_WIN
+   QRect            priorFullScreenGeometry_ {};
+   Qt::WindowStates priorFullScreenWindowState_ {};
+#endif
 
    std::shared_ptr<manager::AlertManager>  alertManager_;
    std::shared_ptr<manager::HotkeyManager> hotkeyManager_ {
@@ -236,6 +209,7 @@ public:
    bool layerActionsInitialized_ {false};
 
    boost::signals2::scoped_connection homeRadarConnection_ {};
+   boost::signals2::scoped_connection clockFormatConnection_ {};
    boost::signals2::scoped_connection defaultTimeZoneConnection_ {};
 
    std::vector<map::MapWidget*> maps_;
@@ -282,6 +256,11 @@ MainWindow::MainWindow(QWidget* parent) :
 
    ui->radarSitePresetsButton->setVisible(!radarSitePresets.empty());
 
+   // Configure Map
+   p->ConfigureMapLayout();
+
+   const auto defaultTimeZone = p->activeMap_->GetDefaultTimeZone();
+
    // Configure Alert Dock
    p->alertDockWidget_ = new ui::AlertDockWidget(this);
    addDockWidget(Qt::BottomDockWidgetArea, p->alertDockWidget_);
@@ -302,9 +281,6 @@ MainWindow::MainWindow(QWidget* parent) :
 
    ui->menuDebug->menuAction()->setVisible(
       settings::GeneralSettings::Instance().debug_enabled().GetValue());
-
-   // Configure Map
-   p->ConfigureMapLayout();
 
    // Radar Site Dialog
    p->radarSiteDialog_ = new ui::RadarSiteDialog(this);
@@ -371,12 +347,22 @@ MainWindow::MainWindow(QWidget* parent) :
    ui->radarToolboxScrollAreaContents->layout()->addWidget(
       p->level2SettingsGroup_);
 
+   // Add Level 3 Settings
+   p->level3SettingsGroup_ =
+      new ui::CollapsibleGroup(tr("Level 3 Settings"), this);
+   p->level3SettingsWidget_ = new ui::Level3SettingsWidget(this);
+   p->level3SettingsGroup_->GetContentsLayout()->addWidget(
+      p->level3SettingsWidget_);
+   ui->radarToolboxScrollAreaContents->layout()->addWidget(
+      p->level3SettingsGroup_);
+   p->level3SettingsGroup_->setVisible(false);
+
    // Timeline
    p->timelineGroup_       = new ui::CollapsibleGroup(tr("Timeline"), this);
    p->animationDockWidget_ = new ui::AnimationDockWidget(this);
    p->timelineGroup_->GetContentsLayout()->addWidget(p->animationDockWidget_);
    ui->radarToolboxScrollAreaContents->layout()->addWidget(p->timelineGroup_);
-   p->animationDockWidget_->UpdateTimeZone(p->activeMap_->GetDefaultTimeZone());
+   p->animationDockWidget_->UpdateTimeZone(defaultTimeZone);
 
    // Reset toolbox spacer at the bottom
    ui->radarToolboxScrollAreaContents->layout()->removeItem(
@@ -686,6 +672,49 @@ void MainWindow::on_actionDumpRadarProductRecords_triggered()
    manager::RadarProductManager::DumpRecords();
 }
 
+void MainWindow::on_actionFullScreen_triggered(bool checked)
+{
+   if (checked)
+   {
+#ifdef Q_OS_WIN
+      // On Windows, showFullScreen() with QOpenGLWidgets breaks dropdown menus.
+      // Use a frameless window covering the screen geometry as a workaround.
+      p->priorFullScreenWindowState_ = windowState();
+      p->priorFullScreenGeometry_    = geometry();
+      setWindowFlag(Qt::FramelessWindowHint, true);
+      QScreen* screen = windowHandle() ? windowHandle()->screen() : nullptr;
+      if (screen == nullptr)
+      {
+         screen = QGuiApplication::primaryScreen();
+      }
+      if (screen != nullptr)
+      {
+         setGeometry(screen->geometry());
+      }
+      show();
+#else
+      showFullScreen();
+#endif
+   }
+   else
+   {
+#ifdef Q_OS_WIN
+      setWindowFlag(Qt::FramelessWindowHint, false);
+      if (p->priorFullScreenWindowState_ & Qt::WindowMaximized)
+      {
+         showMaximized();
+      }
+      else
+      {
+         showNormal();
+         setGeometry(p->priorFullScreenGeometry_);
+      }
+#else
+      setWindowState(windowState() & ~Qt::WindowFullScreen);
+#endif
+   }
+}
+
 void MainWindow::on_actionRadarWireframe_triggered(bool checked)
 {
    p->activeMap_->SetRadarWireframeEnabled(checked);
@@ -852,29 +881,38 @@ void MainWindowImpl::ConfigureMapStyles()
 
    for (std::size_t i = 0; i < maps_.size(); i++)
    {
-      std::string styleName = mapSettings.map_style(i).GetValue();
+      const std::string configuredStyleName =
+         mapSettings.map_style(i).GetValue();
+      std::string styleName = configuredStyleName;
 
-      if ((customStyleAvailable_ && styleName == "Custom") ||
-          std::find_if(mapProviderInfo.mapStyles_.cbegin(),
-                       mapProviderInfo.mapStyles_.cend(),
-                       [&](const auto& mapStyle)
-                       { return mapStyle.name_ == styleName; }) !=
-             mapProviderInfo.mapStyles_.cend())
+      if (!((customStyleAvailable_ && styleName == "Custom") ||
+            styleName == "None" ||
+            std::ranges::find_if(mapProviderInfo.mapStyles_,
+                                 [&](const auto& mapStyle)
+                                 { return mapStyle.name_ == styleName; }) !=
+               mapProviderInfo.mapStyles_.cend()))
       {
-         // Initialize map style from settings
-         maps_.at(i)->SetInitialMapStyle(styleName);
-
-         // Update the active map's style
-         if (maps_[i] == activeMap_)
-         {
-            UpdateMapStyle(styleName);
-         }
+         styleName = !mapProviderInfo.mapStyles_.empty() ?
+                        mapProviderInfo.mapStyles_.at(0).name_ :
+                        "None";
       }
-      else if (!mapProviderInfo.mapStyles_.empty())
+
+      const std::string currentStyleName = maps_.at(i)->GetMapStyle();
+      if (currentStyleName != "?")
       {
-         // Stage first valid map style from map provider
-         mapSettings.map_style(i).StageValue(
-            mapProviderInfo.mapStyles_.at(0).name_);
+         styleName = currentStyleName;
+      }
+
+      maps_.at(i)->SetInitialMapStyle(styleName);
+
+      if (maps_[i] == activeMap_)
+      {
+         UpdateMapStyle(styleName);
+      }
+
+      if (configuredStyleName != styleName)
+      {
+         mapSettings.map_style(i).StageValue(styleName);
       }
    }
 }
@@ -889,6 +927,8 @@ void MainWindowImpl::ConfigureUiSettings()
       uiSettings.level2_settings_expanded().GetValue());
    level3ProductsGroup_->SetExpanded(
       uiSettings.level3_products_expanded().GetValue());
+   level3SettingsGroup_->SetExpanded(
+      uiSettings.level3_settings_expanded().GetValue());
    mapSettingsGroup_->SetExpanded(
       uiSettings.map_settings_expanded().GetValue());
    timelineGroup_->SetExpanded(uiSettings.timeline_expanded().GetValue());
@@ -905,6 +945,10 @@ void MainWindowImpl::ConfigureUiSettings()
            &ui::CollapsibleGroup::StateChanged,
            [&](bool expanded)
            { uiSettings.level3_products_expanded().StageValue(expanded); });
+   connect(level3SettingsGroup_,
+           &ui::CollapsibleGroup::StateChanged,
+           [&](bool expanded)
+           { uiSettings.level3_settings_expanded().StageValue(expanded); });
    connect(mapSettingsGroup_,
            &ui::CollapsibleGroup::StateChanged,
            [&](bool expanded)
@@ -1019,16 +1063,6 @@ void MainWindowImpl::ConnectMapSignals()
 
 void MainWindowImpl::ConnectAnimationSignals()
 {
-   defaultTimeZoneConnection_ = settings::GeneralSettings::Instance()
-                                   .default_time_zone()
-                                   .changed_signal()
-                                   .connect(
-                                      [this]()
-                                      {
-                                         animationDockWidget_->UpdateTimeZone(
-                                            activeMap_->GetDefaultTimeZone());
-                                      });
-
    connect(animationDockWidget_,
            &ui::AnimationDockWidget::DateTimeChanged,
            timelineManager_.get(),
@@ -1139,6 +1173,16 @@ void MainWindowImpl::ConnectAnimationSignals()
 
 void MainWindowImpl::ConnectOtherSignals()
 {
+   connect(hotkeyManager_.get(),
+           &manager::HotkeyManager::HotkeyPressed,
+           mainWindow_,
+           [this](types::Hotkey hotkey, bool /*isAutoRepeat*/)
+           {
+              if (hotkey == types::Hotkey::ToggleFullScreen)
+              {
+                 mainWindow_->ui->actionFullScreen->trigger();
+              }
+           });
    connect(qApp,
            &QApplication::focusChanged,
            mainWindow_,
@@ -1228,6 +1272,26 @@ void MainWindowImpl::ConnectOtherSignals()
            &ui::Level2SettingsWidget::ElevationSelected,
            mainWindow_,
            [&](float elevation) { SelectElevation(activeMap_, elevation); });
+   connect(level2SettingsWidget_,
+           &ui::Level2SettingsWidget::ThresholdChanged,
+           mainWindow_,
+           [&](std::optional<float> threshold)
+           {
+              if (activeMap_ != nullptr)
+              {
+                 activeMap_->SetColorTableThreshold(threshold);
+              }
+           });
+   connect(level3SettingsWidget_,
+           &ui::Level3SettingsWidget::ThresholdChanged,
+           mainWindow_,
+           [&](std::optional<float> threshold)
+           {
+              if (activeMap_ != nullptr)
+              {
+                 activeMap_->SetColorTableThreshold(threshold);
+              }
+           });
    connect(mainWindow_,
            &MainWindow::ActiveMapMoved,
            alertDockWidget_,
@@ -1343,14 +1407,11 @@ void MainWindowImpl::ConnectOtherSignals()
    auto& generalSettings = settings::GeneralSettings::Instance();
    homeRadarConnection_ =
       generalSettings.default_radar_site().changed_signal().connect(
-         [this]()
+         [this](const auto& event)
          {
             const std::shared_ptr<config::RadarSite> radarSite =
                activeMap_->GetRadarSite();
-            const std::string homeRadarSite =
-               settings::GeneralSettings::Instance()
-                  .default_radar_site()
-                  .GetValue();
+            const std::string& homeRadarSite = event.newValue_;
             if (radarSite == nullptr)
             {
                mainWindow_->ui->saveRadarProductsButton->setVisible(false);
@@ -1361,6 +1422,42 @@ void MainWindowImpl::ConnectOtherSignals()
                   radarSite->id() == homeRadarSite);
             }
          });
+
+   clockFormatConnection_ =
+      generalSettings.clock_format().changed_signal().connect(
+         [](const auto& event)
+         {
+            util::time::set_default_clock_format(
+               util::GetClockFormat(event.newValue_));
+         });
+   defaultTimeZoneConnection_ =
+      generalSettings.default_time_zone().changed_signal().connect(
+         [this](auto&&...)
+         {
+            const auto defaultTimeZone = activeMap_->GetDefaultTimeZone();
+            util::time::set_current_time_zone(defaultTimeZone);
+            animationDockWidget_->UpdateTimeZone(defaultTimeZone);
+         });
+
+   connections_.emplace_back(
+      generalSettings.custom_style_url().changed_signal().connect(
+         [this](auto&&...) { PopulateCustomMapStyle(); }));
+   connections_.emplace_back(
+      generalSettings.custom_style_draw_layer().changed_signal().connect(
+         [this](auto&&...) { PopulateCustomMapStyle(); }));
+
+   connections_.emplace_back(
+      generalSettings.map_provider().changed_signal().connect(
+         [this](const auto& event)
+         {
+            mapProvider_ = map::GetMapProvider(event.newValue_);
+            PopulateMapStyles();
+            ConfigureMapStyles();
+         }));
+
+   // Ensure default clock format is initialized
+   util::time::set_default_clock_format(
+      util::GetClockFormat(generalSettings.clock_format().GetValue()));
 }
 
 void MainWindowImpl::InitializeLayerDisplayActions()
@@ -1476,6 +1573,10 @@ void MainWindowImpl::PopulateCustomMapStyle()
 
 void MainWindowImpl::PopulateMapStyles()
 {
+   const QSignalBlocker blocker(mainWindow_->ui->mapStyleComboBox);
+
+   mainWindow_->ui->mapStyleComboBox->clear();
+
    const auto& mapProviderInfo = map::GetMapProviderInfo(mapProvider_);
    for (const auto& mapStyle : mapProviderInfo.mapStyles_)
    {
@@ -1483,19 +1584,11 @@ void MainWindowImpl::PopulateMapStyles()
          QString::fromStdString(mapStyle.name_));
    }
 
-   auto& generalSettings = settings::GeneralSettings::Instance();
+   const std::string kNone = "None";
+   mainWindow_->ui->mapStyleComboBox->addItem(QString::fromStdString(kNone));
 
-   auto& customStyleUrl       = generalSettings.custom_style_url();
-   auto& customStyleDrawLayer = generalSettings.custom_style_draw_layer();
-
-   customStyleUrlChangedCallbackUuid_ =
-      customStyleUrl.RegisterValueChangedCallback(
-         [this]([[maybe_unused]] const std::string& value)
-         { PopulateCustomMapStyle(); });
-   customStyleDrawLayerChangedCallbackUuid_ =
-      customStyleDrawLayer.RegisterValueChangedCallback(
-         [this]([[maybe_unused]] const std::string& value)
-         { PopulateCustomMapStyle(); });
+   // The combobox was cleared above, so force re-evaluation of custom style.
+   customStyleAvailable_ = false;
 
    PopulateCustomMapStyle();
 }
@@ -1581,6 +1674,7 @@ void MainWindowImpl::UpdateMapStyle(const std::string& styleName)
       QString::fromStdString(styleName));
    if (index != -1)
    {
+      const QSignalBlocker blocker(mainWindow_->ui->mapStyleComboBox);
       mainWindow_->ui->mapStyleComboBox->setCurrentIndex(index);
 
       // Update settings for active map
@@ -1611,11 +1705,30 @@ void MainWindowImpl::UpdateRadarProductSettings()
       level2SettingsGroup_->setVisible(true);
       // This should be done after setting visible for correct sizing
       level2SettingsWidget_->UpdateSettings(activeMap_);
+
+      level3SettingsGroup_->setVisible(false);
+      level3SettingsWidget_->setEnabled(false);
+   }
+   else if (activeMap_->GetRadarProductGroup() ==
+            common::RadarProductGroup::Level3)
+   {
+      level2SettingsGroup_->setVisible(false);
+      level2SettingsWidget_->setEnabled(false);
+
+      level3SettingsWidget_->setEnabled(true);
+      level3SettingsGroup_->setVisible(true);
+      const bool hasContent =
+         level3SettingsWidget_->UpdateThreshold(activeMap_);
+      level3SettingsWidget_->setEnabled(hasContent);
+      level3SettingsGroup_->setVisible(hasContent);
    }
    else
    {
       level2SettingsGroup_->setVisible(false);
       level2SettingsWidget_->setEnabled(false);
+
+      level3SettingsGroup_->setVisible(false);
+      level3SettingsWidget_->setEnabled(false);
    }
 
    mainWindow_->ui->smoothRadarDataCheckBox->setCheckState(
@@ -1663,7 +1776,9 @@ void MainWindowImpl::UpdateRadarSite()
    alertManager_->SetRadarSite(radarSite);
    placefileManager_->SetRadarSite(radarSite);
 
-   animationDockWidget_->UpdateTimeZone(activeMap_->GetDefaultTimeZone());
+   const auto timeZone = activeMap_->GetDefaultTimeZone();
+   util::time::set_current_time_zone(timeZone);
+   animationDockWidget_->UpdateTimeZone(timeZone);
 }
 
 void MainWindowImpl::UpdateVcp()

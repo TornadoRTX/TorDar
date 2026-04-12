@@ -5,27 +5,30 @@ import os
 
 class SupercellWxConan(ConanFile):
     settings   = ("os", "compiler", "build_type", "arch")
-    requires   = ("boost/1.89.0",
-                  "cpr/1.14.1",
-                  "fontconfig/2.15.0",
+    requires   = ("boost/1.90.0",
+                  "cpr/1.14.2",
+                  "fontconfig/2.17.1",
                   "geographiclib/2.6",
                   "geos/3.13.0",
                   "glm/1.0.1",
                   "gtest/1.17.0",
                   "libcurl/8.17.0",
-                  "libpng/1.6.53",
-                  "libxml2/2.15.0",
+                  "libjpeg/9f",
+                  "libpng/1.6.54",
+                  "libtiff/4.7.1",
+                  "libxml2/2.15.1",
                   "libzip/1.11.4",
-                  "openssl/3.5.0",
+                  "openssl/3.6.0",
                   "range-v3/cci.20240905",
                   "re2/20251105",
-                  "spdlog/1.16.0",
+                  "spdlog/1.17.0",
                   "sqlite3/3.51.0",
                   "vulkan-loader/1.4.313.0",
                   "zlib/1.3.1")
     generators = ("CMakeDeps")
-    default_options = {"geos/*:shared"     : True,
-                       "libiconv/*:shared" : True}
+    default_options = {"boost/*:without_cobalt" : True,
+                       "geos/*:shared"          : True,
+                       "libiconv/*:shared"      : True}
 
     def configure(self):
         if self.settings.os == "Windows":
@@ -34,6 +37,8 @@ class SupercellWxConan(ConanFile):
             self.options["openssl"].shared    = True
             self.options["libcurl"].ca_bundle = "none"
             self.options["libcurl"].ca_path   = "none"
+            # onetbb requires option hwloc/*:shared=True
+            self.options["hwloc"].shared      = True
         elif self.settings.os == "Macos":
             self.options["openssl"].shared    = True
             self.options["libcurl"].ca_bundle = "none"
