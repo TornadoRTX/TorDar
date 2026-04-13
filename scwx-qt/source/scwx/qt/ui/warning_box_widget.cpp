@@ -26,6 +26,8 @@
 #include <QFontMetrics>
 #include <QLayoutItem>
 #include <QMargins>
+#include <QPolygon>
+#include <QRegion>
 #include <QScrollBar>
 
 #include <algorithm>
@@ -152,8 +154,8 @@ public:
    void UpdateCountdown();
    void UpdateExpirationOnly();
    void
-        UpdateProgressVisual(const types::TextEventKey&                   key,
-                             const std::shared_ptr<const awips::Segment>& segment);
+   UpdateProgressVisual(const types::TextEventKey&                   key,
+                        const std::shared_ptr<const awips::Segment>& segment);
    void ApplyTheme(const types::TextEventKey&                   key,
                    const std::shared_ptr<const awips::Segment>& segment);
    void UpdateTitleFont();
@@ -178,9 +180,9 @@ public:
    GetFieldValue(const std::unordered_map<std::string, std::string>& fields,
                  const std::initializer_list<std::string_view>&      keys);
    void
-        AddSummaryField(const std::string& summaryLabel,
-                        const std::unordered_map<std::string, std::string>& fields,
-                        const std::initializer_list<std::string_view>&      keys);
+   AddSummaryField(const std::string& summaryLabel,
+                   const std::unordered_map<std::string, std::string>& fields,
+                   const std::initializer_list<std::string_view>&      keys);
    void AddPhenomenonSpecificFields(
       awips::Phenomenon                                   phenomenon,
       const std::unordered_map<std::string, std::string>& fields);
@@ -305,7 +307,7 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
 
    p->progressTrack_ = new QFrame(this);
    p->progressTrack_->setObjectName("progressTrack");
-   p->progressTrack_->setFixedHeight(8);
+   p->progressTrack_->setFixedHeight(14);
    p->progressTrack_->setVisible(false);
    p->progressFill_ = new QFrame(p->progressTrack_);
    p->progressFill_->setObjectName("progressFill");
@@ -316,13 +318,13 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    p->progressSweep_->move(-p->progressSweep_->width(), 0);
    p->progressSweepGlow_ = new QFrame(p->progressTrack_);
    p->progressSweepGlow_->setObjectName("progressSweepGlow");
-   p->progressSweepGlow_->setFixedSize(110, 8);
-   p->progressSweepGlow_->move(-p->progressSweep_->width() - 21, 0);
+   p->progressSweepGlow_->setFixedSize(132, 12);
+   p->progressSweepGlow_->move(-p->progressSweep_->width() - 32, 0);
    p->progressSweepGlow_->lower();
    p->progressMid_ = new QFrame(p->progressTrack_);
    p->progressMid_->setObjectName("progressMid");
    p->progressMid_->setFixedHeight(1);
-   p->progressMid_->move(0, (p->progressTrack_->height() - 1) / 2);
+   p->progressMid_->move(0, 3);
    p->progressMid_->lower();
    ui->verticalLayout->insertWidget(2, p->progressTrack_);
 
@@ -382,9 +384,7 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
 }
 
 WarningBoxWidget::~WarningBoxWidget()
-{
-   delete ui;
-}
+{ delete ui; }
 
 void WarningBoxWidget::ShowWarning(const types::TextEventKey& key)
 {
@@ -416,9 +416,7 @@ void WarningBoxWidget::HideWarning()
 }
 
 void WarningBoxWidget::on_closeButton_clicked()
-{
-   HideWarning();
-}
+{ HideWarning(); }
 
 void WarningBoxWidget::on_viewEasTextButton_clicked()
 {
@@ -657,7 +655,7 @@ void WarningBoxWidgetImpl::AddSevereMetricCards(const std::string& maxHail,
          QFont metricValueFont = valueLabel->font();
          metricValueFont.setFamily(
             QString::fromStdString(warningTitleFontFamily_));
-         metricValueFont.setPointSize(15);
+         metricValueFont.setPointSize(30);
          metricValueFont.setWeight(QFont::Bold);
          metricValueFont.setStyleStrategy(QFont::PreferAntialias);
          metricValueFont.setHintingPreference(QFont::PreferNoHinting);
@@ -887,9 +885,9 @@ void WarningBoxWidgetImpl::UpdateProgressVisual(
 
    static_cast<void>(key);
 
-   progressTrack_->setMinimumHeight(8);
-   progressTrack_->setMaximumHeight(8);
-   progressTrack_->setFixedHeight(8);
+   progressTrack_->setMinimumHeight(14);
+   progressTrack_->setMaximumHeight(14);
+   progressTrack_->setFixedHeight(14);
    progressTrack_->setVisible(true);
    if (!sweepTimer_->isActive())
    {
@@ -920,11 +918,11 @@ void WarningBoxWidgetImpl::UpdateProgressVisual(
 
    const int trackWidth  = progressTrack_->width();
    const int trackHeight = progressTrack_->height();
-   const int fillHeight  = std::max(0, trackHeight - 2);
+   const int fillHeight  = 6;
    progressSweep_->setFixedHeight(fillHeight);
    const int midHeight = progressMid_->height();
-   progressMid_->setGeometry(
-      0, (trackHeight - midHeight) / 2, trackWidth, midHeight);
+   static_cast<void>(trackHeight);
+   progressMid_->setGeometry(0, 3, trackWidth, midHeight);
    const int fillWidth =
       static_cast<int>(static_cast<float>(trackWidth) * fractionElapsed);
    progressFill_->setGeometry(0, 0, std::max(0, fillWidth), fillHeight);
@@ -1087,20 +1085,20 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "QWidget#WarningBoxWidget QFrame#cornerBR {";
    styleSheet += "  border: none;";
    styleSheet +=
-      "  background: qlineargradient(x1:0, y1:0, x2:1, y2:1, "
-      "stop:0 rgba(0, 2, 26, 255), "
-      "stop:0.64 rgba(0, 2, 26, 255), "
-      "stop:0.68 rgba(" +
+      "  background: qlineargradient(x1:0, y1:1, x2:1, y2:0, "
+      "stop:0 rgba(0, 0, 0, 0), "
+      "stop:0.44 rgba(0, 0, 0, 0), "
+      "stop:0.48 rgba(" +
       accentColor +
       ", 240), "
-      "stop:0.72 rgba(" +
+      "stop:0.50 rgba(" +
       accentColor +
       ", 255), "
-      "stop:0.76 rgba(" +
+      "stop:0.52 rgba(" +
       accentColor +
       ", 240), "
-      "stop:0.80 rgba(0, 2, 26, 255), "
-      "stop:1 rgba(0, 2, 26, 255));";
+      "stop:0.56 rgba(0, 0, 0, 0), "
+      "stop:1 rgba(0, 0, 0, 0));";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QLabel {";
    styleSheet += "  color: rgb(236, 240, 255);";
@@ -1286,7 +1284,7 @@ void WarningBoxWidgetImpl::ApplyTheme(
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QLabel#severeMetricValue {";
       styleSheet += "  font-family: '" + warningTitleFontFamily_ + "';";
-      styleSheet += "  font-size: 15px;";
+      styleSheet += "  font-size: 30px;";
       styleSheet += "  font-weight: 700;";
       styleSheet += "}";
       styleSheet +=
@@ -1500,12 +1498,28 @@ void WarningBoxWidgetImpl::AdjustHeightToContents()
    self_->resize(self_->width(), panelFinalHeight);
    self_->layout()->activate();
 
+   static constexpr int kCornerSize = 12;
+   const int            w           = self_->width();
+   const int            h           = self_->height();
+
+   if (w > (kCornerSize + 2) && h > (kCornerSize + 2))
+   {
+      const int cut = kCornerSize;
+      QRegion   panelRegion(0, 0, w, h);
+      QPolygon  cutPolygon;
+      cutPolygon << QPoint(w - cut, h - 1) << QPoint(w - 1, h - cut)
+                 << QPoint(w - 1, h - 1);
+      panelRegion = panelRegion.subtracted(QRegion(cutPolygon));
+      self_->setMask(panelRegion);
+   }
+   else
+   {
+      self_->clearMask();
+   }
+
    if (cornerTL_ != nullptr && cornerTR_ != nullptr && cornerBL_ != nullptr &&
        cornerBR_ != nullptr)
    {
-      static constexpr int kCornerSize = 12;
-      const int            w           = self_->width();
-      const int            h           = self_->height();
       cornerTL_->setGeometry(0, 0, kCornerSize, kCornerSize);
       cornerTR_->setGeometry(w - kCornerSize, 0, kCornerSize, kCornerSize);
       cornerBL_->setGeometry(0, h - kCornerSize, kCornerSize, kCornerSize);
@@ -1697,9 +1711,7 @@ void WarningBoxWidgetImpl::AddPhenomenonSpecificFields(
 }
 
 void WarningBoxWidgetImpl::UpdateCountdown()
-{
-   UpdateExpirationOnly();
-}
+{ UpdateExpirationOnly(); }
 
 #include "warning_box_widget.moc"
 
