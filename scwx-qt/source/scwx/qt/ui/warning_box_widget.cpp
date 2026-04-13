@@ -154,8 +154,8 @@ public:
    void UpdateCountdown();
    void UpdateExpirationOnly();
    void
-   UpdateProgressVisual(const types::TextEventKey&                   key,
-                        const std::shared_ptr<const awips::Segment>& segment);
+        UpdateProgressVisual(const types::TextEventKey&                   key,
+                             const std::shared_ptr<const awips::Segment>& segment);
    void ApplyTheme(const types::TextEventKey&                   key,
                    const std::shared_ptr<const awips::Segment>& segment);
    void UpdateTitleFont();
@@ -180,9 +180,9 @@ public:
    GetFieldValue(const std::unordered_map<std::string, std::string>& fields,
                  const std::initializer_list<std::string_view>&      keys);
    void
-   AddSummaryField(const std::string& summaryLabel,
-                   const std::unordered_map<std::string, std::string>& fields,
-                   const std::initializer_list<std::string_view>&      keys);
+        AddSummaryField(const std::string& summaryLabel,
+                        const std::unordered_map<std::string, std::string>& fields,
+                        const std::initializer_list<std::string_view>&      keys);
    void AddPhenomenonSpecificFields(
       awips::Phenomenon                                   phenomenon,
       const std::unordered_map<std::string, std::string>& fields);
@@ -384,7 +384,9 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
 }
 
 WarningBoxWidget::~WarningBoxWidget()
-{ delete ui; }
+{
+   delete ui;
+}
 
 void WarningBoxWidget::ShowWarning(const types::TextEventKey& key)
 {
@@ -416,7 +418,9 @@ void WarningBoxWidget::HideWarning()
 }
 
 void WarningBoxWidget::on_closeButton_clicked()
-{ HideWarning(); }
+{
+   HideWarning();
+}
 
 void WarningBoxWidget::on_viewEasTextButton_clicked()
 {
@@ -1711,7 +1715,9 @@ void WarningBoxWidgetImpl::AddPhenomenonSpecificFields(
 }
 
 void WarningBoxWidgetImpl::UpdateCountdown()
-{ UpdateExpirationOnly(); }
+{
+   UpdateExpirationOnly();
+}
 
 #include "warning_box_widget.moc"
 
