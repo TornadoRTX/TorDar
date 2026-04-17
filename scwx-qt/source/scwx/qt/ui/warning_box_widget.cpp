@@ -144,8 +144,11 @@ public:
             }
             progressSweep_->move(sweepPosition_, 0);
             const int glowWidth = progressSweepGlow_->width();
+            const int glowY =
+               progressSweep_->y() +
+               ((progressSweep_->height() - progressSweepGlow_->height()) / 2);
             progressSweepGlow_->move(
-               sweepPosition_ - ((glowWidth - sweepWidth) / 2), 0);
+               sweepPosition_ - ((glowWidth - sweepWidth) / 2), glowY);
          });
    }
    ~WarningBoxWidgetImpl() = default;
@@ -319,7 +322,10 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    p->progressSweepGlow_ = new QFrame(p->progressTrack_);
    p->progressSweepGlow_->setObjectName("progressSweepGlow");
    p->progressSweepGlow_->setFixedSize(108, 10);
-   p->progressSweepGlow_->move(-p->progressSweep_->width() - 20, 0);
+   const int initialGlowY =
+      p->progressSweep_->y() +
+      ((p->progressSweep_->height() - p->progressSweepGlow_->height()) / 2);
+   p->progressSweepGlow_->move(-p->progressSweep_->width() - 20, initialGlowY);
    p->progressSweepGlow_->lower();
    p->progressMid_ = new QFrame(p->progressTrack_);
    p->progressMid_->setObjectName("progressMid");
@@ -1101,8 +1107,8 @@ void WarningBoxWidgetImpl::ApplyTheme(
       "stop:0.52 rgba(" +
       accentColor +
       ", 240), "
-      "stop:0.56 rgba(0, 0, 0, 0), "
-      "stop:1 rgba(0, 0, 0, 0));";
+      "stop:0.56 rgba(0, 2, 26, 255), "
+      "stop:1 rgba(0, 2, 26, 255));";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QLabel {";
    styleSheet += "  color: rgb(236, 240, 255);";
