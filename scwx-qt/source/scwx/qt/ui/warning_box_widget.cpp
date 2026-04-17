@@ -318,8 +318,8 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    p->progressSweep_->move(-p->progressSweep_->width(), 0);
    p->progressSweepGlow_ = new QFrame(p->progressTrack_);
    p->progressSweepGlow_->setObjectName("progressSweepGlow");
-   p->progressSweepGlow_->setFixedSize(132, 12);
-   p->progressSweepGlow_->move(-p->progressSweep_->width() - 32, 0);
+   p->progressSweepGlow_->setFixedSize(108, 10);
+   p->progressSweepGlow_->move(-p->progressSweep_->width() - 20, 0);
    p->progressSweepGlow_->lower();
    p->progressMid_ = new QFrame(p->progressTrack_);
    p->progressMid_->setObjectName("progressMid");
@@ -1089,7 +1089,7 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "QWidget#WarningBoxWidget QFrame#cornerBR {";
    styleSheet += "  border: none;";
    styleSheet +=
-      "  background: qlineargradient(x1:0, y1:1, x2:1, y2:0, "
+      "  background: qlineargradient(x1:0, y1:0, x2:1, y2:1, "
       "stop:0 rgba(0, 0, 0, 0), "
       "stop:0.44 rgba(0, 0, 0, 0), "
       "stop:0.48 rgba(" +
@@ -1155,11 +1155,11 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet +=
       "  background: qlineargradient(x1:0, y1:0.5, x2:1, y2:0.5, "
       "stop:0 rgba(255, 255, 255, 0), "
-      "stop:0.25 rgba(255, 255, 255, 80), "
-      "stop:0.5 rgba(255, 255, 255, 160), "
-      "stop:0.75 rgba(255, 255, 255, 80), "
+      "stop:0.28 rgba(255, 255, 255, 20), "
+      "stop:0.5 rgba(255, 255, 255, 52), "
+      "stop:0.72 rgba(255, 255, 255, 20), "
       "stop:1 rgba(255, 255, 255, 0));";
-   styleSheet += "  border-radius: 4px;";
+   styleSheet += "  border-radius: 5px;";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QFrame#progressMid {";
    styleSheet += "  background-color: rgb(96, 99, 105);";
@@ -1508,7 +1508,7 @@ void WarningBoxWidgetImpl::AdjustHeightToContents()
 
    if (w > (kCornerSize + 2) && h > (kCornerSize + 2))
    {
-      const int cut = kCornerSize;
+      const int cut = kCornerSize + 1;
       QRegion   panelRegion(0, 0, w, h);
       QPolygon  cutPolygon;
       cutPolygon << QPoint(w - cut, h - 1) << QPoint(w - 1, h - cut)
