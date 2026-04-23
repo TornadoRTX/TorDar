@@ -665,7 +665,7 @@ void WarningBoxWidgetImpl::AddSevereMetricCards(const std::string& maxHail,
          QFont metricValueFont = valueLabel->font();
          metricValueFont.setFamily(
             QString::fromStdString(warningTitleFontFamily_));
-         metricValueFont.setPointSize(30);
+         metricValueFont.setPointSize(20);
          metricValueFont.setWeight(QFont::Bold);
          metricValueFont.setStyleStrategy(QFont::PreferAntialias);
          metricValueFont.setHintingPreference(QFont::PreferNoHinting);
@@ -1096,8 +1096,8 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "  border: none;";
    styleSheet +=
       "  background: qlineargradient(x1:0, y1:0, x2:1, y2:1, "
-      "stop:0 rgba(0, 0, 0, 0), "
-      "stop:0.44 rgba(0, 0, 0, 0), "
+      "stop:0 rgba(0, 2, 26, 255), "
+      "stop:0.44 rgba(0, 2, 26, 255), "
       "stop:0.48 rgba(" +
       accentColor +
       ", 240), "
@@ -1294,7 +1294,7 @@ void WarningBoxWidgetImpl::ApplyTheme(
       styleSheet += "}";
       styleSheet += "QWidget#WarningBoxWidget QLabel#severeMetricValue {";
       styleSheet += "  font-family: '" + warningTitleFontFamily_ + "';";
-      styleSheet += "  font-size: 30px;";
+      styleSheet += "  font-size: 20px;";
       styleSheet += "  font-weight: 700;";
       styleSheet += "}";
       styleSheet +=
