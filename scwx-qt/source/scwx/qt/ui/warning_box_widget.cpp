@@ -1032,9 +1032,7 @@ void WarningBoxWidgetImpl::ApplyTheme(
          cornerGlowColor +
          ", 250), "
          "stop:0.25 rgba(43, 17, 32, 255), "
-         "stop:0.33 rgba(" +
-         cornerGlowColor +
-         ", 250), "
+         "stop:0.38 rgba(42, 17, 32, 255), "
          "stop:0.50 rgba(41, 17, 32, 255), "
          "stop:0.75 rgba(30, 12, 30, 255), "
          "stop:1 rgba(0, 2, 26, 255));";
