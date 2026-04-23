@@ -383,6 +383,7 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    p->cornerBR_->raise();
    p->cornerTR_->setVisible(false);
    p->cornerBL_->setVisible(false);
+   p->cornerBR_->setVisible(true);
 
    p->fixedWidth_ = width();
    setMinimumWidth(p->fixedWidth_);
@@ -1476,8 +1477,8 @@ void WarningBoxWidgetImpl::AdjustHeightToContents()
                            self_->parentWidget()->height() - kParentPaddingY);
    }
 
-   const int detailsWanted = std::max(
-      kMinDetailsHeight, detailsContainer_->minimumSizeHint().height());
+   const int detailsWanted =
+      std::max(kMinDetailsHeight, detailsContainer_->sizeHint().height());
 
    // Estimate non-scroll-area ("chrome") height by pinning scroll area to min
    self_->ui->scrollArea->setMinimumHeight(kMinDetailsHeight);
@@ -1516,7 +1517,13 @@ void WarningBoxWidgetImpl::AdjustHeightToContents()
       QPolygon  cutPolygon;
       cutPolygon << QPoint(w - cut, h - 1) << QPoint(w - 1, h - cut)
                  << QPoint(w - 1, h - 1);
-      panelRegion = panelRegion.subtracted(QRegion(cutPolygon));
+      QRegion cutRegion(QRegion(cutPolygon));
+
+      // Remove any residual border pixels after the diagonal cut.
+      cutRegion = cutRegion.united(QRegion(w - cut, h - 1, cut, 1));
+      cutRegion = cutRegion.united(QRegion(w - 1, h - cut, 1, cut));
+
+      panelRegion = panelRegion.subtracted(cutRegion);
       self_->setMask(panelRegion);
    }
    else
