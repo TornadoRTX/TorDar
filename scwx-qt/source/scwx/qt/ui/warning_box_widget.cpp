@@ -1517,7 +1517,7 @@ void WarningBoxWidgetImpl::AdjustHeightToContents()
       QPolygon  cutPolygon;
       cutPolygon << QPoint(w - cut, h - 1) << QPoint(w - 1, h - cut)
                  << QPoint(w - 1, h - 1);
-      QRegion cutRegion(QRegion(cutPolygon));
+      QRegion cutRegion = QRegion(cutPolygon, Qt::OddEvenFill);
 
       // Remove any residual border pixels after the diagonal cut.
       cutRegion = cutRegion.united(QRegion(w - cut, h - 1, cut, 1));
