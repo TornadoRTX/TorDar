@@ -1465,9 +1465,9 @@ void WarningBoxWidgetImpl::AdjustHeightToContents()
    detailsContainer_->adjustSize();
    detailsContainer_->updateGeometry();
 
-   static constexpr int kExtraBottomSpace = 2;
+   static constexpr int kExtraBottomSpace = 0;
    static constexpr int kMinBoxHeight     = 0;
-   static constexpr int kMinDetailsHeight = 20;
+   static constexpr int kMinDetailsHeight = 0;
    static constexpr int kParentPaddingY   = 24;
 
    int maxHeight = std::max(kMinBoxHeight, self_->sizeHint().height());
@@ -1477,8 +1477,31 @@ void WarningBoxWidgetImpl::AdjustHeightToContents()
                            self_->parentWidget()->height() - kParentPaddingY);
    }
 
+   int detailsContentHeight = 0;
+   if (detailsLayout_ != nullptr)
+   {
+      const int itemCount = detailsLayout_->count();
+      for (int i = 0; i < itemCount; ++i)
+      {
+         if (QLayoutItem* item = detailsLayout_->itemAt(i); item != nullptr)
+         {
+            detailsContentHeight += item->sizeHint().height();
+         }
+      }
+
+      if (itemCount > 1)
+      {
+         detailsContentHeight += detailsLayout_->spacing() * (itemCount - 1);
+      }
+
+      const QMargins detailMargins = detailsLayout_->contentsMargins();
+      detailsContentHeight += detailMargins.top() + detailMargins.bottom();
+   }
+
    const int detailsWanted =
-      std::max(kMinDetailsHeight, detailsContainer_->sizeHint().height());
+      std::max(kMinDetailsHeight,
+               std::max(detailsContentHeight,
+                        detailsContainer_->minimumSizeHint().height()));
 
    // Estimate non-scroll-area ("chrome") height by pinning scroll area to min
    self_->ui->scrollArea->setMinimumHeight(kMinDetailsHeight);
