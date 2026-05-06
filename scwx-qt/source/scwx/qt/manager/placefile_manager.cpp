@@ -36,6 +36,9 @@ static const std::string kEnabledName_     = "enabled";
 static const std::string kThresholdedName_ = "thresholded";
 static const std::string kTitleName_       = "title";
 static const std::string kNameName_        = "name";
+static const std::string kLightningTitle_  = "Lightning";
+static const std::string kLightningUrl_ =
+   "https://saratoga-weather.org/USA-blitzortung/placefileET.txt";
 
 class PlacefileManager::Impl
 {
@@ -382,6 +385,13 @@ void PlacefileManager::Impl::ReadPlacefileSettings()
    }
 
    ApplyPlacefileSettings(placefileJson);
+
+   // Add the default lightning placefile when settings are initialized for the
+   // first time.
+   if (placefileJson == nullptr)
+   {
+      self_->AddUrl(kLightningUrl_, kLightningTitle_, false, false);
+   }
 
    placefileSettingsRead_ = true;
 }
