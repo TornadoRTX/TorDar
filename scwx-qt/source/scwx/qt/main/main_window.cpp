@@ -19,6 +19,7 @@
 #include <scwx/qt/model/radar_site_model.hpp>
 #include <scwx/qt/settings/general_settings.hpp>
 #include <scwx/qt/settings/map_settings.hpp>
+#include <scwx/qt/settings/product_settings.hpp>
 #include <scwx/qt/settings/ui_settings.hpp>
 #include <scwx/qt/ui/about_dialog.hpp>
 #include <scwx/qt/ui/alert_dock_widget.hpp>
@@ -128,6 +129,7 @@ public:
                            common::RadarProductGroup group,
                            const std::string&        productName,
                            int16_t                   productCode);
+   void ApplyStoredColorTableThreshold(map::MapWidget* mapWidget);
    void SetActiveMap(map::MapWidget* mapWidget);
    void UpdateAvailableLevel3Products();
    void UpdateElevationSelection(float elevation);
@@ -782,6 +784,8 @@ void MainWindow::on_radarSiteHomeButton_clicked()
    }
 
    p->UpdateRadarSite();
+   p->UpdateAvailableLevel3Products();
+   p->UpdateRadarProductSettings();
 }
 
 void MainWindow::on_radarSiteSelectButton_clicked()
@@ -1167,6 +1171,8 @@ void MainWindowImpl::ConnectAnimationSignals()
                  }
 
                  UpdateRadarSite();
+                 UpdateAvailableLevel3Products();
+                 UpdateRadarProductSettings();
               });
    }
 }
@@ -1272,26 +1278,36 @@ void MainWindowImpl::ConnectOtherSignals()
            &ui::Level2SettingsWidget::ElevationSelected,
            mainWindow_,
            [&](float elevation) { SelectElevation(activeMap_, elevation); });
-   connect(level2SettingsWidget_,
-           &ui::Level2SettingsWidget::ThresholdChanged,
-           mainWindow_,
-           [&](std::optional<float> threshold)
-           {
-              if (activeMap_ != nullptr)
-              {
-                 activeMap_->SetColorTableThreshold(threshold);
-              }
-           });
-   connect(level3SettingsWidget_,
-           &ui::Level3SettingsWidget::ThresholdChanged,
-           mainWindow_,
-           [&](std::optional<float> threshold)
-           {
-              if (activeMap_ != nullptr)
-              {
-                 activeMap_->SetColorTableThreshold(threshold);
-              }
-           });
+   connect(
+      level2SettingsWidget_,
+      &ui::Level2SettingsWidget::ThresholdChanged,
+      mainWindow_,
+      [&](std::optional<float> threshold)
+      {
+         if (activeMap_ != nullptr)
+         {
+            settings::ProductSettings::Instance().set_color_table_threshold(
+               activeMap_->GetRadarProductGroup(),
+               activeMap_->GetRadarProductName(),
+               threshold);
+            activeMap_->SetColorTableThreshold(threshold);
+         }
+      });
+   connect(
+      level3SettingsWidget_,
+      &ui::Level3SettingsWidget::ThresholdChanged,
+      mainWindow_,
+      [&](std::optional<float> threshold)
+      {
+         if (activeMap_ != nullptr)
+         {
+            settings::ProductSettings::Instance().set_color_table_threshold(
+               activeMap_->GetRadarProductGroup(),
+               activeMap_->GetRadarProductName(),
+               threshold);
+            activeMap_->SetColorTableThreshold(threshold);
+         }
+      });
    connect(mainWindow_,
            &MainWindow::ActiveMapMoved,
            alertDockWidget_,
@@ -1361,6 +1377,8 @@ void MainWindowImpl::ConnectOtherSignals()
               }
 
               UpdateRadarSite();
+              UpdateAvailableLevel3Products();
+              UpdateRadarProductSettings();
            });
    connect(radarSiteModel_.get(),
            &model::RadarSiteModel::PresetToggled,
@@ -1521,6 +1539,8 @@ void MainWindowImpl::AddRadarSitePreset(const std::string& siteId)
               }
 
               UpdateRadarSite();
+              UpdateAvailableLevel3Products();
+              UpdateRadarProductSettings();
            });
 }
 
@@ -1631,6 +1651,31 @@ void MainWindowImpl::SelectRadarProduct(map::MapWidget*           mapWidget,
 
    mapWidget->SelectRadarProduct(
       group, productName, productCode, selectedTime_);
+   ApplyStoredColorTableThreshold(mapWidget);
+
+   if (mapWidget == activeMap_)
+   {
+      UpdateRadarProductSettings();
+   }
+}
+
+void MainWindowImpl::ApplyStoredColorTableThreshold(map::MapWidget* mapWidget)
+{
+   if (mapWidget == nullptr)
+   {
+      return;
+   }
+
+   const auto threshold =
+      settings::ProductSettings::Instance().color_table_threshold(
+         mapWidget->GetRadarProductGroup(), mapWidget->GetRadarProductName());
+
+   if (mapWidget->GetColorTableThreshold() == threshold)
+   {
+      return;
+   }
+
+   mapWidget->SetColorTableThreshold(threshold);
 }
 
 void MainWindowImpl::SetActiveMap(map::MapWidget* mapWidget)
@@ -1699,6 +1744,8 @@ void MainWindowImpl::UpdateRadarProductSelection(
 
 void MainWindowImpl::UpdateRadarProductSettings()
 {
+   ApplyStoredColorTableThreshold(activeMap_);
+
    if (activeMap_->GetRadarProductGroup() == common::RadarProductGroup::Level2)
    {
       level2SettingsWidget_->setEnabled(true);
@@ -1770,7 +1817,7 @@ void MainWindowImpl::UpdateRadarSite()
       mainWindow_->ui->radarLocationLabel->setVisible(false);
       mainWindow_->ui->saveRadarProductsButton->setVisible(false);
 
-      timelineManager_->SetRadarSite("?");
+      timelineManager_->SetRadarSite("");
    }
 
    alertManager_->SetRadarSite(radarSite);
