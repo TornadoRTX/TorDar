@@ -18,6 +18,9 @@ namespace scwx::qt::map
 
 static const std::string logPrefix_ = "scwx::qt::map::placefile_layer";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
+static const std::string kBuiltInLightningUrl_ =
+   "https://www.freelightning.com/hub/"
+   "placefile.php?request=10213|10454|138624046|10463|10369|10644|0|84764|1";
 
 class PlacefileLayer::Impl
 {
@@ -154,6 +157,8 @@ void PlacefileLayer::Render(
       p->placefileText_->set_thresholded(thresholded);
 
       p->placefileIcons_->set_selected_time(p->selectedTime_);
+      p->placefileIcons_->set_time_fade_enabled(p->placefileName_ ==
+                                                kBuiltInLightningUrl_);
       p->placefileImages_->set_selected_time(p->selectedTime_);
       p->placefileLines_->set_selected_time(p->selectedTime_);
       p->placefilePolygons_->set_selected_time(p->selectedTime_);
