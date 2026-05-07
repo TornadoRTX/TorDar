@@ -827,6 +827,13 @@
                 </widget>
                </item>
                <item>
+                <widget class="QCheckBox" name="builtInLightningCheckBox">
+                 <property name="text">
+                  <string>Built-In Lightning Layer Enabled</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
                 <widget class="QCheckBox" name="debugEnabledCheckBox">
                  <property name="text">
                   <string>Debug Enabled</string>

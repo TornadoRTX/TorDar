@@ -95,6 +95,7 @@ public:
       radarSiteThreshold_.SetDefault(0.0);
       highPrivilegeWarningEnabled_.SetDefault(true);
       cursorIconScale_.SetDefault(1.0);
+      builtInLightningEnabled_.SetDefault(true);
 
       cursorIconScale_.SetMinimum(1.0);
       cursorIconScale_.SetMaximum(5.0);
@@ -242,6 +243,8 @@ public:
    SettingsVariable<bool>        highPrivilegeWarningEnabled_ {
       "high_privilege_warning_enabled"};
    SettingsVariable<double> cursorIconScale_ {"cursor_icon_scale"};
+   SettingsVariable<bool>   builtInLightningEnabled_ {
+      "built_in_lightning_enabled"};
 };
 
 GeneralSettings::GeneralSettings() :
@@ -284,7 +287,8 @@ GeneralSettings::GeneralSettings() :
                       &p->cursorIconAlwaysOn_,
                       &p->radarSiteThreshold_,
                       &p->highPrivilegeWarningEnabled_,
-                      &p->cursorIconScale_});
+                      &p->cursorIconScale_,
+                      &p->builtInLightningEnabled_});
    SetDefaults();
 }
 GeneralSettings::~GeneralSettings() = default;
@@ -484,6 +488,11 @@ SettingsVariable<double>& GeneralSettings::cursor_icon_scale() const
    return p->cursorIconScale_;
 }
 
+SettingsVariable<bool>& GeneralSettings::built_in_lightning_enabled() const
+{
+   return p->builtInLightningEnabled_;
+}
+
 bool GeneralSettings::Shutdown()
 {
    bool dataChanged = false;
@@ -548,7 +557,8 @@ bool operator==(const GeneralSettings& lhs, const GeneralSettings& rhs)
            lhs.p->radarSiteThreshold_ == rhs.p->radarSiteThreshold_ &&
            lhs.p->highPrivilegeWarningEnabled_ ==
               rhs.p->highPrivilegeWarningEnabled_ &&
-           lhs.p->cursorIconScale_ == rhs.p->cursorIconScale_);
+           lhs.p->cursorIconScale_ == rhs.p->cursorIconScale_ &&
+           lhs.p->builtInLightningEnabled_ == rhs.p->builtInLightningEnabled_);
 }
 
 } // namespace scwx::qt::settings

@@ -3,6 +3,7 @@
 #include <scwx/qt/manager/resource_manager.hpp>
 #include <scwx/qt/main/application.hpp>
 #include <scwx/qt/main/application_paths.hpp>
+#include <scwx/qt/settings/general_settings.hpp>
 #include <scwx/qt/util/network.hpp>
 #include <scwx/gr/placefile.hpp>
 #include <scwx/network/cpr.hpp>
@@ -40,6 +41,32 @@ static const std::string kLightningTitle_  = "Lightning";
 static const std::string kLightningUrl_ =
    "https://saratoga-weather.org/USA-blitzortung/placefileET.txt";
 
+static bool ContainsPlacefileEntry(const boost::json::value& placefileJson,
+                                   const std::string&        name)
+{
+   if (!placefileJson.is_array())
+   {
+      return false;
+   }
+
+   for (const auto& entry : placefileJson.as_array())
+   {
+      if (!entry.is_object())
+      {
+         continue;
+      }
+
+      auto it = entry.as_object().find(kNameName_);
+      if (it != entry.as_object().end() && it->value().is_string() &&
+          it->value().as_string() == name)
+      {
+         return true;
+      }
+   }
+
+   return false;
+}
+
 class PlacefileManager::Impl
 {
 public:
@@ -49,6 +76,7 @@ public:
    ~Impl() { threadPool_.join(); }
 
    void InitializePlacefileSettings();
+   void SyncBuiltInLightning();
    void ApplyPlacefileSettings(const boost::json::value& placefileJson);
    void ReadPlacefileSettings();
    void SavePlacefileSettings();
@@ -160,6 +188,11 @@ public:
 
 PlacefileManager::PlacefileManager() : p(std::make_unique<Impl>(this))
 {
+   settings::GeneralSettings::Instance()
+      .built_in_lightning_enabled()
+      .RegisterValueChangedCallback([this](const bool& /* enabled */)
+                                    { p->SyncBuiltInLightning(); });
+
    boost::asio::post(p->threadPool_,
                      [this]()
                      {
@@ -386,14 +419,40 @@ void PlacefileManager::Impl::ReadPlacefileSettings()
 
    ApplyPlacefileSettings(placefileJson);
 
-   // Add the default lightning placefile when settings are initialized for the
-   // first time.
-   if (placefileJson == nullptr)
+   // Add and enable the default lightning placefile on first run if enabled.
+   if (settings::GeneralSettings::Instance()
+          .built_in_lightning_enabled()
+          .GetValue() &&
+       !ContainsPlacefileEntry(placefileJson, kLightningUrl_))
    {
-      self_->AddUrl(kLightningUrl_, kLightningTitle_, false, false);
+      self_->AddUrl(kLightningUrl_, kLightningTitle_, true, false);
    }
 
+   // Ensure persisted records match the current built-in lightning setting.
+   SyncBuiltInLightning();
+
    placefileSettingsRead_ = true;
+}
+
+void PlacefileManager::Impl::SyncBuiltInLightning()
+{
+   const bool lightningEnabled = settings::GeneralSettings::Instance()
+                                    .built_in_lightning_enabled()
+                                    .GetValue();
+
+   std::shared_lock lock(placefileRecordLock_);
+   const bool       hasLightningRecord =
+      placefileRecordMap_.find(kLightningUrl_) != placefileRecordMap_.cend();
+   lock.unlock();
+
+   if (lightningEnabled && !hasLightningRecord)
+   {
+      self_->AddUrl(kLightningUrl_, kLightningTitle_, true, false);
+   }
+   else if (!lightningEnabled && hasLightningRecord)
+   {
+      self_->RemoveUrl(kLightningUrl_);
+   }
 }
 
 void PlacefileManager::ReadPlacefileSettings(std::istream& is)
