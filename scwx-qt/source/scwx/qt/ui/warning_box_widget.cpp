@@ -1024,6 +1024,11 @@ void WarningBoxWidgetImpl::ApplyTheme(
 
    std::string styleSheet;
    styleSheet += "QWidget#WarningBoxWidget {";
+   const bool isPdsOrEmergencyTornado =
+      (key.phenomenon_ == awips::Phenomenon::Tornado &&
+       (tornadoStyle_ == TornadoStyle::Pds ||
+        tornadoStyle_ == TornadoStyle::Emergency));
+
    if (isBaseTornado)
    {
       styleSheet +=
@@ -1052,6 +1057,25 @@ void WarningBoxWidgetImpl::ApplyTheme(
          ", 250), "
          "stop:0.50 rgba(37, 33, 36, 255), "
          "stop:0.75 rgba(28, 26, 33, 255), "
+         "stop:1 rgba(0, 2, 26, 255));";
+   }
+   else if (isPdsOrEmergencyTornado)
+   {
+      styleSheet +=
+         "  background-color: qradialgradient("
+         "cx:1.0, cy:0.0, radius:0.88, fx:1.0, fy:0.0, "
+         "stop:0 rgba(" +
+         cornerGlowColor +
+         ", 64), "
+         "stop:0.20 rgba(" +
+         transitionGlowColor +
+         ", 48), "
+         "stop:0.38 rgba(" +
+         transitionGlowColor +
+         ", 32), "
+         "stop:0.54 rgba(38, 20, 33, 255), "
+         "stop:0.66 rgba(0, 2, 26, 255), "
+         "stop:0.76 rgba(0, 2, 26, 255), "
          "stop:1 rgba(0, 2, 26, 255));";
    }
    else
