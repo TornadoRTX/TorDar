@@ -157,7 +157,8 @@ public:
           &updateNotificationsEnabled_,
           &cursorIconAlwaysOn_,
           &cursorIconScale_,
-          &builtInLightningEnabled_,
+          &legacyLightningEnabled_,
+          &goesGlmLightningEnabled_,
           &debugEnabled_,
           &alertAudioSoundFile_,
           &alertAudioLocationMethod_,
@@ -288,7 +289,8 @@ public:
    settings::SettingsInterface<bool>         updateNotificationsEnabled_ {};
    settings::SettingsInterface<bool>         cursorIconAlwaysOn_ {};
    settings::SettingsInterface<double>       cursorIconScale_ {};
-   settings::SettingsInterface<bool>         builtInLightningEnabled_ {};
+   settings::SettingsInterface<bool>         legacyLightningEnabled_ {};
+   settings::SettingsInterface<bool>         goesGlmLightningEnabled_ {};
    settings::SettingsInterface<bool>         debugEnabled_ {};
 
    std::unordered_map<std::string, settings::SettingsInterface<std::string>>
@@ -995,9 +997,13 @@ void SettingsDialogImpl::SetupGeneralTab()
       generalSettings.cursor_icon_always_on());
    cursorIconAlwaysOn_.SetEditWidget(self_->ui->cursorIconAlwaysOnCheckBox);
 
-   builtInLightningEnabled_.SetSettingsVariable(
-      generalSettings.built_in_lightning_enabled());
-   builtInLightningEnabled_.SetEditWidget(self_->ui->builtInLightningCheckBox);
+   legacyLightningEnabled_.SetSettingsVariable(
+      generalSettings.legacy_lightning_enabled());
+   legacyLightningEnabled_.SetEditWidget(self_->ui->legacyLightningCheckBox);
+
+   goesGlmLightningEnabled_.SetSettingsVariable(
+      generalSettings.goes_glm_lightning_enabled());
+   goesGlmLightningEnabled_.SetEditWidget(self_->ui->goesGlmLightningCheckBox);
 
    debugEnabled_.SetSettingsVariable(generalSettings.debug_enabled());
    debugEnabled_.SetEditWidget(self_->ui->debugEnabledCheckBox);

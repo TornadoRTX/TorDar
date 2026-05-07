@@ -33,14 +33,17 @@ namespace scwx::qt::manager
 static const std::string logPrefix_ = "scwx::qt::manager::placefile_manager";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 
-static const std::string kEnabledName_     = "enabled";
-static const std::string kThresholdedName_ = "thresholded";
-static const std::string kTitleName_       = "title";
-static const std::string kNameName_        = "name";
-static const std::string kLightningTitle_  = "Lightning";
-static const std::string kLightningUrl_ =
+static const std::string kEnabledName_          = "enabled";
+static const std::string kThresholdedName_      = "thresholded";
+static const std::string kTitleName_            = "title";
+static const std::string kNameName_             = "name";
+static const std::string kLegacyLightningTitle_ = "Legacy Lightning";
+static const std::string kLegacyLightningUrl_ =
    "https://www.freelightning.com/hub/"
    "placefile.php?request=10213|10454|138624046|10463|10369|10644|0|84764|1";
+static const std::string kGoesGlmLightningTitle_ = "GOES GLM Lightning (AWS)";
+static const std::string kGoesGlmLightningUrl_ =
+   "https://noaa-goes16.s3.amazonaws.com/index.html";
 
 static bool ContainsPlacefileEntry(const boost::json::value& placefileJson,
                                    const std::string&        name)
@@ -190,7 +193,11 @@ public:
 PlacefileManager::PlacefileManager() : p(std::make_unique<Impl>(this))
 {
    settings::GeneralSettings::Instance()
-      .built_in_lightning_enabled()
+      .legacy_lightning_enabled()
+      .RegisterValueChangedCallback([this](const bool& /* enabled */)
+                                    { p->SyncBuiltInLightning(); });
+   settings::GeneralSettings::Instance()
+      .goes_glm_lightning_enabled()
       .RegisterValueChangedCallback([this](const bool& /* enabled */)
                                     { p->SyncBuiltInLightning(); });
 
@@ -420,13 +427,24 @@ void PlacefileManager::Impl::ReadPlacefileSettings()
 
    ApplyPlacefileSettings(placefileJson);
 
-   // Add and enable the default lightning placefile on first run if enabled.
+   // Add and enable the default legacy lightning placefile on first run if
+   // enabled.
    if (settings::GeneralSettings::Instance()
-          .built_in_lightning_enabled()
+          .legacy_lightning_enabled()
           .GetValue() &&
-       !ContainsPlacefileEntry(placefileJson, kLightningUrl_))
+       !ContainsPlacefileEntry(placefileJson, kLegacyLightningUrl_))
    {
-      self_->AddUrl(kLightningUrl_, kLightningTitle_, true, false);
+      self_->AddUrl(kLegacyLightningUrl_, kLegacyLightningTitle_, true, false);
+   }
+
+   // Add GOES GLM lightning source on first run if enabled.
+   if (settings::GeneralSettings::Instance()
+          .goes_glm_lightning_enabled()
+          .GetValue() &&
+       !ContainsPlacefileEntry(placefileJson, kGoesGlmLightningUrl_))
+   {
+      self_->AddUrl(
+         kGoesGlmLightningUrl_, kGoesGlmLightningTitle_, true, false);
    }
 
    // Ensure persisted records match the current built-in lightning setting.
@@ -437,22 +455,39 @@ void PlacefileManager::Impl::ReadPlacefileSettings()
 
 void PlacefileManager::Impl::SyncBuiltInLightning()
 {
-   const bool lightningEnabled = settings::GeneralSettings::Instance()
-                                    .built_in_lightning_enabled()
-                                    .GetValue();
+   const bool legacyLightningEnabled = settings::GeneralSettings::Instance()
+                                          .legacy_lightning_enabled()
+                                          .GetValue();
+   const bool goesGlmLightningEnabled = settings::GeneralSettings::Instance()
+                                           .goes_glm_lightning_enabled()
+                                           .GetValue();
 
    std::shared_lock lock(placefileRecordLock_);
-   const bool       hasLightningRecord =
-      placefileRecordMap_.find(kLightningUrl_) != placefileRecordMap_.cend();
+   const bool       hasLegacyLightningRecord =
+      placefileRecordMap_.find(kLegacyLightningUrl_) !=
+      placefileRecordMap_.cend();
+   const bool hasGoesGlmLightningRecord =
+      placefileRecordMap_.find(kGoesGlmLightningUrl_) !=
+      placefileRecordMap_.cend();
    lock.unlock();
 
-   if (lightningEnabled && !hasLightningRecord)
+   if (legacyLightningEnabled && !hasLegacyLightningRecord)
    {
-      self_->AddUrl(kLightningUrl_, kLightningTitle_, true, false);
+      self_->AddUrl(kLegacyLightningUrl_, kLegacyLightningTitle_, true, false);
    }
-   else if (!lightningEnabled && hasLightningRecord)
+   else if (!legacyLightningEnabled && hasLegacyLightningRecord)
    {
-      self_->RemoveUrl(kLightningUrl_);
+      self_->RemoveUrl(kLegacyLightningUrl_);
+   }
+
+   if (goesGlmLightningEnabled && !hasGoesGlmLightningRecord)
+   {
+      self_->AddUrl(
+         kGoesGlmLightningUrl_, kGoesGlmLightningTitle_, true, false);
+   }
+   else if (!goesGlmLightningEnabled && hasGoesGlmLightningRecord)
+   {
+      self_->RemoveUrl(kGoesGlmLightningUrl_);
    }
 }
 

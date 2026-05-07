@@ -95,7 +95,8 @@ public:
       radarSiteThreshold_.SetDefault(0.0);
       highPrivilegeWarningEnabled_.SetDefault(true);
       cursorIconScale_.SetDefault(1.0);
-      builtInLightningEnabled_.SetDefault(true);
+      legacyLightningEnabled_.SetDefault(false);
+      goesGlmLightningEnabled_.SetDefault(false);
 
       cursorIconScale_.SetMinimum(1.0);
       cursorIconScale_.SetMaximum(5.0);
@@ -243,8 +244,9 @@ public:
    SettingsVariable<bool>        highPrivilegeWarningEnabled_ {
       "high_privilege_warning_enabled"};
    SettingsVariable<double> cursorIconScale_ {"cursor_icon_scale"};
-   SettingsVariable<bool>   builtInLightningEnabled_ {
-      "built_in_lightning_enabled"};
+   SettingsVariable<bool> legacyLightningEnabled_ {"legacy_lightning_enabled"};
+   SettingsVariable<bool> goesGlmLightningEnabled_ {
+      "goes_glm_lightning_enabled"};
 };
 
 GeneralSettings::GeneralSettings() :
@@ -288,7 +290,8 @@ GeneralSettings::GeneralSettings() :
                       &p->radarSiteThreshold_,
                       &p->highPrivilegeWarningEnabled_,
                       &p->cursorIconScale_,
-                      &p->builtInLightningEnabled_});
+                      &p->legacyLightningEnabled_,
+                      &p->goesGlmLightningEnabled_});
    SetDefaults();
 }
 GeneralSettings::~GeneralSettings() = default;
@@ -488,9 +491,14 @@ SettingsVariable<double>& GeneralSettings::cursor_icon_scale() const
    return p->cursorIconScale_;
 }
 
-SettingsVariable<bool>& GeneralSettings::built_in_lightning_enabled() const
+SettingsVariable<bool>& GeneralSettings::legacy_lightning_enabled() const
 {
-   return p->builtInLightningEnabled_;
+   return p->legacyLightningEnabled_;
+}
+
+SettingsVariable<bool>& GeneralSettings::goes_glm_lightning_enabled() const
+{
+   return p->goesGlmLightningEnabled_;
 }
 
 bool GeneralSettings::Shutdown()
@@ -558,7 +566,8 @@ bool operator==(const GeneralSettings& lhs, const GeneralSettings& rhs)
            lhs.p->highPrivilegeWarningEnabled_ ==
               rhs.p->highPrivilegeWarningEnabled_ &&
            lhs.p->cursorIconScale_ == rhs.p->cursorIconScale_ &&
-           lhs.p->builtInLightningEnabled_ == rhs.p->builtInLightningEnabled_);
+           lhs.p->legacyLightningEnabled_ == rhs.p->legacyLightningEnabled_ &&
+           lhs.p->goesGlmLightningEnabled_ == rhs.p->goesGlmLightningEnabled_);
 }
 
 } // namespace scwx::qt::settings
