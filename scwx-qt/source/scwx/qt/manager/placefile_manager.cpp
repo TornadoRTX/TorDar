@@ -39,7 +39,8 @@ static const std::string kTitleName_       = "title";
 static const std::string kNameName_        = "name";
 static const std::string kLightningTitle_  = "Lightning";
 static const std::string kLightningUrl_ =
-   "https://www.freelightning.com/hub/placefile.php?request=10213|10454|138624046|10463|10369|10644|0|84764|1";
+   "https://www.freelightning.com/hub/"
+   "placefile.php?request=10213|10454|138624046|10463|10369|10644|0|84764|1";
 
 static bool ContainsPlacefileEntry(const boost::json::value& placefileJson,
                                    const std::string&        name)
