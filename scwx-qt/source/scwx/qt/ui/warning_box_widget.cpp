@@ -1029,6 +1029,43 @@ void WarningBoxWidgetImpl::ApplyTheme(
        (tornadoStyle_ == TornadoStyle::Pds ||
         tornadoStyle_ == TornadoStyle::Emergency));
 
+   auto parseRgb = [](const std::string& rgb)
+   {
+      int r = 0;
+      int g = 0;
+      int b = 0;
+#if defined(_MSC_VER)
+      (void) ::sscanf_s(rgb.c_str(), "%d, %d, %d", &r, &g, &b);
+#else
+      (void) std::sscanf(rgb.c_str(), "%d, %d, %d", &r, &g, &b);
+#endif
+      return std::array<int, 3> {
+         std::clamp(r, 0, 255), std::clamp(g, 0, 255), std::clamp(b, 0, 255)};
+   };
+   auto blendTowardBase = [](const std::array<int, 3>& src, double factor)
+   {
+      static constexpr std::array<int, 3> kBase {0, 2, 26};
+      std::array<int, 3>                  out {};
+      for (size_t i = 0; i < 3; ++i)
+      {
+         const double v =
+            static_cast<double>(kBase[i]) +
+            ((static_cast<double>(src[i]) - static_cast<double>(kBase[i])) *
+             factor);
+         out[i] = std::clamp(static_cast<int>(v + 0.5), 0, 255);
+      }
+      return out;
+   };
+   auto toRgbString = [](const std::array<int, 3>& rgb)
+   {
+      return fmt::format("{}, {}, {}", rgb[0], rgb[1], rgb[2]);
+   };
+
+   const std::string cornerGlowBlend =
+      toRgbString(blendTowardBase(parseRgb(cornerGlowColor), 0.25));
+   const std::string transitionGlowBlend =
+      toRgbString(blendTowardBase(parseRgb(transitionGlowColor), 0.25));
+
    if (isBaseTornado)
    {
       styleSheet +=
@@ -1065,14 +1102,14 @@ void WarningBoxWidgetImpl::ApplyTheme(
          "  background-color: qradialgradient("
          "cx:1.0, cy:0.0, radius:0.88, fx:1.0, fy:0.0, "
          "stop:0 rgba(" +
-         cornerGlowColor +
-         ", 64), "
+         cornerGlowBlend +
+         ", 255), "
          "stop:0.20 rgba(" +
-         transitionGlowColor +
-         ", 48), "
+         transitionGlowBlend +
+         ", 255), "
          "stop:0.38 rgba(" +
-         transitionGlowColor +
-         ", 32), "
+         transitionGlowBlend +
+         ", 255), "
          "stop:0.54 rgba(38, 20, 33, 255), "
          "stop:0.66 rgba(0, 2, 26, 255), "
          "stop:0.76 rgba(0, 2, 26, 255), "
