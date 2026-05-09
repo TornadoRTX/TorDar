@@ -61,6 +61,8 @@ public:
    [[nodiscard]] SettingsVariable<double>&      radar_site_threshold() const;
    [[nodiscard]] SettingsVariable<bool>& high_privilege_warning_enabled() const;
    [[nodiscard]] SettingsVariable<double>& cursor_icon_scale() const;
+   [[nodiscard]] SettingsVariable<bool>&   legacy_lightning_enabled() const;
+   [[nodiscard]] SettingsVariable<bool>&   goes_glm_lightning_enabled() const;
 
    static GeneralSettings& Instance();
 
