@@ -96,6 +96,7 @@ public:
 
    bool dirty_ {false};
    bool thresholded_ {false};
+   bool timeFadeEnabled_ {false};
 
    std::chrono::system_clock::time_point selectedTime_ {};
 
@@ -129,6 +130,7 @@ public:
    GLint uOriginLatLongLocation_ {static_cast<GLint>(GL_INVALID_INDEX)};
    GLint uMapDistanceLocation_ {static_cast<GLint>(GL_INVALID_INDEX)};
    GLint uSelectedTimeLocation_ {static_cast<GLint>(GL_INVALID_INDEX)};
+   GLint uTimeFadeEnabledLocation_ {static_cast<GLint>(GL_INVALID_INDEX)};
 
    GLuint                vao_;
    std::array<GLuint, 3> vbo_;
@@ -156,6 +158,11 @@ void PlacefileIcons::set_thresholded(bool thresholded)
    p->thresholded_ = thresholded;
 }
 
+void PlacefileIcons::set_time_fade_enabled(bool enabled)
+{
+   p->timeFadeEnabled_ = enabled;
+}
+
 void PlacefileIcons::Initialize()
 {
    p->shaderProgram_ = p->context_->GetShaderProgram(
@@ -171,6 +178,8 @@ void PlacefileIcons::Initialize()
       p->shaderProgram_->GetUniformLocation("uMapDistance");
    p->uSelectedTimeLocation_ =
       p->shaderProgram_->GetUniformLocation("uSelectedTime");
+   p->uTimeFadeEnabledLocation_ =
+      p->shaderProgram_->GetUniformLocation("uTimeFadeEnabled");
 
    glGenVertexArrays(1, &p->vao_);
    glGenBuffers(static_cast<GLsizei>(p->vbo_.size()), p->vbo_.data());
@@ -299,6 +308,7 @@ void PlacefileIcons::Render(
          static_cast<GLint>(std::chrono::duration_cast<std::chrono::minutes>(
                                selectedTime.time_since_epoch())
                                .count()));
+      glUniform1i(p->uTimeFadeEnabledLocation_, p->timeFadeEnabled_ ? 1 : 0);
 
       // Interpolate texture coordinates
       glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
