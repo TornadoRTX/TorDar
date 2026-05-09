@@ -206,6 +206,7 @@ public:
    QFrame*                                    progressMid_ {nullptr};
    int                                        sweepPosition_ {0};
    int                                        fixedWidth_ {0};
+   int                                        fixedHeight_ {0};
    QWidget*                                   detailsContainer_ {nullptr};
    QVBoxLayout*                               detailsLayout_ {nullptr};
    QFrame*                                    cornerTL_ {nullptr};
@@ -385,7 +386,8 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    p->cornerBL_->setVisible(false);
    p->cornerBR_->setVisible(true);
 
-   p->fixedWidth_ = width();
+   p->fixedWidth_  = width();
+   p->fixedHeight_ = height();
    setMinimumWidth(p->fixedWidth_);
    setMaximumWidth(p->fixedWidth_);
 }
@@ -1531,11 +1533,13 @@ void WarningBoxWidgetImpl::AdjustHeightToContents()
    static constexpr int kMinDetailsHeight = 0;
    static constexpr int kParentPaddingY   = 24;
 
-   int maxHeight = std::max(kMinBoxHeight, self_->sizeHint().height());
+   const int preferredMaxHeight = fixedHeight_ > 0 ? fixedHeight_ : 320;
+   int       maxHeight          = std::max(kMinBoxHeight, preferredMaxHeight);
    if (self_->parentWidget() != nullptr)
    {
-      maxHeight = std::max(kMinBoxHeight,
-                           self_->parentWidget()->height() - kParentPaddingY);
+      const int parentMaxHeight = std::max(
+         kMinBoxHeight, self_->parentWidget()->height() - kParentPaddingY);
+      maxHeight = std::min(maxHeight, parentMaxHeight);
    }
 
    int detailsContentHeight = 0;
