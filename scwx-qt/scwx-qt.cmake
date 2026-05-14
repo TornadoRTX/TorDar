@@ -23,6 +23,7 @@ find_package(OpenGL REQUIRED)
 find_package(Python COMPONENTS Interpreter)
 find_package(SQLite3)
 find_package(TIFF)
+find_package(netcdf-c QUIET CONFIG)
 
 find_package(QT NAMES Qt6
              COMPONENTS Gui
@@ -835,6 +836,16 @@ target_link_libraries(scwx-qt PUBLIC Qt${QT_VERSION_MAJOR}::Widgets
                                      SQLite::SQLite3
                                      TIFF::TIFF
                                      wxdata)
+
+if (TARGET netcdf-c::netcdf-c)
+    target_link_libraries(scwx-qt PUBLIC netcdf-c::netcdf-c)
+    target_compile_definitions(scwx-qt PUBLIC SCWX_HAS_NETCDF=1)
+elseif (TARGET netCDF::netcdf)
+    target_link_libraries(scwx-qt PUBLIC netCDF::netcdf)
+    target_compile_definitions(scwx-qt PUBLIC SCWX_HAS_NETCDF=1)
+else()
+    target_compile_definitions(scwx-qt PUBLIC SCWX_HAS_NETCDF=0)
+endif()
 
 target_link_libraries(scwx-qt INTERFACE Boost::program_options)
 
