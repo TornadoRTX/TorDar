@@ -206,7 +206,6 @@ public:
    QFrame*                                    progressMid_ {nullptr};
    int                                        sweepPosition_ {0};
    int                                        fixedWidth_ {0};
-   int                                        fixedHeight_ {0};
    QWidget*                                   detailsContainer_ {nullptr};
    QVBoxLayout*                               detailsLayout_ {nullptr};
    QFrame*                                    cornerTL_ {nullptr};
@@ -386,8 +385,7 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    p->cornerBL_->setVisible(false);
    p->cornerBR_->setVisible(true);
 
-   p->fixedWidth_  = width();
-   p->fixedHeight_ = height();
+   p->fixedWidth_ = width();
    setMinimumWidth(p->fixedWidth_);
    setMaximumWidth(p->fixedWidth_);
 }
@@ -1533,8 +1531,9 @@ void WarningBoxWidgetImpl::AdjustHeightToContents()
    static constexpr int kMinDetailsHeight = 0;
    static constexpr int kParentPaddingY   = 24;
 
-   const int preferredMaxHeight = fixedHeight_ > 0 ? fixedHeight_ : 320;
-   int       maxHeight          = std::max(kMinBoxHeight, preferredMaxHeight);
+   const int naturalPanelHeight =
+      std::max(kMinBoxHeight, self_->sizeHint().height());
+   int maxHeight = naturalPanelHeight;
    if (self_->parentWidget() != nullptr)
    {
       const int parentMaxHeight = std::max(
@@ -1542,38 +1541,13 @@ void WarningBoxWidgetImpl::AdjustHeightToContents()
       maxHeight = std::min(maxHeight, parentMaxHeight);
    }
 
-   int detailsContentHeight = 0;
-   if (detailsLayout_ != nullptr)
-   {
-      const int itemCount = detailsLayout_->count();
-      for (int i = 0; i < itemCount; ++i)
-      {
-         if (QLayoutItem* item = detailsLayout_->itemAt(i); item != nullptr)
-         {
-            detailsContentHeight += item->sizeHint().height();
-         }
-      }
-
-      if (itemCount > 1)
-      {
-         detailsContentHeight += detailsLayout_->spacing() * (itemCount - 1);
-      }
-
-      const QMargins detailMargins = detailsLayout_->contentsMargins();
-      detailsContentHeight += detailMargins.top() + detailMargins.bottom();
-   }
-
-   const int measuredDetailsHeight = detailsContentHeight > 0 ?
-                                        detailsContentHeight :
-                                        detailsContainer_->sizeHint().height();
-   const int detailsWanted = std::max(kMinDetailsHeight, measuredDetailsHeight);
-
    // Estimate non-scroll-area ("chrome") height by pinning scroll area to min
    self_->ui->scrollArea->setMinimumHeight(kMinDetailsHeight);
    self_->ui->scrollArea->setMaximumHeight(kMinDetailsHeight);
    self_->layout()->activate();
-   const int chromeHeight =
-      std::max(0, self_->sizeHint().height() - kMinDetailsHeight);
+   const int chromeHeight = std::max(0, self_->sizeHint().height());
+   const int detailsWanted =
+      std::max(kMinDetailsHeight, naturalPanelHeight - chromeHeight);
 
    const int availableForDetails =
       std::max(kMinDetailsHeight, maxHeight - chromeHeight - kExtraBottomSpace);
