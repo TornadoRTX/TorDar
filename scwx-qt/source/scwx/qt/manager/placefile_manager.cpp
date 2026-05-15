@@ -60,6 +60,15 @@ static const std::string kGoesGlmLightningUrl_ =
 static const std::string kGoesGlmBucketUrl_ =
    "https://noaa-goes16.s3.amazonaws.com";
 static constexpr std::chrono::minutes kGoesGlmRetention_ {15};
+static constexpr int                  kTmYearEpochOffset_ {1900};
+static constexpr std::size_t          kFileStartYearGroup_ {1};
+static constexpr std::size_t          kFileStartDayGroup_ {2};
+static constexpr std::size_t          kFileStartHourGroup_ {3};
+static constexpr std::size_t          kFileStartMinuteGroup_ {4};
+static constexpr std::size_t          kFileStartSecondGroup_ {5};
+static constexpr int                  kHoursPerDay_ {24};
+static constexpr std::size_t          kMaxGlmFilesToDownload_ {45};
+static constexpr std::size_t          kExpectedLightningPoints_ {5000};
 
 struct GlmLightningPoint
 {
@@ -96,16 +105,17 @@ static bool ParseGlmFileStartTime(const std::string& filename,
    }
 
    std::tm tm {};
-   tm.tm_year = std::stoi(match[1].str()) - 1900;
+   tm.tm_year =
+      std::stoi(match[kFileStartYearGroup_].str()) - kTmYearEpochOffset_;
    tm.tm_mon  = 0;
    tm.tm_mday = 1;
-   tm.tm_hour = std::stoi(match[3].str());
-   tm.tm_min  = std::stoi(match[4].str());
-   tm.tm_sec  = std::stoi(match[5].str());
+   tm.tm_hour = std::stoi(match[kFileStartHourGroup_].str());
+   tm.tm_min  = std::stoi(match[kFileStartMinuteGroup_].str());
+   tm.tm_sec  = std::stoi(match[kFileStartSecondGroup_].str());
 
    const auto jan1         = UtcTmToTimePoint(tm);
-   const int  dayOfYearOne = std::stoi(match[2].str());
-   *t                      = jan1 + std::chrono::hours(24 * (dayOfYearOne - 1));
+   const int  dayOfYearOne = std::stoi(match[kFileStartDayGroup_].str());
+   *t = jan1 + std::chrono::hours(kHoursPerDay_ * (dayOfYearOne - 1));
    return true;
 }
 
@@ -143,7 +153,7 @@ FetchRecentGlmKeys(const std::chrono::system_clock::time_point& nowUtc)
 
       const std::string prefix =
          fmt::format("GLM-L2-LCFA/{:04d}/{:03d}/{:02d}/",
-                     tmUtc.tm_year + 1900,
+                     tmUtc.tm_year + kTmYearEpochOffset_,
                      tmUtc.tm_yday + 1,
                      tmUtc.tm_hour);
 
@@ -304,13 +314,13 @@ BuildGoesGlmPlacefile(const std::string& placefileName)
              [](const auto& lhs, const auto& rhs)
              { return lhs.second > rhs.second; });
 
-   if (candidates.size() > 45)
+   if (candidates.size() > kMaxGlmFilesToDownload_)
    {
-      candidates.resize(45);
+      candidates.resize(kMaxGlmFilesToDownload_);
    }
 
    std::vector<GlmLightningPoint> points {};
-   points.reserve(5000);
+   points.reserve(kExpectedLightningPoints_);
 
    for (const auto& [key, fileStart] : candidates)
    {
@@ -1067,8 +1077,8 @@ void PlacefileManager::Impl::PlacefileRecord::Update()
                url.query(QUrl::ComponentFormattingOption::PrettyDecoded)
                   .toStdString();
 
-            boost::char_separator<char> delimiter("&");
-            boost::tokenizer            tokens(query, delimiter);
+            boost::char_separator<char> const delimiter("&");
+            boost::tokenizer const            tokens(query, delimiter);
 
             for (auto& token : tokens)
             {
