@@ -351,7 +351,7 @@ BuildGoesGlmPlacefile(const std::string& placefileName)
    pf << "RefreshSeconds: 30\n";
    pf << "Threshold: 999\n";
    pf << "IconFile: 1, 28, 28, 14, 14, "
-         "\":/res/icons/flaticon/lightning.svg\"\n";
+         "\"qrc:/res/icons/flaticon/lightning.svg\"\n";
 
    for (const auto& p : points)
    {
