@@ -488,13 +488,25 @@ TextureAtlas::Impl::LoadImage(const std::string& imagePath, double scale)
    std::shared_ptr<boost::gil::rgba8_image_t> image = nullptr;
 
    QString qImagePath = QString::fromStdString(imagePath);
+   QString normalizedImagePath {qImagePath};
 
-   QUrl url = QUrl::fromUserInput(qImagePath);
-
-   if (url.isLocalFile())
+   if (normalizedImagePath.startsWith("qrc:/", Qt::CaseInsensitive))
    {
-      const QString suffix          = QFileInfo(qImagePath).suffix().toLower();
-      const QString qLocalImagePath = url.toString(QUrl::PreferLocalFile);
+      // Convert qrc:/ resource URLs to :/ resource paths for
+      // QFile/QSvgRenderer.
+      normalizedImagePath = ":" + normalizedImagePath.mid(4);
+   }
+
+   const bool isQtResource = normalizedImagePath.startsWith(":/");
+
+   QUrl url = QUrl::fromUserInput(normalizedImagePath);
+
+   if (isQtResource || url.isLocalFile())
+   {
+      const QString suffix = QFileInfo(normalizedImagePath).suffix().toLower();
+      const QString qLocalImagePath = isQtResource ?
+                                         normalizedImagePath :
+                                         url.toString(QUrl::PreferLocalFile);
 
       static const std::unordered_map<
          QString,
