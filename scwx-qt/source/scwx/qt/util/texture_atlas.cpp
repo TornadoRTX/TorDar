@@ -499,7 +499,7 @@ TextureAtlas::Impl::LoadImage(const std::string& imagePath, double scale)
 
    const bool isQtResource = normalizedImagePath.startsWith(":/");
 
-   QUrl url = QUrl::fromUserInput(normalizedImagePath);
+   QUrl const url = QUrl::fromUserInput(normalizedImagePath);
 
    if (isQtResource || url.isLocalFile())
    {
