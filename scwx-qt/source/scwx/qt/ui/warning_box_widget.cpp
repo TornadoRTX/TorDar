@@ -280,8 +280,9 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    ui->buttonsLayout->setContentsMargins(0, 0, 0, 0);
    ui->buttonsLayout->setSpacing(0);
    ui->verticalLayout->setContentsMargins(10, 8, 10, 8);
-   ui->verticalLayout->setSpacing(6);
+   ui->verticalLayout->setSpacing(4);
    ui->scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+   ui->scrollArea->setFrameShape(QFrame::NoFrame);
 
    ui->buttonsLayout->removeWidget(ui->closeButton);
    while (ui->buttonsLayout->count() > 0)
