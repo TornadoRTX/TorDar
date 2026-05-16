@@ -194,16 +194,21 @@ static bool ReadNetcdfVariable(int ncid, const char* name, std::vector<T>* out)
       return false;
    }
 
-   int dimid {};
-   if (nc_inq_vardimid(ncid, varid, &dimid) != NC_NOERR)
+   std::vector<int> dimIds(static_cast<std::size_t>(ndims), 0);
+   if (nc_inq_vardimid(ncid, varid, dimIds.data()) != NC_NOERR)
    {
       return false;
    }
 
-   size_t count {};
-   if (nc_inq_dimlen(ncid, dimid, &count) != NC_NOERR || count == 0)
+   size_t count {1u};
+   for (int dimId : dimIds)
    {
-      return false;
+      size_t dimLen {};
+      if (nc_inq_dimlen(ncid, dimId, &dimLen) != NC_NOERR || dimLen == 0u)
+      {
+         return false;
+      }
+      count *= dimLen;
    }
 
    out->resize(count);
@@ -271,8 +276,21 @@ BuildGlmPointsFromFile(const std::filesystem::path& ncFile)
    const auto baseTime = ReadCoverageStart(ncid);
    nc_close(ncid);
 
-   const size_t count =
-      std::min(latitudes.size(), std::min(longitudes.size(), offsets.size()));
+   size_t     count          = 0u;
+   const bool hasTimeOffsets = !offsets.empty();
+   if (hasTimeOffsets)
+   {
+      count = std::min(latitudes.size(),
+                       std::min(longitudes.size(), offsets.size()));
+   }
+   else
+   {
+      count = std::min(latitudes.size(), longitudes.size());
+      logger_->warn(
+         "GLM file missing expected time offset variable, using file "
+         "coverage start time for all points: {}",
+         ncFile.string());
+   }
    points.reserve(count);
 
    for (size_t i = 0; i < count; ++i)
@@ -280,11 +298,16 @@ BuildGlmPointsFromFile(const std::filesystem::path& ncFile)
       points.push_back(
          {latitudes[i],
           longitudes[i],
-          baseTime + std::chrono::duration_cast<std::chrono::seconds>(
-                        std::chrono::duration<double>(offsets[i]))});
+          hasTimeOffsets ?
+             baseTime + std::chrono::duration_cast<std::chrono::seconds>(
+                           std::chrono::duration<double>(offsets[i])) :
+             baseTime});
    }
 #else
    (void) ncFile;
+   logger_->warn(
+      "GOES GLM support compiled without NetCDF; no GLM points can "
+      "be decoded");
 #endif
 
    return points;
@@ -307,6 +330,12 @@ BuildGoesGlmPlacefile(const std::string& placefileName)
       {
          candidates.emplace_back(key, startTime);
       }
+   }
+
+   if (candidates.empty())
+   {
+      logger_->warn("GOES GLM: no recent files found in the last {} minutes",
+                    kGoesGlmRetention_.count());
    }
 
    std::sort(candidates.begin(),
@@ -356,6 +385,10 @@ BuildGoesGlmPlacefile(const std::string& placefileName)
       points.insert(points.end(), filePoints.begin(), filePoints.end());
    }
 
+   logger_->debug("GOES GLM: decoded {} raw points from {} files",
+                  points.size(),
+                  candidates.size());
+
    std::ostringstream pf {};
    pf << "Title: " << kGoesGlmLightningTitle_ << "\n";
    pf << "RefreshSeconds: 30\n";
@@ -363,6 +396,7 @@ BuildGoesGlmPlacefile(const std::string& placefileName)
    pf << "IconFile: 1, 28, 28, 14, 14, "
          "\"qrc:/res/icons/flaticon/lightning.svg\"\n";
 
+   std::size_t emittedPoints {0u};
    for (const auto& p : points)
    {
       if (p.time_ < cutoff || p.time_ > nowUtc)
@@ -389,7 +423,11 @@ BuildGoesGlmPlacefile(const std::string& placefileName)
       pf << "Icon: "
          << fmt::format("{:.4f}, {:.4f}, 0, 1, 1", p.latitude_, p.longitude_)
          << "\n";
+      ++emittedPoints;
    }
+
+   logger_->debug("GOES GLM: emitted {} points after time filtering",
+                  emittedPoints);
 
    std::istringstream stream {pf.str()};
    return gr::Placefile::Load(placefileName, stream);
