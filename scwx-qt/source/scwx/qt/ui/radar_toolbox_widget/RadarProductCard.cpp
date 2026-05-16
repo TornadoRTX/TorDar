@@ -143,6 +143,10 @@ void RadarProductCard::mousePressEvent(QMouseEvent* event)
    {
       Clicked();
    }
+   else if (event->button() == Qt::RightButton)
+   {
+      RightClicked(event->globalPosition().toPoint());
+   }
 
    QWidget::mousePressEvent(event);
 }

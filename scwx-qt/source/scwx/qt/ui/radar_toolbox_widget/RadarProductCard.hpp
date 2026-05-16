@@ -4,6 +4,7 @@
 #include <QEvent>
 #include <QMouseEvent>
 #include <QEnterEvent>
+#include <QPoint>
 
 class QLabel;
 
@@ -23,6 +24,7 @@ public:
 
 signals:
    void Clicked();
+   void RightClicked(const QPoint& globalPos);
 
 protected:
    void mousePressEvent(QMouseEvent* event) override;

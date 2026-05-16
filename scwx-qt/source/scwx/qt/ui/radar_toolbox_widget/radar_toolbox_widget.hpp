@@ -1,5 +1,7 @@
 #pragma once
 
+#include <scwx/common/products.hpp>
+
 #include <QEvent>
 #include <QWidget>
 
@@ -14,12 +16,19 @@ class QShowEvent;
 namespace scwx::qt::ui
 {
 
+class RadarProductCard;
+
 class RadarToolboxWidget : public QWidget
 {
    Q_OBJECT
 
 public:
    explicit RadarToolboxWidget(QWidget* parent = nullptr);
+
+Q_SIGNALS:
+   void RadarProductSelected(scwx::common::RadarProductGroup group,
+                             const std::string&              productName,
+                             int16_t                         productCode);
 
 protected:
    bool eventFilter(QObject* watched, QEvent* event) override;
@@ -29,6 +38,7 @@ private:
    void SetCollapsed(bool collapsed);
    void MoveToBottomLeft();
    void ClampToParent();
+   void SelectProductCard(RadarProductCard* selectedCard);
 
    // Root layout
    QVBoxLayout* rootLayout_;

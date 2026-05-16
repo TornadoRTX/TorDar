@@ -1296,6 +1296,14 @@ void MainWindowImpl::ConnectOtherSignals()
           const std::string&        productName,
           int16_t                   productCode)
       { SelectRadarProduct(activeMap_, group, productName, productCode); });
+   connect(
+      radarToolboxWidget_,
+      &ui::RadarToolboxWidget::RadarProductSelected,
+      mainWindow_,
+      [&](common::RadarProductGroup group,
+          const std::string&        productName,
+          int16_t                   productCode)
+      { SelectRadarProduct(activeMap_, group, productName, productCode); });
    connect(level2SettingsWidget_,
            &ui::Level2SettingsWidget::ElevationSelected,
            mainWindow_,

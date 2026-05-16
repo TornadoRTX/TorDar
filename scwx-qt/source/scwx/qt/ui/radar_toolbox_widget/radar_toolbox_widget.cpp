@@ -1,6 +1,7 @@
 #include "radar_toolbox_widget.hpp"
 #include "RadarProductCard.hpp"
 
+#include <QAction>
 #include <QFrame>
 #include <QFont>
 #include <QFontDatabase>
@@ -9,6 +10,7 @@
 #include <QIcon>
 #include <QLabel>
 #include <QLayout>
+#include <QMenu>
 #include <QMouseEvent>
 #include <QPushButton>
 #include <QScrollArea>
@@ -17,6 +19,7 @@
 #include <QVBoxLayout>
 #include <QWidget>
 #include <algorithm>
+#include <optional>
 #include <vector>
 
 namespace
@@ -24,9 +27,46 @@ namespace
 
 struct ProductInfo
 {
-   QString name;
-   QString icon;
+   QString                                            name;
+   QString                                            icon;
+   std::optional<scwx::common::Level2Product>         level2Product {};
+   std::optional<scwx::common::Level3ProductCategory> level3Category {};
 };
+
+void StyleProductMenu(QMenu* menu, const QString& oswaldBoldFontFamily)
+{
+   QFont menuFont {oswaldBoldFontFamily};
+   menuFont.setPixelSize(18);
+   menuFont.setWeight(QFont::Bold);
+   menu->setFont(menuFont);
+
+   menu->setStyleSheet(
+      "QMenu {"
+      "  background: #000000;"
+      "  border: 2px solid #f2f2f2;"
+      "  border-radius: 12px;"
+      "  padding: 8px;"
+      "}"
+      "QMenu::item {"
+      "  background: #9c9c9c;"
+      "  color: #f2f2f2;"
+      "  border-radius: 10px;"
+      "  padding: 6px 18px;"
+      "  margin: 4px 0px;"
+      "}"
+      "QMenu::item:selected {"
+      "  background: #1f2ef9;"
+      "  color: #ffffff;"
+      "}"
+      "QMenu::item:disabled {"
+      "  background: #525252;"
+      "  color: #9a9a9a;"
+      "}"
+      "QMenu::right-arrow {"
+      "  width: 10px;"
+      "  height: 10px;"
+      "}");
+}
 
 QString GetOswaldBoldFontFamily()
 {
@@ -208,22 +248,70 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
    productsLayout_->setSizeConstraint(QLayout::SetMinAndMaxSize);
 
    const std::vector<ProductInfo> products = {
-      {"Reflectivity", ":/res/icons/radar/reflectivity.svg"},
-      {"Velocity", ":/res/icons/radar/velocity.svg"},
-      {"Correlation Coefficient", ":/res/icons/radar/cc.svg"},
-      {"Differential Reflectivity", ":/res/icons/radar/ZDR.svg"},
-      {"Spectrum Width", ":/res/icons/radar/SW.svg"},
-      {"Precipitation Type", ":/res/icons/radar/PRT.svg"},
-      {"Differential Phase", ":/res/icons/radar/placeholder.svg"},
-      {"Specific Differential Phase", ":/res/icons/radar/KDP.svg"},
-      {"Hydrometeor Classification", ":/res/icons/radar/HCA.svg"},
-      {"Enhanced Echo Tops", ":/res/icons/radar/EET.svg"},
-      {"Echo Tops", ":/res/icons/radar/placeholder.svg"},
-      {"Storm Relative Velocity", ":/res/icons/radar/SRV-SRM.svg"},
-      {"Vertical Integrated Liquid", ":/res/icons/radar/VIL.svg"},
-      {"One Hour Precip. Accum.", ":/res/icons/radar/OHPA.svg"},
-      {"Storm Total Precip. Accum.", ":/res/icons/radar/STPA.svg"},
-      {"Clutter Filter Power Removed", ":/res/icons/radar/placeholder.svg"}};
+      {"Reflectivity",
+       ":/res/icons/radar/reflectivity.svg",
+       common::Level2Product::Reflectivity,
+       common::Level3ProductCategory::Reflectivity},
+      {"Velocity",
+       ":/res/icons/radar/velocity.svg",
+       common::Level2Product::Velocity,
+       common::Level3ProductCategory::Velocity},
+      {"Correlation Coefficient",
+       ":/res/icons/radar/cc.svg",
+       common::Level2Product::CorrelationCoefficient,
+       common::Level3ProductCategory::CorrelationCoefficient},
+      {"Differential Reflectivity",
+       ":/res/icons/radar/ZDR.svg",
+       common::Level2Product::DifferentialReflectivity,
+       common::Level3ProductCategory::DifferentialReflectivity},
+      {"Spectrum Width",
+       ":/res/icons/radar/SW.svg",
+       common::Level2Product::SpectrumWidth,
+       common::Level3ProductCategory::SpectrumWidth},
+      {"Precipitation Type",
+       ":/res/icons/radar/PRT.svg",
+       std::nullopt,
+       common::Level3ProductCategory::PrecipitationAccumulation},
+      {"Differential Phase",
+       ":/res/icons/radar/placeholder.svg",
+       common::Level2Product::DifferentialPhase,
+       common::Level3ProductCategory::SpecificDifferentialPhase},
+      {"Specific Differential Phase",
+       ":/res/icons/radar/KDP.svg",
+       std::nullopt,
+       common::Level3ProductCategory::SpecificDifferentialPhase},
+      {"Hydrometeor Classification",
+       ":/res/icons/radar/HCA.svg",
+       std::nullopt,
+       common::Level3ProductCategory::HydrometeorClassification},
+      {"Enhanced Echo Tops",
+       ":/res/icons/radar/EET.svg",
+       std::nullopt,
+       common::Level3ProductCategory::EchoTops},
+      {"Echo Tops",
+       ":/res/icons/radar/placeholder.svg",
+       std::nullopt,
+       common::Level3ProductCategory::EchoTops},
+      {"Storm Relative Velocity",
+       ":/res/icons/radar/SRV-SRM.svg",
+       std::nullopt,
+       common::Level3ProductCategory::StormRelativeVelocity},
+      {"Vertical Integrated Liquid",
+       ":/res/icons/radar/VIL.svg",
+       std::nullopt,
+       common::Level3ProductCategory::VerticallyIntegratedLiquid},
+      {"One Hour Precip. Accum.",
+       ":/res/icons/radar/OHPA.svg",
+       std::nullopt,
+       common::Level3ProductCategory::PrecipitationAccumulation},
+      {"Storm Total Precip. Accum.",
+       ":/res/icons/radar/STPA.svg",
+       std::nullopt,
+       common::Level3ProductCategory::PrecipitationAccumulation},
+      {"Clutter Filter Power Removed",
+       ":/res/icons/radar/placeholder.svg",
+       common::Level2Product::ClutterFilterPowerRemoved,
+       std::nullopt}};
 
    for (const auto& product : products)
    {
@@ -233,18 +321,99 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
       connect(card,
               &RadarProductCard::Clicked,
               this,
-              [this, card]()
-              {
-                 auto cards =
-                    scrollContents_->findChildren<RadarProductCard*>();
+              [this, card]() { SelectProductCard(card); });
 
-                 for (auto* c : cards)
-                 {
-                    c->SetSelected(false);
-                 }
+      connect(
+         card,
+         &RadarProductCard::RightClicked,
+         this,
+         [this, card, product, oswaldBoldFontFamily](const QPoint& globalPos)
+         {
+            SelectProductCard(card);
 
-                 card->SetSelected(true);
-              });
+            QMenu menu(this);
+            StyleProductMenu(&menu, oswaldBoldFontFamily);
+
+            QAction* level2Action = menu.addAction(tr("LEVEL 2 DOPPLER RADAR"));
+
+            if (product.level2Product.has_value())
+            {
+               const std::string level2Name =
+                  common::GetLevel2Name(product.level2Product.value());
+
+               level2Action->setData(
+                  QString("L2|%1").arg(QString::fromStdString(level2Name)));
+            }
+            else
+            {
+               level2Action->setEnabled(false);
+            }
+
+            QMenu* level3Menu = menu.addMenu(tr("LEVEL 3 DOPPLER RADAR"));
+            StyleProductMenu(level3Menu, oswaldBoldFontFamily);
+
+            bool hasLevel3Products = false;
+
+            if (product.level3Category.has_value())
+            {
+               const auto& level3Products = common::GetLevel3ProductsByCategory(
+                  product.level3Category.value());
+
+               for (const auto& level3Product : level3Products)
+               {
+                  const auto& awipsIds =
+                     common::GetLevel3AwipsIdsByProduct(level3Product);
+
+                  if (awipsIds.empty())
+                  {
+                     continue;
+                  }
+
+                  const QString actionText =
+                     QString::fromStdString(
+                        common::GetLevel3ProductDescription(level3Product))
+                        .toUpper();
+
+                  QAction* level3Action = level3Menu->addAction(actionText);
+                  level3Action->setData(QString("L3|%1").arg(
+                     QString::fromStdString(awipsIds.front())));
+                  hasLevel3Products = true;
+               }
+            }
+
+            if (!hasLevel3Products)
+            {
+               level3Menu->setEnabled(false);
+            }
+
+            QAction* selectedAction = menu.exec(globalPos);
+
+            if (selectedAction == nullptr)
+            {
+               return;
+            }
+
+            const QString actionData = selectedAction->data().toString();
+            const auto    parts      = actionData.split("|");
+
+            if (parts.size() != 2)
+            {
+               return;
+            }
+
+            const std::string productName = parts.at(1).toStdString();
+
+            if (parts.at(0) == "L2")
+            {
+               Q_EMIT RadarProductSelected(
+                  common::RadarProductGroup::Level2, productName, 0);
+            }
+            else if (parts.at(0) == "L3")
+            {
+               Q_EMIT RadarProductSelected(
+                  common::RadarProductGroup::Level3, productName, 0);
+            }
+         });
 
       productsLayout_->addWidget(
          card,
@@ -362,6 +531,21 @@ RadarToolboxWidget::RadarToolboxWidget(QWidget* parent) : QWidget(parent)
       "}");
 
    SetCollapsed(false);
+}
+
+void RadarToolboxWidget::SelectProductCard(RadarProductCard* selectedCard)
+{
+   auto cards = scrollContents_->findChildren<RadarProductCard*>();
+
+   for (auto* card : cards)
+   {
+      card->SetSelected(false);
+   }
+
+   if (selectedCard != nullptr)
+   {
+      selectedCard->SetSelected(true);
+   }
 }
 
 bool RadarToolboxWidget::eventFilter(QObject* watched, QEvent* event)
