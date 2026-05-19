@@ -162,6 +162,7 @@ public:
    void ApplyTheme(const types::TextEventKey&                   key,
                    const std::shared_ptr<const awips::Segment>& segment);
    void UpdateTitleFont();
+   int  MeasureDetailsContentHeight();
    void AdjustHeightToContents();
    void AddDetailRow(const std::string& label, const std::string& value);
    void AddSevereMetricCards(const std::string& maxHail,
@@ -283,6 +284,9 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    ui->verticalLayout->setSpacing(4);
    ui->scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
    ui->scrollArea->setFrameShape(QFrame::NoFrame);
+   ui->scrollArea->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
+   ui->verticalLayout->removeWidget(ui->areasFrame);
+   ui->areasFrame->hide();
 
    ui->buttonsLayout->removeWidget(ui->closeButton);
    while (ui->buttonsLayout->count() > 0)
@@ -520,8 +524,6 @@ void WarningBoxWidgetImpl::PopulateFromWarning(const types::TextEventKey& key)
       stateBadgeLabel_->setToolTip(QString {});
       stateBadgeFrame_->setVisible(false);
    }
-   self_->ui->areasFrame->setVisible(false);
-
    // Clear previous detail rows
    while (QLayoutItem* item = detailsLayout_->takeAt(0))
    {
@@ -1502,6 +1504,42 @@ void WarningBoxWidgetImpl::UpdateTitleFont()
    self_->ui->warningTypeLabel->setFixedHeight(titleHeight);
 }
 
+int WarningBoxWidgetImpl::MeasureDetailsContentHeight()
+{
+   if (detailsLayout_ == nullptr || detailsContainer_ == nullptr)
+   {
+      return 0;
+   }
+
+   int contentWidth = self_->ui->scrollArea->viewport()->width();
+   if (contentWidth <= 1 && fixedWidth_ > 0)
+   {
+      const QMargins outerMargins =
+         self_->ui->verticalLayout->contentsMargins();
+      const QMargins scrollMargins = self_->ui->scrollArea->contentsMargins();
+      contentWidth = fixedWidth_ - outerMargins.left() - outerMargins.right() -
+                     scrollMargins.left() - scrollMargins.right();
+   }
+   contentWidth = std::max(1, contentWidth);
+
+   detailsContainer_->setMinimumHeight(0);
+   detailsContainer_->setMaximumHeight(QWIDGETSIZE_MAX);
+   detailsContainer_->setFixedWidth(contentWidth);
+
+   const QLayout::SizeConstraint previousConstraint =
+      detailsLayout_->sizeConstraint();
+   detailsLayout_->setSizeConstraint(QLayout::SetFixedSize);
+   detailsLayout_->activate();
+
+   const int measuredHeight = detailsLayout_->minimumSize().height();
+
+   detailsLayout_->setSizeConstraint(previousConstraint);
+   detailsContainer_->setMinimumWidth(0);
+   detailsContainer_->setMaximumWidth(QWIDGETSIZE_MAX);
+
+   return std::max(0, measuredHeight);
+}
+
 void WarningBoxWidgetImpl::AdjustHeightToContents()
 {
    if (detailsContainer_ == nullptr)
@@ -1524,41 +1562,14 @@ void WarningBoxWidgetImpl::AdjustHeightToContents()
 
    self_->layout()->activate();
    detailsLayout_->activate();
-   detailsContainer_->setMinimumHeight(0);
-   detailsContainer_->setMaximumHeight(QWIDGETSIZE_MAX);
-   detailsContainer_->adjustSize();
-   detailsContainer_->updateGeometry();
 
    static constexpr int kExtraBottomSpace = 0;
    static constexpr int kMinBoxHeight     = 0;
    static constexpr int kMinDetailsHeight = 0;
    static constexpr int kParentPaddingY   = 24;
 
-   int detailsContentHeight = 0;
-   if (detailsLayout_ != nullptr)
-   {
-      const int itemCount = detailsLayout_->count();
-      for (int i = 0; i < itemCount; ++i)
-      {
-         if (QLayoutItem* item = detailsLayout_->itemAt(i); item != nullptr)
-         {
-            detailsContentHeight += item->sizeHint().height();
-         }
-      }
-
-      if (itemCount > 1)
-      {
-         detailsContentHeight += detailsLayout_->spacing() * (itemCount - 1);
-      }
-
-      const QMargins detailMargins = detailsLayout_->contentsMargins();
-      detailsContentHeight += detailMargins.top() + detailMargins.bottom();
-   }
-
-   const int measuredDetailsHeight = detailsContentHeight > 0 ?
-                                        detailsContentHeight :
-                                        detailsContainer_->sizeHint().height();
-   const int detailsWanted = std::max(kMinDetailsHeight, measuredDetailsHeight);
+   const int detailsWanted =
+      std::max(kMinDetailsHeight, MeasureDetailsContentHeight());
 
    // Estimate non-scroll-area ("chrome") height by pinning scroll area to min
    self_->ui->scrollArea->setMinimumHeight(kMinDetailsHeight);
