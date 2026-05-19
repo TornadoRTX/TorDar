@@ -337,7 +337,7 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    p->progressMid_->setFixedHeight(1);
    p->progressMid_->move(0, 3);
    p->progressMid_->lower();
-   ui->verticalLayout->insertWidget(2, p->progressTrack_);
+   ui->verticalLayout->insertWidget(1, p->progressTrack_);
 
    p->stateBadgeFrame_ = new QFrame(this);
    p->stateBadgeFrame_->setObjectName("stateBadgeFrame");
@@ -353,7 +353,7 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    p->stateBadgeLabel_->setMaximumWidth(120);
    badgeLayout->addWidget(p->stateBadgeLabel_);
    p->stateBadgeFrame_->setVisible(false);
-   ui->verticalLayout->insertWidget(3, p->stateBadgeFrame_, 0, Qt::AlignLeft);
+   ui->verticalLayout->insertWidget(2, p->stateBadgeFrame_, 0, Qt::AlignLeft);
 
    hide();
 
