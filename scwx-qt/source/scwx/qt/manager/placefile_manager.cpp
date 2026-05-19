@@ -56,9 +56,10 @@ static const std::string kLegacyLightningUrl_ =
    "https://www.freelightning.com/hub/"
    "placefile.php?request=10213|10454|138624046|10463|10369|10644|0|84764|1";
 static const std::string kGoesGlmLightningTitle_ = "GOES GLM Lightning (AWS)";
-// Stable settings key; not used for S3 requests (GOES-16 ceased operations in
-// 2025).
+// Built-in placefile identifier (not used for S3 requests).
 static const std::string kGoesGlmLightningUrl_ =
+   "https://noaa-goes19.s3.amazonaws.com/index.html";
+static const std::string kGoesGlmLegacyLightningUrl_ =
    "https://noaa-goes16.s3.amazonaws.com/index.html";
 // GOES-East (primary); GOES-West is used only when GOES-19 has no recent data.
 static const std::string kGoesGlmPrimaryBucketUrl_ =
@@ -494,6 +495,18 @@ static bool ContainsPlacefileEntry(const boost::json::value& placefileJson,
    return false;
 }
 
+static bool
+ContainsGoesGlmPlacefileEntry(const boost::json::value& placefileJson)
+{
+   return ContainsPlacefileEntry(placefileJson, kGoesGlmLightningUrl_) ||
+          ContainsPlacefileEntry(placefileJson, kGoesGlmLegacyLightningUrl_);
+}
+
+static bool IsGoesGlmLightningUrl(const std::string& name)
+{
+   return name == kGoesGlmLightningUrl_ || name == kGoesGlmLegacyLightningUrl_;
+}
+
 class PlacefileManager::Impl
 {
 public:
@@ -504,6 +517,7 @@ public:
 
    void InitializePlacefileSettings();
    void SyncBuiltInLightning();
+   void MigrateGoesGlmPlacefileUrl();
    void ApplyPlacefileSettings(const boost::json::value& placefileJson);
    void ReadPlacefileSettings();
    void SavePlacefileSettings();
@@ -864,16 +878,36 @@ void PlacefileManager::Impl::ReadPlacefileSettings()
    if (settings::GeneralSettings::Instance()
           .goes_glm_lightning_enabled()
           .GetValue() &&
-       !ContainsPlacefileEntry(placefileJson, kGoesGlmLightningUrl_))
+       !ContainsGoesGlmPlacefileEntry(placefileJson))
    {
       self_->AddUrl(
          kGoesGlmLightningUrl_, kGoesGlmLightningTitle_, true, false);
    }
 
+   MigrateGoesGlmPlacefileUrl();
+
    // Ensure persisted records match the current built-in lightning setting.
    SyncBuiltInLightning();
 
    placefileSettingsRead_ = true;
+}
+
+void PlacefileManager::Impl::MigrateGoesGlmPlacefileUrl()
+{
+   std::shared_lock lock(placefileRecordLock_);
+   const bool       hasLegacyGoesGlmRecord =
+      placefileRecordMap_.find(kGoesGlmLegacyLightningUrl_) !=
+      placefileRecordMap_.cend();
+   const bool hasGoesGlmRecord =
+      placefileRecordMap_.find(kGoesGlmLightningUrl_) !=
+      placefileRecordMap_.cend();
+   lock.unlock();
+
+   if (hasLegacyGoesGlmRecord && !hasGoesGlmRecord)
+   {
+      self_->set_placefile_url(kGoesGlmLegacyLightningUrl_,
+                               kGoesGlmLightningUrl_);
+   }
 }
 
 void PlacefileManager::Impl::SyncBuiltInLightning()
@@ -887,13 +921,20 @@ void PlacefileManager::Impl::SyncBuiltInLightning()
    const bool legacyLightningEnabled =
       legacyLightningEnabledRaw && !goesGlmLightningEnabled;
 
+   MigrateGoesGlmPlacefileUrl();
+
    std::shared_lock lock(placefileRecordLock_);
    const bool       hasLegacyLightningRecord =
       placefileRecordMap_.find(kLegacyLightningUrl_) !=
       placefileRecordMap_.cend();
-   const bool hasGoesGlmLightningRecord =
+   const bool hasGoesGlmLegacyRecord =
+      placefileRecordMap_.find(kGoesGlmLegacyLightningUrl_) !=
+      placefileRecordMap_.cend();
+   const bool hasGoesGlmRecord =
       placefileRecordMap_.find(kGoesGlmLightningUrl_) !=
       placefileRecordMap_.cend();
+   const bool hasGoesGlmLightningRecord =
+      hasGoesGlmRecord || hasGoesGlmLegacyRecord;
    lock.unlock();
 
    if (legacyLightningEnabled && !hasLegacyLightningRecord)
@@ -912,7 +953,14 @@ void PlacefileManager::Impl::SyncBuiltInLightning()
    }
    else if (!goesGlmLightningEnabled && hasGoesGlmLightningRecord)
    {
-      self_->RemoveUrl(kGoesGlmLightningUrl_);
+      if (hasGoesGlmRecord)
+      {
+         self_->RemoveUrl(kGoesGlmLightningUrl_);
+      }
+      if (hasGoesGlmLegacyRecord)
+      {
+         self_->RemoveUrl(kGoesGlmLegacyLightningUrl_);
+      }
    }
 }
 
@@ -1111,7 +1159,7 @@ void PlacefileManager::Impl::PlacefileRecord::Update()
    }
    else
    {
-      if (name == kGoesGlmLightningUrl_)
+      if (IsGoesGlmLightningUrl(name))
       {
          updatedPlacefile = BuildGoesGlmPlacefile(name);
          if (updatedPlacefile == nullptr && enabled_)
@@ -1439,6 +1487,11 @@ PlacefileManager::Impl::LoadImageResources(
    }
 
    return ResourceManager::LoadImageResources(urlStrings);
+}
+
+bool PlacefileManager::IsGoesGlmLightningPlacefile(const std::string& name)
+{
+   return IsGoesGlmLightningUrl(name);
 }
 
 } // namespace scwx::qt::manager

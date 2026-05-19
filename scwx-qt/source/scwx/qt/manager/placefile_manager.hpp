@@ -55,6 +55,8 @@ public:
 
    static std::shared_ptr<PlacefileManager> Instance();
 
+   [[nodiscard]] static bool IsGoesGlmLightningPlacefile(const std::string& name);
+
 signals:
    void PlacefilesInitialized();
    void PlacefileEnabled(const std::string& name, bool enabled);
