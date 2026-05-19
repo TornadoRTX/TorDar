@@ -39,6 +39,7 @@
 #include <regex>
 #include <algorithm>
 #include <filesystem>
+#include <tuple>
 
 namespace scwx::qt::manager
 {
@@ -55,10 +56,15 @@ static const std::string kLegacyLightningUrl_ =
    "https://www.freelightning.com/hub/"
    "placefile.php?request=10213|10454|138624046|10463|10369|10644|0|84764|1";
 static const std::string kGoesGlmLightningTitle_ = "GOES GLM Lightning (AWS)";
+// Stable settings key; not used for S3 requests (GOES-16 ceased operations in
+// 2025).
 static const std::string kGoesGlmLightningUrl_ =
    "https://noaa-goes16.s3.amazonaws.com/index.html";
-static const std::string kGoesGlmBucketUrl_ =
-   "https://noaa-goes16.s3.amazonaws.com";
+// GOES-East (primary); GOES-West is used only when GOES-19 has no recent data.
+static const std::string kGoesGlmPrimaryBucketUrl_ =
+   "https://noaa-goes19.s3.amazonaws.com";
+static const std::string kGoesGlmFallbackBucketUrl_ =
+   "https://noaa-goes18.s3.amazonaws.com";
 static constexpr std::chrono::minutes kGoesGlmRetention_ {15};
 static constexpr int                  kTmYearEpochOffset_ {1900};
 static constexpr std::size_t          kFileStartYearGroup_ {1};
@@ -136,7 +142,8 @@ static std::vector<std::string> ParseS3Keys(const std::string& xmlBody)
 }
 
 static std::vector<std::string>
-FetchRecentGlmKeys(const std::chrono::system_clock::time_point& nowUtc)
+FetchGlmKeysFromBucket(const std::string&                           bucketUrl,
+                       const std::chrono::system_clock::time_point& nowUtc)
 {
    std::vector<std::string> keys {};
 
@@ -157,7 +164,7 @@ FetchRecentGlmKeys(const std::chrono::system_clock::time_point& nowUtc)
                      tmUtc.tm_yday + 1,
                      tmUtc.tm_hour);
 
-      auto response = cpr::Get(cpr::Url {kGoesGlmBucketUrl_},
+      auto response = cpr::Get(cpr::Url {bucketUrl},
                                network::cpr::GetHeader(),
                                cpr::Parameters {{"list-type", "2"},
                                                 {"max-keys", "1000"},
@@ -229,8 +236,15 @@ static std::chrono::system_clock::time_point ReadCoverageStart(int ncid)
        NC_NOERR)
    {
       std::tm            tm {};
-      std::istringstream ss {std::string {buffer.data()}};
-      ss >> std::get_time(&tm, "%Y-%m-%dT%H:%M:%S");
+      std::string        coverageStart {buffer.data()};
+      std::istringstream ss {coverageStart};
+      ss >> std::get_time(&tm, "%Y-%m-%dT%H:%M:%SZ");
+      if (ss.fail())
+      {
+         ss.clear();
+         ss.str(coverageStart);
+         ss >> std::get_time(&tm, "%Y-%m-%dT%H:%M:%S");
+      }
       if (!ss.fail())
       {
          return UtcTmToTimePoint(tm);
@@ -313,23 +327,44 @@ BuildGlmPointsFromFile(const std::filesystem::path& ncFile)
    return points;
 }
 
+static void AppendGlmFileCandidates(
+   const std::string&                                              bucketUrl,
+   const std::chrono::system_clock::time_point&                    nowUtc,
+   const std::chrono::system_clock::time_point&                    cutoff,
+   std::vector<std::tuple<std::string,
+                          std::string,
+                          std::chrono::system_clock::time_point>>& candidates)
+{
+   for (const auto& key : FetchGlmKeysFromBucket(bucketUrl, nowUtc))
+   {
+      std::chrono::system_clock::time_point startTime {};
+      if (key.ends_with(".nc") && ParseGlmFileStartTime(key, &startTime) &&
+          startTime >= cutoff)
+      {
+         candidates.emplace_back(bucketUrl, key, startTime);
+      }
+   }
+}
+
 static std::shared_ptr<gr::Placefile>
 BuildGoesGlmPlacefile(const std::string& placefileName)
 {
    const auto nowUtc = UtcNowMinute();
    const auto cutoff = nowUtc - kGoesGlmRetention_;
 
-   std::vector<std::pair<std::string, std::chrono::system_clock::time_point>>
+   std::vector<std::tuple<std::string,
+                          std::string,
+                          std::chrono::system_clock::time_point>>
       candidates {};
 
-   for (const auto& key : FetchRecentGlmKeys(nowUtc))
+   AppendGlmFileCandidates(
+      kGoesGlmPrimaryBucketUrl_, nowUtc, cutoff, candidates);
+
+   if (candidates.empty())
    {
-      std::chrono::system_clock::time_point startTime {};
-      if (key.ends_with(".nc") && ParseGlmFileStartTime(key, &startTime) &&
-          startTime >= cutoff)
-      {
-         candidates.emplace_back(key, startTime);
-      }
+      logger_->info("GOES GLM: GOES-19 unavailable, falling back to GOES-18");
+      AppendGlmFileCandidates(
+         kGoesGlmFallbackBucketUrl_, nowUtc, cutoff, candidates);
    }
 
    if (candidates.empty())
@@ -341,7 +376,7 @@ BuildGoesGlmPlacefile(const std::string& placefileName)
    std::sort(candidates.begin(),
              candidates.end(),
              [](const auto& lhs, const auto& rhs)
-             { return lhs.second > rhs.second; });
+             { return std::get<2>(lhs) > std::get<2>(rhs); });
 
    if (candidates.size() > kMaxGlmFilesToDownload_)
    {
@@ -351,10 +386,10 @@ BuildGoesGlmPlacefile(const std::string& placefileName)
    std::vector<GlmLightningPoint> points {};
    points.reserve(kExpectedLightningPoints_);
 
-   for (const auto& [key, fileStart] : candidates)
+   for (const auto& [bucketUrl, key, fileStart] : candidates)
    {
       (void) fileStart;
-      const std::string url = fmt::format("{}/{}", kGoesGlmBucketUrl_, key);
+      const std::string url      = fmt::format("{}/{}", bucketUrl, key);
       auto              response = cpr::Get(cpr::Url {url},
                                network::cpr::GetHeader(),
                                network::cpr::GetDefaultTimeout(),
