@@ -389,7 +389,6 @@ BuildGoesGlmPlacefile(const std::string& placefileName)
 
    for (const auto& [bucketUrl, key, fileStart] : candidates)
    {
-      (void) fileStart;
       const std::string url      = fmt::format("{}/{}", bucketUrl, key);
       auto              response = cpr::Get(cpr::Url {url},
                                network::cpr::GetHeader(),
@@ -417,6 +416,14 @@ BuildGoesGlmPlacefile(const std::string& placefileName)
       auto            filePoints = BuildGlmPointsFromFile(tempPath);
       std::error_code ec {};
       std::filesystem::remove(tempPath, ec);
+
+      // Use key-derived file start time for display aging. GLM netCDF time
+      // offsets vary by encoding/scale conventions and can otherwise push
+      // points outside the expected recent-time window.
+      for (auto& point : filePoints)
+      {
+         point.time_ = fileStart;
+      }
 
       points.insert(points.end(), filePoints.begin(), filePoints.end());
    }
