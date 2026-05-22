@@ -1525,17 +1525,27 @@ int WarningBoxWidgetImpl::MeasureDetailsContentHeight()
    detailsContainer_->setMinimumHeight(0);
    detailsContainer_->setMaximumHeight(QWIDGETSIZE_MAX);
    detailsContainer_->setFixedWidth(contentWidth);
-
-   const QLayout::SizeConstraint previousConstraint =
-      detailsLayout_->sizeConstraint();
-   detailsLayout_->setSizeConstraint(QLayout::SetFixedSize);
+   detailsContainer_->updateGeometry();
+   detailsLayout_->invalidate();
    detailsLayout_->activate();
 
-   const int measuredHeight = detailsLayout_->minimumSize().height();
+   int measuredHeight = 0;
+   if (detailsLayout_->hasHeightForWidth())
+   {
+      measuredHeight = detailsLayout_->totalHeightForWidth(contentWidth);
+   }
+   if (measuredHeight <= 0 && detailsContainer_->hasHeightForWidth())
+   {
+      measuredHeight = detailsContainer_->heightForWidth(contentWidth);
+   }
+   if (measuredHeight <= 0)
+   {
+      measuredHeight = detailsLayout_->sizeHint().height();
+   }
 
-   detailsLayout_->setSizeConstraint(previousConstraint);
    detailsContainer_->setMinimumWidth(0);
    detailsContainer_->setMaximumWidth(QWIDGETSIZE_MAX);
+   detailsContainer_->updateGeometry();
 
    return std::max(0, measuredHeight);
 }
