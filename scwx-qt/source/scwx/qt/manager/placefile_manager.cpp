@@ -436,7 +436,7 @@ BuildGoesGlmPlacefile(const std::string& placefileName)
    pf << "Title: " << kGoesGlmLightningTitle_ << "\n";
    pf << "RefreshSeconds: 30\n";
    pf << "Threshold: 999\n";
-   pf << "IconFile: 1, 512, 512, 256, 256, "
+   pf << "IconFile: 1, 24, 24, 12, 12, "
          "\"qrc:/res/icons/flaticon/lightning.svg\"\n";
 
    std::size_t emittedPoints {0u};
