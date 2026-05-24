@@ -37,15 +37,11 @@ void main()
       {
          int ageMinutes = uSelectedTime - gsIn[0].timeRange[0];
 
-         if (ageMinutes >= 5)
-         {
-            alphaScale = 0.25f;
-         }
-         else if (ageMinutes >= 3)
+         if (ageMinutes >= 10)
          {
             alphaScale = 0.35f;
          }
-         else if (ageMinutes >= 1)
+         else if (ageMinutes >= 5)
          {
             alphaScale = 0.50f;
          }
