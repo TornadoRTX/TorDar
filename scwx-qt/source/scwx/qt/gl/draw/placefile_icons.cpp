@@ -5,7 +5,10 @@
 #include <scwx/util/logger.hpp>
 #include <scwx/util/time.hpp>
 
+#include <cmath>
+#include <cstdint>
 #include <execution>
+#include <unordered_set>
 
 #include <QDir>
 #include <QUrl>
@@ -34,8 +37,21 @@ static constexpr std::size_t kIconBufferLength =
 static constexpr std::size_t kTextureBufferLength =
    kNumTriangles * kVerticesPerTriangle * kPointsPerTexCoord;
 
-// Threshold, start time, end time
-static constexpr std::size_t kIntegersPerVertex_ = 3;
+// Threshold, start time, end time, displayed
+static constexpr std::size_t kIntegersPerVertex_ = 4;
+static constexpr float       kOverlapGridSizePx_ = 12.0f;
+
+static std::uint64_t MakeOverlapKey(const glm::vec2& point)
+{
+   const auto quantize = [](float value) -> std::uint32_t
+   {
+      return static_cast<std::uint32_t>(
+         std::llround(value / kOverlapGridSizePx_));
+   };
+
+   return (static_cast<std::uint64_t>(quantize(point.x)) << 32u) |
+          static_cast<std::uint64_t>(quantize(point.y));
+}
 
 struct PlacefileIconInfo
 {
@@ -117,6 +133,9 @@ public:
    std::vector<GLint> currentIntegerBuffer_ {};
    std::vector<float> newIconBuffer_ {};
    std::vector<GLint> newIntegerBuffer_ {};
+
+   std::vector<glm::vec2> currentScreenPoints_ {};
+   std::vector<glm::vec2> newScreenPoints_ {};
 
    std::vector<float> textureBuffer_ {};
 
@@ -260,7 +279,12 @@ void PlacefileIcons::Initialize()
    glEnableVertexAttribArray(6);
 
    // aDisplayed
-   glVertexAttribI1i(7, 1);
+   glVertexAttribIPointer(7, //
+                          1,
+                          GL_INT,
+                          kIntegersPerVertex_ * sizeof(GLint),
+                          reinterpret_cast<void*>(3 * sizeof(GLint)));
+   glEnableVertexAttribArray(7);
 
    // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
    // NOLINTEND(performance-no-int-to-ptr)
@@ -310,6 +334,52 @@ void PlacefileIcons::Render(
                                .count()));
       glUniform1i(p->uTimeFadeEnabledLocation_, p->timeFadeEnabled_ ? 1 : 0);
 
+      if (p->timeFadeEnabled_)
+      {
+         std::vector<GLint> renderIntegerBuffer {p->currentIntegerBuffer_};
+         std::unordered_set<std::uint64_t> seenCells {};
+         seenCells.reserve(p->currentScreenPoints_.size());
+
+         const glm::mat4 mapMatrix = util::maplibre::GetMapMatrix(params);
+         std::size_t     hiddenCount {0u};
+
+         for (std::size_t i = 0u; i < p->currentScreenPoints_.size(); ++i)
+         {
+            const glm::vec2 projected = glm::vec2(
+               mapMatrix * glm::vec4(p->currentScreenPoints_[i], 0.0f, 1.0f));
+            const std::uint64_t cellKey = MakeOverlapKey(projected);
+            if (seenCells.contains(cellKey))
+            {
+               ++hiddenCount;
+               const std::size_t baseIndex =
+                  i * kVerticesPerRectangle * kIntegersPerVertex_;
+               for (std::size_t vertex = 0u; vertex < kVerticesPerRectangle;
+                    ++vertex)
+               {
+                  renderIntegerBuffer[baseIndex + vertex * kIntegersPerVertex_ +
+                                      3u] = 0;
+               }
+            }
+            else
+            {
+               seenCells.insert(cellKey);
+            }
+         }
+
+         if (hiddenCount > 0u)
+         {
+            logger_->debug("GOES GLM: suppressed {} overlapping icons",
+                           hiddenCount);
+         }
+
+         glBindBuffer(GL_ARRAY_BUFFER, p->vbo_[2]);
+         glBufferData(
+            GL_ARRAY_BUFFER,
+            static_cast<GLsizeiptr>(sizeof(GLint) * renderIntegerBuffer.size()),
+            renderIntegerBuffer.data(),
+            GL_DYNAMIC_DRAW);
+      }
+
       // Interpolate texture coordinates
       glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
       glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -329,6 +399,7 @@ void PlacefileIcons::Deinitialize()
    p->currentIconList_.clear();
    p->currentIconFiles_.clear();
    p->currentHoverIcons_.clear();
+   p->currentScreenPoints_.clear();
    p->currentIconBuffer_.clear();
    p->currentIntegerBuffer_.clear();
    p->textureBuffer_.clear();
@@ -373,6 +444,7 @@ void PlacefileIcons::StartIcons()
    p->newIconFiles_.clear();
    p->newIconBuffer_.clear();
    p->newIntegerBuffer_.clear();
+   p->newScreenPoints_.clear();
    p->newHoverIcons_.clear();
 }
 
@@ -417,6 +489,7 @@ void PlacefileIcons::FinishIcons()
    p->currentIconFiles_.swap(p->newIconFiles_);
    p->currentIconBuffer_.swap(p->newIconBuffer_);
    p->currentIntegerBuffer_.swap(p->newIntegerBuffer_);
+   p->currentScreenPoints_.swap(p->newScreenPoints_);
    p->currentHoverIcons_.swap(p->newHoverIcons_);
 
    // Clear the new buffers
@@ -425,6 +498,7 @@ void PlacefileIcons::FinishIcons()
    p->newIconFiles_.clear();
    p->newIconBuffer_.clear();
    p->newIntegerBuffer_.clear();
+   p->newScreenPoints_.clear();
    p->newHoverIcons_.clear();
 
    // Mark the draw item dirty
@@ -438,6 +512,8 @@ void PlacefileIcons::Impl::UpdateBuffers()
    newIntegerBuffer_.clear();
    newIntegerBuffer_.reserve(newIconList_.size() * kVerticesPerRectangle *
                              kIntegersPerVertex_);
+   newScreenPoints_.clear();
+   newScreenPoints_.reserve(newIconList_.size());
 
    for (auto& di : newIconList_)
    {
@@ -479,6 +555,8 @@ void PlacefileIcons::Impl::UpdateBuffers()
       // Latitude and longitude coordinates in degrees
       const float lat = static_cast<float>(di->latitude_);
       const float lon = static_cast<float>(di->longitude_);
+      newScreenPoints_.emplace_back(
+         util::maplibre::LatLongToScreenCoordinate({lat, lon}));
 
       // Base X/Y offsets in pixels
       const float x = static_cast<float>(di->x_);
@@ -519,24 +597,12 @@ void PlacefileIcons::Impl::UpdateBuffers()
                                lat, lon, lx, ty, mc0, mc1, mc2, mc3, a  // TL
                             });
       newIntegerBuffer_.insert(newIntegerBuffer_.end(),
-                               {thresholdValue,
-                                startTime,
-                                endTime,
-                                thresholdValue,
-                                startTime,
-                                endTime,
-                                thresholdValue,
-                                startTime,
-                                endTime,
-                                thresholdValue,
-                                startTime,
-                                endTime,
-                                thresholdValue,
-                                startTime,
-                                endTime,
-                                thresholdValue,
-                                startTime,
-                                endTime});
+                               {thresholdValue, startTime, endTime, 1,
+                                thresholdValue, startTime, endTime, 1,
+                                thresholdValue, startTime, endTime, 1,
+                                thresholdValue, startTime, endTime, 1,
+                                thresholdValue, startTime, endTime, 1,
+                                thresholdValue, startTime, endTime, 1});
 
       if (!di->hoverText_.empty())
       {

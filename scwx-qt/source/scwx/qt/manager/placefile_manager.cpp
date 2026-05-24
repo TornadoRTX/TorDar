@@ -42,6 +42,7 @@
 #include <regex>
 #include <algorithm>
 #include <filesystem>
+#include <sstream>
 #include <tuple>
 #include <unordered_set>
 
@@ -80,7 +81,7 @@ static constexpr std::size_t          kFileStartHourGroup_ {3};
 static constexpr std::size_t          kFileStartMinuteGroup_ {4};
 static constexpr std::size_t          kFileStartSecondGroup_ {5};
 static constexpr int                  kHoursPerDay_ {24};
-static constexpr std::size_t          kMaxGlmFilesToDownload_ {45};
+static constexpr std::size_t          kMaxGlmFilesToDownload_ {20};
 static constexpr std::size_t          kExpectedLightningPoints_ {5000};
 
 struct GlmLightningPoint
@@ -183,23 +184,35 @@ FetchGlmKeysFromBucket(const std::string&                           bucketUrl,
                        const std::chrono::system_clock::time_point& nowUtc)
 {
    std::vector<std::string> keys {};
+   const auto               tt = std::chrono::system_clock::to_time_t(nowUtc);
+   std::tm                  tmUtc {};
+#if defined(_WIN32)
+   gmtime_s(&tmUtc, &tt);
+#else
+   gmtime_r(&tt, &tmUtc);
+#endif
 
-   for (int hourOffset = 0; hourOffset >= -1; --hourOffset)
+   const int minCurrentHour = tmUtc.tm_min;
+   const int minRetention   = static_cast<int>(kGoesGlmRetention_.count());
+
+   for (int hourOffset = 0;
+        hourOffset >= (minCurrentHour < minRetention ? -1 : 0);
+        --hourOffset)
    {
       const auto hourTime = nowUtc + std::chrono::hours(hourOffset);
-      const auto tt       = std::chrono::system_clock::to_time_t(hourTime);
-      std::tm    tmUtc {};
+      const auto hourTt   = std::chrono::system_clock::to_time_t(hourTime);
+      std::tm    hourTm {};
 #if defined(_WIN32)
-      gmtime_s(&tmUtc, &tt);
+      gmtime_s(&hourTm, &hourTt);
 #else
-      gmtime_r(&tt, &tmUtc);
+      gmtime_r(&hourTt, &hourTm);
 #endif
 
       const std::string prefix =
          fmt::format("GLM-L2-LCFA/{:04d}/{:03d}/{:02d}/",
-                     tmUtc.tm_year + kTmYearEpochOffset_,
-                     tmUtc.tm_yday + 1,
-                     tmUtc.tm_hour);
+                     hourTm.tm_year + kTmYearEpochOffset_,
+                     hourTm.tm_yday + 1,
+                     hourTm.tm_hour);
 
       auto response = cpr::Get(cpr::Url {bucketUrl},
                                network::cpr::GetHeader(),
@@ -388,6 +401,23 @@ BuildGoesGlmPlacefile(const std::string&                        placefileName,
                       const std::shared_ptr<config::RadarSite>& radarSite,
                       const std::optional<float>&               radarRangeKm)
 {
+   std::ostringstream pf {};
+   pf << "Title: " << kGoesGlmLightningTitle_ << "\n";
+   pf << "RefreshSeconds: 30\n";
+   pf << "Threshold: 999\n";
+   pf << "IconFile: 1, 24, 24, 12, 12, "
+         "\"qrc:/res/icons/flaticon/lightning.svg\"\n";
+
+   const bool radarFilteringEnabled = radarSite != nullptr &&
+                                      radarRangeKm.has_value() &&
+                                      radarRangeKm.value() > 0.0f;
+   if (!radarFilteringEnabled)
+   {
+      logger_->debug("GOES GLM: waiting for radar scan range");
+      std::istringstream stream {pf.str()};
+      return gr::Placefile::Load(placefileName, stream);
+   }
+
    const auto nowUtc = UtcNowMinute();
    const auto cutoff = nowUtc - kGoesGlmRetention_;
 
@@ -424,10 +454,6 @@ BuildGoesGlmPlacefile(const std::string&                        placefileName,
 
    std::vector<GlmLightningPoint> points {};
    points.reserve(kExpectedLightningPoints_);
-
-   const bool radarFilteringEnabled = radarSite != nullptr &&
-                                      radarRangeKm.has_value() &&
-                                      radarRangeKm.value() > 0.0f;
    const units::length::meters<double> radarRangeMeters =
       radarFilteringEnabled ?
          units::length::meters<double> {radarRangeKm.value() * 1000.0} :
@@ -510,13 +536,6 @@ BuildGoesGlmPlacefile(const std::string&                        placefileName,
       logger_->debug("GOES GLM: skipped {} points outside radar range",
                      skippedOutsideRadarRange);
    }
-
-   std::ostringstream pf {};
-   pf << "Title: " << kGoesGlmLightningTitle_ << "\n";
-   pf << "RefreshSeconds: 30\n";
-   pf << "Threshold: 999\n";
-   pf << "IconFile: 1, 24, 24, 12, 12, "
-         "\"qrc:/res/icons/flaticon/lightning.svg\"\n";
 
    std::size_t emittedPoints {0u};
    std::size_t skippedDuplicatePoints {0u};
