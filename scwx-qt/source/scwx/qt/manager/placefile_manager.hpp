@@ -6,6 +6,7 @@
 #include <scwx/qt/types/imgui_font.hpp>
 
 #include <istream>
+#include <optional>
 #include <ostream>
 
 #include <QObject>
@@ -42,6 +43,7 @@ public:
    void set_placefile_url(const std::string& name, const std::string& newUrl);
 
    void SetRadarSite(std::shared_ptr<config::RadarSite> radarSite);
+   void SetRadarScanRange(std::optional<float> radarRangeKm);
 
    void AddUrl(const std::string& urlString,
                const std::string& title       = {},

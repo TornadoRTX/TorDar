@@ -12,6 +12,9 @@
 
 #include <atomic>
 #include <array>
+#include <cstdint>
+#include <cmath>
+#include <optional>
 #include <shared_mutex>
 #include <type_traits>
 #include <vector>
@@ -40,6 +43,9 @@
 #include <algorithm>
 #include <filesystem>
 #include <tuple>
+#include <unordered_set>
+
+#include <scwx/qt/util/geographic_lib.hpp>
 
 namespace scwx::qt::manager
 {
@@ -83,6 +89,36 @@ struct GlmLightningPoint
    double                                longitude_ {};
    std::chrono::system_clock::time_point time_ {};
 };
+
+struct GlmLightningPointKey
+{
+   std::int64_t latitude_ {};
+   std::int64_t longitude_ {};
+
+   bool operator==(const GlmLightningPointKey&) const = default;
+};
+
+struct GlmLightningPointKeyHash
+{
+   std::size_t operator()(const GlmLightningPointKey& key) const noexcept
+   {
+      const std::size_t latHash = std::hash<std::int64_t> {}(key.latitude_);
+      const std::size_t lonHash = std::hash<std::int64_t> {}(key.longitude_);
+      return latHash ^
+             (lonHash + 0x9e3779b9u + (latHash << 6u) + (latHash >> 2u));
+   }
+};
+
+static GlmLightningPointKey MakeGlmLightningPointKey(double latitude,
+                                                     double longitude)
+{
+   static constexpr double kGlmCoordinateQuantization_ {100000.0};
+
+   return {static_cast<std::int64_t>(
+              std::llround(latitude * kGlmCoordinateQuantization_)),
+           static_cast<std::int64_t>(
+              std::llround(longitude * kGlmCoordinateQuantization_))};
+}
 
 static std::chrono::system_clock::time_point UtcNowMinute()
 {
@@ -348,7 +384,9 @@ static void AppendGlmFileCandidates(
 }
 
 static std::shared_ptr<gr::Placefile>
-BuildGoesGlmPlacefile(const std::string& placefileName)
+BuildGoesGlmPlacefile(const std::string&                        placefileName,
+                      const std::shared_ptr<config::RadarSite>& radarSite,
+                      const std::optional<float>&               radarRangeKm)
 {
    const auto nowUtc = UtcNowMinute();
    const auto cutoff = nowUtc - kGoesGlmRetention_;
@@ -386,6 +424,17 @@ BuildGoesGlmPlacefile(const std::string& placefileName)
 
    std::vector<GlmLightningPoint> points {};
    points.reserve(kExpectedLightningPoints_);
+
+   const bool radarFilteringEnabled = radarSite != nullptr &&
+                                      radarRangeKm.has_value() &&
+                                      radarRangeKm.value() > 0.0f;
+   const units::length::meters<double> radarRangeMeters =
+      radarFilteringEnabled ?
+         units::length::meters<double> {radarRangeKm.value() * 1000.0} :
+         units::length::meters<double> {0.0};
+
+   std::size_t skippedOutsideRadarRange {0u};
+   std::size_t decodedPointCount {0u};
 
    for (const auto& [bucketUrl, key, fileStart] : candidates)
    {
@@ -425,12 +474,42 @@ BuildGoesGlmPlacefile(const std::string& placefileName)
          point.time_ = fileStart;
       }
 
-      points.insert(points.end(), filePoints.begin(), filePoints.end());
+      decodedPointCount += filePoints.size();
+
+      if (!radarFilteringEnabled)
+      {
+         points.insert(points.end(), filePoints.begin(), filePoints.end());
+         continue;
+      }
+
+      for (const auto& point : filePoints)
+      {
+         const units::length::meters<double> distance =
+            util::GeographicLib::GetDistance(radarSite->latitude(),
+                                             radarSite->longitude(),
+                                             point.latitude_,
+                                             point.longitude_);
+
+         if (distance <= radarRangeMeters)
+         {
+            points.push_back(point);
+         }
+         else
+         {
+            ++skippedOutsideRadarRange;
+         }
+      }
    }
 
    logger_->debug("GOES GLM: decoded {} raw points from {} files",
-                  points.size(),
+                  decodedPointCount,
                   candidates.size());
+
+   if (radarFilteringEnabled)
+   {
+      logger_->debug("GOES GLM: skipped {} points outside radar range",
+                     skippedOutsideRadarRange);
+   }
 
    std::ostringstream pf {};
    pf << "Title: " << kGoesGlmLightningTitle_ << "\n";
@@ -440,12 +519,26 @@ BuildGoesGlmPlacefile(const std::string& placefileName)
          "\"qrc:/res/icons/flaticon/lightning.svg\"\n";
 
    std::size_t emittedPoints {0u};
+   std::size_t skippedDuplicatePoints {0u};
+   std::unordered_set<GlmLightningPointKey, GlmLightningPointKeyHash>
+      emittedPointKeys {};
+   emittedPointKeys.reserve(points.size());
+
    for (const auto& p : points)
    {
       if (p.time_ < cutoff || p.time_ > nowUtc)
       {
          continue;
       }
+
+      const GlmLightningPointKey pointKey =
+         MakeGlmLightningPointKey(p.latitude_, p.longitude_);
+      if (emittedPointKeys.contains(pointKey))
+      {
+         ++skippedDuplicatePoints;
+         continue;
+      }
+      emittedPointKeys.insert(pointKey);
 
       const auto endTime = p.time_ + std::chrono::minutes(16);
 
@@ -469,8 +562,16 @@ BuildGoesGlmPlacefile(const std::string& placefileName)
       ++emittedPoints;
    }
 
-   logger_->debug("GOES GLM: emitted {} points after time filtering",
-                  emittedPoints);
+   if (skippedDuplicatePoints > 0u)
+   {
+      logger_->debug("GOES GLM: suppressed {} duplicate points",
+                     skippedDuplicatePoints);
+   }
+
+   logger_->debug("GOES GLM: unrendered {} points total",
+                  skippedOutsideRadarRange + skippedDuplicatePoints);
+
+   logger_->debug("GOES GLM: emitted {} points after filtering", emittedPoints);
 
    std::istringstream stream {pf.str()};
    return gr::Placefile::Load(placefileName, stream);
@@ -541,6 +642,7 @@ public:
    std::string placefileSettingsPath_ {};
 
    std::shared_ptr<config::RadarSite> radarSite_ {};
+   std::optional<float>               radarRangeKm_ {};
 
    std::vector<std::shared_ptr<PlacefileRecord>> placefileRecords_ {};
    boost::unordered_flat_map<std::string, std::shared_ptr<PlacefileRecord>>
@@ -1038,17 +1140,54 @@ void PlacefileManager::WritePlacefileSettings(std::ostream& os)
 void PlacefileManager::SetRadarSite(
    std::shared_ptr<config::RadarSite> radarSite)
 {
-   if (p->radarSite_ == radarSite || radarSite == nullptr)
+   if (p->radarSite_ == radarSite)
    {
       // No action needed
       return;
    }
 
-   logger_->debug("SetRadarSite: {}", radarSite->id());
-
-   p->radarSite_ = radarSite;
+   if (radarSite == nullptr)
+   {
+      logger_->debug("SetRadarSite: cleared");
+      p->radarSite_.reset();
+      p->radarRangeKm_.reset();
+   }
+   else
+   {
+      logger_->debug("SetRadarSite: {}", radarSite->id());
+      p->radarSite_ = radarSite;
+      p->radarRangeKm_.reset();
+   }
 
    // Update all enabled records
+   std::shared_lock lock(p->placefileRecordLock_);
+   for (auto& record : p->placefileRecords_)
+   {
+      if (record->enabled_)
+      {
+         record->UpdateAsync();
+      }
+   }
+}
+
+void PlacefileManager::SetRadarScanRange(std::optional<float> radarRangeKm)
+{
+   if (p->radarRangeKm_ == radarRangeKm)
+   {
+      return;
+   }
+
+   if (radarRangeKm.has_value())
+   {
+      logger_->debug("SetRadarScanRange: {}", radarRangeKm.value());
+   }
+   else
+   {
+      logger_->debug("SetRadarScanRange: cleared");
+   }
+
+   p->radarRangeKm_ = radarRangeKm;
+
    std::shared_lock lock(p->placefileRecordLock_);
    for (auto& record : p->placefileRecords_)
    {
@@ -1168,7 +1307,8 @@ void PlacefileManager::Impl::PlacefileRecord::Update()
    {
       if (IsGoesGlmLightningUrl(name))
       {
-         updatedPlacefile = BuildGoesGlmPlacefile(name);
+         updatedPlacefile =
+            BuildGoesGlmPlacefile(name, p->radarSite_, p->radarRangeKm_);
          if (updatedPlacefile == nullptr && enabled_)
          {
             logger_->warn("GOES GLM lightning update returned no data");

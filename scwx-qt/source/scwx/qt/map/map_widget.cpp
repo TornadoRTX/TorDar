@@ -2539,6 +2539,34 @@ void MapWidgetImpl::RadarProductViewConnect()
                   {radarSite->latitude(), radarSite->longitude()});
             }
 
+            if (placefileManager_ != nullptr)
+            {
+               bool useRadarScanRange = false;
+
+               if (radarProductView->GetRadarProductGroup() ==
+                   common::RadarProductGroup::Level2)
+               {
+                  useRadarScanRange =
+                     common::GetLevel2Product(
+                        radarProductView->GetRadarProductName()) ==
+                     common::Level2Product::Reflectivity;
+               }
+               else if (radarProductView->GetRadarProductGroup() ==
+                        common::RadarProductGroup::Level3)
+               {
+                  useRadarScanRange =
+                     common::GetLevel3CategoryByProduct(
+                        common::GetLevel3ProductByAwipsId(
+                           radarProductView->GetRadarProductName())) ==
+                     common::Level3ProductCategory::Reflectivity;
+               }
+
+               placefileManager_->SetRadarScanRange(
+                  useRadarScanRange ?
+                     std::optional<float> {radarProductView->range()} :
+                     std::nullopt);
+            }
+
             widget_->update();
             Q_EMIT widget_->RadarSweepUpdated();
          },
