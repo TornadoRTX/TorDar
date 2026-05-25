@@ -83,6 +83,9 @@ static constexpr std::size_t          kFileStartSecondGroup_ {5};
 static constexpr int                  kHoursPerDay_ {24};
 static constexpr std::size_t          kMaxGlmFilesToDownload_ {20};
 static constexpr std::size_t          kExpectedLightningPoints_ {5000};
+static constexpr std::uint32_t        kOverlapHashSeed_ {0x9e3779b9u};
+static constexpr std::uint32_t        kOverlapHashLeftShift_ {6u};
+static constexpr std::uint32_t        kOverlapHashRightShift_ {2u};
 
 struct GlmLightningPoint
 {
@@ -105,8 +108,9 @@ struct GlmLightningPointKeyHash
    {
       const std::size_t latHash = std::hash<std::int64_t> {}(key.latitude_);
       const std::size_t lonHash = std::hash<std::int64_t> {}(key.longitude_);
-      return latHash ^
-             (lonHash + 0x9e3779b9u + (latHash << 6u) + (latHash >> 2u));
+      return latHash ^ (lonHash + kOverlapHashSeed_ +
+                        (latHash << kOverlapHashLeftShift_) +
+                        (latHash >> kOverlapHashRightShift_));
    }
 };
 
@@ -793,7 +797,7 @@ PlacefileManager::~PlacefileManager()
 
 bool PlacefileManager::placefile_enabled(const std::string& name)
 {
-   std::shared_lock lock(p->placefileRecordLock_);
+   std::shared_lock const lock(p->placefileRecordLock_);
 
    auto it = p->placefileRecordMap_.find(name);
    if (it != p->placefileRecordMap_.cend())

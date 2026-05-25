@@ -53,6 +53,29 @@ static std::uint64_t MakeOverlapKey(const glm::vec2& point)
           static_cast<std::uint64_t>(quantize(point.y));
 }
 
+struct OverlapRenderKey
+{
+   float zoom_ {};
+   float bearing_ {};
+   float latitude_ {};
+   float longitude_ {};
+   int   width_ {};
+   int   height_ {};
+
+   bool operator==(const OverlapRenderKey&) const = default;
+};
+
+static OverlapRenderKey
+MakeOverlapRenderKey(const QMapLibre::CustomLayerRenderParameters& params)
+{
+   return {params.zoom,
+           params.bearing,
+           params.latitude,
+           params.longitude,
+           params.width,
+           params.height};
+}
+
 struct PlacefileIconInfo
 {
    PlacefileIconInfo(
@@ -136,6 +159,10 @@ public:
 
    std::vector<glm::vec2> currentScreenPoints_ {};
    std::vector<glm::vec2> newScreenPoints_ {};
+
+   bool               overlapCacheValid_ {false};
+   OverlapRenderKey   overlapCacheKey_ {};
+   std::vector<GLint> visibleIntegerBuffer_ {};
 
    std::vector<float> textureBuffer_ {};
 
@@ -336,48 +363,58 @@ void PlacefileIcons::Render(
 
       if (p->timeFadeEnabled_)
       {
-         std::vector<GLint> renderIntegerBuffer {p->currentIntegerBuffer_};
-         std::unordered_set<std::uint64_t> seenCells {};
-         seenCells.reserve(p->currentScreenPoints_.size());
-
-         const glm::mat4 mapMatrix = util::maplibre::GetMapMatrix(params);
-         std::size_t     hiddenCount {0u};
-
-         for (std::size_t i = 0u; i < p->currentScreenPoints_.size(); ++i)
+         const OverlapRenderKey renderKey = MakeOverlapRenderKey(params);
+         if (!p->overlapCacheValid_ || !(p->overlapCacheKey_ == renderKey))
          {
-            const glm::vec2 projected = glm::vec2(
-               mapMatrix * glm::vec4(p->currentScreenPoints_[i], 0.0f, 1.0f));
-            const std::uint64_t cellKey = MakeOverlapKey(projected);
-            if (seenCells.contains(cellKey))
+            p->visibleIntegerBuffer_ = p->currentIntegerBuffer_;
+
+            std::unordered_set<std::uint64_t> seenCells {};
+            seenCells.reserve(p->currentScreenPoints_.size());
+
+            const glm::mat4 mapMatrix = util::maplibre::GetMapMatrix(params);
+            std::size_t     hiddenCount {0u};
+
+            for (std::size_t i = 0u; i < p->currentScreenPoints_.size(); ++i)
             {
-               ++hiddenCount;
-               const std::size_t baseIndex =
-                  i * kVerticesPerRectangle * kIntegersPerVertex_;
-               for (std::size_t vertex = 0u; vertex < kVerticesPerRectangle;
-                    ++vertex)
+               const glm::vec2 projected =
+                  glm::vec2(mapMatrix *
+                            glm::vec4(p->currentScreenPoints_[i], 0.0f, 1.0f));
+               const std::uint64_t cellKey = MakeOverlapKey(projected);
+               if (seenCells.contains(cellKey))
                {
-                  renderIntegerBuffer[baseIndex + vertex * kIntegersPerVertex_ +
-                                      3u] = 0;
+                  ++hiddenCount;
+                  const std::size_t baseIndex =
+                     i * kVerticesPerRectangle * kIntegersPerVertex_;
+                  for (std::size_t vertex = 0u; vertex < kVerticesPerRectangle;
+                       ++vertex)
+                  {
+                     p->visibleIntegerBuffer_[baseIndex +
+                                              vertex * kIntegersPerVertex_ +
+                                              3u] = 0;
+                  }
+               }
+               else
+               {
+                  seenCells.insert(cellKey);
                }
             }
-            else
-            {
-               seenCells.insert(cellKey);
-            }
-         }
 
-         if (hiddenCount > 0u)
-         {
-            logger_->debug("GOES GLM: suppressed {} overlapping icons",
-                           hiddenCount);
+            if (hiddenCount > 0u)
+            {
+               logger_->debug("GOES GLM: suppressed {} overlapping icons",
+                              hiddenCount);
+            }
+
+            p->overlapCacheKey_   = renderKey;
+            p->overlapCacheValid_ = true;
          }
 
          glBindBuffer(GL_ARRAY_BUFFER, p->vbo_[2]);
-         glBufferData(
-            GL_ARRAY_BUFFER,
-            static_cast<GLsizeiptr>(sizeof(GLint) * renderIntegerBuffer.size()),
-            renderIntegerBuffer.data(),
-            GL_DYNAMIC_DRAW);
+         glBufferData(GL_ARRAY_BUFFER,
+                      static_cast<GLsizeiptr>(sizeof(GLint) *
+                                              p->visibleIntegerBuffer_.size()),
+                      p->visibleIntegerBuffer_.data(),
+                      GL_DYNAMIC_DRAW);
       }
 
       // Interpolate texture coordinates
@@ -403,6 +440,8 @@ void PlacefileIcons::Deinitialize()
    p->currentIconBuffer_.clear();
    p->currentIntegerBuffer_.clear();
    p->textureBuffer_.clear();
+   p->visibleIntegerBuffer_.clear();
+   p->overlapCacheValid_ = false;
 }
 
 void PlacefileIconInfo::UpdateTextureInfo()
@@ -500,6 +539,8 @@ void PlacefileIcons::FinishIcons()
    p->newIntegerBuffer_.clear();
    p->newScreenPoints_.clear();
    p->newHoverIcons_.clear();
+   p->visibleIntegerBuffer_.clear();
+   p->overlapCacheValid_ = false;
 
    // Mark the draw item dirty
    p->dirty_ = true;
