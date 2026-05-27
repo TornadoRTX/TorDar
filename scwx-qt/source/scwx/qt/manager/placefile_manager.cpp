@@ -409,7 +409,7 @@ BuildGoesGlmPlacefile(const std::string&                        placefileName,
    pf << "Title: " << kGoesGlmLightningTitle_ << "\n";
    pf << "RefreshSeconds: 30\n";
    pf << "Threshold: 999\n";
-   pf << "IconFile: 1, 24, 24, 12, 12, "
+   pf << "IconFile: 1, 32, 32, 16, 16, "
          "\"qrc:/res/icons/flaticon/lightning.svg\"\n";
 
    const bool radarFilteringEnabled = radarSite != nullptr &&

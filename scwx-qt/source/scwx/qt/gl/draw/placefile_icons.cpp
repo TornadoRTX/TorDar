@@ -38,9 +38,22 @@ static constexpr std::size_t kTextureBufferLength =
    kNumTriangles * kVerticesPerTriangle * kPointsPerTexCoord;
 
 // Threshold, start time, end time, displayed
-static constexpr std::size_t   kIntegersPerVertex_ = 4;
-static constexpr float         kOverlapGridSizePx_ = 12.0f;
-static constexpr std::uint32_t kOverlapKeyShift_   = 32u;
+static constexpr std::size_t   kIntegersPerVertex_  = 4;
+static constexpr float         kOverlapGridSizePx_  = 12.0f;
+static constexpr float         kClipToScreenFactor_ = 0.5f;
+static constexpr std::uint32_t kOverlapKeyShift_    = 32u;
+
+static glm::vec2
+ProjectToScreenPixels(const glm::mat4&                              mapMatrix,
+                      const glm::vec2&                              point,
+                      const glm::vec2&                              origin,
+                      const QMapLibre::CustomLayerRenderParameters& params)
+{
+   const glm::vec2 clip =
+      glm::vec2(mapMatrix * glm::vec4(point - origin, 0.0f, 1.0f));
+   return {clip.x * static_cast<float>(params.width) * kClipToScreenFactor_,
+           clip.y * static_cast<float>(params.height) * kClipToScreenFactor_};
+}
 
 static std::uint64_t MakeOverlapKey(const glm::vec2& point)
 {
@@ -373,13 +386,14 @@ void PlacefileIcons::Render(
             seenCells.reserve(p->currentScreenPoints_.size());
 
             const glm::mat4 mapMatrix = util::maplibre::GetMapMatrix(params);
-            std::size_t     hiddenCount {0u};
+            const glm::vec2 origin = util::maplibre::LatLongToScreenCoordinate(
+               {params.latitude, params.longitude});
+            std::size_t hiddenCount {0u};
 
             for (std::size_t i = 0u; i < p->currentScreenPoints_.size(); ++i)
             {
-               const glm::vec2 projected =
-                  glm::vec2(mapMatrix *
-                            glm::vec4(p->currentScreenPoints_[i], 0.0f, 1.0f));
+               const glm::vec2 projected = ProjectToScreenPixels(
+                  mapMatrix, p->currentScreenPoints_[i], origin, params);
                const std::uint64_t cellKey = MakeOverlapKey(projected);
                if (seenCells.contains(cellKey))
                {
