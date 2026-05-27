@@ -1065,9 +1065,9 @@ void WarningBoxWidgetImpl::ApplyTheme(
    };
 
    const std::string cornerGlowBlend =
-      toRgbString(blendTowardBase(parseRgb(cornerGlowColor), 0.25));
+      toRgbString(blendTowardBase(parseRgb(cornerGlowColor), 0.40));
    const std::string transitionGlowBlend =
-      toRgbString(blendTowardBase(parseRgb(transitionGlowColor), 0.25));
+      toRgbString(blendTowardBase(parseRgb(transitionGlowColor), 0.40));
 
    if (isBaseTornado)
    {
