@@ -38,8 +38,9 @@ static constexpr std::size_t kTextureBufferLength =
    kNumTriangles * kVerticesPerTriangle * kPointsPerTexCoord;
 
 // Threshold, start time, end time, displayed
-static constexpr std::size_t kIntegersPerVertex_ = 4;
-static constexpr float       kOverlapGridSizePx_ = 12.0f;
+static constexpr std::size_t   kIntegersPerVertex_ = 4;
+static constexpr float         kOverlapGridSizePx_ = 12.0f;
+static constexpr std::uint32_t kOverlapKeyShift_   = 32u;
 
 static std::uint64_t MakeOverlapKey(const glm::vec2& point)
 {
@@ -49,7 +50,7 @@ static std::uint64_t MakeOverlapKey(const glm::vec2& point)
          std::llround(value / kOverlapGridSizePx_));
    };
 
-   return (static_cast<std::uint64_t>(quantize(point.x)) << 32u) |
+   return (static_cast<std::uint64_t>(quantize(point.x)) << kOverlapKeyShift_) |
           static_cast<std::uint64_t>(quantize(point.y));
 }
 
