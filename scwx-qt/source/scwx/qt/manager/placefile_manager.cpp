@@ -821,7 +821,7 @@ bool PlacefileManager::placefile_thresholded(const std::string& name)
 
 std::string PlacefileManager::placefile_title(const std::string& name)
 {
-   std::shared_lock lock(p->placefileRecordLock_);
+   std::shared_lock const lock(p->placefileRecordLock_);
 
    auto it = p->placefileRecordMap_.find(name);
    if (it != p->placefileRecordMap_.cend())
