@@ -68,12 +68,12 @@ struct OverlapRenderKey
 static OverlapRenderKey
 MakeOverlapRenderKey(const QMapLibre::CustomLayerRenderParameters& params)
 {
-   return {params.zoom,
-           params.bearing,
-           params.latitude,
-           params.longitude,
-           params.width,
-           params.height};
+   return {static_cast<float>(params.zoom),
+           static_cast<float>(params.bearing),
+           static_cast<float>(params.latitude),
+           static_cast<float>(params.longitude),
+           static_cast<int>(params.width),
+           static_cast<int>(params.height)};
 }
 
 struct PlacefileIconInfo
