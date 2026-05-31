@@ -70,11 +70,6 @@ static std::uint64_t MakeOverlapKey(const glm::vec2& point)
 struct OverlapRenderKey
 {
    float zoom_ {};
-   float bearing_ {};
-   float latitude_ {};
-   float longitude_ {};
-   int   width_ {};
-   int   height_ {};
 
    bool operator==(const OverlapRenderKey&) const = default;
 };
@@ -82,12 +77,7 @@ struct OverlapRenderKey
 static OverlapRenderKey
 MakeOverlapRenderKey(const QMapLibre::CustomLayerRenderParameters& params)
 {
-   return {static_cast<float>(params.zoom),
-           static_cast<float>(params.bearing),
-           static_cast<float>(params.latitude),
-           static_cast<float>(params.longitude),
-           static_cast<int>(params.width),
-           static_cast<int>(params.height)};
+   return {static_cast<float>(params.zoom)};
 }
 
 struct PlacefileIconInfo
