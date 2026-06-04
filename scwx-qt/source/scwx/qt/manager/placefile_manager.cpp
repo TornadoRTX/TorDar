@@ -626,13 +626,6 @@ static bool ContainsPlacefileEntry(const boost::json::value& placefileJson,
    return false;
 }
 
-static bool
-ContainsGoesGlmPlacefileEntry(const boost::json::value& placefileJson)
-{
-   return ContainsPlacefileEntry(placefileJson, kGoesGlmLightningUrl_) ||
-          ContainsPlacefileEntry(placefileJson, kGoesGlmLegacyLightningUrl_);
-}
-
 static bool IsGoesGlmLightningUrl(const std::string& name)
 {
    return name == kGoesGlmLightningUrl_ || name == kGoesGlmLegacyLightningUrl_;
@@ -648,7 +641,6 @@ public:
 
    void InitializePlacefileSettings();
    void SyncBuiltInLightning();
-   void MigrateGoesGlmPlacefileUrl();
    void ApplyPlacefileSettings(const boost::json::value& placefileJson);
    void ReadPlacefileSettings();
    void SavePlacefileSettings();
@@ -763,10 +755,6 @@ PlacefileManager::PlacefileManager() : p(std::make_unique<Impl>(this))
 {
    settings::GeneralSettings::Instance()
       .legacy_lightning_enabled()
-      .RegisterValueChangedCallback([this](const bool& /* enabled */)
-                                    { p->SyncBuiltInLightning(); });
-   settings::GeneralSettings::Instance()
-      .goes_glm_lightning_enabled()
       .RegisterValueChangedCallback([this](const bool& /* enabled */)
                                     { p->SyncBuiltInLightning(); });
 
@@ -1006,40 +994,19 @@ void PlacefileManager::Impl::ReadPlacefileSettings()
       self_->AddUrl(kLegacyLightningUrl_, kLegacyLightningTitle_, true, false);
    }
 
-   // Add GOES GLM lightning source on first run if enabled.
-   if (settings::GeneralSettings::Instance()
-          .goes_glm_lightning_enabled()
-          .GetValue() &&
-       !ContainsGoesGlmPlacefileEntry(placefileJson))
+   if (ContainsPlacefileEntry(placefileJson, kGoesGlmLightningUrl_))
    {
-      self_->AddUrl(
-         kGoesGlmLightningUrl_, kGoesGlmLightningTitle_, true, false);
+      self_->RemoveUrl(kGoesGlmLightningUrl_);
+   }
+   if (ContainsPlacefileEntry(placefileJson, kGoesGlmLegacyLightningUrl_))
+   {
+      self_->RemoveUrl(kGoesGlmLegacyLightningUrl_);
    }
 
-   MigrateGoesGlmPlacefileUrl();
-
-   // Ensure persisted records match the current built-in lightning setting.
+   // Ensure persisted records match the current built-in legacy lightning setting.
    SyncBuiltInLightning();
 
    placefileSettingsRead_ = true;
-}
-
-void PlacefileManager::Impl::MigrateGoesGlmPlacefileUrl()
-{
-   std::shared_lock lock(placefileRecordLock_);
-   const bool       hasLegacyGoesGlmRecord =
-      placefileRecordMap_.find(kGoesGlmLegacyLightningUrl_) !=
-      placefileRecordMap_.cend();
-   const bool hasGoesGlmRecord =
-      placefileRecordMap_.find(kGoesGlmLightningUrl_) !=
-      placefileRecordMap_.cend();
-   lock.unlock();
-
-   if (hasLegacyGoesGlmRecord && !hasGoesGlmRecord)
-   {
-      self_->set_placefile_url(kGoesGlmLegacyLightningUrl_,
-                               kGoesGlmLightningUrl_);
-   }
 }
 
 void PlacefileManager::Impl::SyncBuiltInLightning()
@@ -1047,26 +1014,12 @@ void PlacefileManager::Impl::SyncBuiltInLightning()
    const bool legacyLightningEnabledRaw = settings::GeneralSettings::Instance()
                                              .legacy_lightning_enabled()
                                              .GetValue();
-   const bool goesGlmLightningEnabled = settings::GeneralSettings::Instance()
-                                           .goes_glm_lightning_enabled()
-                                           .GetValue();
-   const bool legacyLightningEnabled =
-      legacyLightningEnabledRaw && !goesGlmLightningEnabled;
-
-   MigrateGoesGlmPlacefileUrl();
+   const bool legacyLightningEnabled = legacyLightningEnabledRaw;
 
    std::shared_lock lock(placefileRecordLock_);
    const bool       hasLegacyLightningRecord =
       placefileRecordMap_.find(kLegacyLightningUrl_) !=
       placefileRecordMap_.cend();
-   const bool hasGoesGlmLegacyRecord =
-      placefileRecordMap_.find(kGoesGlmLegacyLightningUrl_) !=
-      placefileRecordMap_.cend();
-   const bool hasGoesGlmRecord =
-      placefileRecordMap_.find(kGoesGlmLightningUrl_) !=
-      placefileRecordMap_.cend();
-   const bool hasGoesGlmLightningRecord =
-      hasGoesGlmRecord || hasGoesGlmLegacyRecord;
    lock.unlock();
 
    if (legacyLightningEnabled && !hasLegacyLightningRecord)
@@ -1076,23 +1029,6 @@ void PlacefileManager::Impl::SyncBuiltInLightning()
    else if (!legacyLightningEnabled && hasLegacyLightningRecord)
    {
       self_->RemoveUrl(kLegacyLightningUrl_);
-   }
-
-   if (goesGlmLightningEnabled && !hasGoesGlmLightningRecord)
-   {
-      self_->AddUrl(
-         kGoesGlmLightningUrl_, kGoesGlmLightningTitle_, true, false);
-   }
-   else if (!goesGlmLightningEnabled && hasGoesGlmLightningRecord)
-   {
-      if (hasGoesGlmRecord)
-      {
-         self_->RemoveUrl(kGoesGlmLightningUrl_);
-      }
-      if (hasGoesGlmLegacyRecord)
-      {
-         self_->RemoveUrl(kGoesGlmLegacyLightningUrl_);
-      }
    }
 }
 
@@ -1183,34 +1119,6 @@ void PlacefileManager::SetRadarSite(
    }
 
    // Update all enabled records
-   std::shared_lock lock(p->placefileRecordLock_);
-   for (auto& record : p->placefileRecords_)
-   {
-      if (record->enabled_)
-      {
-         record->UpdateAsync();
-      }
-   }
-}
-
-void PlacefileManager::SetRadarScanRange(std::optional<float> radarRangeKm)
-{
-   if (p->radarRangeKm_ == radarRangeKm)
-   {
-      return;
-   }
-
-   if (radarRangeKm.has_value())
-   {
-      logger_->debug("SetRadarScanRange: {}", radarRangeKm.value());
-   }
-   else
-   {
-      logger_->debug("SetRadarScanRange: cleared");
-   }
-
-   p->radarRangeKm_ = radarRangeKm;
-
    std::shared_lock lock(p->placefileRecordLock_);
    for (auto& record : p->placefileRecords_)
    {
@@ -1657,11 +1565,6 @@ PlacefileManager::Impl::LoadImageResources(
    }
 
    return ResourceManager::LoadImageResources(urlStrings);
-}
-
-bool PlacefileManager::IsGoesGlmLightningPlacefile(const std::string& name)
-{
-   return IsGoesGlmLightningUrl(name);
 }
 
 } // namespace scwx::qt::manager

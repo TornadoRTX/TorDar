@@ -43,7 +43,6 @@ public:
    void set_placefile_url(const std::string& name, const std::string& newUrl);
 
    void SetRadarSite(std::shared_ptr<config::RadarSite> radarSite);
-   void SetRadarScanRange(std::optional<float> radarRangeKm);
 
    void AddUrl(const std::string& urlString,
                const std::string& title       = {},
@@ -56,9 +55,6 @@ public:
    void Refresh(const std::string& name);
 
    static std::shared_ptr<PlacefileManager> Instance();
-
-   [[nodiscard]] static bool
-   IsGoesGlmLightningPlacefile(const std::string& name);
 
 signals:
    void PlacefilesInitialized();

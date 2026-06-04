@@ -153,9 +153,6 @@ void PlacefileLayer::Render(
       p->placefileText_->set_thresholded(thresholded);
 
       p->placefileIcons_->set_selected_time(p->selectedTime_);
-      p->placefileIcons_->set_time_fade_enabled(
-         manager::PlacefileManager::IsGoesGlmLightningPlacefile(
-            p->placefileName_));
       p->placefileImages_->set_selected_time(p->selectedTime_);
       p->placefileLines_->set_selected_time(p->selectedTime_);
       p->placefilePolygons_->set_selected_time(p->selectedTime_);
