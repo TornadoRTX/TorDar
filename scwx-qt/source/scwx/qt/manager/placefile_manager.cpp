@@ -1003,7 +1003,8 @@ void PlacefileManager::Impl::ReadPlacefileSettings()
       self_->RemoveUrl(kGoesGlmLegacyLightningUrl_);
    }
 
-   // Ensure persisted records match the current built-in legacy lightning setting.
+   // Ensure persisted records match the current built-in legacy lightning
+   // setting.
    SyncBuiltInLightning();
 
    placefileSettingsRead_ = true;

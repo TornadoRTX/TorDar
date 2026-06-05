@@ -2868,12 +2868,12 @@ bool MapWidgetImpl::UpdateStoredMapParameters()
 
    bool changed = false;
 
-   double newLatitude  = map_->latitude();
-   double newLongitude = map_->longitude();
-   double newZoom      = map_->zoom();
-   double newBearing   = map_->bearing();
-   double newPitch     = map_->pitch();
-   const bool zoomChanged = prevZoom_ != newZoom;
+   double     newLatitude  = map_->latitude();
+   double     newLongitude = map_->longitude();
+   double     newZoom      = map_->zoom();
+   double     newBearing   = map_->bearing();
+   double     newPitch     = map_->pitch();
+   const bool zoomChanged  = prevZoom_ != newZoom;
 
    if (prevLatitude_ != newLatitude ||   //
        prevLongitude_ != newLongitude || //

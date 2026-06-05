@@ -32,9 +32,9 @@ public:
 
    ~Impl() { threadPool_.join(); }
 
-   Impl(const Impl&)            = delete;
-   Impl(Impl&&) noexcept        = delete;
-   Impl& operator=(const Impl&) = delete;
+   Impl(const Impl&)                = delete;
+   Impl(Impl&&) noexcept            = delete;
+   Impl& operator=(const Impl&)     = delete;
    Impl& operator=(Impl&&) noexcept = delete;
 
    void ConnectSignals();
@@ -43,7 +43,7 @@ public:
    boost::asio::thread_pool threadPool_ {1};
    std::mutex               dataMutex_ {};
 
-   LightningLayer* self_;
+   LightningLayer*                           self_;
    std::shared_ptr<gl::draw::PlacefileIcons> placefileIcons_ {};
    std::chrono::system_clock::time_point     selectedTime_ {};
 };
@@ -101,7 +101,8 @@ void LightningLayer::Impl::ReloadDataSync()
    Q_EMIT self_->DataReloaded();
 }
 
-LightningLayer::LightningLayer(const std::shared_ptr<gl::GlContext>& glContext) :
+LightningLayer::LightningLayer(
+   const std::shared_ptr<gl::GlContext>& glContext) :
     p(std::make_unique<Impl>(this, glContext))
 {
    AddDrawItem(p->placefileIcons_);
@@ -138,19 +139,18 @@ void LightningLayer::Deinitialize()
 
 void LightningLayer::ReloadData()
 {
-   boost::asio::post(
-      p->threadPool_,
-      [this]()
-      {
-         try
-         {
-            p->ReloadDataSync();
-         }
-         catch (const std::exception& ex)
-         {
-            logger_->error(ex.what());
-         }
-      });
+   boost::asio::post(p->threadPool_,
+                     [this]()
+                     {
+                        try
+                        {
+                           p->ReloadDataSync();
+                        }
+                        catch (const std::exception& ex)
+                        {
+                           logger_->error(ex.what());
+                        }
+                     });
 }
 
 } // namespace scwx::qt::map

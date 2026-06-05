@@ -440,7 +440,7 @@ BuildLightningPlacefile(const std::string&                        placefileName,
    const units::length::meters<double> radarRangeMeters =
       units::length::meters<double> {radarRangeKm.value() * 1000.0};
 
-   std::size_t decodedPointCount = 0u;
+   std::size_t decodedPointCount        = 0u;
    std::size_t skippedOutsideRadarRange = 0u;
 
    for (const auto& [bucketUrl, key, fileStart] : candidates)
@@ -588,9 +588,9 @@ public:
       SyncEnabled();
    }
 
-   Impl(const Impl&)            = delete;
-   Impl& operator=(const Impl&) = delete;
-   Impl(const Impl&&)           = delete;
+   Impl(const Impl&)             = delete;
+   Impl& operator=(const Impl&)  = delete;
+   Impl(const Impl&&)            = delete;
    Impl& operator=(const Impl&&) = delete;
 
    void SetRadarSite(std::shared_ptr<config::RadarSite> radarSite);
@@ -605,16 +605,16 @@ public:
       const std::chrono::system_clock::duration timeUntilNextUpdate);
    void CancelRefresh();
 
-   LightningManager* self_;
-   std::shared_ptr<config::RadarSite> radarSite_ {};
-   std::optional<float>               radarRangeKm_ {};
-   std::shared_ptr<gr::Placefile>     placefile_ {};
-   bool                               enabled_ {false};
-   std::optional<double>              lastZoom_ {};
-   boost::asio::thread_pool           threadPool_ {1u};
-   boost::asio::steady_timer          refreshTimer_ {threadPool_};
-   std::mutex                         refreshMutex_ {};
-   std::mutex                         timerMutex_ {};
+   LightningManager*                     self_;
+   std::shared_ptr<config::RadarSite>    radarSite_ {};
+   std::optional<float>                  radarRangeKm_ {};
+   std::shared_ptr<gr::Placefile>        placefile_ {};
+   bool                                  enabled_ {false};
+   std::optional<double>                 lastZoom_ {};
+   boost::asio::thread_pool              threadPool_ {1u};
+   boost::asio::steady_timer             refreshTimer_ {threadPool_};
+   std::mutex                            refreshMutex_ {};
+   std::mutex                            timerMutex_ {};
    std::chrono::system_clock::time_point lastUpdateTime_ {};
    std::size_t                           failureCount_ {};
 };
@@ -645,7 +645,8 @@ void LightningManager::Impl::SetRadarSite(
    RefreshAsync();
 }
 
-void LightningManager::Impl::SetRadarScanRange(std::optional<float> radarRangeKm)
+void LightningManager::Impl::SetRadarScanRange(
+   std::optional<float> radarRangeKm)
 {
    std::unique_lock lock {refreshMutex_};
 
@@ -680,19 +681,18 @@ void LightningManager::Impl::NotifyMapZoom(double zoom)
 
 void LightningManager::Impl::RefreshAsync()
 {
-   boost::asio::post(
-      threadPool_,
-      [this]()
-      {
-         try
-         {
-            Refresh();
-         }
-         catch (const std::exception& ex)
-         {
-            logger_->error(ex.what());
-         }
-      });
+   boost::asio::post(threadPool_,
+                     [this]()
+                     {
+                        try
+                        {
+                           Refresh();
+                        }
+                        catch (const std::exception& ex)
+                        {
+                           logger_->error(ex.what());
+                        }
+                     });
 }
 
 void LightningManager::Impl::Refresh()
@@ -734,8 +734,9 @@ void LightningManager::Impl::Refresh()
 void LightningManager::Impl::SyncEnabled()
 {
    std::unique_lock lock {refreshMutex_};
-   enabled_ =
-      settings::GeneralSettings::Instance().goes_glm_lightning_enabled().GetValue();
+   enabled_ = settings::GeneralSettings::Instance()
+                 .goes_glm_lightning_enabled()
+                 .GetValue();
 
    if (!enabled_)
    {
@@ -773,9 +774,9 @@ void LightningManager::Impl::ScheduleRefresh()
 void LightningManager::Impl::ScheduleRefresh(
    const std::chrono::system_clock::duration timeUntilNextUpdate)
 {
-   logger_->debug("Scheduled refresh in {:%M:%S} (GOES GLM)",
-                  std::chrono::duration_cast<std::chrono::seconds>(
-                     timeUntilNextUpdate));
+   logger_->debug(
+      "Scheduled refresh in {:%M:%S} (GOES GLM)",
+      std::chrono::duration_cast<std::chrono::seconds>(timeUntilNextUpdate));
 
    refreshTimer_.expires_after(timeUntilNextUpdate);
    refreshTimer_.async_wait(
@@ -817,14 +818,15 @@ std::shared_ptr<LightningManager> LightningManager::Instance()
 
    if (lightningManager == nullptr)
    {
-      lightningManager            = std::make_shared<LightningManager>();
+      lightningManager           = std::make_shared<LightningManager>();
       lightningManagerReference_ = lightningManager;
    }
 
    return lightningManager;
 }
 
-void LightningManager::SetRadarSite(std::shared_ptr<config::RadarSite> radarSite)
+void LightningManager::SetRadarSite(
+   std::shared_ptr<config::RadarSite> radarSite)
 {
    p->SetRadarSite(std::move(radarSite));
 }
