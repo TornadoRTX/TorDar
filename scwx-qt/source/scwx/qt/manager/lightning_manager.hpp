@@ -7,7 +7,7 @@
 #include <QObject>
 
 #include <scwx/qt/config/radar_site.hpp>
-#include <scwx/qt/gr/placefile.hpp>
+#include <scwx/gr/placefile.hpp>
 
 namespace scwx::qt::manager
 {

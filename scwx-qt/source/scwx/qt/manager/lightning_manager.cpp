@@ -19,6 +19,7 @@
 #include <boost/asio/post.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/thread_pool.hpp>
+#include <boost/algorithm/string.hpp>
 #include <cmath>
 #include <atomic>
 #include <chrono>
@@ -35,6 +36,12 @@
 #include <unordered_set>
 #include <vector>
 
+#include <QGuiApplication>
+#include <QScreen>
+#include <QString>
+#include <QUrl>
+#include <boost/tokenizer.hpp>
+
 namespace scwx::qt::manager
 {
 
@@ -44,6 +51,10 @@ namespace
 static const std::string logPrefix_ = "scwx::qt::manager::lightning_manager";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 
+static const std::string kLegacyLightningTitle_ = "Legacy Lightning";
+static const std::string kLegacyLightningUrl_ =
+   "https://www.freelightning.com/hub/"
+   "placefile.php?request=10213|10454|138624046|10463|10369|10644|0|84764|1";
 static const std::string kLightningTitle_ = "GOES GLM Lightning (AWS)";
 static const std::string kLightningUrl_ =
    "https://noaa-goes19.s3.amazonaws.com/index.html";
@@ -573,6 +584,76 @@ BuildLightningPlacefile(const std::string&                        placefileName,
    return gr::Placefile::Load(placefileName, stream);
 }
 
+static std::shared_ptr<gr::Placefile> BuildLegacyLightningPlacefile(
+   const std::string&                        placefileName,
+   const std::shared_ptr<config::RadarSite>& radarSite)
+{
+   if (radarSite == nullptr)
+   {
+      logger_->debug("Legacy lightning: waiting for radar site");
+      return nullptr;
+   }
+
+   QUrl url = QUrl::fromUserInput(QString::fromStdString(kLegacyLightningUrl_));
+
+   std::string decodedUrl {kLegacyLightningUrl_};
+   auto        queryPos = decodedUrl.find('?');
+   if (queryPos != std::string::npos)
+   {
+      decodedUrl.erase(queryPos);
+   }
+
+   auto dpi = QGuiApplication::primaryScreen()->logicalDotsPerInch();
+
+   auto parameters =
+      cpr::Parameters {{"version", "1.5"}, // Placefile Version Supported
+                       {"dpi", fmt::format("{:0.0f}", dpi)},
+                       {"lat", fmt::format("{:0.3f}", radarSite->latitude())},
+                       {"lon", fmt::format("{:0.3f}", radarSite->longitude())}};
+
+   if (url.hasQuery())
+   {
+      auto query = url.query(QUrl::ComponentFormattingOption::PrettyDecoded)
+                      .toStdString();
+
+      boost::char_separator<char> const delimiter("&");
+      boost::tokenizer const            tokens(query, delimiter);
+
+      for (auto& token : tokens)
+      {
+         std::vector<std::string> split {};
+         boost::split(split, token, boost::is_any_of("="));
+         if (split.size() >= 2)
+         {
+            parameters.Add({split[0], split[1]});
+         }
+         else
+         {
+            parameters.Add({token, {}});
+         }
+      }
+   }
+
+   auto response = cpr::Get(cpr::Url {decodedUrl},
+                            network::cpr::GetHeader(),
+                            parameters,
+                            network::cpr::GetDefaultTimeout(),
+                            network::cpr::GetDefaultConnectTimeout(),
+                            network::cpr::GetDefaultLowSpeed(),
+                            network::cpr::GetDefaultProgressCallback(true));
+
+   if (!cpr::status::is_success(response.status_code))
+   {
+      logger_->warn("Legacy lightning: error loading placefile: {} ({})",
+                    decodedUrl,
+                    response.status_line);
+      return nullptr;
+   }
+
+   std::istringstream responseBody {response.text};
+   return gr::Placefile::Load(placefileName, responseBody);
+}
+
 } // namespace
 
 class LightningManager::Impl
@@ -580,6 +661,10 @@ class LightningManager::Impl
 public:
    explicit Impl(LightningManager* self) : self_ {self}
    {
+      settings::GeneralSettings::Instance()
+         .legacy_lightning_enabled()
+         .RegisterValueChangedCallback([this](const bool& /* enabled */)
+                                       { SyncEnabled(); });
       settings::GeneralSettings::Instance()
          .goes_glm_lightning_enabled()
          .RegisterValueChangedCallback([this](const bool& /* enabled */)
@@ -609,6 +694,7 @@ public:
    std::shared_ptr<config::RadarSite>    radarSite_ {};
    std::optional<float>                  radarRangeKm_ {};
    std::shared_ptr<gr::Placefile>        placefile_ {};
+   bool                                  legacyEnabled_ {false};
    bool                                  enabled_ {false};
    std::optional<double>                 lastZoom_ {};
    boost::asio::thread_pool              threadPool_ {1u};
@@ -657,6 +743,12 @@ void LightningManager::Impl::SetRadarScanRange(
 
    radarRangeKm_ = radarRangeKm;
 
+   if (legacyEnabled_ && !enabled_)
+   {
+      RefreshAsync();
+      return;
+   }
+
    if (!enabled_ || radarSite_ == nullptr || !radarRangeKm_.has_value())
    {
       placefile_.reset();
@@ -699,8 +791,7 @@ void LightningManager::Impl::Refresh()
 {
    std::unique_lock lock {refreshMutex_};
 
-   if (!enabled_ || radarSite_ == nullptr || !radarRangeKm_.has_value() ||
-       radarRangeKm_.value() <= 0.0f)
+   if ((!enabled_ && !legacyEnabled_) || radarSite_ == nullptr)
    {
       if (placefile_ != nullptr)
       {
@@ -710,8 +801,17 @@ void LightningManager::Impl::Refresh()
       return;
    }
 
-   auto updatedPlacefile =
-      BuildLightningPlacefile(kLightningUrl_, radarSite_, radarRangeKm_);
+   std::shared_ptr<gr::Placefile> updatedPlacefile {};
+   if (enabled_ && radarRangeKm_.has_value() && radarRangeKm_.value() > 0.0f)
+   {
+      updatedPlacefile =
+         BuildLightningPlacefile(kLightningUrl_, radarSite_, radarRangeKm_);
+   }
+   else if (legacyEnabled_)
+   {
+      updatedPlacefile =
+         BuildLegacyLightningPlacefile(kLegacyLightningUrl_, radarSite_);
+   }
 
    if (updatedPlacefile != nullptr)
    {
@@ -734,11 +834,14 @@ void LightningManager::Impl::Refresh()
 void LightningManager::Impl::SyncEnabled()
 {
    std::unique_lock lock {refreshMutex_};
+   legacyEnabled_ = settings::GeneralSettings::Instance()
+                       .legacy_lightning_enabled()
+                       .GetValue();
    enabled_ = settings::GeneralSettings::Instance()
                  .goes_glm_lightning_enabled()
                  .GetValue();
 
-   if (!enabled_)
+   if (!enabled_ && !legacyEnabled_)
    {
       CancelRefresh();
       if (placefile_ != nullptr)
@@ -749,8 +852,9 @@ void LightningManager::Impl::SyncEnabled()
       return;
    }
 
-   if (radarSite_ != nullptr && radarRangeKm_.has_value() &&
-       radarRangeKm_.value() > 0.0f)
+   if (radarSite_ != nullptr && ((enabled_ && radarRangeKm_.has_value() &&
+                                  radarRangeKm_.value() > 0.0f) ||
+                                 legacyEnabled_))
    {
       RefreshAsync();
    }
@@ -760,7 +864,8 @@ void LightningManager::Impl::ScheduleRefresh()
 {
    using namespace std::chrono_literals;
 
-   if (!enabled_ || !radarRangeKm_.has_value())
+   if ((!enabled_ && !legacyEnabled_) ||
+       (enabled_ && !radarRangeKm_.has_value()))
    {
       return;
    }
@@ -849,7 +954,7 @@ std::shared_ptr<gr::Placefile> LightningManager::placefile() const
 
 bool LightningManager::IsLightningPlacefile(const std::string& name)
 {
-   return name == kLightningUrl_;
+   return name == kLightningUrl_ || name == kLegacyLightningUrl_;
 }
 
 } // namespace scwx::qt::manager

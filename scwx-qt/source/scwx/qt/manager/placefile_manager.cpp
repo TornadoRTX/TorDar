@@ -626,11 +626,6 @@ static bool ContainsPlacefileEntry(const boost::json::value& placefileJson,
    return false;
 }
 
-static bool IsGoesGlmLightningUrl(const std::string& name)
-{
-   return name == kGoesGlmLightningUrl_ || name == kGoesGlmLegacyLightningUrl_;
-}
-
 class PlacefileManager::Impl
 {
 public:
@@ -640,7 +635,6 @@ public:
    ~Impl() { threadPool_.join(); }
 
    void InitializePlacefileSettings();
-   void SyncBuiltInLightning();
    void ApplyPlacefileSettings(const boost::json::value& placefileJson);
    void ReadPlacefileSettings();
    void SavePlacefileSettings();
@@ -753,11 +747,6 @@ public:
 
 PlacefileManager::PlacefileManager() : p(std::make_unique<Impl>(this))
 {
-   settings::GeneralSettings::Instance()
-      .legacy_lightning_enabled()
-      .RegisterValueChangedCallback([this](const bool& /* enabled */)
-                                    { p->SyncBuiltInLightning(); });
-
    boost::asio::post(p->threadPool_,
                      [this]()
                      {
@@ -984,53 +973,7 @@ void PlacefileManager::Impl::ReadPlacefileSettings()
 
    ApplyPlacefileSettings(placefileJson);
 
-   // Add and enable the default legacy lightning placefile on first run if
-   // enabled.
-   if (settings::GeneralSettings::Instance()
-          .legacy_lightning_enabled()
-          .GetValue() &&
-       !ContainsPlacefileEntry(placefileJson, kLegacyLightningUrl_))
-   {
-      self_->AddUrl(kLegacyLightningUrl_, kLegacyLightningTitle_, true, false);
-   }
-
-   if (ContainsPlacefileEntry(placefileJson, kGoesGlmLightningUrl_))
-   {
-      self_->RemoveUrl(kGoesGlmLightningUrl_);
-   }
-   if (ContainsPlacefileEntry(placefileJson, kGoesGlmLegacyLightningUrl_))
-   {
-      self_->RemoveUrl(kGoesGlmLegacyLightningUrl_);
-   }
-
-   // Ensure persisted records match the current built-in legacy lightning
-   // setting.
-   SyncBuiltInLightning();
-
    placefileSettingsRead_ = true;
-}
-
-void PlacefileManager::Impl::SyncBuiltInLightning()
-{
-   const bool legacyLightningEnabledRaw = settings::GeneralSettings::Instance()
-                                             .legacy_lightning_enabled()
-                                             .GetValue();
-   const bool legacyLightningEnabled = legacyLightningEnabledRaw;
-
-   std::shared_lock lock(placefileRecordLock_);
-   const bool       hasLegacyLightningRecord =
-      placefileRecordMap_.find(kLegacyLightningUrl_) !=
-      placefileRecordMap_.cend();
-   lock.unlock();
-
-   if (legacyLightningEnabled && !hasLegacyLightningRecord)
-   {
-      self_->AddUrl(kLegacyLightningUrl_, kLegacyLightningTitle_, true, false);
-   }
-   else if (!legacyLightningEnabled && hasLegacyLightningRecord)
-   {
-      self_->RemoveUrl(kLegacyLightningUrl_);
-   }
 }
 
 void PlacefileManager::ReadPlacefileSettings(std::istream& is)
@@ -1061,7 +1004,9 @@ void PlacefileManager::Impl::ApplyPlacefileSettings(
             PlacefileRecord record =
                boost::json::value_to<PlacefileRecord>(placefileEntry);
 
-            if (!record.name_.empty())
+            if (!record.name_.empty() && record.name_ != kLegacyLightningUrl_ &&
+                record.name_ != kGoesGlmLightningUrl_ &&
+                record.name_ != kGoesGlmLegacyLightningUrl_)
             {
                self_->AddUrl(record.name_,
                              record.title_,
@@ -1237,97 +1182,84 @@ void PlacefileManager::Impl::PlacefileRecord::Update()
    }
    else
    {
-      if (IsGoesGlmLightningUrl(name))
+      std::string decodedUrl {name};
+      auto        queryPos = decodedUrl.find('?');
+      if (queryPos != std::string::npos)
       {
-         updatedPlacefile =
-            BuildGoesGlmPlacefile(name, p->radarSite_, p->radarRangeKm_);
-         if (updatedPlacefile == nullptr && enabled_)
+         decodedUrl.erase(queryPos);
+      }
+
+      if (p->radarSite_ == nullptr)
+      {
+         // Wait to process until a radar site is selected
+         return;
+      }
+
+      auto dpi = QGuiApplication::primaryScreen()->logicalDotsPerInch();
+
+      // Specify parameters
+      auto parameters = cpr::Parameters {
+         {"version", "1.5"}, // Placefile Version Supported
+         {"dpi", fmt::format("{:0.0f}", dpi)},
+         {"lat", fmt::format("{:0.3f}", p->radarSite_->latitude())},
+         {"lon", fmt::format("{:0.3f}", p->radarSite_->longitude())}};
+
+      // Iterate through each query parameter in the URL
+      if (url.hasQuery())
+      {
+         auto query = url.query(QUrl::ComponentFormattingOption::PrettyDecoded)
+                         .toStdString();
+
+         boost::char_separator<char> const delimiter("&");
+         boost::tokenizer const            tokens(query, delimiter);
+
+         for (auto& token : tokens)
          {
-            logger_->warn("GOES GLM lightning update returned no data");
+            std::vector<std::string> split {};
+            boost::split(split, token, boost::is_any_of("="));
+            if (split.size() >= 2)
+            {
+               // Token is a key=value parameter
+               parameters.Add({split[0], split[1]});
+            }
+            else
+            {
+               // Token is a single key with no value
+               parameters.Add({token, {}});
+            }
          }
+      }
+
+      // Send HTTP GET request
+      auto response =
+         cpr::Get(cpr::Url {decodedUrl},
+                  network::cpr::GetHeader(),
+                  parameters,
+                  network::cpr::GetDefaultTimeout(),
+                  network::cpr::GetDefaultConnectTimeout(),
+                  network::cpr::GetDefaultLowSpeed(),
+                  network::cpr::GetDefaultProgressCallback(enabled_));
+
+      if (cpr::status::is_success(response.status_code))
+      {
+         std::istringstream responseBody {response.text};
+         updatedPlacefile = gr::Placefile::Load(name, responseBody);
+      }
+      else if (response.status_code == 0 && enabled_)
+      {
+         logger_->error("Error loading placefile: {} ({})",
+                        decodedUrl,
+                        response.error.message);
+      }
+      else if (enabled_)
+      {
+         logger_->error("Error loading placefile: {} ({})",
+                        decodedUrl,
+                        response.status_line);
       }
       else
       {
-         std::string decodedUrl {name};
-         auto        queryPos = decodedUrl.find('?');
-         if (queryPos != std::string::npos)
-         {
-            decodedUrl.erase(queryPos);
-         }
-
-         if (p->radarSite_ == nullptr)
-         {
-            // Wait to process until a radar site is selected
-            return;
-         }
-
-         auto dpi = QGuiApplication::primaryScreen()->logicalDotsPerInch();
-
-         // Specify parameters
-         auto parameters = cpr::Parameters {
-            {"version", "1.5"}, // Placefile Version Supported
-            {"dpi", fmt::format("{:0.0f}", dpi)},
-            {"lat", fmt::format("{:0.3f}", p->radarSite_->latitude())},
-            {"lon", fmt::format("{:0.3f}", p->radarSite_->longitude())}};
-
-         // Iterate through each query parameter in the URL
-         if (url.hasQuery())
-         {
-            auto query =
-               url.query(QUrl::ComponentFormattingOption::PrettyDecoded)
-                  .toStdString();
-
-            boost::char_separator<char> const delimiter("&");
-            boost::tokenizer const            tokens(query, delimiter);
-
-            for (auto& token : tokens)
-            {
-               std::vector<std::string> split {};
-               boost::split(split, token, boost::is_any_of("="));
-               if (split.size() >= 2)
-               {
-                  // Token is a key=value parameter
-                  parameters.Add({split[0], split[1]});
-               }
-               else
-               {
-                  // Token is a single key with no value
-                  parameters.Add({token, {}});
-               }
-            }
-         }
-
-         // Send HTTP GET request
-         auto response =
-            cpr::Get(cpr::Url {decodedUrl},
-                     network::cpr::GetHeader(),
-                     parameters,
-                     network::cpr::GetDefaultTimeout(),
-                     network::cpr::GetDefaultConnectTimeout(),
-                     network::cpr::GetDefaultLowSpeed(),
-                     network::cpr::GetDefaultProgressCallback(enabled_));
-
-         if (cpr::status::is_success(response.status_code))
-         {
-            std::istringstream responseBody {response.text};
-            updatedPlacefile = gr::Placefile::Load(name, responseBody);
-         }
-         else if (response.status_code == 0 && enabled_)
-         {
-            logger_->error("Error loading placefile: {} ({})",
-                           decodedUrl,
-                           response.error.message);
-         }
-         else if (enabled_)
-         {
-            logger_->error("Error loading placefile: {} ({})",
-                           decodedUrl,
-                           response.status_line);
-         }
-         else
-         {
-            logger_->debug("Request cancelled, shutting down");
-         }
+         logger_->debug("Request cancelled, shutting down");
       }
    }
 
