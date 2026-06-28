@@ -54,7 +54,7 @@
       "hidden": true,
       "generator": "Visual Studio 17 2022",
       "cacheVariables": {
-        "CMAKE_PREFIX_PATH": "C:/Qt/6.11.0/msvc2022_64"
+        "CMAKE_PREFIX_PATH": "C:/Qt/6.11.1/msvc2022_64"
       }
     },
     {
@@ -63,7 +63,7 @@
       "hidden": true,
       "generator": "Ninja",
       "cacheVariables": {
-        "CMAKE_PREFIX_PATH": "C:/Qt/6.11.0/msvc2022_64"
+        "CMAKE_PREFIX_PATH": "C:/Qt/6.11.1/msvc2022_64"
       }
     },
     {
@@ -72,7 +72,7 @@
       "hidden": true,
       "generator": "Visual Studio 18 2026",
       "cacheVariables": {
-        "CMAKE_PREFIX_PATH": "C:/Qt/6.11.0/msvc2022_64"
+        "CMAKE_PREFIX_PATH": "C:/Qt/6.11.1/msvc2022_64"
       }
     },
     {
@@ -81,7 +81,7 @@
       "hidden": true,
       "generator": "Ninja",
       "cacheVariables": {
-        "CMAKE_PREFIX_PATH": "C:/Qt/6.11.0/msvc2022_64"
+        "CMAKE_PREFIX_PATH": "C:/Qt/6.11.1/msvc2022_64"
       }
     },
     {
@@ -89,7 +89,7 @@
       "inherits": "linux-base",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_PREFIX_PATH": "/opt/Qt/6.11.0/gcc_64"
+        "CMAKE_PREFIX_PATH": "/opt/Qt/6.11.1/gcc_64"
       },
       "environment": {
         "CC": "gcc-11",
@@ -101,7 +101,7 @@
       "inherits": "linux-base",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_PREFIX_PATH": "/opt/Qt/6.11.0/gcc_64"
+        "CMAKE_PREFIX_PATH": "/opt/Qt/6.11.1/gcc_64"
       },
       "environment": {
         "CC": "gcc-13",
@@ -113,7 +113,7 @@
       "inherits": "linux-base",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_PREFIX_PATH": "/opt/Qt/6.11.0/gcc_64"
+        "CMAKE_PREFIX_PATH": "/opt/Qt/6.11.1/gcc_64"
       },
       "environment": {
         "CC": "gcc-14",
@@ -125,11 +125,23 @@
       "inherits": "linux-base",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_PREFIX_PATH": "/opt/Qt/6.11.0/gcc_64"
+        "CMAKE_PREFIX_PATH": "/opt/Qt/6.11.1/gcc_64"
       },
       "environment": {
         "CC": "gcc-15",
         "CXX": "g++-15"
+      }
+    },
+    {
+      "name": "linux-gcc16-base",
+      "inherits": "linux-base",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_PREFIX_PATH": "/opt/Qt/6.11.1/gcc_64"
+      },
+      "environment": {
+        "CC": "gcc-16",
+        "CXX": "g++-16"
       }
     },
     {
@@ -273,6 +285,17 @@
       }
     },
     {
+      "name": "linux-gcc16-debug",
+      "inherits": "linux-gcc16-base",
+      "displayName": "Linux GCC 16 Debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/Debug/supercell-wx",
+        "CONAN_HOST_PROFILE": "scwx-linux_gcc-16-debug",
+        "CONAN_BUILD_PROFILE": "scwx-linux_gcc-16-debug"
+      }
+    },
+    {
       "name": "linux-gcc11-release",
       "inherits": "linux-gcc11-base",
       "displayName": "Linux GCC 11 Release",
@@ -314,6 +337,17 @@
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/Release/supercell-wx",
         "CONAN_HOST_PROFILE": "scwx-linux_gcc-15",
         "CONAN_BUILD_PROFILE": "scwx-linux_gcc-15"
+      }
+    },
+    {
+      "name": "linux-gcc16-release",
+      "inherits": "linux-gcc16-base",
+      "displayName": "Linux GCC 16 Release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/Release/supercell-wx",
+        "CONAN_HOST_PROFILE": "scwx-linux_gcc-16",
+        "CONAN_BUILD_PROFILE": "scwx-linux_gcc-16"
       }
     },
     {
@@ -370,6 +404,21 @@
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/Debug/supercell-wx",
         "CONAN_HOST_PROFILE": "scwx-linux_gcc-15-debug",
         "CONAN_BUILD_PROFILE": "scwx-linux_gcc-15-debug",
+        "SCWX_ADDRESS_SANITIZER": {
+          "type": "BOOL",
+          "value": "ON"
+        }
+      }
+    },
+    {
+      "name": "linux-gcc16-debug-asan",
+      "inherits": "linux-gcc16-base",
+      "displayName": "Linux GCC 16 Debug Address Sanitizer",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/Debug/supercell-wx",
+        "CONAN_HOST_PROFILE": "scwx-linux_gcc-16-debug",
+        "CONAN_BUILD_PROFILE": "scwx-linux_gcc-16-debug",
         "SCWX_ADDRESS_SANITIZER": {
           "type": "BOOL",
           "value": "ON"
@@ -437,6 +486,21 @@
       }
     },
     {
+      "name": "linux-gcc16-release-asan",
+      "inherits": "linux-gcc16-base",
+      "displayName": "Linux GCC 16 Release Address Sanitizer",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/Release/supercell-wx",
+        "CONAN_HOST_PROFILE": "scwx-linux_gcc-16",
+        "CONAN_BUILD_PROFILE": "scwx-linux_gcc-16",
+        "SCWX_ADDRESS_SANITIZER": {
+          "type": "BOOL",
+          "value": "ON"
+        }
+      }
+    },
+    {
       "name": "ci-linux-gcc14",
       "inherits": "linux-gcc14-base",
       "displayName": "CI Linux GCC 14",
@@ -466,7 +530,7 @@
       "displayName": "CI Linux GCC 11 ARM64",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_PREFIX_PATH": "/opt/Qt/6.11.0/gcc_arm64",
+        "CMAKE_PREFIX_PATH": "/opt/Qt/6.11.1/gcc_arm64",
         "CONAN_HOST_PROFILE": "scwx-linux_gcc-11_armv8",
         "CONAN_BUILD_PROFILE": "scwx-linux_gcc-11_armv8"
       },
@@ -480,7 +544,7 @@
       "inherits": "base",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_PREFIX_PATH": "$env{HOME}/Qt/6.11.0/macos"
+        "CMAKE_PREFIX_PATH": "$env{HOME}/Qt/6.11.1/macos"
       },
       "condition": {
         "type": "equals",
