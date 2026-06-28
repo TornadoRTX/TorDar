@@ -377,14 +377,14 @@ public:
       manager::PlacefileManager::Instance()};
    std::shared_ptr<manager::RadarProductManager> radarProductManager_;
 
-   std::shared_ptr<RadarProductLayer>   radarProductLayer_;
-   std::shared_ptr<OverlayLayer>        overlayLayer_;
-   std::shared_ptr<OverlayProductLayer> overlayProductLayer_ {nullptr};
-   std::shared_ptr<LightningLayer>      lightningLayer_ {nullptr};
-   std::shared_ptr<PlacefileLayer>      placefileLayer_;
-   std::shared_ptr<MarkerLayer>         markerLayer_;
-   std::shared_ptr<ColorTableLayer>     colorTableLayer_;
-   std::shared_ptr<RadarSiteLayer>      radarSiteLayer_ {nullptr};
+   std::shared_ptr<RadarProductLayer>         radarProductLayer_;
+   std::shared_ptr<OverlayLayer>              overlayLayer_;
+   std::shared_ptr<OverlayProductLayer>       overlayProductLayer_ {nullptr};
+   std::shared_ptr<LightningLayer>            lightningLayer_ {nullptr};
+   std::shared_ptr<PlacefileLayer>            placefileLayer_;
+   std::shared_ptr<MarkerLayer>               markerLayer_;
+   std::shared_ptr<ColorTableLayer>           colorTableLayer_;
+   std::shared_ptr<RadarSiteLayer>            radarSiteLayer_ {nullptr};
    std::shared_ptr<RadarProductLayer>         radarProductLayer_;
    std::shared_ptr<OverlayLayer>              overlayLayer_;
    std::shared_ptr<OverlayProductLayer>       overlayProductLayer_ {nullptr};
