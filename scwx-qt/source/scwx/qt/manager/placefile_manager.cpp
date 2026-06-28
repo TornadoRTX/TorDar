@@ -33,6 +33,9 @@
 namespace scwx::qt::manager
 {
 
+namespace
+{
+
 static const std::string logPrefix_ = "scwx::qt::manager::placefile_manager";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 
@@ -40,6 +43,8 @@ static const std::string kEnabledName_     = "enabled";
 static const std::string kThresholdedName_ = "thresholded";
 static const std::string kTitleName_       = "title";
 static const std::string kNameName_        = "name";
+
+} // namespace
 
 class PlacefileManager::Impl
 {
@@ -54,7 +59,7 @@ public:
    void ReadPlacefileSettings();
    void SavePlacefileSettings();
 
-   static FontMap
+   static PlacefileManager::FontMap
    LoadFontResources(const std::shared_ptr<gr::Placefile>& placefile);
    static std::vector<std::shared_ptr<boost::gil::rgba8_image_t>>
    LoadImageResources(const std::shared_ptr<gr::Placefile>& placefile);
@@ -146,7 +151,7 @@ public:
    std::mutex                     refreshMutex_ {};
    std::mutex                     timerMutex_ {};
 
-   FontMap    fonts_ {};
+   PlacefileManager::FontMap fonts_ {};
    std::mutex fontsMutex_ {};
 
    std::vector<std::shared_ptr<boost::gil::rgba8_image_t>> images_ {};
