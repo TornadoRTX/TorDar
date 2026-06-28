@@ -456,7 +456,7 @@ BuildLightningPlacefile(const std::string&                        placefileName,
 
    for (const auto& [bucketUrl, key, fileStart] : candidates)
    {
-      auto response = cpr::Get(cpr::Url {bucketUrl + "/" + key},
+      auto response = cpr::Get(cpr::Url {fmt::format("{}/{}", bucketUrl, key)},
                                network::cpr::GetHeader(),
                                network::cpr::GetDefaultTimeout(),
                                network::cpr::GetDefaultConnectTimeout(),
@@ -594,7 +594,8 @@ static std::shared_ptr<gr::Placefile> BuildLegacyLightningPlacefile(
       return nullptr;
    }
 
-   QUrl url = QUrl::fromUserInput(QString::fromStdString(kLegacyLightningUrl_));
+   QUrl const url =
+      QUrl::fromUserInput(QString::fromStdString(kLegacyLightningUrl_));
 
    std::string decodedUrl {kLegacyLightningUrl_};
    auto        queryPos = decodedUrl.find('?');
@@ -677,6 +678,7 @@ public:
    Impl& operator=(const Impl&)  = delete;
    Impl(const Impl&&)            = delete;
    Impl& operator=(const Impl&&) = delete;
+   ~Impl()                       = default;
 
    void SetRadarSite(std::shared_ptr<config::RadarSite> radarSite);
    void SetRadarScanRange(std::optional<float> radarRangeKm);
@@ -708,7 +710,7 @@ public:
 void LightningManager::Impl::SetRadarSite(
    std::shared_ptr<config::RadarSite> radarSite)
 {
-   std::unique_lock lock {refreshMutex_};
+   std::unique_lock const lock {refreshMutex_};
 
    if (radarSite_ == radarSite)
    {
@@ -734,7 +736,7 @@ void LightningManager::Impl::SetRadarSite(
 void LightningManager::Impl::SetRadarScanRange(
    std::optional<float> radarRangeKm)
 {
-   std::unique_lock lock {refreshMutex_};
+   std::unique_lock const lock {refreshMutex_};
 
    if (radarRangeKm_ == radarRangeKm)
    {
@@ -789,7 +791,7 @@ void LightningManager::Impl::RefreshAsync()
 
 void LightningManager::Impl::Refresh()
 {
-   std::unique_lock lock {refreshMutex_};
+   std::unique_lock const lock {refreshMutex_};
 
    if ((!enabled_ && !legacyEnabled_) || radarSite_ == nullptr)
    {
@@ -833,7 +835,7 @@ void LightningManager::Impl::Refresh()
 
 void LightningManager::Impl::SyncEnabled()
 {
-   std::unique_lock lock {refreshMutex_};
+   std::unique_lock const lock {refreshMutex_};
    legacyEnabled_ = settings::GeneralSettings::Instance()
                        .legacy_lightning_enabled()
                        .GetValue();
@@ -870,7 +872,7 @@ void LightningManager::Impl::ScheduleRefresh()
       return;
    }
 
-   std::unique_lock lock {timerMutex_};
+   std::unique_lock const lock {timerMutex_};
    auto nextUpdateTime      = lastUpdateTime_ + kLightningRefreshSeconds_;
    auto timeUntilNextUpdate = nextUpdateTime - std::chrono::system_clock::now();
    ScheduleRefresh(timeUntilNextUpdate);
@@ -904,7 +906,7 @@ void LightningManager::Impl::ScheduleRefresh(
 
 void LightningManager::Impl::CancelRefresh()
 {
-   std::unique_lock lock {timerMutex_};
+   std::unique_lock const lock {timerMutex_};
    refreshTimer_.cancel();
 }
 
@@ -916,7 +918,7 @@ std::shared_ptr<LightningManager> LightningManager::Instance()
    static std::weak_ptr<LightningManager> lightningManagerReference_ {};
    static std::mutex                      instanceMutex_ {};
 
-   std::unique_lock lock(instanceMutex_);
+   std::unique_lock const lock(instanceMutex_);
 
    std::shared_ptr<LightningManager> lightningManager =
       lightningManagerReference_.lock();

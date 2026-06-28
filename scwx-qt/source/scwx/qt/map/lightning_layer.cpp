@@ -3,7 +3,7 @@
 #include <scwx/gr/placefile.hpp>
 #include <scwx/qt/manager/lightning_manager.hpp>
 #include <scwx/qt/manager/timeline_manager.hpp>
-#include <scwx/qt/util/gl.hpp>
+#include <scwx/qt/gl/gl.hpp>
 #include <scwx/util/logger.hpp>
 
 #include <boost/asio/thread_pool.hpp>
@@ -30,7 +30,7 @@ public:
       ConnectSignals();
    }
 
-   ~Impl() { threadPool_.join(); }
+   ~Impl() = default;
 
    Impl(const Impl&)                = delete;
    Impl(Impl&&) noexcept            = delete;
@@ -77,8 +77,17 @@ void LightningLayer::Impl::ReloadDataSync()
    if (placefile != nullptr)
    {
       placefileIcons_->SetIconFiles(placefile->icon_files(), placefile->name());
+   }
+   else
+   {
+      placefileIcons_->SetIconFiles(
+         std::vector<std::shared_ptr<const gr::Placefile::IconFile>> {},
+         std::string {});
+   }
 
-      placefileIcons_->StartIcons();
+   placefileIcons_->StartIcons();
+   if (placefile != nullptr)
+   {
       for (const auto& drawItem : placefile->GetDrawItems())
       {
          if (drawItem->itemType_ == gr::Placefile::ItemType::Icon)
@@ -87,16 +96,8 @@ void LightningLayer::Impl::ReloadDataSync()
                std::static_pointer_cast<gr::Placefile::IconDrawItem>(drawItem));
          }
       }
-      placefileIcons_->FinishIcons();
    }
-   else
-   {
-      placefileIcons_->SetIconFiles(
-         std::vector<std::shared_ptr<const gr::Placefile::IconFile>> {},
-         std::string {});
-      placefileIcons_->StartIcons();
-      placefileIcons_->FinishIcons();
-   }
+   placefileIcons_->FinishIcons();
 
    Q_EMIT self_->DataReloaded();
 }

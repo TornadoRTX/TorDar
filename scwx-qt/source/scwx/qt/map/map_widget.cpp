@@ -385,13 +385,6 @@ public:
    std::shared_ptr<MarkerLayer>               markerLayer_;
    std::shared_ptr<ColorTableLayer>           colorTableLayer_;
    std::shared_ptr<RadarSiteLayer>            radarSiteLayer_ {nullptr};
-   std::shared_ptr<RadarProductLayer>         radarProductLayer_;
-   std::shared_ptr<OverlayLayer>              overlayLayer_;
-   std::shared_ptr<OverlayProductLayer>       overlayProductLayer_ {nullptr};
-   std::shared_ptr<PlacefileLayer>            placefileLayer_;
-   std::shared_ptr<MarkerLayer>               markerLayer_;
-   std::shared_ptr<ColorTableLayer>           colorTableLayer_;
-   std::shared_ptr<RadarSiteLayer>            radarSiteLayer_ {nullptr};
    std::shared_ptr<MapAnnotationLayer>        annotationLayer_;
    std::unordered_map<std::uint64_t, QLabel*> measureLabels_ {};
 
@@ -3248,12 +3241,12 @@ bool MapWidgetImpl::UpdateStoredMapParameters()
 
    bool changed = false;
 
-   double     newLatitude  = map_->latitude();
-   double     newLongitude = map_->longitude();
-   double     newZoom      = map_->zoom();
-   double     newBearing   = map_->bearing();
-   double     newPitch     = map_->pitch();
-   const bool zoomChanged  = prevZoom_ != newZoom;
+   const double newLatitude  = map_->latitude();
+   const double newLongitude = map_->longitude();
+   const double newZoom      = map_->zoom();
+   const double newBearing   = map_->bearing();
+   const double newPitch     = map_->pitch();
+   const bool   zoomChanged  = prevZoom_ != newZoom;
 
    if (prevLatitude_ != newLatitude ||   //
        prevLongitude_ != newLongitude || //

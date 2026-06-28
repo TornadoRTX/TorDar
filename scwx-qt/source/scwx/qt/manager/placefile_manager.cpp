@@ -40,7 +40,6 @@ static const std::string kEnabledName_     = "enabled";
 static const std::string kThresholdedName_ = "thresholded";
 static const std::string kTitleName_       = "title";
 static const std::string kNameName_        = "name";
-} // namespace
 
 class PlacefileManager::Impl
 {

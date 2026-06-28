@@ -20,6 +20,11 @@ public:
    explicit LightningManager();
    ~LightningManager() override;
 
+   LightningManager(const LightningManager&)            = delete;
+   LightningManager& operator=(const LightningManager&) = delete;
+   LightningManager(LightningManager&&)                 = delete;
+   LightningManager& operator=(LightningManager&&)      = delete;
+
    static std::shared_ptr<LightningManager> Instance();
 
    void SetRadarSite(std::shared_ptr<config::RadarSite> radarSite);
