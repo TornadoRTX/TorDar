@@ -1,6 +1,7 @@
 #include <scwx/qt/map/lightning_layer.hpp>
 
 #include <scwx/gr/placefile.hpp>
+#include <scwx/qt/gl/draw/placefile_icons.hpp>
 #include <scwx/qt/manager/lightning_manager.hpp>
 #include <scwx/qt/manager/timeline_manager.hpp>
 #include <scwx/qt/gl/gl.hpp>
@@ -69,21 +70,18 @@ void LightningLayer::Impl::ReloadDataSync()
 {
    logger_->debug("ReloadData: lightning");
 
-   std::unique_lock lock {dataMutex_};
+   const std::unique_lock lock {dataMutex_};
 
    auto lightningManager = manager::LightningManager::Instance();
    auto placefile        = lightningManager->placefile();
 
-   if (placefile != nullptr)
-   {
-      placefileIcons_->SetIconFiles(placefile->icon_files(), placefile->name());
-   }
-   else
-   {
-      placefileIcons_->SetIconFiles(
-         std::vector<std::shared_ptr<const gr::Placefile::IconFile>> {},
-         std::string {});
-   }
+   const auto iconFiles =
+      placefile != nullptr ?
+         placefile->icon_files() :
+         std::vector<std::shared_ptr<const gr::Placefile::IconFile>> {};
+   const auto placefileName =
+      placefile != nullptr ? placefile->name() : std::string {};
+   placefileIcons_->SetIconFiles(iconFiles, placefileName);
 
    placefileIcons_->StartIcons();
    if (placefile != nullptr)
@@ -104,6 +102,7 @@ void LightningLayer::Impl::ReloadDataSync()
 
 LightningLayer::LightningLayer(
    const std::shared_ptr<gl::GlContext>& glContext) :
+    DrawLayer(glContext, "LightningLayer"),
     p(std::make_unique<Impl>(this, glContext))
 {
    AddDrawItem(p->placefileIcons_);

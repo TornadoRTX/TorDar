@@ -75,7 +75,8 @@ public:
                      placefileRecordMap_ {};
    std::shared_mutex placefileRecordLock_ {};
 
-   bool placefileSettingsRead_ {false};
+   std::shared_ptr<config::RadarSite> radarSite_ {};
+   bool                               placefileSettingsRead_ {false};
 };
 
 class PlacefileManager::Impl::PlacefileRecord
@@ -152,7 +153,7 @@ public:
    std::mutex                     timerMutex_ {};
 
    PlacefileManager::FontMap fonts_ {};
-   std::mutex fontsMutex_ {};
+   std::mutex                fontsMutex_ {};
 
    std::vector<std::shared_ptr<boost::gil::rgba8_image_t>> images_ {};
 
@@ -460,12 +461,6 @@ void PlacefileManager::WritePlacefileSettings(std::ostream& os)
 void PlacefileManager::SetRadarSite(
    std::shared_ptr<config::RadarSite> radarSite)
 {
-   if (p->radarSite_ == radarSite)
-   {
-      // No action needed
-      return;
-   }
-
    if (radarSite == nullptr)
    {
       logger_->debug("SetRadarSite: cleared");
@@ -474,6 +469,8 @@ void PlacefileManager::SetRadarSite(
    {
       logger_->debug("SetRadarSite: {}", radarSite->id());
    }
+
+   p->radarSite_ = std::move(radarSite);
 
    // Update all enabled records
    std::shared_lock lock(p->placefileRecordLock_);
