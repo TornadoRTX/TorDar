@@ -45,7 +45,7 @@ static OndasConfigLoader::Result FetchConfig(const std::string& baseUri,
                  network::cpr::GetDefaultProgressCallback(
                     common::ApplicationState::IsRunning()));
 
-   if (response.status_code == ::cpr::status::HTTP_OK)
+   if (cpr::status::is_success(response.status_code))
    {
       auto config = std::make_shared<OndasConfig>();
       auto is     = std::istringstream(response.text);
@@ -54,15 +54,17 @@ static OndasConfigLoader::Result FetchConfig(const std::string& baseUri,
       result.status = OndasConfigLoader::Status::Loaded;
       result.config = config;
    }
-   else if (response.status_code == ::cpr::status::HTTP_NOT_FOUND)
+   else if (cpr::status::is_client_error(response.status_code))
    {
       logger_->debug("Config file not found: {0}/{1}", baseUri, configFile);
       result.status = OndasConfigLoader::Status::NotFound;
    }
    else
    {
-      logger_->warn(
-         "Failed to fetch config file: {0}/{1}", baseUri, configFile);
+      logger_->warn("Failed to fetch config file: {0}/{1} ({2})",
+                    baseUri,
+                    configFile,
+                    response.status_code);
       result.status = OndasConfigLoader::Status::Error;
    }
 
