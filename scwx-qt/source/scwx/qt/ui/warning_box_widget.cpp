@@ -1157,20 +1157,22 @@ void WarningBoxWidgetImpl::ApplyTheme(
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QFrame#cornerBR {";
    styleSheet += "  border: none;";
+   // The parent widget masks the outer portion of this corner. Keep the
+   // accent band inside the unmasked area so it remains visible.
    styleSheet +=
       "  background: qlineargradient(x1:0, y1:0, x2:1, y2:1, "
       "stop:0 rgba(0, 2, 26, 255), "
-      "stop:0.44 rgba(0, 2, 26, 255), "
-      "stop:0.48 rgba(" +
+      "stop:0.34 rgba(0, 2, 26, 255), "
+      "stop:0.36 rgba(" +
       accentColor +
       ", 240), "
-      "stop:0.50 rgba(" +
+      "stop:0.38 rgba(" +
       accentColor +
       ", 255), "
-      "stop:0.52 rgba(" +
+      "stop:0.40 rgba(" +
       accentColor +
       ", 240), "
-      "stop:0.56 rgba(0, 2, 26, 255), "
+      "stop:0.44 rgba(0, 2, 26, 255), "
       "stop:1 rgba(0, 2, 26, 255));";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QLabel {";
