@@ -705,61 +705,101 @@ public:
    std::mutex                            timerMutex_ {};
    std::chrono::system_clock::time_point lastUpdateTime_ {};
    std::size_t                           failureCount_ {};
+   std::uint64_t                         refreshGeneration_ {};
 };
 
 void LightningManager::Impl::SetRadarSite(
    std::shared_ptr<config::RadarSite> radarSite)
 {
-   std::unique_lock const lock {refreshMutex_};
+   bool shouldRefresh = false;
+   bool shouldNotify  = false;
+   bool shouldCancel  = false;
 
-   if (radarSite_ == radarSite)
    {
-      return;
-   }
+      std::unique_lock const lock {refreshMutex_};
 
-   radarSite_ = std::move(radarSite);
+      if (radarSite_ == radarSite)
+      {
+         return;
+      }
 
-   if (radarSite_ == nullptr)
-   {
+      radarSite_ = std::move(radarSite);
       radarRangeKm_.reset();
+      ++refreshGeneration_;
+
+      shouldNotify = placefile_ != nullptr;
       placefile_.reset();
-      Q_EMIT self_->LightningUpdated();
-      CancelRefresh();
-      return;
+
+      shouldRefresh =
+         radarSite_ != nullptr &&
+         (legacyEnabled_ || (enabled_ && radarRangeKm_.has_value()));
+      shouldCancel = !shouldRefresh;
    }
 
-   radarRangeKm_.reset();
+   if (shouldCancel)
+   {
+      CancelRefresh();
+   }
 
-   RefreshAsync();
+   if (shouldNotify)
+   {
+      Q_EMIT self_->LightningUpdated();
+   }
+
+   if (shouldRefresh)
+   {
+      RefreshAsync();
+   }
 }
 
 void LightningManager::Impl::SetRadarScanRange(
    std::optional<float> radarRangeKm)
 {
-   std::unique_lock const lock {refreshMutex_};
+   bool shouldRefresh = false;
+   bool shouldNotify  = false;
+   bool shouldCancel  = false;
 
-   if (radarRangeKm_ == radarRangeKm)
    {
-      return;
+      std::unique_lock const lock {refreshMutex_};
+
+      if (radarRangeKm_ == radarRangeKm)
+      {
+         return;
+      }
+
+      radarRangeKm_ = radarRangeKm;
+
+      if (legacyEnabled_ && !enabled_)
+      {
+         shouldRefresh = true;
+      }
+      else if (!enabled_ || radarSite_ == nullptr || !radarRangeKm_.has_value())
+      {
+         ++refreshGeneration_;
+         shouldNotify = placefile_ != nullptr;
+         placefile_.reset();
+         shouldCancel = true;
+      }
+      else
+      {
+         shouldRefresh = true;
+      }
    }
 
-   radarRangeKm_ = radarRangeKm;
+   if (shouldNotify)
+   {
+      Q_EMIT self_->LightningUpdated();
+   }
 
-   if (legacyEnabled_ && !enabled_)
+   if (shouldCancel)
+   {
+      CancelRefresh();
+   }
+
+   if (shouldRefresh)
    {
       RefreshAsync();
-      return;
    }
-
-   if (!enabled_ || radarSite_ == nullptr || !radarRangeKm_.has_value())
-   {
-      placefile_.reset();
-      Q_EMIT self_->LightningUpdated();
-      CancelRefresh();
-      return;
-   }
-
-   RefreshAsync();
 }
 
 void LightningManager::Impl::NotifyMapZoom(double zoom)
@@ -791,43 +831,76 @@ void LightningManager::Impl::RefreshAsync()
 
 void LightningManager::Impl::Refresh()
 {
-   std::unique_lock const lock {refreshMutex_};
+   std::shared_ptr<config::RadarSite> radarSite;
+   std::optional<float>               radarRangeKm;
+   bool                               enabled;
+   bool                               legacyEnabled;
+   std::uint64_t                      refreshGeneration;
 
-   if ((!enabled_ && !legacyEnabled_) || radarSite_ == nullptr)
    {
-      if (placefile_ != nullptr)
+      std::unique_lock const lock {refreshMutex_};
+      radarSite         = radarSite_;
+      radarRangeKm      = radarRangeKm_;
+      enabled           = enabled_;
+      legacyEnabled     = legacyEnabled_;
+      refreshGeneration = refreshGeneration_;
+
+      if ((!enabled && !legacyEnabled) || radarSite == nullptr ||
+          (enabled && !legacyEnabled && !radarRangeKm.has_value()))
       {
+         const bool notify = placefile_ != nullptr;
          placefile_.reset();
-         Q_EMIT self_->LightningUpdated();
+         if (notify)
+         {
+            Q_EMIT self_->LightningUpdated();
+         }
+         return;
       }
-      return;
    }
 
    std::shared_ptr<gr::Placefile> updatedPlacefile {};
-   if (enabled_ && radarRangeKm_.has_value() && radarRangeKm_.value() > 0.0f)
+   if (enabled && radarRangeKm.has_value() && radarRangeKm.value() > 0.0f)
    {
       updatedPlacefile =
-         BuildLightningPlacefile(kLightningUrl_, radarSite_, radarRangeKm_);
+         BuildLightningPlacefile(kLightningUrl_, radarSite, radarRangeKm);
    }
-   else if (legacyEnabled_)
+   else if (legacyEnabled)
    {
       updatedPlacefile =
-         BuildLegacyLightningPlacefile(kLegacyLightningUrl_, radarSite_);
+         BuildLegacyLightningPlacefile(kLegacyLightningUrl_, radarSite);
    }
 
+   bool success = updatedPlacefile != nullptr;
    if (updatedPlacefile != nullptr)
    {
+      std::unique_lock const lock {refreshMutex_};
+      if (refreshGeneration != refreshGeneration_)
+      {
+         return;
+      }
       placefile_      = std::move(updatedPlacefile);
       lastUpdateTime_ = std::chrono::system_clock::now();
       failureCount_   = 0u;
-      Q_EMIT self_->LightningUpdated();
+   }
+   else
+   {
+      std::unique_lock const lock {refreshMutex_};
+      if (refreshGeneration != refreshGeneration_)
+      {
+         return;
+      }
+      ++failureCount_;
+      placefile_.reset();
+   }
+
+   Q_EMIT self_->LightningUpdated();
+
+   if (success)
+   {
       ScheduleRefresh();
    }
    else
    {
-      ++failureCount_;
-      placefile_.reset();
-      Q_EMIT self_->LightningUpdated();
       using namespace std::chrono_literals;
       ScheduleRefresh(std::max<std::chrono::seconds>(15s * failureCount_, 60s));
    }
@@ -835,28 +908,44 @@ void LightningManager::Impl::Refresh()
 
 void LightningManager::Impl::SyncEnabled()
 {
-   std::unique_lock const lock {refreshMutex_};
-   legacyEnabled_ = settings::GeneralSettings::Instance()
-                       .legacy_lightning_enabled()
-                       .GetValue();
-   enabled_ = settings::GeneralSettings::Instance()
-                 .goes_glm_lightning_enabled()
-                 .GetValue();
+   bool shouldRefresh = false;
+   bool shouldNotify  = false;
+   bool shouldCancel  = false;
 
-   if (!enabled_ && !legacyEnabled_)
    {
-      CancelRefresh();
-      if (placefile_ != nullptr)
+      std::unique_lock const lock {refreshMutex_};
+      legacyEnabled_ = settings::GeneralSettings::Instance()
+                          .legacy_lightning_enabled()
+                          .GetValue();
+      enabled_ = settings::GeneralSettings::Instance()
+                    .goes_glm_lightning_enabled()
+                    .GetValue();
+
+      if (!enabled_ && !legacyEnabled_)
       {
+         ++refreshGeneration_;
+         shouldCancel = true;
+         shouldNotify = placefile_ != nullptr;
          placefile_.reset();
-         Q_EMIT self_->LightningUpdated();
       }
-      return;
+      else if (radarSite_ != nullptr &&
+               ((enabled_ && radarRangeKm_.has_value() &&
+                 radarRangeKm_.value() > 0.0f) ||
+                legacyEnabled_))
+      {
+         shouldRefresh = true;
+      }
    }
 
-   if (radarSite_ != nullptr && ((enabled_ && radarRangeKm_.has_value() &&
-                                  radarRangeKm_.value() > 0.0f) ||
-                                 legacyEnabled_))
+   if (shouldCancel)
+   {
+      CancelRefresh();
+   }
+   if (shouldNotify)
+   {
+      Q_EMIT self_->LightningUpdated();
+   }
+   if (shouldRefresh)
    {
       RefreshAsync();
    }
