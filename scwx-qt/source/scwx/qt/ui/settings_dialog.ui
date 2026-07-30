@@ -827,6 +827,20 @@
                 </widget>
                </item>
                <item>
+                <widget class="QCheckBox" name="legacyLightningCheckBox">
+                 <property name="text">
+                  <string>Legacy Lightning Layer Enabled</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="goesGlmLightningCheckBox">
+                 <property name="text">
+                  <string>GOES GLM Lightning Layer Enabled</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
                 <widget class="QCheckBox" name="debugEnabledCheckBox">
                  <property name="text">
                   <string>Debug Enabled</string>
