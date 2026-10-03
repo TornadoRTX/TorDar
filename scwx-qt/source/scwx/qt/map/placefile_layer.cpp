@@ -18,7 +18,6 @@ namespace scwx::qt::map
 
 static const std::string logPrefix_ = "scwx::qt::map::placefile_layer";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
-
 class PlacefileLayer::Impl
 {
 public:

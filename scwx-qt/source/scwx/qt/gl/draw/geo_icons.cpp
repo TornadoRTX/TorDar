@@ -242,7 +242,7 @@ void GeoIcons::Initialize()
    glVertexAttribIPointer(5, //
                           1,
                           GL_INT,
-                          0,
+                          kIntegersPerVertex_ * sizeof(GLint),
                           static_cast<void*>(0));
    glEnableVertexAttribArray(5);
 

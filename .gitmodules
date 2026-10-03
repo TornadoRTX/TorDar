@@ -42,4 +42,5 @@
 	url = https://github.com/nholthaus/units.git
 [submodule "test/data"]
 	path = test/data
-	url = https://github.com/dpaulat/supercell-wx-test-data
+	url = https://github.com/TornadoRTX/tordar-test-data.git
+	branch = feature/lightning

@@ -29,6 +29,7 @@ public:
 
    void set_selected_time(std::chrono::system_clock::time_point selectedTime);
    void set_thresholded(bool thresholded);
+   void set_time_fade_enabled(bool enabled);
 
    void Initialize() override;
    void Render(const QMapLibre::CustomLayerRenderParameters& params,

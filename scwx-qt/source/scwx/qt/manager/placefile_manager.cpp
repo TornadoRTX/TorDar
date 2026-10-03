@@ -25,8 +25,15 @@
 #include <boost/tokenizer.hpp>
 #include <cpr/cpr.h>
 #include <fmt/chrono.h>
+#include <fmt/format.h>
+
+#include <filesystem>
+#include <sstream>
 
 namespace scwx::qt::manager
+{
+
+namespace
 {
 
 static const std::string logPrefix_ = "scwx::qt::manager::placefile_manager";
@@ -36,6 +43,8 @@ static const std::string kEnabledName_     = "enabled";
 static const std::string kThresholdedName_ = "thresholded";
 static const std::string kTitleName_       = "title";
 static const std::string kNameName_        = "name";
+
+} // namespace
 
 class PlacefileManager::Impl
 {
@@ -50,7 +59,7 @@ public:
    void ReadPlacefileSettings();
    void SavePlacefileSettings();
 
-   static FontMap
+   static PlacefileManager::FontMap
    LoadFontResources(const std::shared_ptr<gr::Placefile>& placefile);
    static std::vector<std::shared_ptr<boost::gil::rgba8_image_t>>
    LoadImageResources(const std::shared_ptr<gr::Placefile>& placefile);
@@ -61,14 +70,13 @@ public:
 
    std::string placefileSettingsPath_ {};
 
-   std::shared_ptr<config::RadarSite> radarSite_ {};
-
    std::vector<std::shared_ptr<PlacefileRecord>> placefileRecords_ {};
    boost::unordered_flat_map<std::string, std::shared_ptr<PlacefileRecord>>
                      placefileRecordMap_ {};
    std::shared_mutex placefileRecordLock_ {};
 
-   bool placefileSettingsRead_ {false};
+   std::shared_ptr<config::RadarSite> radarSite_ {};
+   bool                               placefileSettingsRead_ {false};
 };
 
 class PlacefileManager::Impl::PlacefileRecord
@@ -144,8 +152,8 @@ public:
    std::mutex                     refreshMutex_ {};
    std::mutex                     timerMutex_ {};
 
-   FontMap    fonts_ {};
-   std::mutex fontsMutex_ {};
+   PlacefileManager::FontMap fonts_ {};
+   std::mutex                fontsMutex_ {};
 
    std::vector<std::shared_ptr<boost::gil::rgba8_image_t>> images_ {};
 
@@ -184,7 +192,7 @@ PlacefileManager::~PlacefileManager()
 
 bool PlacefileManager::placefile_enabled(const std::string& name)
 {
-   std::shared_lock lock(p->placefileRecordLock_);
+   std::shared_lock const lock(p->placefileRecordLock_);
 
    auto it = p->placefileRecordMap_.find(name);
    if (it != p->placefileRecordMap_.cend())
@@ -196,7 +204,7 @@ bool PlacefileManager::placefile_enabled(const std::string& name)
 
 bool PlacefileManager::placefile_thresholded(const std::string& name)
 {
-   std::shared_lock lock(p->placefileRecordLock_);
+   std::shared_lock const lock(p->placefileRecordLock_);
 
    auto it = p->placefileRecordMap_.find(name);
    if (it != p->placefileRecordMap_.cend())
@@ -208,7 +216,7 @@ bool PlacefileManager::placefile_thresholded(const std::string& name)
 
 std::string PlacefileManager::placefile_title(const std::string& name)
 {
-   std::shared_lock lock(p->placefileRecordLock_);
+   std::shared_lock const lock(p->placefileRecordLock_);
 
    auto it = p->placefileRecordMap_.find(name);
    if (it != p->placefileRecordMap_.cend())
@@ -453,15 +461,16 @@ void PlacefileManager::WritePlacefileSettings(std::ostream& os)
 void PlacefileManager::SetRadarSite(
    std::shared_ptr<config::RadarSite> radarSite)
 {
-   if (p->radarSite_ == radarSite || radarSite == nullptr)
+   if (radarSite == nullptr)
    {
-      // No action needed
-      return;
+      logger_->debug("SetRadarSite: cleared");
+   }
+   else
+   {
+      logger_->debug("SetRadarSite: {}", radarSite->id());
    }
 
-   logger_->debug("SetRadarSite: {}", radarSite->id());
-
-   p->radarSite_ = radarSite;
+   p->radarSite_ = std::move(radarSite);
 
    // Update all enabled records
    std::shared_lock lock(p->placefileRecordLock_);
@@ -609,8 +618,8 @@ void PlacefileManager::Impl::PlacefileRecord::Update()
          auto query = url.query(QUrl::ComponentFormattingOption::PrettyDecoded)
                          .toStdString();
 
-         boost::char_separator<char> delimiter("&");
-         boost::tokenizer            tokens(query, delimiter);
+         boost::char_separator<char> const delimiter("&");
+         boost::tokenizer const            tokens(query, delimiter);
 
          for (auto& token : tokens)
          {

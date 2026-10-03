@@ -18,6 +18,7 @@ class SupercellWxConan(ConanFile):
                   "libtiff/4.7.1",
                   "libxml2/2.15.3",
                   "libzip/1.11.4",
+                  "netcdf/4.8.1",
                   "openssl/3.6.3",
                   "range-v3/cci.20240905",
                   "re2/20251105",

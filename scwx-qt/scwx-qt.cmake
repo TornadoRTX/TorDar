@@ -29,6 +29,7 @@ find_package(PNG REQUIRED)
 find_package(Python COMPONENTS Interpreter)
 find_package(SQLite3 REQUIRED)
 find_package(TIFF REQUIRED)
+find_package(netcdf QUIET CONFIG)
 
 find_package(QT NAMES Qt6
              COMPONENTS Gui
@@ -121,6 +122,7 @@ set(HDR_MANAGER source/scwx/qt/manager/alert_manager.hpp
                 source/scwx/qt/manager/hotkey_manager.hpp
                 source/scwx/qt/manager/log_manager.hpp
                 source/scwx/qt/manager/marker_manager.hpp
+                source/scwx/qt/manager/lightning_manager.hpp
                 source/scwx/qt/manager/media_manager.hpp
                 source/scwx/qt/manager/placefile_manager.hpp
                 source/scwx/qt/manager/position_manager.hpp
@@ -142,6 +144,7 @@ set(SRC_MANAGER source/scwx/qt/manager/alert_manager.cpp
                 source/scwx/qt/manager/hotkey_manager.cpp
                 source/scwx/qt/manager/log_manager.cpp
                 source/scwx/qt/manager/marker_manager.cpp
+                source/scwx/qt/manager/lightning_manager.cpp
                 source/scwx/qt/manager/media_manager.cpp
                 source/scwx/qt/manager/placefile_manager.cpp
                 source/scwx/qt/manager/position_manager.cpp
@@ -163,6 +166,7 @@ set(HDR_MAP source/scwx/qt/map/alert_layer.hpp
             source/scwx/qt/map/draw_layer.hpp
             source/scwx/qt/map/generic_layer.hpp
             source/scwx/qt/map/layer_wrapper.hpp
+            source/scwx/qt/map/lightning_layer.hpp
             source/scwx/qt/map/map_annotation_layer.hpp
             source/scwx/qt/map/map_annotation_model.hpp
             source/scwx/qt/map/map_annotation_types.hpp
@@ -187,6 +191,7 @@ set(SRC_MAP source/scwx/qt/map/alert_layer.cpp
             source/scwx/qt/map/draw_layer.cpp
             source/scwx/qt/map/generic_layer.cpp
             source/scwx/qt/map/layer_wrapper.cpp
+            source/scwx/qt/map/lightning_layer.cpp
             source/scwx/qt/map/map_annotation_layer.cpp
             source/scwx/qt/map/map_annotation_model.cpp
             source/scwx/qt/map/map_context.cpp
@@ -883,6 +888,19 @@ target_link_libraries(scwx-qt PUBLIC Qt${QT_VERSION_MAJOR}::Widgets
                                      SQLite::SQLite3
                                      TIFF::TIFF
                                      wxdata)
+
+if (TARGET netcdf::netcdf)
+    target_link_libraries(scwx-qt PUBLIC netcdf::netcdf)
+    target_compile_definitions(scwx-qt PUBLIC SCWX_HAS_NETCDF=1)
+elseif (TARGET netcdf-c::netcdf-c)
+    target_link_libraries(scwx-qt PUBLIC netcdf-c::netcdf-c)
+    target_compile_definitions(scwx-qt PUBLIC SCWX_HAS_NETCDF=1)
+elseif (TARGET netCDF::netcdf)
+    target_link_libraries(scwx-qt PUBLIC netCDF::netcdf)
+    target_compile_definitions(scwx-qt PUBLIC SCWX_HAS_NETCDF=1)
+else()
+    target_compile_definitions(scwx-qt PUBLIC SCWX_HAS_NETCDF=0)
+endif()
 
 target_link_libraries(scwx-qt INTERFACE Boost::program_options)
 

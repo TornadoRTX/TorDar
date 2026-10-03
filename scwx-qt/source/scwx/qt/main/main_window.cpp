@@ -12,6 +12,7 @@
 #include <scwx/qt/config/radar_site.hpp>
 #include <scwx/qt/manager/alert_manager.hpp>
 #include <scwx/qt/manager/hotkey_manager.hpp>
+#include <scwx/qt/manager/lightning_manager.hpp>
 #include <scwx/qt/manager/placefile_manager.hpp>
 #include <scwx/qt/manager/settings_manager.hpp>
 #include <scwx/qt/manager/marker_manager.hpp>
@@ -3740,6 +3741,7 @@ void MainWindowImpl::UpdateRadarSite()
    }
 
    alertManager_->SetRadarSite(radarSite);
+   manager::LightningManager::Instance()->SetRadarSite(radarSite);
    placefileManager_->SetRadarSite(radarSite);
 
    const auto timeZone = activeMap_->GetDefaultTimeZone();

@@ -5,6 +5,7 @@ layout (triangle_strip, max_vertices = 3) out;
 
 uniform float uMapDistance;
 uniform int   uSelectedTime;
+uniform int   uTimeFadeEnabled;
 
 in VertexData
 {
@@ -30,19 +31,38 @@ void main()
         (gsIn[0].timeRange[0] <= uSelectedTime && // If the selected time is after the start time
          uSelectedTime < gsIn[0].timeRange[1])))  // If the selected time is before the end time
    {
+      float alphaScale = 1.0f;
+
+      if (uTimeFadeEnabled != 0 && gsIn[0].timeRange[0] != 0)
+      {
+         int ageMinutes = uSelectedTime - gsIn[0].timeRange[0];
+
+         if (ageMinutes >= 10)
+         {
+            alphaScale = 0.35f;
+         }
+         else if (ageMinutes >= 5)
+         {
+            alphaScale = 0.50f;
+         }
+      }
+
       gl_Position = gl_in[0].gl_Position;
       texCoord    = gsIn[0].texCoord;
       color       = gsIn[0].color;
+      color.a    *= alphaScale;
       EmitVertex();
 
       gl_Position = gl_in[1].gl_Position;
       texCoord    = gsIn[1].texCoord;
       color       = gsIn[1].color;
+      color.a    *= alphaScale;
 
       EmitVertex();
       gl_Position = gl_in[2].gl_Position;
       texCoord    = gsIn[2].texCoord;
       color       = gsIn[2].color;
+      color.a    *= alphaScale;
 
       EmitVertex();
       EndPrimitive();

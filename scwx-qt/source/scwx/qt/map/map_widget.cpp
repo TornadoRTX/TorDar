@@ -3,6 +3,7 @@
 #include <scwx/qt/gl/gl.hpp>
 #include <scwx/qt/manager/font_manager.hpp>
 #include <scwx/qt/manager/hotkey_manager.hpp>
+#include <scwx/qt/manager/lightning_manager.hpp>
 #include <scwx/qt/manager/placefile_manager.hpp>
 #include <scwx/qt/manager/radar_product_manager.hpp>
 #include <scwx/qt/manager/timeline_manager.hpp>
@@ -14,6 +15,7 @@
 #include <scwx/qt/map/marker_layer.hpp>
 #include <scwx/qt/map/overlay_layer.hpp>
 #include <scwx/qt/map/overlay_product_layer.hpp>
+#include <scwx/qt/map/lightning_layer.hpp>
 #include <scwx/qt/map/placefile_layer.hpp>
 #include <scwx/qt/map/radar_product_layer.hpp>
 #include <scwx/qt/map/radar_range_layer.hpp>
@@ -283,6 +285,7 @@ public:
    void AddLayers();
    void AddPlacefileLayer(const std::string& placefileName,
                           const std::string& before);
+   void AddLightningLayer(const std::string& before);
    void ConnectMapSignals();
    void ConnectSignals();
    void HandleHotkeyPressed(types::Hotkey hotkey, bool isAutoRepeat);
@@ -331,6 +334,7 @@ public:
    GetLevel2ProductOrDefault(const std::string& productName) const;
 
    static std::string GetPlacefileLayerName(const std::string& placefileName);
+   static std::string GetLightningLayerName();
 
    boost::asio::thread_pool threadPool_ {2u};
 
@@ -368,6 +372,8 @@ public:
 
    std::shared_ptr<manager::HotkeyManager> hotkeyManager_ {
       manager::HotkeyManager::Instance()};
+   std::shared_ptr<manager::LightningManager> lightningManager_ {
+      manager::LightningManager::Instance()};
    std::shared_ptr<manager::PlacefileManager> placefileManager_ {
       manager::PlacefileManager::Instance()};
    std::shared_ptr<manager::RadarProductManager> radarProductManager_;
@@ -375,6 +381,7 @@ public:
    std::shared_ptr<RadarProductLayer>         radarProductLayer_;
    std::shared_ptr<OverlayLayer>              overlayLayer_;
    std::shared_ptr<OverlayProductLayer>       overlayProductLayer_ {nullptr};
+   std::shared_ptr<LightningLayer>            lightningLayer_ {nullptr};
    std::shared_ptr<PlacefileLayer>            placefileLayer_;
    std::shared_ptr<MarkerLayer>               markerLayer_;
    std::shared_ptr<ColorTableLayer>           colorTableLayer_;
@@ -542,6 +549,12 @@ void MapWidgetImpl::ConnectSignals()
            &manager::PlacefileManager::PlacefileUpdated,
            widget_,
            static_cast<void (QWidget::*)()>(&QWidget::update));
+
+   connect(lightningManager_.get(),
+           &manager::LightningManager::ViewUpdated,
+           widget_,
+           static_cast<void (QWidget::*)()>(&QWidget::update),
+           Qt::QueuedConnection);
 
    // When the layer model changes, update the layers
    connect(layerModel_.get(),
@@ -1606,6 +1619,7 @@ void MapWidgetImpl::AddLayers()
    layerList_.clear();
    genericLayers_.clear();
    placefileLayers_.clear();
+   lightningLayer_.reset();
 
    // Update custom layer list from model
    types::LayerVector customLayers = model::LayerModel::Instance()->GetLayers();
@@ -1795,11 +1809,19 @@ void MapWidgetImpl::AddLayer(types::LayerType        type,
          break;
       }
    }
+
+   AddLightningLayer("");
 }
 
 void MapWidgetImpl::AddPlacefileLayer(const std::string& placefileName,
                                       const std::string& before)
 {
+   if (manager::LightningManager::IsLightningPlacefile(placefileName))
+   {
+      AddLightningLayer(before);
+      return;
+   }
+
    std::shared_ptr<PlacefileLayer> placefileLayer =
       std::make_shared<PlacefileLayer>(glContext_, placefileName);
    placefileLayers_.push_back(placefileLayer);
@@ -1812,10 +1834,32 @@ void MapWidgetImpl::AddPlacefileLayer(const std::string& placefileName,
            static_cast<void (QWidget::*)()>(&QWidget::update));
 }
 
+void MapWidgetImpl::AddLightningLayer(const std::string& before)
+{
+   if (lightningLayer_ != nullptr)
+   {
+      return;
+   }
+
+   lightningLayer_ = std::make_shared<LightningLayer>(glContext_);
+   AddLayer(GetLightningLayerName(), lightningLayer_, before);
+
+   connect(lightningLayer_.get(),
+           &LightningLayer::DataReloaded,
+           widget_,
+           static_cast<void (QWidget::*)()>(&QWidget::update),
+           Qt::QueuedConnection);
+}
+
 std::string
 MapWidgetImpl::GetPlacefileLayerName(const std::string& placefileName)
 {
    return types::GetLayerName(types::LayerType::Placefile, placefileName);
+}
+
+std::string MapWidgetImpl::GetLightningLayerName()
+{
+   return "lightning";
 }
 
 void MapWidgetImpl::AddLayer(const std::string&                   id,
@@ -2913,6 +2957,31 @@ void MapWidgetImpl::RadarProductViewConnect()
                   {radarSite->latitude(), radarSite->longitude()});
             }
 
+            bool useRadarScanRange = false;
+
+            if (radarProductView->GetRadarProductGroup() ==
+                common::RadarProductGroup::Level2)
+            {
+               useRadarScanRange =
+                  common::GetLevel2Product(
+                     radarProductView->GetRadarProductName()) ==
+                  common::Level2Product::Reflectivity;
+            }
+            else if (radarProductView->GetRadarProductGroup() ==
+                     common::RadarProductGroup::Level3)
+            {
+               useRadarScanRange =
+                  common::GetLevel3CategoryByProduct(
+                     common::GetLevel3ProductByAwipsId(
+                        radarProductView->GetRadarProductName())) ==
+                  common::Level3ProductCategory::Reflectivity;
+            }
+
+            lightningManager_->SetRadarScanRange(
+               useRadarScanRange ?
+                  std::optional<float> {radarProductView->range()} :
+                  std::nullopt);
+
             widget_->update();
             Q_EMIT widget_->RadarSweepUpdated();
          },
@@ -3064,6 +3133,8 @@ void MapWidgetImpl::SetRadarSite(const std::string& radarSite,
                                  bool               checkProductAvailability)
 {
    // Set the radar site in the context
+   context_->set_radar_site(config::RadarSite::Get(radarSite));
+   lightningManager_->SetRadarSite(context_->radar_site());
    const std::string canonicalRadarSite =
       common::GetCanonicalRadarId(radarSite);
    const auto newRadarSite = config::RadarSite::Get(canonicalRadarSite);
@@ -3180,11 +3251,12 @@ bool MapWidgetImpl::UpdateStoredMapParameters()
 
    bool changed = false;
 
-   double newLatitude  = map_->latitude();
-   double newLongitude = map_->longitude();
-   double newZoom      = map_->zoom();
-   double newBearing   = map_->bearing();
-   double newPitch     = map_->pitch();
+   const double newLatitude  = map_->latitude();
+   const double newLongitude = map_->longitude();
+   const double newZoom      = map_->zoom();
+   const double newBearing   = map_->bearing();
+   const double newPitch     = map_->pitch();
+   const bool   zoomChanged  = prevZoom_ != newZoom;
 
    if (prevLatitude_ != newLatitude ||   //
        prevLongitude_ != newLongitude || //
@@ -3197,6 +3269,11 @@ bool MapWidgetImpl::UpdateStoredMapParameters()
       prevZoom_      = newZoom;
       prevBearing_   = newBearing;
       prevPitch_     = newPitch;
+
+      if (zoomChanged)
+      {
+         lightningManager_->NotifyMapZoom(newZoom);
+      }
 
       changed = true;
    }

@@ -6,6 +6,7 @@
 #include <scwx/qt/types/imgui_font.hpp>
 
 #include <istream>
+#include <optional>
 #include <ostream>
 
 #include <QObject>
