@@ -1,10 +1,10 @@
-# Supercell Wx Roles
+# TorDar Roles
 
 This project accepts contributions from multiple contributors. Contributors may propose changes, open issues, submit pull requests, review code, and participate in discussion.
 
 ## Approver
 
-Dan Paulat is the sole approver for this project.
+TornadoRTX is the sole approver for this project.
 
 Only the approver may accept, reject, or require changes to any proposed contribution. Approval is not automatic, and all changes remain subject to the approver's final judgment.
 

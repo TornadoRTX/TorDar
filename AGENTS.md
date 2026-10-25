@@ -1,6 +1,6 @@
-# Supercell Wx AI Agent Instructions
+# TorDar AI Agent Instructions
 
-Supercell Wx is a cross-platform C++20/Qt6 application for visualizing live and archived NEXRAD weather radar data. This guide helps AI agents understand the codebase architecture and development workflow.
+TorDar is a new cross-platform C++20/Qt6 application for visualizing live and archived NEXRAD weather radar data that is currently being worked on. This guide helps AI agents understand the codebase architecture and development workflow.
 
 ## Project Architecture
 
