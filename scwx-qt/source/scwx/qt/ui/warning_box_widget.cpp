@@ -247,9 +247,11 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    LoadFontFamily(":/res/fonts/AlegreyaSans-Black.ttf", "AlegreyaSans-Black");
 
    setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);
-   setAttribute(Qt::WA_TranslucentBackground, false);
+   // Allow the themed panel gradient to blend with the map underneath, which
+   // gives the warning panel its frosted-glass surface.
+   setAttribute(Qt::WA_TranslucentBackground, true);
    setAttribute(Qt::WA_StyledBackground, true);
-   setAutoFillBackground(true);
+   setAutoFillBackground(false);
 
    ui->warningTypeLabel->setTextInteractionFlags(Qt::NoTextInteraction);
    ui->warningTypeLabel->setWordWrap(true);
@@ -1076,12 +1078,12 @@ void WarningBoxWidgetImpl::ApplyTheme(
          "cx:1.0, cy:0.0, radius:0.88, fx:1.0, fy:0.0, "
          "stop:0 rgba(" +
          cornerGlowColor +
-         ", 250), "
-         "stop:0.25 rgba(43, 17, 32, 255), "
-         "stop:0.38 rgba(42, 17, 32, 255), "
-         "stop:0.50 rgba(41, 17, 32, 255), "
-         "stop:0.75 rgba(30, 12, 30, 255), "
-         "stop:1 rgba(0, 2, 26, 255));";
+         ", 235), "
+         "stop:0.25 rgba(43, 17, 32, 232), "
+         "stop:0.38 rgba(42, 17, 32, 228), "
+         "stop:0.50 rgba(41, 17, 32, 224), "
+         "stop:0.75 rgba(30, 12, 30, 218), "
+         "stop:1 rgba(0, 2, 26, 214));";
    }
    else if (isSevere)
    {
@@ -1090,14 +1092,14 @@ void WarningBoxWidgetImpl::ApplyTheme(
          "cx:1.0, cy:0.0, radius:0.88, fx:1.0, fy:0.0, "
          "stop:0 rgba(" +
          cornerGlowColor +
-         ", 250), "
-         "stop:0.25 rgba(47, 41, 38, 255), "
+         ", 235), "
+         "stop:0.25 rgba(47, 41, 38, 232), "
          "stop:0.33 rgba(" +
          cornerGlowColor +
-         ", 250), "
-         "stop:0.50 rgba(37, 33, 36, 255), "
-         "stop:0.75 rgba(28, 26, 33, 255), "
-         "stop:1 rgba(0, 2, 26, 255));";
+         ", 235), "
+         "stop:0.50 rgba(37, 33, 36, 224), "
+         "stop:0.75 rgba(28, 26, 33, 218), "
+         "stop:1 rgba(0, 2, 26, 214));";
    }
    else if (isPdsOrEmergencyTornado)
    {
@@ -1106,17 +1108,17 @@ void WarningBoxWidgetImpl::ApplyTheme(
          "cx:1.0, cy:0.0, radius:0.88, fx:1.0, fy:0.0, "
          "stop:0 rgba(" +
          cornerGlowBlend +
-         ", 255), "
+         ", 238), "
          "stop:0.20 rgba(" +
          transitionGlowBlend +
-         ", 255), "
+         ", 232), "
          "stop:0.38 rgba(" +
          transitionGlowBlend +
-         ", 255), "
-         "stop:0.54 rgba(38, 20, 33, 255), "
-         "stop:0.66 rgba(0, 2, 26, 255), "
-         "stop:0.76 rgba(0, 2, 26, 255), "
-         "stop:1 rgba(0, 2, 26, 255));";
+         ", 226), "
+         "stop:0.54 rgba(38, 20, 33, 224), "
+         "stop:0.66 rgba(0, 2, 26, 218), "
+         "stop:0.76 rgba(0, 2, 26, 216), "
+         "stop:1 rgba(0, 2, 26, 214));";
    }
    else
    {
@@ -1125,19 +1127,19 @@ void WarningBoxWidgetImpl::ApplyTheme(
          "cx:1.0, cy:0.0, radius:0.88, fx:1.0, fy:0.0, "
          "stop:0 rgba(" +
          cornerGlowColor +
-         ", 255), "
+         ", 238), "
          "stop:0.20 rgba(" +
          transitionGlowColor +
-         ", 252), "
+         ", 232), "
          "stop:0.38 rgba(" +
          transitionGlowColor +
-         ", 240), "
-         "stop:0.54 rgba(38, 20, 33, 255), "
-         "stop:0.66 rgba(0, 2, 26, 255), "
-         "stop:0.76 rgba(0, 2, 26, 255), "
-         "stop:1 rgba(0, 2, 26, 255));";
+         ", 226), "
+         "stop:0.54 rgba(38, 20, 33, 224), "
+         "stop:0.66 rgba(0, 2, 26, 218), "
+         "stop:0.76 rgba(0, 2, 26, 216), "
+         "stop:1 rgba(0, 2, 26, 214));";
    }
-   styleSheet += "  border: 1px solid rgba(" + accentColor + ", 220);";
+   styleSheet += "  border: 1px solid rgba(" + accentColor + ", 235);";
    styleSheet += "  border-radius: 0px;";
    styleSheet += "}";
    styleSheet += "QWidget#WarningBoxWidget QFrame#cornerTL {";
