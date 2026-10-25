@@ -29,9 +29,9 @@ public:
    AwsLevel2ChunksDataProvider&
    operator=(const AwsLevel2ChunksDataProvider&) = delete;
 
-   AwsLevel2ChunksDataProvider(AwsLevel2ChunksDataProvider&&) = delete;
+   AwsLevel2ChunksDataProvider(AwsLevel2ChunksDataProvider&&) noexcept;
    AwsLevel2ChunksDataProvider&
-   operator=(AwsLevel2ChunksDataProvider&&) = delete;
+   operator=(AwsLevel2ChunksDataProvider&&) noexcept;
 
    [[nodiscard]] std::chrono::system_clock::time_point
    GetTimePointByKey(const std::string& key) const override;
@@ -46,9 +46,8 @@ public:
    std::string FindLatestKey() override;
    std::chrono::system_clock::time_point FindLatestTime() override;
    std::vector<std::chrono::system_clock::time_point>
-   GetTimePointsByDate(std::chrono::system_clock::time_point date,
-                       bool                                  update) override;
-   [[nodiscard]] bool IsDateArchiveAvailable() const override;
+        GetTimePointsByDate(std::chrono::system_clock::time_point date,
+                            bool                                  update) override;
    bool IsDateCached(std::chrono::system_clock::time_point date) override;
    std::tuple<bool, size_t, size_t>
    ListObjects(std::chrono::system_clock::time_point date) override;
@@ -63,7 +62,7 @@ public:
 
    std::optional<float> GetCurrentElevation();
 
-   void AddLevel2DataProvider(
+   void SetLevel2DataProvider(
       const std::shared_ptr<AwsLevel2DataProvider>& provider);
 
    /**

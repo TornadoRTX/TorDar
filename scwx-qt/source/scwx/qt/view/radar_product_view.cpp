@@ -50,8 +50,6 @@ public:
    }
    ~RadarProductViewImpl() {}
 
-   void DisconnectProductSettings() { connection_.disconnect(); }
-
    RadarProductView* self_;
 
    bool       initialized_;
@@ -140,11 +138,6 @@ std::mutex& RadarProductView::sweep_mutex()
 void RadarProductView::set_load_status(types::RadarProductLoadStatus loadStatus)
 {
    p->loadStatus_ = loadStatus;
-}
-
-void RadarProductView::DisconnectProductSettings()
-{
-   p->DisconnectProductSettings();
 }
 
 void RadarProductView::set_radar_product_manager(

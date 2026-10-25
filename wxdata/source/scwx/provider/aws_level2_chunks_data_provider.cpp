@@ -90,6 +90,7 @@ public:
        lastTimeListed_ {},
        // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers) about average
        updatePeriod_ {7},
+       level2DataProvider_ {},
        self_ {self}
    {
       // Disable HTTP request for region
@@ -137,8 +138,7 @@ public:
 
    std::chrono::seconds updatePeriod_;
 
-   std::vector<std::weak_ptr<AwsLevel2DataProvider>> level2DataProviders_ {};
-   std::weak_ptr<AwsLevel2DataProvider>              lastLevel2DataProvider_ {};
+   std::weak_ptr<AwsLevel2DataProvider> level2DataProvider_;
 
    AwsLevel2ChunksDataProvider* self_;
 
@@ -155,7 +155,6 @@ AwsLevel2ChunksDataProvider::AwsLevel2ChunksDataProvider(
    const std::string& radarSite,
    const std::string& bucketName,
    const std::string& region) :
-    NexradDataProvider(radarSite),
     p(std::make_unique<Impl>(this, radarSite, bucketName, region))
 {
 }
@@ -296,12 +295,6 @@ AwsLevel2ChunksDataProvider::GetTimePointsByDate(
    std::chrono::system_clock::time_point /* date */, bool /* update */)
 {
    return {};
-}
-
-bool AwsLevel2ChunksDataProvider::IsDateArchiveAvailable() const
-{
-   // No archive, default to false
-   return false;
 }
 
 bool AwsLevel2ChunksDataProvider::IsDateCached(
@@ -720,35 +713,17 @@ std::pair<size_t, size_t> AwsLevel2ChunksDataProvider::Refresh()
                }
                else
                {
-                  for (const auto& level2DataProviderPtr :
-                       p->level2DataProviders_)
+                  auto level2DataProvider = p->level2DataProvider_.lock();
+                  if (level2DataProvider != nullptr)
                   {
-                     const auto level2DataProvider =
-                        level2DataProviderPtr.lock();
-                     if (level2DataProvider != nullptr)
+                     level2DataProvider->ListObjects(p->lastScan_.time_);
+                     p->lastScan_.nexradFile_ =
+                        std::dynamic_pointer_cast<wsr88d::Ar2vFile>(
+                           level2DataProvider->LoadObjectByTime(
+                              p->lastScan_.time_));
+                     if (p->lastScan_.nexradFile_ != nullptr)
                      {
-                        level2DataProvider->ListObjects(p->lastScan_.time_);
-                        p->lastScan_.nexradFile_ =
-                           std::dynamic_pointer_cast<wsr88d::Ar2vFile>(
-                              level2DataProvider->LoadObjectByTime(
-                                 p->lastScan_.time_));
-
-                        // If we found a file, set the last level 2 data
-                        // provider and break
-                        if (p->lastScan_.nexradFile_ != nullptr)
-                        {
-                           p->lastScan_.hasAllFiles_  = true;
-                           p->lastLevel2DataProvider_ = level2DataProviderPtr;
-                           break;
-                        }
-
-                        // If we have already successfully loaded a file from
-                        // this provider, don't proceed to the next provider
-                        if (p->lastLevel2DataProvider_.lock() ==
-                            level2DataProvider)
-                        {
-                           break;
-                        }
+                        p->lastScan_.hasAllFiles_ = true;
                      }
                   }
                   // Fall back to chunks if files did not load
@@ -780,6 +755,11 @@ std::vector<std::string> AwsLevel2ChunksDataProvider::GetAvailableProducts()
 {
    return {};
 }
+
+AwsLevel2ChunksDataProvider::AwsLevel2ChunksDataProvider(
+   AwsLevel2ChunksDataProvider&&) noexcept = default;
+AwsLevel2ChunksDataProvider& AwsLevel2ChunksDataProvider::operator=(
+   AwsLevel2ChunksDataProvider&&) noexcept = default;
 
 std::optional<float> AwsLevel2ChunksDataProvider::GetCurrentElevation()
 {
@@ -814,10 +794,10 @@ std::optional<float> AwsLevel2ChunksDataProvider::GetCurrentElevation()
    return {};
 }
 
-void AwsLevel2ChunksDataProvider::AddLevel2DataProvider(
+void AwsLevel2ChunksDataProvider::SetLevel2DataProvider(
    const std::shared_ptr<AwsLevel2DataProvider>& provider)
 {
-   p->level2DataProviders_.push_back(provider);
+   p->level2DataProvider_ = provider;
 }
 
 void AwsLevel2ChunksDataProvider::Shutdown() noexcept

@@ -9,6 +9,8 @@
 
 namespace scwx::qt::ui
 {
+namespace
+{
 
 TEST(ThresholdValueUtility, SliderToPhysicalAtMin)
 {
@@ -58,4 +60,5 @@ TEST(ThresholdLineEditSync, InvalidTextDoesNotMatch)
       QStringLiteral(".."), 0, -32.0f, 94.5f));
 }
 
+} // namespace
 } // namespace scwx::qt::ui

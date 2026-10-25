@@ -2,7 +2,6 @@
 #include <scwx/qt/manager/radar_product_manager.hpp>
 #include <scwx/qt/settings/general_settings.hpp>
 #include <scwx/qt/util/queue_counter.hpp>
-#include <scwx/common/sites.hpp>
 #include <scwx/util/logger.hpp>
 #include <scwx/util/map.hpp>
 #include <scwx/util/time.hpp>
@@ -123,11 +122,6 @@ std::chrono::system_clock::time_point TimelineManager::GetSelectedTime() const
    return p->selectedTime_;
 }
 
-types::MapTime TimelineManager::GetViewType() const
-{
-   return p->viewType_;
-}
-
 void TimelineManager::SetMapCount(std::size_t mapCount)
 {
    p->mapCount_ = mapCount;
@@ -135,18 +129,15 @@ void TimelineManager::SetMapCount(std::size_t mapCount)
 
 void TimelineManager::SetRadarSite(const std::string& radarSite)
 {
-   const std::string canonicalRadarSite =
-      common::GetCanonicalRadarId(radarSite);
-
-   if (p->radarSite_ == canonicalRadarSite)
+   if (p->radarSite_ == radarSite)
    {
       // No action needed
       return;
    }
 
-   logger_->debug("SetRadarSite: {}", canonicalRadarSite);
+   logger_->debug("SetRadarSite: {}", radarSite);
 
-   p->radarSite_ = canonicalRadarSite;
+   p->radarSite_ = radarSite;
 
    if (p->viewType_ == types::MapTime::Live)
    {

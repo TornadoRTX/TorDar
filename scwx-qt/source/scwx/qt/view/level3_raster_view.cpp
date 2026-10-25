@@ -27,12 +27,7 @@ public:
        latitude_ {}, longitude_ {}, range_ {}, vcp_ {}, sweepTime_ {}
    {
    }
-   ~Level3RasterViewImpl() = default;
-
-   Level3RasterViewImpl(const Level3RasterViewImpl&)                = delete;
-   Level3RasterViewImpl& operator=(const Level3RasterViewImpl&)     = delete;
-   Level3RasterViewImpl(Level3RasterViewImpl&&) noexcept            = delete;
-   Level3RasterViewImpl& operator=(Level3RasterViewImpl&&) noexcept = delete;
+   ~Level3RasterViewImpl() { threadPool_.join(); };
 
    [[nodiscard]] inline std::uint8_t
    RemapDataMoment(std::uint8_t dataMoment) const;
@@ -67,14 +62,7 @@ Level3RasterView::Level3RasterView(
 
 Level3RasterView::~Level3RasterView()
 {
-   // Stop callbacks that can post ComputeSweep, then join while Impl is still
-   // alive. Do not hold sweep_mutex across join: a worker blocked on that lock
-   // would deadlock.
-   DisconnectProductSettings();
-   Level3RasterView::DisconnectRadarProductManager();
-
-   p->threadPool_.stop();
-   p->threadPool_.join();
+   std::unique_lock sweepLock {sweep_mutex()};
 }
 
 boost::asio::thread_pool& Level3RasterView::thread_pool()

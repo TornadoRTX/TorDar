@@ -15,7 +15,6 @@ static const std::unordered_map<std::string, DataBlockType> strToDataBlock_ {
    {"REF", DataBlockType::MomentRef},
    {"VEL", DataBlockType::MomentVel},
    {"SW ", DataBlockType::MomentSw},
-   {std::string {"SW\0", 3}, DataBlockType::MomentSw},
    {"ZDR", DataBlockType::MomentZdr},
    {"PHI", DataBlockType::MomentPhi},
    {"RHO", DataBlockType::MomentRho},

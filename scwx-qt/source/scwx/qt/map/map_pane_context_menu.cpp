@@ -122,16 +122,27 @@ QString MapPaneContextMenuBaseStyle(QLatin1String menuPadding,
                       "QMenu#MapPaneContextMenu::indicator {"
                       "  width: 16px; height: 16px; left: 8px;"
                       "}")
-                      .arg(QString {menuPadding});
+                      .arg(menuPadding);
    if (clearInteriorChildBackgrounds)
    {
-      // Title QLabel only; transparent on all QWidget children clears row gaps.
       sheet += QStringLiteral(
-         "QMenu#MapPaneContextMenu QLabel#MapPaneContextMenuTitle {"
+         "QMenu#MapPaneContextMenu QWidget {"
          "  background: transparent;"
          "}");
    }
    return sheet;
+}
+
+QString MapPaneContextMenuStyleSheet()
+{
+   return MapPaneContextMenuBaseStyle(QLatin1String {"14px 12px 12px 12px"},
+                                      true);
+}
+
+QString MapPaneContextSubMenuStyleSheet()
+{
+   return MapPaneContextMenuBaseStyle(QLatin1String {"8px 10px 8px 10px"},
+                                      false);
 }
 
 void StyleMapPaneContextSubmenu(QMenu* m)
@@ -144,8 +155,7 @@ void StyleMapPaneContextSubmenu(QMenu* m)
    m->setAttribute(Qt::WA_TranslucentBackground, true);
    m->setAttribute(Qt::WA_StyledBackground, true);
    m->setMinimumWidth(0);
-   m->setStyleSheet(
-      MapPaneContextMenuBaseStyle(QLatin1String {"8px 10px 8px 10px"}, false));
+   m->setStyleSheet(MapPaneContextSubMenuStyleSheet());
    static constexpr const char* kAlignInstalled = "_scwx_alignInstalled";
    if (!m->property(kAlignInstalled).toBool())
    {
@@ -256,8 +266,7 @@ void RunMapPaneContextMenu(const MapPaneContextMenuConfig& cfg,
    menu.setAttribute(Qt::WA_TranslucentBackground);
    menu.setAttribute(Qt::WA_StyledBackground, true);
    menu.setMinimumWidth(0);
-   menu.setStyleSheet(
-      MapPaneContextMenuBaseStyle(QLatin1String {"14px 12px 12px 12px"}, true));
+   menu.setStyleSheet(MapPaneContextMenuStyleSheet());
 
    // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
    auto* const titleLabel = new QLabel(cfg.title_map, &menu);
@@ -279,58 +288,6 @@ void RunMapPaneContextMenu(const MapPaneContextMenuConfig& cfg,
    titleAction->setDefaultWidget(titleLabel);
    menu.addAction(titleAction);
    menu.addSeparator();
-
-   if (!cfg.text_draw.isEmpty() && cfg.set_draw_toolbar_open)
-   {
-      QAction* const drawAction = menu.addAction(cfg.text_draw);
-      const auto     isOpen     = cfg.is_draw_toolbar_open;
-      if (isOpen)
-      {
-         drawAction->setCheckable(true);
-         {
-            const QSignalBlocker blocker {drawAction};
-            drawAction->setChecked(isOpen(mapIndex));
-         }
-         QObject::connect(
-            drawAction,
-            &QAction::toggled,
-            receiver,
-            [receiver, mapIndex, onDraw = cfg.set_draw_toolbar_open](
-               bool checked)
-            {
-               QTimer::singleShot(0,
-                                  receiver,
-                                  [receiver, mapIndex, onDraw, checked]()
-                                  {
-                                     if (receiver && onDraw)
-                                     {
-                                        onDraw(mapIndex, checked);
-                                     }
-                                  });
-            });
-      }
-      else
-      {
-         QObject::connect(
-            drawAction,
-            &QAction::triggered,
-            receiver,
-            [receiver, mapIndex, onOpen = cfg.set_draw_toolbar_open](
-               bool /* checked */)
-            {
-               QTimer::singleShot(0,
-                                  receiver,
-                                  [receiver, mapIndex, onOpen]()
-                                  {
-                                     if (receiver && onOpen)
-                                     {
-                                        onOpen(mapIndex, true);
-                                     }
-                                  });
-            });
-      }
-      menu.addSeparator();
-   }
 
    if (mapIndex < cfg.popped_out->size() && !cfg.popped_out->at(mapIndex) &&
        onPop)

@@ -60,6 +60,7 @@ bool Message::ValidateMessage(std::istream& is, size_t bytesRead) const
          logger_->warn("Message contents larger than size: {} > {} bytes",
                        bytesRead,
                        dataSize);
+         messageValid = false;
       }
    }
 

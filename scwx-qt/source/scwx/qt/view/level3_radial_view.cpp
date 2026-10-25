@@ -28,12 +28,7 @@ class Level3RadialView::Impl
 {
 public:
    explicit Impl(Level3RadialView* self) : self_ {self} {}
-   ~Impl() = default;
-
-   Impl(const Impl&)                = delete;
-   Impl& operator=(const Impl&)     = delete;
-   Impl(Impl&&) noexcept            = delete;
-   Impl& operator=(Impl&&) noexcept = delete;
+   ~Impl() { threadPool_.join(); };
 
    void ComputeCoordinates(
       const std::shared_ptr<wsr88d::rpg::GenericRadialDataPacket>& radialData,
@@ -77,14 +72,7 @@ Level3RadialView::Level3RadialView(
 
 Level3RadialView::~Level3RadialView()
 {
-   // Stop callbacks that can post ComputeSweep, then join while Impl is still
-   // alive. Do not hold sweep_mutex across join: a worker blocked on that lock
-   // would deadlock.
-   DisconnectProductSettings();
-   Level3RadialView::DisconnectRadarProductManager();
-
-   p->threadPool_.stop();
-   p->threadPool_.join();
+   std::unique_lock sweepLock {sweep_mutex()};
 }
 
 boost::asio::thread_pool& Level3RadialView::thread_pool()
@@ -280,9 +268,12 @@ void Level3RadialView::ComputeSweep()
       return;
    }
 
-   common::RadialSize radialSize = common::RadialSize::NonStandard;
-
-   if (radarProductManager->radar_type() == types::RadarType::WSR88D)
+   common::RadialSize radialSize;
+   if (radarProductManager->is_tdwr())
+   {
+      radialSize = common::RadialSize::NonStandard;
+   }
+   else
    {
       if (radials == common::MAX_0_5_DEGREE_RADIALS)
       {

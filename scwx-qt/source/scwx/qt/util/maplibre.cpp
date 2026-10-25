@@ -1,7 +1,6 @@
 #include <scwx/qt/util/maplibre.hpp>
 
 #include <QFile>
-#include <QMapLibre/Map>
 #include <QMapLibre/Utils>
 #include <QUrl>
 #include <QUrlQuery>
@@ -24,20 +23,6 @@ GetMapDistance(const QMapLibre::CustomLayerRenderParameters& params)
    return units::length::meters<double>(
       QMapLibre::metersPerPixelAtLatitude(params.latitude, params.zoom) *
       (params.width + params.height) / 2.0);
-}
-
-units::length::meters<double>
-MetersPerPixelAt(const std::shared_ptr<QMapLibre::Map>& map,
-                 const QPointF&                         widgetPixel)
-{
-   if (map == nullptr)
-   {
-      return units::length::meters<double> {0.0};
-   }
-
-   const auto coord = map->coordinateForPixel(widgetPixel);
-   return units::length::meters<double> {
-      QMapLibre::metersPerPixelAtLatitude(coord.first, map->zoom())};
 }
 
 glm::mat4 GetMapMatrix(const QMapLibre::CustomLayerRenderParameters& params)

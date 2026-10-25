@@ -3,6 +3,7 @@
 #include <scwx/qt/manager/resource_manager.hpp>
 #include <scwx/qt/main/application.hpp>
 #include <scwx/qt/main/application_paths.hpp>
+#include <scwx/qt/settings/general_settings.hpp>
 #include <scwx/qt/util/network.hpp>
 #include <scwx/gr/placefile.hpp>
 #include <scwx/network/cpr.hpp>
@@ -10,7 +11,12 @@
 #include <scwx/util/logger.hpp>
 
 #include <atomic>
+#include <array>
+#include <cstdint>
+#include <cmath>
+#include <optional>
 #include <shared_mutex>
+#include <type_traits>
 #include <vector>
 
 #include <QDir>
@@ -27,24 +33,610 @@
 #include <fmt/chrono.h>
 #include <fmt/format.h>
 
+#if SCWX_HAS_NETCDF
+#   include <netcdf.h>
+#endif
+
+#include <fstream>
+#include <iomanip>
+#include <regex>
+#include <algorithm>
 #include <filesystem>
 #include <sstream>
+#include <tuple>
+#include <unordered_set>
+
+#include <scwx/qt/util/geographic_lib.hpp>
 
 namespace scwx::qt::manager
-{
-
-namespace
 {
 
 static const std::string logPrefix_ = "scwx::qt::manager::placefile_manager";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 
-static const std::string kEnabledName_     = "enabled";
-static const std::string kThresholdedName_ = "thresholded";
-static const std::string kTitleName_       = "title";
-static const std::string kNameName_        = "name";
+static const std::string kEnabledName_          = "enabled";
+static const std::string kThresholdedName_      = "thresholded";
+static const std::string kTitleName_            = "title";
+static const std::string kNameName_             = "name";
+static const std::string kLegacyLightningTitle_ = "Legacy Lightning";
+static const std::string kLegacyLightningUrl_ =
+   "https://www.freelightning.com/hub/"
+   "placefile.php?request=10213|10454|138624046|10463|10369|10644|0|84764|1";
+static const std::string kGoesGlmLightningTitle_ = "GOES GLM Lightning (AWS)";
+// Built-in placefile identifier (not used for S3 requests).
+static const std::string kGoesGlmLightningUrl_ =
+   "https://noaa-goes19.s3.amazonaws.com/index.html";
+static const std::string kGoesGlmLegacyLightningUrl_ =
+   "https://noaa-goes16.s3.amazonaws.com/index.html";
+// GOES-East (primary); GOES-West is used only when GOES-19 has no recent data.
+static const std::string kGoesGlmPrimaryBucketUrl_ =
+   "https://noaa-goes19.s3.amazonaws.com";
+static const std::string kGoesGlmFallbackBucketUrl_ =
+   "https://noaa-goes18.s3.amazonaws.com";
+static constexpr std::chrono::minutes kGoesGlmRetention_ {15};
+static constexpr int                  kTmYearEpochOffset_ {1900};
+static constexpr std::size_t          kFileStartYearGroup_ {1};
+static constexpr std::size_t          kFileStartDayGroup_ {2};
+static constexpr std::size_t          kFileStartHourGroup_ {3};
+static constexpr std::size_t          kFileStartMinuteGroup_ {4};
+static constexpr std::size_t          kFileStartSecondGroup_ {5};
+static constexpr int                  kHoursPerDay_ {24};
+static constexpr std::size_t          kMaxGlmFilesToDownload_ {20};
+static constexpr std::size_t          kExpectedLightningPoints_ {5000};
+static constexpr std::uint32_t        kOverlapHashSeed_ {0x9e3779b9u};
+static constexpr std::uint32_t        kOverlapHashLeftShift_ {6u};
+static constexpr std::uint32_t        kOverlapHashRightShift_ {2u};
 
-} // namespace
+struct GlmLightningPoint
+{
+   double                                latitude_ {};
+   double                                longitude_ {};
+   std::chrono::system_clock::time_point time_ {};
+};
+
+struct GlmLightningPointKey
+{
+   std::int64_t latitude_ {};
+   std::int64_t longitude_ {};
+
+   bool operator==(const GlmLightningPointKey&) const = default;
+};
+
+struct GlmLightningPointKeyHash
+{
+   std::size_t operator()(const GlmLightningPointKey& key) const noexcept
+   {
+      const std::size_t latHash = std::hash<std::int64_t> {}(key.latitude_);
+      const std::size_t lonHash = std::hash<std::int64_t> {}(key.longitude_);
+      return latHash ^ (lonHash + kOverlapHashSeed_ +
+                        (latHash << kOverlapHashLeftShift_) +
+                        (latHash >> kOverlapHashRightShift_));
+   }
+};
+
+static GlmLightningPointKey MakeGlmLightningPointKey(double latitude,
+                                                     double longitude)
+{
+   static constexpr double kGlmCoordinateQuantization_ {100000.0};
+
+   return {static_cast<std::int64_t>(
+              std::llround(latitude * kGlmCoordinateQuantization_)),
+           static_cast<std::int64_t>(
+              std::llround(longitude * kGlmCoordinateQuantization_))};
+}
+
+static std::chrono::system_clock::time_point UtcNowMinute()
+{
+   const auto now = std::chrono::system_clock::now();
+   return std::chrono::time_point_cast<std::chrono::minutes>(now);
+}
+
+static std::chrono::system_clock::time_point UtcTmToTimePoint(std::tm tm)
+{
+#if defined(_WIN32)
+   const auto epoch = _mkgmtime(&tm);
+#else
+   const auto epoch = timegm(&tm);
+#endif
+   return std::chrono::system_clock::from_time_t(epoch);
+}
+
+static bool ParseGlmFileStartTime(const std::string& filename,
+                                  std::chrono::system_clock::time_point* t)
+{
+   static const std::regex kStartTimeRegex {
+      R"(_s(\d{4})(\d{3})(\d{2})(\d{2})(\d{2}))"};
+   std::smatch match {};
+   if (!std::regex_search(filename, match, kStartTimeRegex))
+   {
+      return false;
+   }
+
+   std::tm tm {};
+   tm.tm_year =
+      std::stoi(match[kFileStartYearGroup_].str()) - kTmYearEpochOffset_;
+   tm.tm_mon  = 0;
+   tm.tm_mday = 1;
+   tm.tm_hour = std::stoi(match[kFileStartHourGroup_].str());
+   tm.tm_min  = std::stoi(match[kFileStartMinuteGroup_].str());
+   tm.tm_sec  = std::stoi(match[kFileStartSecondGroup_].str());
+
+   const auto jan1         = UtcTmToTimePoint(tm);
+   const int  dayOfYearOne = std::stoi(match[kFileStartDayGroup_].str());
+   *t = jan1 + std::chrono::hours(kHoursPerDay_ * (dayOfYearOne - 1));
+   return true;
+}
+
+static std::vector<std::string> ParseS3Keys(const std::string& xmlBody)
+{
+   std::vector<std::string> keys {};
+   static const std::regex  kKeyRegex {R"(<Key>([^<]+)</Key>)"};
+
+   auto begin = std::sregex_iterator(xmlBody.begin(), xmlBody.end(), kKeyRegex);
+   auto end   = std::sregex_iterator();
+
+   for (auto it = begin; it != end; ++it)
+   {
+      keys.push_back((*it)[1].str());
+   }
+
+   return keys;
+}
+
+static std::vector<std::string>
+FetchGlmKeysFromBucket(const std::string&                           bucketUrl,
+                       const std::chrono::system_clock::time_point& nowUtc)
+{
+   std::vector<std::string> keys {};
+   const auto               tt = std::chrono::system_clock::to_time_t(nowUtc);
+   std::tm                  tmUtc {};
+#if defined(_WIN32)
+   gmtime_s(&tmUtc, &tt);
+#else
+   gmtime_r(&tt, &tmUtc);
+#endif
+
+   const int minCurrentHour = tmUtc.tm_min;
+   const int minRetention   = static_cast<int>(kGoesGlmRetention_.count());
+
+   for (int hourOffset = 0;
+        hourOffset >= (minCurrentHour < minRetention ? -1 : 0);
+        --hourOffset)
+   {
+      const auto hourTime = nowUtc + std::chrono::hours(hourOffset);
+      const auto hourTt   = std::chrono::system_clock::to_time_t(hourTime);
+      std::tm    hourTm {};
+#if defined(_WIN32)
+      gmtime_s(&hourTm, &hourTt);
+#else
+      gmtime_r(&hourTt, &hourTm);
+#endif
+
+      const std::string prefix =
+         fmt::format("GLM-L2-LCFA/{:04d}/{:03d}/{:02d}/",
+                     hourTm.tm_year + kTmYearEpochOffset_,
+                     hourTm.tm_yday + 1,
+                     hourTm.tm_hour);
+
+      auto response = cpr::Get(cpr::Url {bucketUrl},
+                               network::cpr::GetHeader(),
+                               cpr::Parameters {{"list-type", "2"},
+                                                {"max-keys", "1000"},
+                                                {"prefix", prefix}},
+                               network::cpr::GetDefaultTimeout(),
+                               network::cpr::GetDefaultConnectTimeout(),
+                               network::cpr::GetDefaultLowSpeed());
+
+      if (!cpr::status::is_success(response.status_code))
+      {
+         continue;
+      }
+
+      auto parsed = ParseS3Keys(response.text);
+      keys.insert(keys.end(), parsed.begin(), parsed.end());
+   }
+
+   return keys;
+}
+
+#if SCWX_HAS_NETCDF
+template<typename T>
+static bool ReadNetcdfVariable(int ncid, const char* name, std::vector<T>* out)
+{
+   int varid {};
+   if (nc_inq_varid(ncid, name, &varid) != NC_NOERR)
+   {
+      return false;
+   }
+
+   int ndims {};
+   if (nc_inq_varndims(ncid, varid, &ndims) != NC_NOERR || ndims < 1)
+   {
+      return false;
+   }
+
+   std::vector<int> dimIds(static_cast<std::size_t>(ndims), 0);
+   if (nc_inq_vardimid(ncid, varid, dimIds.data()) != NC_NOERR)
+   {
+      return false;
+   }
+
+   size_t count {1u};
+   for (int dimId : dimIds)
+   {
+      size_t dimLen {};
+      if (nc_inq_dimlen(ncid, dimId, &dimLen) != NC_NOERR || dimLen == 0u)
+      {
+         return false;
+      }
+      count *= dimLen;
+   }
+
+   out->resize(count);
+   if constexpr (std::is_same_v<T, float>)
+   {
+      return nc_get_var_float(ncid, varid, out->data()) == NC_NOERR;
+   }
+   else
+   {
+      return nc_get_var_double(ncid, varid, out->data()) == NC_NOERR;
+   }
+}
+
+static std::chrono::system_clock::time_point ReadCoverageStart(int ncid)
+{
+   std::array<char, 64> buffer {};
+   if (nc_get_att_text(ncid, NC_GLOBAL, "time_coverage_start", buffer.data()) ==
+       NC_NOERR)
+   {
+      std::tm            tm {};
+      std::string        coverageStart {buffer.data()};
+      std::istringstream ss {coverageStart};
+      ss >> std::get_time(&tm, "%Y-%m-%dT%H:%M:%SZ");
+      if (ss.fail())
+      {
+         ss.clear();
+         ss.str(coverageStart);
+         ss >> std::get_time(&tm, "%Y-%m-%dT%H:%M:%S");
+      }
+      if (!ss.fail())
+      {
+         return UtcTmToTimePoint(tm);
+      }
+   }
+
+   return UtcNowMinute();
+}
+#endif
+
+static std::vector<GlmLightningPoint>
+BuildGlmPointsFromFile(const std::filesystem::path& ncFile)
+{
+   std::vector<GlmLightningPoint> points {};
+
+#if SCWX_HAS_NETCDF
+   int ncid {};
+   if (nc_open(ncFile.string().c_str(), NC_NOWRITE, &ncid) != NC_NOERR)
+   {
+      return points;
+   }
+
+   std::vector<float> latitudes {};
+   std::vector<float> longitudes {};
+
+   const bool hasFlashCoords =
+      ReadNetcdfVariable(ncid, "flash_lat", &latitudes) &&
+      ReadNetcdfVariable(ncid, "flash_lon", &longitudes);
+   const bool hasGroupCoords =
+      !hasFlashCoords && ReadNetcdfVariable(ncid, "group_lat", &latitudes) &&
+      ReadNetcdfVariable(ncid, "group_lon", &longitudes);
+
+   std::vector<double> offsets {};
+   if (hasFlashCoords)
+   {
+      ReadNetcdfVariable(ncid, "flash_time_offset_of_first_event", &offsets);
+   }
+   else if (hasGroupCoords)
+   {
+      ReadNetcdfVariable(ncid, "group_time_offset", &offsets);
+   }
+
+   const auto baseTime = ReadCoverageStart(ncid);
+   nc_close(ncid);
+
+   size_t     count          = 0u;
+   const bool hasTimeOffsets = !offsets.empty();
+   if (hasTimeOffsets)
+   {
+      count = std::min(latitudes.size(),
+                       std::min(longitudes.size(), offsets.size()));
+   }
+   else
+   {
+      count = std::min(latitudes.size(), longitudes.size());
+      logger_->warn(
+         "GLM file missing expected time offset variable, using file "
+         "coverage start time for all points: {}",
+         ncFile.string());
+   }
+   points.reserve(count);
+
+   for (size_t i = 0; i < count; ++i)
+   {
+      points.push_back(
+         {latitudes[i],
+          longitudes[i],
+          hasTimeOffsets ?
+             baseTime + std::chrono::duration_cast<std::chrono::seconds>(
+                           std::chrono::duration<double>(offsets[i])) :
+             baseTime});
+   }
+#else
+   (void) ncFile;
+   logger_->warn(
+      "GOES GLM support compiled without NetCDF; no GLM points can "
+      "be decoded");
+#endif
+
+   return points;
+}
+
+static void AppendGlmFileCandidates(
+   const std::string&                                              bucketUrl,
+   const std::chrono::system_clock::time_point&                    nowUtc,
+   const std::chrono::system_clock::time_point&                    cutoff,
+   std::vector<std::tuple<std::string,
+                          std::string,
+                          std::chrono::system_clock::time_point>>& candidates)
+{
+   for (const auto& key : FetchGlmKeysFromBucket(bucketUrl, nowUtc))
+   {
+      std::chrono::system_clock::time_point startTime {};
+      if (key.ends_with(".nc") && ParseGlmFileStartTime(key, &startTime) &&
+          startTime >= cutoff)
+      {
+         candidates.emplace_back(bucketUrl, key, startTime);
+      }
+   }
+}
+
+static std::shared_ptr<gr::Placefile>
+BuildGoesGlmPlacefile(const std::string&                        placefileName,
+                      const std::shared_ptr<config::RadarSite>& radarSite,
+                      const std::optional<float>&               radarRangeKm)
+{
+   std::ostringstream pf {};
+   pf << "Title: " << kGoesGlmLightningTitle_ << "\n";
+   pf << "RefreshSeconds: 30\n";
+   pf << "Threshold: 999\n";
+   pf << "IconFile: 1, 8, 8, 4, 4, "
+         "\"qrc:/res/icons/flaticon/lightning.svg\"\n";
+
+   const bool radarFilteringEnabled = radarSite != nullptr &&
+                                      radarRangeKm.has_value() &&
+                                      radarRangeKm.value() > 0.0f;
+   if (!radarFilteringEnabled)
+   {
+      logger_->debug("GOES GLM: waiting for radar scan range");
+      std::istringstream stream {pf.str()};
+      return gr::Placefile::Load(placefileName, stream);
+   }
+
+   const auto nowUtc = UtcNowMinute();
+   const auto cutoff = nowUtc - kGoesGlmRetention_;
+
+   std::vector<std::tuple<std::string,
+                          std::string,
+                          std::chrono::system_clock::time_point>>
+      candidates {};
+
+   AppendGlmFileCandidates(
+      kGoesGlmPrimaryBucketUrl_, nowUtc, cutoff, candidates);
+
+   if (candidates.empty())
+   {
+      logger_->info("GOES GLM: GOES-19 unavailable, falling back to GOES-18");
+      AppendGlmFileCandidates(
+         kGoesGlmFallbackBucketUrl_, nowUtc, cutoff, candidates);
+   }
+
+   if (candidates.empty())
+   {
+      logger_->warn("GOES GLM: no recent files found in the last {} minutes",
+                    kGoesGlmRetention_.count());
+   }
+
+   std::sort(candidates.begin(),
+             candidates.end(),
+             [](const auto& lhs, const auto& rhs)
+             { return std::get<2>(lhs) > std::get<2>(rhs); });
+
+   if (candidates.size() > kMaxGlmFilesToDownload_)
+   {
+      candidates.resize(kMaxGlmFilesToDownload_);
+   }
+
+   std::vector<GlmLightningPoint> points {};
+   points.reserve(kExpectedLightningPoints_);
+   const units::length::meters<double> radarRangeMeters =
+      radarFilteringEnabled ?
+         units::length::meters<double> {radarRangeKm.value() * 1000.0} :
+         units::length::meters<double> {0.0};
+
+   std::size_t skippedOutsideRadarRange {0u};
+   std::size_t decodedPointCount {0u};
+
+   for (const auto& [bucketUrl, key, fileStart] : candidates)
+   {
+      const std::string url      = fmt::format("{}/{}", bucketUrl, key);
+      auto              response = cpr::Get(cpr::Url {url},
+                               network::cpr::GetHeader(),
+                               network::cpr::GetDefaultTimeout(),
+                               network::cpr::GetDefaultConnectTimeout(),
+                               network::cpr::GetDefaultLowSpeed());
+      if (!cpr::status::is_success(response.status_code))
+      {
+         continue;
+      }
+
+      auto tempPath =
+         std::filesystem::temp_directory_path() /
+         fmt::format("scwx_glm_{}.nc",
+                     std::chrono::duration_cast<std::chrono::microseconds>(
+                        std::chrono::system_clock::now().time_since_epoch())
+                        .count());
+
+      {
+         std::ofstream ofs {tempPath, std::ios::binary | std::ios::trunc};
+         ofs.write(response.text.data(),
+                   static_cast<std::streamsize>(response.text.size()));
+      }
+
+      auto            filePoints = BuildGlmPointsFromFile(tempPath);
+      std::error_code ec {};
+      std::filesystem::remove(tempPath, ec);
+
+      // Use key-derived file start time for display aging. GLM netCDF time
+      // offsets vary by encoding/scale conventions and can otherwise push
+      // points outside the expected recent-time window.
+      for (auto& point : filePoints)
+      {
+         point.time_ = fileStart;
+      }
+
+      decodedPointCount += filePoints.size();
+
+      if (!radarFilteringEnabled)
+      {
+         points.insert(points.end(), filePoints.begin(), filePoints.end());
+         continue;
+      }
+
+      for (const auto& point : filePoints)
+      {
+         const units::length::meters<double> distance =
+            util::GeographicLib::GetDistance(radarSite->latitude(),
+                                             radarSite->longitude(),
+                                             point.latitude_,
+                                             point.longitude_);
+
+         if (distance <= radarRangeMeters)
+         {
+            points.push_back(point);
+         }
+         else
+         {
+            ++skippedOutsideRadarRange;
+         }
+      }
+   }
+
+   logger_->debug("GOES GLM: decoded {} raw points from {} files",
+                  decodedPointCount,
+                  candidates.size());
+
+   if (radarFilteringEnabled)
+   {
+      logger_->debug("GOES GLM: skipped {} points outside radar range",
+                     skippedOutsideRadarRange);
+   }
+
+   std::size_t emittedPoints {0u};
+   std::size_t skippedDuplicatePoints {0u};
+   std::unordered_set<GlmLightningPointKey, GlmLightningPointKeyHash>
+      emittedPointKeys {};
+   emittedPointKeys.reserve(points.size());
+
+   for (const auto& p : points)
+   {
+      if (p.time_ < cutoff || p.time_ > nowUtc)
+      {
+         continue;
+      }
+
+      const GlmLightningPointKey pointKey =
+         MakeGlmLightningPointKey(p.latitude_, p.longitude_);
+      if (emittedPointKeys.contains(pointKey))
+      {
+         ++skippedDuplicatePoints;
+         continue;
+      }
+      emittedPointKeys.insert(pointKey);
+
+      const auto endTime = p.time_ + std::chrono::minutes(16);
+
+      const auto startT = std::chrono::system_clock::to_time_t(p.time_);
+      const auto endT   = std::chrono::system_clock::to_time_t(endTime);
+      std::tm    startTm {};
+      std::tm    endTm {};
+#if defined(_WIN32)
+      gmtime_s(&startTm, &startT);
+      gmtime_s(&endTm, &endT);
+#else
+      gmtime_r(&startT, &startTm);
+      gmtime_r(&endT, &endTm);
+#endif
+
+      pf << "TimeRange: " << fmt::format("{:%Y-%m-%dT%H:%M:%S}", startTm) << " "
+         << fmt::format("{:%Y-%m-%dT%H:%M:%S}", endTm) << "\n";
+      pf << "Icon: "
+         << fmt::format("{:.4f}, {:.4f}, 0, 1, 1", p.latitude_, p.longitude_)
+         << "\n";
+      ++emittedPoints;
+   }
+
+   if (skippedDuplicatePoints > 0u)
+   {
+      logger_->debug("GOES GLM: suppressed {} duplicate points",
+                     skippedDuplicatePoints);
+   }
+
+   logger_->debug("GOES GLM: unrendered {} points total",
+                  skippedOutsideRadarRange + skippedDuplicatePoints);
+
+   logger_->debug("GOES GLM: emitted {} points after filtering", emittedPoints);
+
+   std::istringstream stream {pf.str()};
+   return gr::Placefile::Load(placefileName, stream);
+}
+
+static bool ContainsPlacefileEntry(const boost::json::value& placefileJson,
+                                   const std::string&        name)
+{
+   if (!placefileJson.is_array())
+   {
+      return false;
+   }
+
+   for (const auto& entry : placefileJson.as_array())
+   {
+      if (!entry.is_object())
+      {
+         continue;
+      }
+
+      auto it = entry.as_object().find(kNameName_);
+      if (it != entry.as_object().end() && it->value().is_string() &&
+          it->value().as_string() == name)
+      {
+         return true;
+      }
+   }
+
+   return false;
+}
+
+static bool
+ContainsGoesGlmPlacefileEntry(const boost::json::value& placefileJson)
+{
+   return ContainsPlacefileEntry(placefileJson, kGoesGlmLightningUrl_) ||
+          ContainsPlacefileEntry(placefileJson, kGoesGlmLegacyLightningUrl_);
+}
+
+static bool IsGoesGlmLightningUrl(const std::string& name)
+{
+   return name == kGoesGlmLightningUrl_ || name == kGoesGlmLegacyLightningUrl_;
+}
 
 class PlacefileManager::Impl
 {
@@ -55,11 +647,13 @@ public:
    ~Impl() { threadPool_.join(); }
 
    void InitializePlacefileSettings();
+   void SyncBuiltInLightning();
+   void MigrateGoesGlmPlacefileUrl();
    void ApplyPlacefileSettings(const boost::json::value& placefileJson);
    void ReadPlacefileSettings();
    void SavePlacefileSettings();
 
-   static PlacefileManager::FontMap
+   static FontMap
    LoadFontResources(const std::shared_ptr<gr::Placefile>& placefile);
    static std::vector<std::shared_ptr<boost::gil::rgba8_image_t>>
    LoadImageResources(const std::shared_ptr<gr::Placefile>& placefile);
@@ -70,13 +664,15 @@ public:
 
    std::string placefileSettingsPath_ {};
 
+   std::shared_ptr<config::RadarSite> radarSite_ {};
+   std::optional<float>               radarRangeKm_ {};
+
    std::vector<std::shared_ptr<PlacefileRecord>> placefileRecords_ {};
    boost::unordered_flat_map<std::string, std::shared_ptr<PlacefileRecord>>
                      placefileRecordMap_ {};
    std::shared_mutex placefileRecordLock_ {};
 
-   std::shared_ptr<config::RadarSite> radarSite_ {};
-   bool                               placefileSettingsRead_ {false};
+   bool placefileSettingsRead_ {false};
 };
 
 class PlacefileManager::Impl::PlacefileRecord
@@ -152,8 +748,8 @@ public:
    std::mutex                     refreshMutex_ {};
    std::mutex                     timerMutex_ {};
 
-   PlacefileManager::FontMap fonts_ {};
-   std::mutex                fontsMutex_ {};
+   FontMap    fonts_ {};
+   std::mutex fontsMutex_ {};
 
    std::vector<std::shared_ptr<boost::gil::rgba8_image_t>> images_ {};
 
@@ -165,6 +761,15 @@ public:
 
 PlacefileManager::PlacefileManager() : p(std::make_unique<Impl>(this))
 {
+   settings::GeneralSettings::Instance()
+      .legacy_lightning_enabled()
+      .RegisterValueChangedCallback([this](const bool& /* enabled */)
+                                    { p->SyncBuiltInLightning(); });
+   settings::GeneralSettings::Instance()
+      .goes_glm_lightning_enabled()
+      .RegisterValueChangedCallback([this](const bool& /* enabled */)
+                                    { p->SyncBuiltInLightning(); });
+
    boost::asio::post(p->threadPool_,
                      [this]()
                      {
@@ -391,7 +996,104 @@ void PlacefileManager::Impl::ReadPlacefileSettings()
 
    ApplyPlacefileSettings(placefileJson);
 
+   // Add and enable the default legacy lightning placefile on first run if
+   // enabled.
+   if (settings::GeneralSettings::Instance()
+          .legacy_lightning_enabled()
+          .GetValue() &&
+       !ContainsPlacefileEntry(placefileJson, kLegacyLightningUrl_))
+   {
+      self_->AddUrl(kLegacyLightningUrl_, kLegacyLightningTitle_, true, false);
+   }
+
+   // Add GOES GLM lightning source on first run if enabled.
+   if (settings::GeneralSettings::Instance()
+          .goes_glm_lightning_enabled()
+          .GetValue() &&
+       !ContainsGoesGlmPlacefileEntry(placefileJson))
+   {
+      self_->AddUrl(
+         kGoesGlmLightningUrl_, kGoesGlmLightningTitle_, true, false);
+   }
+
+   MigrateGoesGlmPlacefileUrl();
+
+   // Ensure persisted records match the current built-in lightning setting.
+   SyncBuiltInLightning();
+
    placefileSettingsRead_ = true;
+}
+
+void PlacefileManager::Impl::MigrateGoesGlmPlacefileUrl()
+{
+   std::shared_lock lock(placefileRecordLock_);
+   const bool       hasLegacyGoesGlmRecord =
+      placefileRecordMap_.find(kGoesGlmLegacyLightningUrl_) !=
+      placefileRecordMap_.cend();
+   const bool hasGoesGlmRecord =
+      placefileRecordMap_.find(kGoesGlmLightningUrl_) !=
+      placefileRecordMap_.cend();
+   lock.unlock();
+
+   if (hasLegacyGoesGlmRecord && !hasGoesGlmRecord)
+   {
+      self_->set_placefile_url(kGoesGlmLegacyLightningUrl_,
+                               kGoesGlmLightningUrl_);
+   }
+}
+
+void PlacefileManager::Impl::SyncBuiltInLightning()
+{
+   const bool legacyLightningEnabledRaw = settings::GeneralSettings::Instance()
+                                             .legacy_lightning_enabled()
+                                             .GetValue();
+   const bool goesGlmLightningEnabled = settings::GeneralSettings::Instance()
+                                           .goes_glm_lightning_enabled()
+                                           .GetValue();
+   const bool legacyLightningEnabled =
+      legacyLightningEnabledRaw && !goesGlmLightningEnabled;
+
+   MigrateGoesGlmPlacefileUrl();
+
+   std::shared_lock lock(placefileRecordLock_);
+   const bool       hasLegacyLightningRecord =
+      placefileRecordMap_.find(kLegacyLightningUrl_) !=
+      placefileRecordMap_.cend();
+   const bool hasGoesGlmLegacyRecord =
+      placefileRecordMap_.find(kGoesGlmLegacyLightningUrl_) !=
+      placefileRecordMap_.cend();
+   const bool hasGoesGlmRecord =
+      placefileRecordMap_.find(kGoesGlmLightningUrl_) !=
+      placefileRecordMap_.cend();
+   const bool hasGoesGlmLightningRecord =
+      hasGoesGlmRecord || hasGoesGlmLegacyRecord;
+   lock.unlock();
+
+   if (legacyLightningEnabled && !hasLegacyLightningRecord)
+   {
+      self_->AddUrl(kLegacyLightningUrl_, kLegacyLightningTitle_, true, false);
+   }
+   else if (!legacyLightningEnabled && hasLegacyLightningRecord)
+   {
+      self_->RemoveUrl(kLegacyLightningUrl_);
+   }
+
+   if (goesGlmLightningEnabled && !hasGoesGlmLightningRecord)
+   {
+      self_->AddUrl(
+         kGoesGlmLightningUrl_, kGoesGlmLightningTitle_, true, false);
+   }
+   else if (!goesGlmLightningEnabled && hasGoesGlmLightningRecord)
+   {
+      if (hasGoesGlmRecord)
+      {
+         self_->RemoveUrl(kGoesGlmLightningUrl_);
+      }
+      if (hasGoesGlmLegacyRecord)
+      {
+         self_->RemoveUrl(kGoesGlmLegacyLightningUrl_);
+      }
+   }
 }
 
 void PlacefileManager::ReadPlacefileSettings(std::istream& is)
@@ -461,18 +1163,54 @@ void PlacefileManager::WritePlacefileSettings(std::ostream& os)
 void PlacefileManager::SetRadarSite(
    std::shared_ptr<config::RadarSite> radarSite)
 {
+   if (p->radarSite_ == radarSite)
+   {
+      // No action needed
+      return;
+   }
+
    if (radarSite == nullptr)
    {
       logger_->debug("SetRadarSite: cleared");
+      p->radarSite_.reset();
+      p->radarRangeKm_.reset();
    }
    else
    {
       logger_->debug("SetRadarSite: {}", radarSite->id());
+      p->radarSite_ = radarSite;
+      p->radarRangeKm_.reset();
    }
 
-   p->radarSite_ = std::move(radarSite);
-
    // Update all enabled records
+   std::shared_lock lock(p->placefileRecordLock_);
+   for (auto& record : p->placefileRecords_)
+   {
+      if (record->enabled_)
+      {
+         record->UpdateAsync();
+      }
+   }
+}
+
+void PlacefileManager::SetRadarScanRange(std::optional<float> radarRangeKm)
+{
+   if (p->radarRangeKm_ == radarRangeKm)
+   {
+      return;
+   }
+
+   if (radarRangeKm.has_value())
+   {
+      logger_->debug("SetRadarScanRange: {}", radarRangeKm.value());
+   }
+   else
+   {
+      logger_->debug("SetRadarScanRange: cleared");
+   }
+
+   p->radarRangeKm_ = radarRangeKm;
+
    std::shared_lock lock(p->placefileRecordLock_);
    for (auto& record : p->placefileRecords_)
    {
@@ -590,84 +1328,97 @@ void PlacefileManager::Impl::PlacefileRecord::Update()
    }
    else
    {
-      std::string decodedUrl {name};
-      auto        queryPos = decodedUrl.find('?');
-      if (queryPos != std::string::npos)
+      if (IsGoesGlmLightningUrl(name))
       {
-         decodedUrl.erase(queryPos);
-      }
-
-      if (p->radarSite_ == nullptr)
-      {
-         // Wait to process until a radar site is selected
-         return;
-      }
-
-      auto dpi = QGuiApplication::primaryScreen()->logicalDotsPerInch();
-
-      // Specify parameters
-      auto parameters = cpr::Parameters {
-         {"version", "1.5"}, // Placefile Version Supported
-         {"dpi", fmt::format("{:0.0f}", dpi)},
-         {"lat", fmt::format("{:0.3f}", p->radarSite_->latitude())},
-         {"lon", fmt::format("{:0.3f}", p->radarSite_->longitude())}};
-
-      // Iterate through each query parameter in the URL
-      if (url.hasQuery())
-      {
-         auto query = url.query(QUrl::ComponentFormattingOption::PrettyDecoded)
-                         .toStdString();
-
-         boost::char_separator<char> const delimiter("&");
-         boost::tokenizer const            tokens(query, delimiter);
-
-         for (auto& token : tokens)
+         updatedPlacefile =
+            BuildGoesGlmPlacefile(name, p->radarSite_, p->radarRangeKm_);
+         if (updatedPlacefile == nullptr && enabled_)
          {
-            std::vector<std::string> split {};
-            boost::split(split, token, boost::is_any_of("="));
-            if (split.size() >= 2)
-            {
-               // Token is a key=value parameter
-               parameters.Add({split[0], split[1]});
-            }
-            else
-            {
-               // Token is a single key with no value
-               parameters.Add({token, {}});
-            }
+            logger_->warn("GOES GLM lightning update returned no data");
          }
-      }
-
-      // Send HTTP GET request
-      auto response =
-         cpr::Get(cpr::Url {decodedUrl},
-                  network::cpr::GetHeader(),
-                  parameters,
-                  network::cpr::GetDefaultTimeout(),
-                  network::cpr::GetDefaultConnectTimeout(),
-                  network::cpr::GetDefaultLowSpeed(),
-                  network::cpr::GetDefaultProgressCallback(enabled_));
-
-      if (cpr::status::is_success(response.status_code))
-      {
-         std::istringstream responseBody {response.text};
-         updatedPlacefile = gr::Placefile::Load(name, responseBody);
-      }
-      else if (response.status_code == 0 && enabled_)
-      {
-         logger_->error("Error loading placefile: {} ({})",
-                        decodedUrl,
-                        response.error.message);
-      }
-      else if (enabled_)
-      {
-         logger_->error("Error loading placefile: {} ({})",
-                        decodedUrl,
-                        response.status_line);
       }
       else
       {
-         logger_->debug("Request cancelled, shutting down");
+         std::string decodedUrl {name};
+         auto        queryPos = decodedUrl.find('?');
+         if (queryPos != std::string::npos)
+         {
+            decodedUrl.erase(queryPos);
+         }
+
+         if (p->radarSite_ == nullptr)
+         {
+            // Wait to process until a radar site is selected
+            return;
+         }
+
+         auto dpi = QGuiApplication::primaryScreen()->logicalDotsPerInch();
+
+         // Specify parameters
+         auto parameters = cpr::Parameters {
+            {"version", "1.5"}, // Placefile Version Supported
+            {"dpi", fmt::format("{:0.0f}", dpi)},
+            {"lat", fmt::format("{:0.3f}", p->radarSite_->latitude())},
+            {"lon", fmt::format("{:0.3f}", p->radarSite_->longitude())}};
+
+         // Iterate through each query parameter in the URL
+         if (url.hasQuery())
+         {
+            auto query =
+               url.query(QUrl::ComponentFormattingOption::PrettyDecoded)
+                  .toStdString();
+
+            boost::char_separator<char> const delimiter("&");
+            boost::tokenizer const            tokens(query, delimiter);
+
+            for (auto& token : tokens)
+            {
+               std::vector<std::string> split {};
+               boost::split(split, token, boost::is_any_of("="));
+               if (split.size() >= 2)
+               {
+                  // Token is a key=value parameter
+                  parameters.Add({split[0], split[1]});
+               }
+               else
+               {
+                  // Token is a single key with no value
+                  parameters.Add({token, {}});
+               }
+            }
+         }
+
+         // Send HTTP GET request
+         auto response =
+            cpr::Get(cpr::Url {decodedUrl},
+                     network::cpr::GetHeader(),
+                     parameters,
+                     network::cpr::GetDefaultTimeout(),
+                     network::cpr::GetDefaultConnectTimeout(),
+                     network::cpr::GetDefaultLowSpeed(),
+                     network::cpr::GetDefaultProgressCallback(enabled_));
+
+         if (cpr::status::is_success(response.status_code))
+         {
+            std::istringstream responseBody {response.text};
+            updatedPlacefile = gr::Placefile::Load(name, responseBody);
+         }
+         else if (response.status_code == 0 && enabled_)
+         {
+            logger_->error("Error loading placefile: {} ({})",
+                           decodedUrl,
+                           response.error.message);
+         }
+         else if (enabled_)
+         {
+            logger_->error("Error loading placefile: {} ({})",
+                           decodedUrl,
+                           response.status_line);
+         }
+         else
+         {
+            logger_->debug("Request cancelled, shutting down");
+         }
       }
    }
 
@@ -906,6 +1657,11 @@ PlacefileManager::Impl::LoadImageResources(
    }
 
    return ResourceManager::LoadImageResources(urlStrings);
+}
+
+bool PlacefileManager::IsGoesGlmLightningPlacefile(const std::string& name)
+{
+   return IsGoesGlmLightningUrl(name);
 }
 
 } // namespace scwx::qt::manager

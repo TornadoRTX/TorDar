@@ -96,8 +96,7 @@ std::vector<DirListRecord> DirList(const std::string& baseUrl)
                  network::cpr::GetDefaultTimeout(),
                  network::cpr::GetDefaultConnectTimeout(),
                  network::cpr::GetDefaultLowSpeed());
-
-   std::vector<DirListRecord> records {};
+   DirListSAXData saxData {};
 
    if (response.status_code != ::cpr::status::HTTP_OK)
    {
@@ -108,33 +107,24 @@ std::vector<DirListRecord> DirList(const std::string& baseUrl)
    }
    else
    {
-      records = DirList(baseUrl, response.text);
-   }
+      htmlParserCtxtPtr ctxt = htmlNewSAXParserCtxt(&saxHandler_, &saxData);
+      htmlDocPtr        doc  = nullptr;
 
-   return records;
-}
+      if (ctxt != nullptr)
+      {
+         doc = htmlCtxtReadDoc(
+            ctxt,
+            reinterpret_cast<const xmlChar*>(response.text.c_str()),
+            baseUrl.c_str(),
+            nullptr,
+            HTML_PARSE_NONET);
+         htmlFreeParserCtxt(ctxt);
+      }
 
-std::vector<DirListRecord> DirList(const std::string& baseUrl,
-                                   const std::string& responseText)
-{
-   DirListSAXData    saxData {};
-   htmlParserCtxtPtr ctxt = htmlNewSAXParserCtxt(&saxHandler_, &saxData);
-   htmlDocPtr        doc  = nullptr;
-
-   if (ctxt != nullptr)
-   {
-      doc =
-         htmlCtxtReadDoc(ctxt,
-                         reinterpret_cast<const xmlChar*>(responseText.c_str()),
-                         baseUrl.c_str(),
-                         nullptr,
-                         HTML_PARSE_NONET);
-      htmlFreeParserCtxt(ctxt);
-   }
-
-   if (doc != nullptr)
-   {
-      xmlFreeDoc(doc);
+      if (doc != nullptr)
+      {
+         xmlFreeDoc(doc);
+      }
    }
 
    return saxData.records_;
@@ -221,28 +211,15 @@ void DirListSAXHandler::Characters(void* userData, const xmlChar* ch, int len)
       using namespace date;
 #endif
 
-      // Date time formats: yyyy-mm-dd hh:mm or dd-Mon-yyyy hh:mm
-      static const std::string kIsoDateTimeFormat {"%Y-%m-%d %H:%M"};
-      static const std::string kAbbrevDateTimeFormat {"%d-%b-%Y %H:%M"};
+      // Date time format: yyyy-mm-dd hh:mm
+      static const std::string kDateTimeFormat {"%Y-%m-%d %H:%M"};
 
       // Attempt to parse the date time
+      std::istringstream             ssCharacters {characters};
       std::chrono::sys_time<minutes> mtime;
-      bool                           parsed = false;
+      ssCharacters >> parse(kDateTimeFormat, mtime);
 
-      {
-         std::istringstream ss {characters};
-         ss >> parse(kIsoDateTimeFormat, mtime);
-         parsed = !ss.fail();
-      }
-
-      if (!parsed)
-      {
-         std::istringstream ss {characters};
-         ss >> parse(kAbbrevDateTimeFormat, mtime);
-         parsed = !ss.fail();
-      }
-
-      if (parsed)
+      if (!ssCharacters.fail())
       {
          // Date time parsing succeeded, look for link size
          auto& record  = data->records_.back();

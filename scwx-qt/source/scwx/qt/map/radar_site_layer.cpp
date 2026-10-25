@@ -11,8 +11,6 @@
 #include <scwx/common/geographic.hpp>
 #include <scwx/util/logger.hpp>
 
-#include <ranges>
-
 #include <boost/unordered/unordered_flat_map.hpp>
 #include <imgui.h>
 #include <mbgl/util/constants.hpp>
@@ -41,7 +39,7 @@ public:
    Impl& operator=(const Impl&&) = delete;
 
    void RenderRadarSite(const QMapLibre::CustomLayerRenderParameters& params,
-                        const std::shared_ptr<config::RadarSite>& radarSite);
+                        std::shared_ptr<config::RadarSite>& radarSite);
    void RenderRadarLine(const std::shared_ptr<MapContext>& mapContext);
 
    RadarSiteLayer* self_;
@@ -150,7 +148,7 @@ void RadarSiteLayer::Render(
    }
 
    // Render Radar Sites
-   for (const auto& radarSite : p->radarSites_ | std::views::reverse)
+   for (auto& radarSite : p->radarSites_)
    {
       p->RenderRadarSite(params, radarSite);
    }
@@ -167,7 +165,7 @@ void RadarSiteLayer::Render(
 
 void RadarSiteLayer::Impl::RenderRadarSite(
    const QMapLibre::CustomLayerRenderParameters& params,
-   const std::shared_ptr<config::RadarSite>&     radarSite)
+   std::shared_ptr<config::RadarSite>&           radarSite)
 {
    const std::string windowName = fmt::format("radar-site-{}", radarSite->id());
 

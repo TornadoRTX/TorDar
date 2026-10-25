@@ -4,12 +4,14 @@
 
 #include <memory>
 
-namespace scwx::provider
+namespace scwx
+{
+namespace provider
 {
 
 class NexradDataProviderFactory
 {
-public:
+private:
    explicit NexradDataProviderFactory() = delete;
    ~NexradDataProviderFactory()         = delete;
 
@@ -21,12 +23,9 @@ public:
    NexradDataProviderFactory&
    operator=(NexradDataProviderFactory&&) noexcept = delete;
 
+public:
    static std::shared_ptr<NexradDataProvider>
    CreateLevel2DataProvider(const std::string& radarSite);
-
-   static std::shared_ptr<NexradDataProvider>
-   CreateLevel2DataProvider(const std::string& radarSite,
-                            const std::string& baseUri);
 
    static std::shared_ptr<NexradDataProvider>
    CreateLevel2ChunksDataProvider(const std::string& radarSite);
@@ -34,11 +33,7 @@ public:
    static std::shared_ptr<NexradDataProvider>
    CreateLevel3DataProvider(const std::string& radarSite,
                             const std::string& product);
-
-   static std::shared_ptr<NexradDataProvider>
-   CreateLevel3DataProvider(const std::string& radarSite,
-                            const std::string& product,
-                            const std::string& baseUri);
 };
 
-} // namespace scwx::provider
+} // namespace provider
+} // namespace scwx

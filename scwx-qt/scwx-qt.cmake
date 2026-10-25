@@ -13,22 +13,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 OPTION(SCWX_DISABLE_CONSOLE "Disables the Windows console in release mode" ON)
 
-find_package(Boost
-             COMPONENTS atomic
-                        json
-                        program_options
-                        timer
-             REQUIRED)
-find_package(Fontconfig REQUIRED)
-find_package(GeographicLib REQUIRED)
-find_package(geos REQUIRED)
-find_package(glm REQUIRED)
-find_package(JPEG REQUIRED)
+find_package(Boost)
+find_package(Fontconfig)
+find_package(geographiclib)
+find_package(geos)
+find_package(glm)
+find_package(JPEG)
 find_package(OpenGL REQUIRED)
-find_package(PNG REQUIRED)
 find_package(Python COMPONENTS Interpreter)
-find_package(SQLite3 REQUIRED)
-find_package(TIFF REQUIRED)
+find_package(SQLite3)
+find_package(TIFF)
 find_package(netcdf QUIET CONFIG)
 
 find_package(QT NAMES Qt6
@@ -93,7 +87,6 @@ set(HDR_GL_DRAW source/scwx/qt/gl/draw/draw_item.hpp
                 source/scwx/qt/gl/draw/geo_lines.hpp
                 source/scwx/qt/gl/draw/icons.hpp
                 source/scwx/qt/gl/draw/linked_vectors.hpp
-                source/scwx/qt/gl/draw/map_annotations_draw_item.hpp
                 source/scwx/qt/gl/draw/placefile_icons.hpp
                 source/scwx/qt/gl/draw/placefile_images.hpp
                 source/scwx/qt/gl/draw/placefile_images_xy.hpp
@@ -107,7 +100,6 @@ set(SRC_GL_DRAW source/scwx/qt/gl/draw/draw_item.cpp
                 source/scwx/qt/gl/draw/geo_lines.cpp
                 source/scwx/qt/gl/draw/icons.cpp
                 source/scwx/qt/gl/draw/linked_vectors.cpp
-                source/scwx/qt/gl/draw/map_annotations_draw_item.cpp
                 source/scwx/qt/gl/draw/placefile_icons.cpp
                 source/scwx/qt/gl/draw/placefile_images.cpp
                 source/scwx/qt/gl/draw/placefile_images_xy.cpp
@@ -122,12 +114,9 @@ set(HDR_MANAGER source/scwx/qt/manager/alert_manager.hpp
                 source/scwx/qt/manager/hotkey_manager.hpp
                 source/scwx/qt/manager/log_manager.hpp
                 source/scwx/qt/manager/marker_manager.hpp
-                source/scwx/qt/manager/lightning_manager.hpp
                 source/scwx/qt/manager/media_manager.hpp
                 source/scwx/qt/manager/placefile_manager.hpp
                 source/scwx/qt/manager/position_manager.hpp
-                source/scwx/qt/manager/provider_manager.hpp
-                source/scwx/qt/manager/radar_coordinate_table.hpp
                 source/scwx/qt/manager/radar_product_manager.hpp
                 source/scwx/qt/manager/radar_product_manager_notifier.hpp
                 source/scwx/qt/manager/radar_site_status_manager.hpp
@@ -144,12 +133,9 @@ set(SRC_MANAGER source/scwx/qt/manager/alert_manager.cpp
                 source/scwx/qt/manager/hotkey_manager.cpp
                 source/scwx/qt/manager/log_manager.cpp
                 source/scwx/qt/manager/marker_manager.cpp
-                source/scwx/qt/manager/lightning_manager.cpp
                 source/scwx/qt/manager/media_manager.cpp
                 source/scwx/qt/manager/placefile_manager.cpp
                 source/scwx/qt/manager/position_manager.cpp
-                source/scwx/qt/manager/provider_manager.cpp
-                source/scwx/qt/manager/radar_coordinate_table.cpp
                 source/scwx/qt/manager/radar_product_manager.cpp
                 source/scwx/qt/manager/radar_product_manager_notifier.cpp
                 source/scwx/qt/manager/radar_site_status_manager.cpp
@@ -166,10 +152,6 @@ set(HDR_MAP source/scwx/qt/map/alert_layer.hpp
             source/scwx/qt/map/draw_layer.hpp
             source/scwx/qt/map/generic_layer.hpp
             source/scwx/qt/map/layer_wrapper.hpp
-            source/scwx/qt/map/lightning_layer.hpp
-            source/scwx/qt/map/map_annotation_layer.hpp
-            source/scwx/qt/map/map_annotation_model.hpp
-            source/scwx/qt/map/map_annotation_types.hpp
             source/scwx/qt/map/map_context.hpp
             source/scwx/qt/map/map_pane_context_menu.hpp
             source/scwx/qt/map/map_pane_splitter_state.hpp
@@ -191,9 +173,6 @@ set(SRC_MAP source/scwx/qt/map/alert_layer.cpp
             source/scwx/qt/map/draw_layer.cpp
             source/scwx/qt/map/generic_layer.cpp
             source/scwx/qt/map/layer_wrapper.cpp
-            source/scwx/qt/map/lightning_layer.cpp
-            source/scwx/qt/map/map_annotation_layer.cpp
-            source/scwx/qt/map/map_annotation_model.cpp
             source/scwx/qt/map/map_context.cpp
             source/scwx/qt/map/map_pane_context_menu.cpp
             source/scwx/qt/map/map_pane_view_link_state.cpp
@@ -339,7 +318,6 @@ set(HDR_UI source/scwx/qt/ui/about_dialog.hpp
            source/scwx/qt/ui/open_url_dialog.hpp
            source/scwx/qt/ui/placefile_dialog.hpp
            source/scwx/qt/ui/placefile_settings_widget.hpp
-           source/scwx/qt/ui/map_annotation_dock_widget.hpp
            source/scwx/qt/ui/marker_dialog.hpp
            source/scwx/qt/ui/marker_settings_widget.hpp
            source/scwx/qt/ui/progress_dialog.hpp
@@ -378,7 +356,6 @@ set(SRC_UI source/scwx/qt/ui/about_dialog.cpp
            source/scwx/qt/ui/open_url_dialog.cpp
            source/scwx/qt/ui/placefile_dialog.cpp
            source/scwx/qt/ui/placefile_settings_widget.cpp
-           source/scwx/qt/ui/map_annotation_dock_widget.cpp
            source/scwx/qt/ui/marker_dialog.cpp
            source/scwx/qt/ui/marker_settings_widget.cpp
            source/scwx/qt/ui/progress_dialog.cpp
@@ -491,9 +468,7 @@ set(SRC_VIEW source/scwx/qt/view/level2_product_view.cpp
 
 set(RESOURCE_FILES scwx-qt.qrc)
 
-set(SHADER_FILES gl/annotation_geo.vert
-                 gl/annotation_stroke.frag
-                 gl/color.frag
+set(SHADER_FILES gl/color.frag
                  gl/color.vert
                  gl/geo_line.vert
                  gl/geo_texture2d.vert
@@ -508,9 +483,6 @@ set(SHADER_FILES gl/annotation_geo.vert
                  gl/threshold.geom)
 
 set(CMAKE_FILES scwx-qt.cmake)
-
-set(GIS_FILES res/config/radars_iastate.gis
-              res/config/radars_weatherpulse.gis)
 
 set(JSON_FILES res/config/radar_sites.json)
 
@@ -528,8 +500,6 @@ set(COUNTIES_SQLITE_DB ${scwx-qt_BINARY_DIR}/res/db/counties.db)
 
 set(RESOURCE_INPUT  ${scwx-qt_SOURCE_DIR}/res/scwx-qt.rc.in)
 set(RESOURCE_OUTPUT ${scwx-qt_BINARY_DIR}/res/scwx-qt.rc)
-set(METAINFO_INPUT  ${scwx-qt_SOURCE_DIR}/res/linux/net.supercellwx.app.metainfo.xml.in)
-set(METAINFO_OUTPUT ${scwx-qt_BINARY_DIR}/res/linux/net.supercellwx.app.metainfo.xml)
 set(VERSIONS_INPUT  ${scwx-qt_SOURCE_DIR}/source/scwx/qt/main/versions.hpp.in)
 set(VERSIONS_CACHE  ${scwx-qt_BINARY_DIR}/versions_cache.json)
 set(VERSIONS_HEADER ${scwx-qt_BINARY_DIR}/scwx/qt/main/versions.hpp)
@@ -572,7 +542,6 @@ set(PROJECT_SOURCES ${HDR_MAIN}
                     ${HDR_VIEW}
                     ${SRC_VIEW}
                     ${SHADER_FILES}
-                    ${GIS_FILES}
                     ${JSON_FILES}
                     ${TS_FILES}
                     ${CMAKE_FILES})
@@ -619,7 +588,6 @@ source_group("Header Files\\view"         FILES ${HDR_VIEW})
 source_group("Source Files\\view"         FILES ${SRC_VIEW})
 source_group("OpenGL Shaders"             FILES ${SHADER_FILES})
 source_group("Resources"                  FILES ${RESOURCE_FILES})
-source_group("Resources\\gis"             FILES ${GIS_FILES})
 source_group("Resources\\json"            FILES ${JSON_FILES})
 source_group("I18N Files"                 FILES ${TS_FILES})
 
@@ -653,10 +621,7 @@ else()
 endif()
 
 if (WIN32)
-    add_custom_command(OUTPUT  ${VERSIONS_HEADER}
-                               ${RESOURCE_OUTPUT}
-                               ${METAINFO_OUTPUT}
-                               ${VERSIONS_HEADER}-ALWAYS_RUN
+    add_custom_command(OUTPUT  ${VERSIONS_HEADER} ${RESOURCE_OUTPUT} ${VERSIONS_HEADER}-ALWAYS_RUN
                        COMMAND ${Python_EXECUTABLE}
                                ${scwx-qt_SOURCE_DIR}/tools/generate_versions.py
                                -g ${SCWX_DIR}
@@ -666,13 +631,9 @@ if (WIN32)
                                -o ${VERSIONS_HEADER}
                                -b ${SCWX_BUILD_NUM}
                                --input-resource ${RESOURCE_INPUT}
-                               --output-resource ${RESOURCE_OUTPUT}
-                               --input-metainfo ${METAINFO_INPUT}
-                               --output-metainfo ${METAINFO_OUTPUT})
+                               --output-resource ${RESOURCE_OUTPUT})
 else()
-    add_custom_command(OUTPUT  ${VERSIONS_HEADER}
-                               ${METAINFO_OUTPUT}
-                               ${VERSIONS_HEADER}-ALWAYS_RUN
+    add_custom_command(OUTPUT  ${VERSIONS_HEADER} ${VERSIONS_HEADER}-ALWAYS_RUN
                        COMMAND ${Python_EXECUTABLE}
                                ${scwx-qt_SOURCE_DIR}/tools/generate_versions.py
                                -g ${SCWX_DIR}
@@ -680,9 +641,7 @@ else()
                                -c ${VERSIONS_CACHE}
                                -i ${VERSIONS_INPUT}
                                -o ${VERSIONS_HEADER}
-                               -b ${SCWX_BUILD_NUM}
-                               --input-metainfo ${METAINFO_INPUT}
-                               --output-metainfo ${METAINFO_OUTPUT})
+                               -b ${SCWX_BUILD_NUM})
 endif()
 
 add_custom_target(scwx-qt_generate_versions ALL
@@ -745,7 +704,7 @@ elseif (APPLE)
                           MACOSX_BUNDLE_INFO_PLIST           "${scwx-qt_SOURCE_DIR}/res/scwx-qt.plist.in"
                           MACOSX_BUNDLE_GUI_IDENTIFIER       "net.supercellwx.app"
                           MACOSX_BUNDLE_BUNDLE_NAME          "Supercell Wx"
-                          MACOSX_BUNDLE_BUNDLE_VERSION       "${SCWX_BUILD_NUM}"
+                          MACOSX_BUNDLE_BUNDLE_VERSION       "${SCWX_VERSION}"
                           MACOSX_BUNDLE_SHORT_VERSION_STRING "${SCWX_VERSION}"
                           MACOSX_BUNDLE_COPYRIGHT            "Copyright ${CURRENT_YEAR} Dan Paulat"
                           MACOSX_BUNDLE_ICON_FILE            "scwx.icns"
@@ -789,22 +748,12 @@ target_compile_options(supercell-wx PRIVATE
     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
 )
 
-# GCC 14+ produces false positives for -Wmaybe-uninitialized
-target_compile_options(scwx-qt PRIVATE
-    $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,14>>:-Wno-maybe-uninitialized>
-)
-target_compile_options(supercell-wx PRIVATE
-    $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,14>>:-Wno-maybe-uninitialized>
-)
-
-# Temporary workaround for Boost and GCC 16+ where -Warray-bounds and -Wstringop-overflow cause false positives
+# Temporary workaround for Boost and GCC 16+ where -Warray-bounds causes false positives
 target_compile_options(scwx-qt PRIVATE
     $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,16>>:-Wno-array-bounds>
-    $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,16>>:-Wno-stringop-overflow>
 )
 target_compile_options(supercell-wx PRIVATE
     $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,16>>:-Wno-array-bounds>
-    $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,16>>:-Wno-stringop-overflow>
 )
 
 if (MSVC)
@@ -882,7 +831,6 @@ target_link_libraries(scwx-qt PUBLIC Qt${QT_VERSION_MAJOR}::Widgets
                                      glm::glm
                                      imgui
                                      JPEG::JPEG
-                                     PNG::PNG
                                      qt6ct-common
                                      qt6ct-widgets
                                      SQLite::SQLite3

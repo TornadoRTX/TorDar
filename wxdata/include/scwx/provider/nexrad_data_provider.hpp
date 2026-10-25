@@ -13,14 +13,14 @@ namespace scwx::provider
 class NexradDataProvider
 {
 public:
-   explicit NexradDataProvider(const std::string& radarSite);
+   explicit NexradDataProvider();
    virtual ~NexradDataProvider();
 
    NexradDataProvider(const NexradDataProvider&)            = delete;
    NexradDataProvider& operator=(const NexradDataProvider&) = delete;
 
-   NexradDataProvider(NexradDataProvider&&)            = delete;
-   NexradDataProvider& operator=(NexradDataProvider&&) = delete;
+   NexradDataProvider(NexradDataProvider&&) noexcept;
+   NexradDataProvider& operator=(NexradDataProvider&&) noexcept;
 
    [[nodiscard]] virtual size_t cache_size() const = 0;
 
@@ -32,13 +32,6 @@ public:
     */
    [[nodiscard]] virtual std::chrono::system_clock::time_point
    last_modified() const = 0;
-
-   /**
-    * Gets the radar site of the provider.
-    *
-    * @return Radar site of the provider
-    */
-   [[nodiscard]] virtual std::string radar_site() const;
 
    /**
     * Gets the current update period. This is equal to the difference between
@@ -137,13 +130,6 @@ public:
    virtual std::vector<std::chrono::system_clock::time_point>
    GetTimePointsByDate(std::chrono::system_clock::time_point date,
                        bool                                  update) = 0;
-
-   /**
-    * Determines if a historical archive is available.
-    *
-    * @return Whether or not an archive is available
-    */
-   [[nodiscard]] virtual bool IsDateArchiveAvailable() const = 0;
 
    /**
     * Determines if time points for the requested date are cached.
