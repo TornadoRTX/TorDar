@@ -247,11 +247,11 @@ WarningBoxWidget::WarningBoxWidget(QWidget* parent) :
    LoadFontFamily(":/res/fonts/AlegreyaSans-Black.ttf", "AlegreyaSans-Black");
 
    setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);
-   // Allow the themed panel gradient to blend with the map underneath, which
-   // gives the warning panel its frosted-glass surface.
-   setAttribute(Qt::WA_TranslucentBackground, true);
+   // Keep an opaque widget backing; the themed gradients provide the frosted
+   // surface without exposing the map through the entire panel.
+   setAttribute(Qt::WA_TranslucentBackground, false);
    setAttribute(Qt::WA_StyledBackground, true);
-   setAutoFillBackground(false);
+   setAutoFillBackground(true);
 
    ui->warningTypeLabel->setTextInteractionFlags(Qt::NoTextInteraction);
    ui->warningTypeLabel->setWordWrap(true);
