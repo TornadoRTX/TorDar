@@ -21,19 +21,29 @@ static const std::string TEMP_SETTINGS_FILE =
 
 class SettingsManagerTest : public testing::Test
 {
-   virtual void SetUp() { scwx::qt::config::RadarSite::Initialize(); }
+   void SetUp() override { scwx::qt::config::RadarSite::Initialize(); }
+   void TearDown() override { std::filesystem::remove(TEMP_SETTINGS_FILE); }
 };
 
 class DefaultSettingsTest : public testing::TestWithParam<std::string>
 {
-   virtual void SetUp() { scwx::qt::config::RadarSite::Initialize(); }
+   void SetUp() override { scwx::qt::config::RadarSite::Initialize(); }
+   void TearDown() override { std::filesystem::remove(TEMP_SETTINGS_FILE); }
 };
 
 class BadSettingsTest :
     public testing::TestWithParam<std::pair<std::string, std::string>>
 {
-   virtual void SetUp() { scwx::qt::config::RadarSite::Initialize(); }
+   void SetUp() override { scwx::qt::config::RadarSite::Initialize(); }
+   void TearDown() override { std::filesystem::remove(TEMP_SETTINGS_FILE); }
 };
+
+static void CopyToTempSettings(const std::string& sourceFile,
+                               const std::string& tempSettingsFile)
+{
+   std::filesystem::remove(tempSettingsFile);
+   std::filesystem::copy_file(sourceFile, tempSettingsFile);
+}
 
 static void VerifyDefaults()
 {
@@ -88,7 +98,9 @@ TEST_F(SettingsManagerTest, CreateJson)
 {
    scwx::qt::config::RadarSite::Initialize();
 
-   std::string filename {TEMP_SETTINGS_FILE};
+   const std::string filename {TEMP_SETTINGS_FILE};
+
+   std::filesystem::remove(filename);
 
    // Verify file doesn't exist prior to test start
    EXPECT_EQ(std::filesystem::exists(filename), false);
@@ -106,8 +118,8 @@ TEST_F(SettingsManagerTest, CreateJson)
 
 TEST_F(SettingsManagerTest, SettingsKeax)
 {
-   std::string filename(std::string(SCWX_TEST_DATA_DIR) +
-                        "/json/settings/settings-keax.json");
+   const std::string filename(std::string(SCWX_TEST_DATA_DIR) +
+                              "/json/settings/settings-keax.json");
 
    SettingsManager::Instance().ReadSettings(filename);
 
@@ -123,11 +135,11 @@ TEST_F(SettingsManagerTest, SettingsKeax)
 
 TEST_P(DefaultSettingsTest, DefaultSettings)
 {
-   std::string sourceFile(std::string(SCWX_TEST_DATA_DIR) + "/json/settings/" +
-                          GetParam());
-   std::string filename {TEMP_SETTINGS_FILE};
+   const std::string sourceFile(std::string(SCWX_TEST_DATA_DIR) +
+                                "/json/settings/" + GetParam());
+   const std::string filename {TEMP_SETTINGS_FILE};
 
-   std::filesystem::copy_file(sourceFile, filename);
+   CopyToTempSettings(sourceFile, filename);
 
    SettingsManager::Instance().ReadSettings(filename);
 
@@ -155,7 +167,7 @@ TEST_P(BadSettingsTest, BadSettings)
                                 "/json/settings/" + badFilename);
    const std::string filename {TEMP_SETTINGS_FILE};
 
-   std::filesystem::copy_file(sourceFile, filename);
+   CopyToTempSettings(sourceFile, filename);
 
    SettingsManager::Instance().ReadSettings(filename);
 

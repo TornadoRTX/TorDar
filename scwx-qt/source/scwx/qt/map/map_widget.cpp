@@ -69,6 +69,117 @@
 namespace scwx::qt::map
 {
 
+// Cursor artwork and transient Qt-owned labels use tuned values and normal Qt
+// parent ownership patterns.
+// NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers,cppcoreguidelines-owning-memory)
+namespace
+{
+
+constexpr int kFallbackEraseCursorRadiusPx {8};
+
+std::string CustomAlertLayerId(awips::Phenomenon phenomenon)
+{
+   return fmt::format("alert.{}", awips::GetPhenomenonCode(phenomenon));
+}
+
+std::string CustomLayerId(types::LayerType        type,
+                          types::LayerDescription description)
+{
+   if (type == types::LayerType::Alert &&
+       std::holds_alternative<awips::Phenomenon>(description))
+   {
+      return CustomAlertLayerId(std::get<awips::Phenomenon>(description));
+   }
+
+   return types::GetLayerName(type, description);
+}
+
+float LayerOpacity(const types::LayerInfo& info)
+{
+   return types::LayerSupportsOpacity(info.type_) ? info.opacity_ : 1.0f;
+}
+
+/** Ring + eraser in pixmap so KDE/Wayland compositor tracks cursor with zero
+ * lag. Pixmap radius is capped (~124px) for display only; geographic erase pick
+ * and `EraseCursorRadiusPx` use the full brush width in ground meters. */
+QCursor CreateEraseCursor(int radiusPx)
+{
+   constexpr int kPad      = 8;
+   constexpr int kMaxSize  = 256;
+   const int     maxRadius = (kMaxSize - kPad) / 2;
+   const int     r         = std::clamp(radiusPx, 4, maxRadius);
+   const int     size      = std::clamp(r * 2 + kPad, 32, kMaxSize);
+   const qreal   center    = static_cast<qreal>(size) / 2.0;
+
+   QPixmap pixmap {size, size};
+   pixmap.fill(Qt::transparent);
+
+   QPainter painter {&pixmap};
+   painter.setRenderHint(QPainter::Antialiasing, true);
+   painter.setBrush(Qt::NoBrush);
+
+   const QPointF ringCenter {center, center};
+   const auto    ringRadius = static_cast<qreal>(r);
+
+   // Dark halo — readable on bright radar returns.
+   QPen haloPen {QColor {0, 0, 0, 210}};
+   haloPen.setWidthF(3.0);
+   haloPen.setCapStyle(Qt::RoundCap);
+   painter.setPen(haloPen);
+   painter.drawEllipse(ringCenter, ringRadius, ringRadius);
+
+   // Light dashed ring — readable on dark map / satellite.
+   QPen dashPen {QColor {255, 255, 255, 245}};
+   dashPen.setWidthF(1.75);
+   dashPen.setStyle(Qt::DashLine);
+   dashPen.setDashPattern({5.0, 4.0});
+   dashPen.setCapStyle(Qt::RoundCap);
+   painter.setPen(dashPen);
+   painter.drawEllipse(ringCenter, ringRadius, ringRadius);
+
+   painter.translate(center, center);
+   painter.rotate(-35.0);
+   painter.setPen(QPen {QColor {36, 36, 36}, 1.0});
+   painter.setBrush(QColor {255, 186, 104});
+   painter.drawRoundedRect(QRectF {-5.0, -7.0, 10.0, 7.0}, 2.0, 2.0);
+   painter.setBrush(QColor {239, 83, 80});
+   painter.drawRoundedRect(QRectF {-5.0, 0.0, 10.0, 5.0}, 1.5, 1.5);
+   painter.setBrush(QColor {245, 245, 245});
+   painter.drawRect(QRectF {-4.0, 4.0, 8.0, 2.5});
+
+   return QCursor {pixmap, static_cast<int>(center), static_cast<int>(center)};
+}
+
+QString FormatMeasurementDistance(double meters)
+{
+   const auto units = types::GetDistanceUnitsFromName(
+      settings::UnitSettings::Instance().distance_units().GetValue());
+   const double display = meters * scwx::common::kKilometersPerMeter *
+                          types::GetDistanceUnitsScale(units);
+   std::string abbrev = types::GetDistanceUnitsAbbreviation(units);
+   if (abbrev.empty())
+   {
+      abbrev = "user";
+   }
+
+   int decimals = 1;
+   if (display < 1.0)
+   {
+      decimals = 2;
+   }
+   else if (display >= 10.0)
+   {
+      decimals = 0;
+   }
+
+   return QStringLiteral("%1 %2")
+      .arg(QString::number(display, 'f', decimals))
+      .arg(QString::fromStdString(abbrev));
+}
+
+// NOLINTEND(cppcoreguidelines-avoid-magic-numbers,cppcoreguidelines-owning-memory)
+} // namespace
+
 static const std::string logPrefix_ = "scwx::qt::map::map_widget";
 static const auto        logger_    = scwx::util::Logger::Create(logPrefix_);
 
@@ -178,6 +289,7 @@ public:
                           const std::string& before);
    void ConnectMapSignals();
    void ConnectSignals();
+   void UpdateLayerOpacities();
    void HandleHotkeyPressed(types::Hotkey hotkey, bool isAutoRepeat);
    void HandleHotkeyReleased(types::Hotkey hotkey);
    void HandleHotkeyUpdates();
@@ -235,6 +347,8 @@ public:
    std::list<std::string>          layerList_;
 
    std::vector<std::shared_ptr<GenericLayer>> genericLayers_ {};
+   std::unordered_map<std::string, std::shared_ptr<GenericLayer>>
+      genericLayerMap_ {};
 
    const std::vector<MapStyle> emptyStyles_ {};
    const std::vector<MapStyle> noneStyles_ {
@@ -437,6 +551,8 @@ void MapWidgetImpl::ConnectSignals()
            {
               static const int enabledColumn =
                  static_cast<int>(model::LayerModel::Column::Enabled);
+              static const int opacityColumn =
+                 static_cast<int>(model::LayerModel::Column::Opacity);
               const int displayColumn =
                  static_cast<int>(model::LayerModel::Column::DisplayMap1) +
                  static_cast<int>(id_);
@@ -449,6 +565,11 @@ void MapWidgetImpl::ConnectSignals()
                    enabledColumn <= bottomRight.column()))
               {
                  AddLayers();
+              }
+              else if (topLeft.column() <= opacityColumn &&
+                       opacityColumn <= bottomRight.column())
+              {
+                 UpdateLayerOpacities();
               }
            });
    connect(layerModel_.get(),
@@ -1482,6 +1603,7 @@ void MapWidgetImpl::AddLayers()
    }
    layerList_.clear();
    genericLayers_.clear();
+   genericLayerMap_.clear();
    placefileLayers_.clear();
 
    // Update custom layer list from model
@@ -1530,6 +1652,8 @@ void MapWidgetImpl::AddLayers()
    {
       context_->set_color_table_margins({});
    }
+
+   UpdateLayerOpacities();
 }
 
 void MapWidgetImpl::AddLayer(types::LayerType        type,
@@ -1555,9 +1679,7 @@ void MapWidgetImpl::AddLayer(types::LayerType        type,
 
       std::shared_ptr<AlertLayer> alertLayer =
          std::make_shared<AlertLayer>(glContext_, phenomenon);
-      AddLayer(fmt::format("alert.{}", awips::GetPhenomenonCode(phenomenon)),
-               alertLayer,
-               before);
+      AddLayer(CustomAlertLayerId(phenomenon), alertLayer, before);
       connect(alertLayer.get(),
               &AlertLayer::AlertSelected,
               widget_,
@@ -1649,7 +1771,8 @@ void MapWidgetImpl::AddLayer(types::LayerType        type,
                map_,
                radarProductView->range(),
                {radarSite->latitude(), radarSite->longitude()},
-               QString::fromStdString(before));
+               QString::fromStdString(before),
+               LayerOpacity(layerModel_->GetLayerInfo(type, description)));
             layerList_.push_back(types::GetLayerName(type, description));
          }
          break;
@@ -1695,6 +1818,7 @@ void MapWidgetImpl::AddLayer(const std::string&                   id,
 
       layerList_.push_back(id);
       genericLayers_.push_back(layer);
+      genericLayerMap_.insert_or_assign(id, layer);
 
       connect(layer.get(),
               &GenericLayer::NeedsRendering,
@@ -1705,6 +1829,33 @@ void MapWidgetImpl::AddLayer(const std::string&                   id,
    {
       // When dragging and dropping, a temporary duplicate layer exists
    }
+}
+
+void MapWidgetImpl::UpdateLayerOpacities()
+{
+   const types::LayerVector layers = layerModel_->GetLayers();
+   for (const auto& info : layers)
+   {
+      const float opacity = LayerOpacity(info);
+
+      if (info.type_ == types::LayerType::Data &&
+          std::holds_alternative<types::DataLayer>(info.description_) &&
+          std::get<types::DataLayer>(info.description_) ==
+             types::DataLayer::RadarRange)
+      {
+         RadarRangeLayer::SetOpacity(map_, opacity);
+         continue;
+      }
+
+      const std::string id = CustomLayerId(info.type_, info.description_);
+      auto              it = genericLayerMap_.find(id);
+      if (it != genericLayerMap_.end() && it->second != nullptr)
+      {
+         it->second->set_opacity(opacity);
+      }
+   }
+
+   widget_->update();
 }
 
 bool MapWidget::event(QEvent* e)

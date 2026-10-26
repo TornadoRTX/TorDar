@@ -1,7 +1,7 @@
 > [!CAUTION]
 > The only official websites that are affilated with TorDar are this GitHub page and TornadoRTX social media. Do not trust any other websites or Social Media accounts that claim to be affilated or have ownership of this fork.
 
-## [Development Update #1](https://github.com/TornadoRTX/TorDar/discussions/37) is now available! 
+## [Development Update #2](https://github.com/TornadoRTX/TorDar/discussions/57) is now available.
 
 # TorDar (Tornado Radar)
 

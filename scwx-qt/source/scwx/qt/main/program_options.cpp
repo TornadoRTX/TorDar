@@ -120,6 +120,23 @@ const boost::program_options::options_description& GetVisibleOptions()
           boost::program_options::bool_switch(&programOptions_.enableConsole_),
           "Enable console output") //
 #endif
+         ("custom-radars-gis",
+          boost::program_options::value<std::string>(
+             &programOptions_.customRadarsGis_)
+             ->value_name("path"),
+          "Path to custom radar sites GIS configuration file.") //
+         ("level2-provider",
+          boost::program_options::value<std::string>(
+             &programOptions_.level2Provider_)
+             ->value_name("url"),
+          "Level 2 data provider URL. Protocol may be any of: HTTP/HTTPS "
+          "(ONDAS), or S3.") //
+         ("level3-provider",
+          boost::program_options::value<std::string>(
+             &programOptions_.level3Provider_)
+             ->value_name("url"),
+          "Level 3 data provider. URL Protocol may be any of: HTTP/HTTPS "
+          "(ONDAS or TGFTP), or S3.") //
          ("portable,p",
           boost::program_options::bool_switch(&programOptions_.portableMode_),
           "Run in portable mode, storing settings in the application "

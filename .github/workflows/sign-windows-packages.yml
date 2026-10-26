@@ -3,19 +3,11 @@ name: Sign Windows Packages
 on:
   workflow_dispatch:
     inputs:
-      run-id:
-        description: CI workflow run ID that produced the Windows artifacts
-        required: true
-        type: string
       signing-policy:
         description: SignPath signing policy slug
         required: true
         type: string
         default: test-signing
-
-permissions:
-  actions: read
-  contents: read
 
 jobs:
   sign-and-package:
@@ -23,96 +15,60 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: windows_vs2022_x64
-            os: windows-2022
+          - name: windows_vs2026_x64
+            os: windows-2025-vs2026
             build_type: Release
             vs_arch: x64
-            vs_version: 2022
-            qt_version: 6.11.0
+            vs_version: 18
+            qt_version: 6.11.1
             qt_arch_aqt: win64_msvc2022_64
             qt_arch_dir: msvc2022_64
             qt_modules: qtimageformats qtmultimedia qtpositioning qtserialport
-            conan_profile: scwx-windows_vs2022_x64
-            windows_artifact_name: supercell-wx-windows-vs2022-x64
-            signed_windows_artifact_name: supercell-wx-signed-windows-vs2022-x64
-            unsigned_installer_artifact_name: supercell-wx-installer-unsigned-windows-vs2022-x64
-            signed_installer_artifact_name: supercell-wx-installer-signed-windows-vs2022-x64
+            conan_build_profile: scwx-windows_vs2026_x64
+            conan_host_profile: scwx-windows_vs2026_x64
+            windows_artifact_name: supercell-wx-windows-vs2026-x64
+            signed_windows_artifact_name: supercell-wx-signed-windows-vs2026-x64
+            unsigned_installer_artifact_name: supercell-wx-installer-unsigned-windows-vs2026-x64
+            signed_installer_artifact_name: supercell-wx-installer-signed-windows-vs2026-x64
+            unsigned_bootstrap_artifact_name: supercell-wx-bootstrap-unsigned-windows-vs2026-x64
+            signed_bootstrap_artifact_name: supercell-wx-bootstrap-signed-windows-vs2026-x64
+          - name: windows_vs2026_arm64
+            os: windows-2025-vs2026
+            build_type: Release
+            vs_arch: arm64
+            vs_version: 18
+            qt_version: 6.11.1
+            qt_arch_aqt: win64_msvc2022_arm64_cross_compiled
+            qt_arch_dir: msvc2022_arm64
+            qt_modules: qtimageformats qtmultimedia qtpositioning qtserialport
+            conan_build_profile: scwx-windows_vs2026_x64
+            conan_host_profile: scwx-windows_vs2026_armv8
+            windows_artifact_name: supercell-wx-windows-vs2026-arm64
+            signed_windows_artifact_name: supercell-wx-signed-windows-vs2026-arm64
+            unsigned_installer_artifact_name: supercell-wx-installer-unsigned-windows-vs2026-arm64
+            signed_installer_artifact_name: supercell-wx-installer-signed-windows-vs2026-arm64
+            unsigned_bootstrap_artifact_name: supercell-wx-bootstrap-unsigned-windows-vs2026-arm64
+            signed_bootstrap_artifact_name: supercell-wx-bootstrap-signed-windows-vs2026-arm64
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     env:
-      RUN_ID: ${{ inputs.run-id || '22879759893' }}
-      UNSIGNED_ARTIFACTS_DIR: ${{ github.workspace }}\unsigned-artifacts
       SIGNED_ARTIFACTS_DIR: ${{ github.workspace }}\signed-artifacts
       SIGNED_INSTALLER_DIR: ${{ github.workspace }}\signed-installer
+      SIGNED_BOOTSTRAP_DIR: ${{ github.workspace }}\signed-bootstrap
       SIGNPATH_ORGANIZATION_ID: 7b83cc63-b02a-4b77-a91f-808f4b4db14c
       SIGNPATH_PROJECT: supercell-wx
       SIGNPATH_SIGNING_POLICY: ${{ inputs.signing-policy || 'test-signing' }}
 
     steps:
-    - name: Resolve CI Windows Artifact
-      id: ci-artifact
-      uses: actions/github-script@v9
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const runId = Number(process.env.RUN_ID);
-
-          if (!Number.isInteger(runId) || runId <= 0) {
-            core.setFailed(`Invalid workflow run ID: ${process.env.RUN_ID}`);
-            return;
-          }
-
-          const {owner, repo} = context.repo;
-          const artifactName = `${{ matrix.windows_artifact_name }}`;
-          const [runResponse, artifactsResponse] = await Promise.all([
-            github.rest.actions.getWorkflowRun({owner, repo, run_id: runId}),
-            github.rest.actions.listWorkflowRunArtifacts({owner, repo, run_id: runId, per_page: 100})
-          ]);
-
-          if (runResponse.data.status !== 'completed') {
-            core.setFailed(`Workflow run ${runId} is not completed.`);
-            return;
-          }
-
-          if (runResponse.data.conclusion !== 'success') {
-            core.setFailed(`Workflow run ${runId} concluded with '${runResponse.data.conclusion}'.`);
-            return;
-          }
-
-          const artifact = artifactsResponse.data.artifacts.find(a => a.name === artifactName && !a.expired);
-
-          if (!artifact) {
-            core.setFailed(`Artifact '${artifactName}' was not found for workflow run ${runId}.`);
-            return;
-          }
-
-          core.info(`Using artifact '${artifact.name}' (${artifact.id}) from ${runResponse.data.html_url}`);
-          core.info(`Artifact workflow head SHA: ${runResponse.data.head_sha}`);
-
     - name: Setup
       shell: pwsh
       run: git config --global core.longpaths true
 
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         path: source
         submodules: recursive
-
-    - name: Download CI Artifacts (Windows)
-      uses: actions/download-artifact@v8
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        run-id: ${{ env.RUN_ID }}
-        name: ${{ matrix.windows_artifact_name }}
-        path: ${{ env.UNSIGNED_ARTIFACTS_DIR }}\${{ matrix.windows_artifact_name }}
-
-    - name: Upload Unsigned Artifacts (Windows)
-      id: upload-unsigned-windows-artifacts
-      uses: actions/upload-artifact@v7
-      with:
-        name: ${{ matrix.windows_artifact_name }}
-        path: ${{ env.UNSIGNED_ARTIFACTS_DIR }}\${{ matrix.windows_artifact_name }}
 
     - name: Install Qt
       uses: jdpurcell/install-qt-action@v5
@@ -125,27 +81,46 @@ jobs:
         aqtsource: git+https://github.com/miurahr/aqtinstall.git@073e34d7c2ab4ae6961ed7cca690b3abd5ba5a7e
 
     - name: Setup MSVC
-      uses: ilammy/msvc-dev-cmd@v1
-      with:
-        arch: ${{ matrix.vs_arch }}
-        vsversion: ${{ matrix.vs_version }}
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+        $vsPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+        if (-not $vsPath) { throw "Visual Studio with C++ tools not found" }
+
+        $vsDevCmd = Join-Path $vsPath "Common7\Tools\VsDevCmd.bat"
+        if (-not (Test-Path $vsDevCmd)) { throw "VsDevCmd not found at $vsDevCmd" }
+
+        # GitHub-hosted Windows images are x64. ARM64 is produced with the
+        # x64-hosted cross compiler (Hostx64\arm64), not HostARM64\ARM64.
+        $targetArch = if ("${{ matrix.vs_arch }}" -eq "x64") { "amd64" } else { "${{ matrix.vs_arch }}" }
+        $hostArch = if ("${{ matrix.vs_arch }}" -eq "arm64") { "amd64" } else { $targetArch }
+
+        cmd.exe /d /s /c """$vsDevCmd"" -arch=$targetArch -host_arch=$hostArch && set" |
+          ForEach-Object {
+            if ($_ -match "^(.*?)=(.*)$") {
+              "$($matches[1])=$($matches[2])" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            }
+          }
 
     - name: Setup Python Environment
       shell: pwsh
       run: |
-        pip install conan
+        pip install geopandas `
+                    GitPython `
+                    conan
 
-    - name: Cache Conan Packages
-      uses: actions/cache@v5
-      with:
-        path: ~/.conan2
-        key: build-v2-${{ matrix.conan_profile }}-${{ hashFiles('./source/conanfile.py', './source/tools/conan/profiles/*') }}
-
+    # Do not use cache for Conan packages for the signing workflow for traceability purposes
     - name: Install Conan Packages
       shell: pwsh
       run: |
+        $ErrorActionPreference = 'Stop'
+        $PSNativeCommandUseErrorActionPreference = $true
         conan config install `
-          ./source/tools/conan/profiles/${{ matrix.conan_profile }} `
+          ./source/tools/conan/profiles/${{ matrix.conan_build_profile }} `
+          -tf profiles
+        conan config install `
+          ./source/tools/conan/profiles/${{ matrix.conan_host_profile }} `
           -tf profiles
         mkdir build
         cd build
@@ -153,10 +128,43 @@ jobs:
         conan install ../source/ `
           --remote conancenter `
           --build missing `
-          --profile:all ${{ matrix.conan_profile }} `
+          --profile:build ${{ matrix.conan_build_profile }} `
+          --profile:host ${{ matrix.conan_host_profile }} `
           --settings:all build_type=${{ matrix.build_type }} `
           --output-folder ./conan/
         conan cache clean
+
+    - name: Build Supercell Wx
+      shell: pwsh
+      run: |
+        cd build
+        cmake ../source/ `
+          -G Ninja `
+          -DCMAKE_BUILD_TYPE="${{ matrix.build_type }}" `
+          -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="${{ github.workspace }}/source/external/cmake-conan/conan_provider.cmake" `
+          -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/supercell-wx" `
+          -DCONAN_HOST_PROFILE="${{ matrix.conan_host_profile }}" `
+          -DCONAN_BUILD_PROFILE="${{ matrix.conan_build_profile }}"
+        ninja supercell-wx
+
+    - name: Install Supercell Wx
+      shell: pwsh
+      run: |
+        cd build
+        cmake --install . --component supercell-wx
+
+    - name: Upload Unsigned Artifacts (Windows)
+      id: upload-unsigned-windows-artifacts
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ matrix.windows_artifact_name }}
+        path: ${{ github.workspace }}/supercell-wx/
+
+    - name: Upload Debug Artifacts (Windows)
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ matrix.windows_artifact_name }}-debug
+        path: ${{ github.workspace }}/build/Release/bin/*.pdb
 
     - name: Sign Artifacts (Windows)
       id: sign-windows-artifacts
@@ -169,6 +177,7 @@ jobs:
         artifact-configuration-slug: binary-archive
         github-artifact-id: ${{ steps.upload-unsigned-windows-artifacts.outputs.artifact-id }}
         wait-for-completion: true
+        wait-for-completion-timeout-in-seconds: 3600
         output-artifact-directory: ${{ env.SIGNED_ARTIFACTS_DIR }}
 
     - name: Upload Signed Artifacts (Windows)
@@ -186,9 +195,15 @@ jobs:
           -DCMAKE_BUILD_TYPE="${{ matrix.build_type }}" `
           -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="${{ github.workspace }}/source/external/cmake-conan/conan_provider.cmake" `
           -DCMAKE_INSTALL_PREFIX="${{ env.SIGNED_ARTIFACTS_DIR }}" `
-          -DCONAN_HOST_PROFILE="${{ matrix.conan_profile }}" `
-          -DCONAN_BUILD_PROFILE="${{ matrix.conan_profile }}" `
+          -DCONAN_HOST_PROFILE="${{ matrix.conan_host_profile }}" `
+          -DCONAN_BUILD_PROFILE="${{ matrix.conan_build_profile }}" `
           -DSCWX_WINDOWS_PACKAGE_INSTALL_ROOT="${{ env.SIGNED_ARTIFACTS_DIR }}"
+
+    - name: Install NSIS (Windows)
+      shell: pwsh
+      run: |
+        choco install nsis -y --no-progress
+        if ($LASTEXITCODE -ne 0) { throw "choco install nsis failed with exit code $LASTEXITCODE" }
 
     - name: Build Installer (Windows)
       shell: pwsh
@@ -221,3 +236,44 @@ jobs:
       with:
         name: ${{ matrix.signed_installer_artifact_name }}
         path: ${{ env.SIGNED_INSTALLER_DIR }}/**/*.msi
+
+    - name: Build Bootstrap (Windows)
+      shell: pwsh
+      run: |
+        $signedMsi = Get-ChildItem -Path "${{ env.SIGNED_INSTALLER_DIR }}" `
+          -Filter "supercell-wx-*.msi" -Recurse |
+          Select-Object -First 1 -ExpandProperty FullName
+        if (-not $signedMsi) {
+          throw "Signed MSI not found under ${{ env.SIGNED_INSTALLER_DIR }}"
+        }
+        & "${{ github.workspace }}/source/tools/build-windows-nsis-bootstrapper.ps1" `
+          -BuildDir "${{ github.workspace }}/build" `
+          -SourceDir "${{ github.workspace }}/source" `
+          -Arch "${{ matrix.vs_arch }}" `
+          -MsiPath $signedMsi
+
+    - name: Upload Unsigned Bootstrap (Windows)
+      id: upload-unsigned-bootstrap
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ matrix.unsigned_bootstrap_artifact_name }}
+        path: ${{ github.workspace }}/build/supercell-wx-*.exe
+
+    - name: Sign Bootstrap (Windows)
+      id: sign-windows-bootstrap
+      uses: signpath/github-action-submit-signing-request@v2
+      with:
+        api-token:           ${{ secrets.SIGNPATH_API_TOKEN }}
+        organization-id:     ${{ env.SIGNPATH_ORGANIZATION_ID }}
+        project-slug:        ${{ env.SIGNPATH_PROJECT }}
+        signing-policy-slug: ${{ env.SIGNPATH_SIGNING_POLICY }}
+        artifact-configuration-slug: windows-bootstrap-archive
+        github-artifact-id: ${{ steps.upload-unsigned-bootstrap.outputs.artifact-id }}
+        wait-for-completion: true
+        output-artifact-directory: ${{ env.SIGNED_BOOTSTRAP_DIR }}
+
+    - name: Upload Signed Bootstrap (Windows)
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ matrix.signed_bootstrap_artifact_name }}
+        path: ${{ env.SIGNED_BOOTSTRAP_DIR }}/**/*.exe

@@ -638,6 +638,30 @@ static bool IsGoesGlmLightningUrl(const std::string& name)
    return name == kGoesGlmLightningUrl_ || name == kGoesGlmLegacyLightningUrl_;
 }
 
+namespace
+{
+// JSON settings DTO. PlacefileRecord is not copyable/movable (mutex, atomic,
+// ASIO types), so try_value_to cannot wrap it in boost::system::result.
+struct PlacefileSettingsEntry
+{
+   std::string name {};
+   std::string title {};
+   bool        enabled {false};
+   bool        thresholded {false};
+};
+
+PlacefileSettingsEntry
+tag_invoke(boost::json::value_to_tag<PlacefileSettingsEntry>,
+           const boost::json::value& jv)
+{
+   return PlacefileSettingsEntry {
+      .name        = boost::json::value_to<std::string>(jv.at(kNameName_)),
+      .title       = boost::json::value_to<std::string>(jv.at(kTitleName_)),
+      .enabled     = jv.at(kEnabledName_).as_bool(),
+      .thresholded = jv.at(kThresholdedName_).as_bool()};
+}
+} // namespace
+
 class PlacefileManager::Impl
 {
 public:
@@ -722,18 +746,6 @@ public:
             {kThresholdedName_, record->thresholded_},
             {kTitleName_, record->title_},
             {kNameName_, record->name_}};
-   }
-
-   friend PlacefileRecord tag_invoke(boost::json::value_to_tag<PlacefileRecord>,
-                                     const boost::json::value& jv)
-   {
-      return PlacefileRecord {
-         nullptr,
-         boost::json::value_to<std::string>(jv.at(kNameName_)),
-         nullptr,
-         boost::json::value_to<std::string>(jv.at(kTitleName_)),
-         jv.at(kEnabledName_).as_bool(),
-         jv.at(kThresholdedName_).as_bool()};
    }
 
    Impl* p;
@@ -1118,23 +1130,24 @@ void PlacefileManager::Impl::ApplyPlacefileSettings(
       auto& placefileArray = placefileJson.as_array();
       for (auto& placefileEntry : placefileArray)
       {
-         try
-         {
-            // Convert placefile entry to a record
-            PlacefileRecord record =
-               boost::json::value_to<PlacefileRecord>(placefileEntry);
+         // Convert placefile entry to settings fields
+         auto record =
+            boost::json::try_value_to<PlacefileSettingsEntry>(placefileEntry);
 
-            if (!record.name_.empty())
+         if (!record.has_error())
+         {
+            if (!record->name.empty())
             {
-               self_->AddUrl(record.name_,
-                             record.title_,
-                             record.enabled_,
-                             record.thresholded_);
+               self_->AddUrl(record->name,
+                             record->title,
+                             record->enabled,
+                             record->thresholded);
             }
          }
-         catch (const std::exception& ex)
+         else
          {
-            logger_->warn("Invalid placefile entry: {}", ex.what());
+            logger_->warn("Invalid placefile entry: {}",
+                          record.error().message());
          }
       }
    }
